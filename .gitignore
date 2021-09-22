@@ -32,3 +32,5 @@ ics_*
 .*.swp
 *.lst
 slurm-*.out
+*.new
+*.xml

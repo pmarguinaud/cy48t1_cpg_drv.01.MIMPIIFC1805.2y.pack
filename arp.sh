@@ -86,7 +86,7 @@ let "NPROC_IO=$NNODE_IO*$NTASK_IO"
 
 # Set forecast term; reduce it for debugging
 
-STOP=102
+STOP=6
 
 # Modify namelist
 

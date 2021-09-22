@@ -29,3 +29,6 @@ src/unsxref
 hub
 data/*
 ics_*
+.*.swp
+*.lst
+slurm-*.out

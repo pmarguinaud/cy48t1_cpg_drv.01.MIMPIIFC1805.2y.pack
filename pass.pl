@@ -8,6 +8,9 @@ use File::Basename;
 use lib $Bin;
 use Fxtran;
 
+#my ($var, $typ, $mod) = qw (YDVARS FIELD_VARIABLES FIELD_VARIABLES_MOD);
+my ($var, $typ, $mod) = qw (YDSURFVARS SURFACE_VARIABLES SURFACE_VARIABLES_MOD);
+
 my @r = qw (APLPAR APL_AROME MF_PHYS CPG CPG_GP CPG_DYN CPG_DIA);
 
 my $F90 = shift;
@@ -21,7 +24,7 @@ my $d = &Fxtran::fxtran (location => $F90, fopts => [qw (-line-length 200)]);
   my $comma = $ydgeometry_dummy->nextSibling ();
   my $lst = $ydgeometry_dummy->parentNode ();
 
-  $lst->insertAfter (&n ('<arg-N><N><n>YDVARS</n></N></arg-N>'), $ydgeometry_dummy);
+  $lst->insertAfter (&n ("<arg-N><N><n>$var</n></N></arg-N>"), $ydgeometry_dummy);
   $lst->insertAfter ($comma->cloneNode (1), $ydgeometry_dummy);
 }
 
@@ -37,7 +40,7 @@ for my $r (@r)
         my $comma = $ydgeometry_actual->nextSibling ();
         my $lst = $ydgeometry_actual->parentNode ();
 
-        $lst->insertAfter (&n ('<arg><named-E><N><n>YDVARS</n></N></named-E></arg>'), $ydgeometry_actual);
+        $lst->insertAfter (&n ("<arg><named-E><N><n>$var</n></N></named-E></arg>"), $ydgeometry_actual);
         $lst->insertAfter ($comma->cloneNode (1), $ydgeometry_actual);
       }
   }
@@ -51,7 +54,7 @@ for my $r (@r)
   my $decl = $ydgeometry_decl->cloneNode (1);
   
   my ($N) = &F ('.//EN-N/N/n/text()', $decl);
-  $N->setData ('YDVARS');
+  $N->setData ("$var");
   
   my ($intent) = &F ('.//attribute[string (attribute-N)="INTENT"]/intent-spec/text()', $decl);
   $intent->setData ('INOUT');
@@ -69,14 +72,14 @@ for my $r (@r)
   my ($spec) = &F ('./_T-spec_', $decl);
   my ($type) = &F ('./derived-T-spec/T-N/N/n/text()', $spec);
   
-  $type->setData ('FIELD_VARIABLES');
+  $type->setData ($typ);
   
   my $space2 = $spec->nextSibling;
   
   if ($space2->nodeName eq '#text')
     {
       my $text = $space2->data;
-      for (1 .. 7)
+      for (1 .. length ($typ) - length ("GEOMETRY"))
         {
           ($text =~ s/ $//o) or ($text =~ s/^ //o);
         }
@@ -96,10 +99,10 @@ for my $r (@r)
 
   my ($moduleN) = &F ('.//module-N', $use_field_variables);
   my ($N) = &F ('./N/n/text()', $moduleN);
-  $N->setData ('FIELD_VARIABLES_MOD');
+  $N->setData ($mod);
   my $space = $moduleN->nextSibling;
   my $text = $space->data;
-  for (1 .. 7)
+  for (1 .. length ($typ) - length ("GEOMETRY"))
     {
       ($text =~ s/^ //o) or ($text =~ s/ ONLY/ONLY/o);
     }
@@ -111,7 +114,7 @@ for my $r (@r)
     {
       $_->unbindNode ();
     }
-  $renameLT->appendChild (&n ('<rename><use-N><N><n>FIELD_VARIABLES</n></N></use-N></rename>'));
+  $renameLT->appendChild (&n ("<rename><use-N><N><n>$typ</n></N></use-N></rename>"));
 
   my ($cr) = &f ('following::text ()[contains (.,"' . "\n" . '")]', $use_geometry);
   

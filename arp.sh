@@ -35,6 +35,14 @@ mkdir -p $TMPDIR
 
 cd $TMPDIR
 
+
+for NAM in ARP LACE LTWOTL=F
+do
+
+mkdir -p $NAM
+cd $NAM
+
+
 # Choose your test case resolution
 
 #GRID=t1798
@@ -143,6 +151,10 @@ xpnam --delta="
 /
 " --inplace fort.4
 
+xpnam --delta="
+$(cat $PACK/$NAM.nam)
+" --inplace fort.4
+
 # Set up grib_api environment
 
 grib_api_prefix=$(ldd $PACK/bin/MASTERODB  | perl -ne ' 
@@ -176,6 +188,10 @@ cat fort.4
     --nnp $NTASK_FC --nn $NNODE_FC --openmp $NOPMP_FC -- $PACK/bin/MASTERODB \
  -- --nnp $NTASK_IO --nn $NNODE_IO --openmp $NOPMP_IO -- $PACK/bin/MASTERODB 
 
-cat NODE.001_01
+diffNODE.001_01 NODE.001_01 $PACK/NODE.001_01.$NAM
 
 ls -lrt
+
+cd ..
+
+done

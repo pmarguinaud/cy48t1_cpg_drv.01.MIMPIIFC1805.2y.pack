@@ -67,7 +67,7 @@ for my $call (@call)
         if ($y =~ s/(L|M)$//o)
           {
             my $d = $1;
-            next unless ($t eq 'T0');
+            next unless (($t eq 'T0') || (($t eq 'T9') && ($d eq 'L')));
             $t = "D$d";
           }
 

@@ -1174,9 +1174,9 @@ ZT9SP       => YDVARS%SP%T9
 ZT9SPD      => YDVARS%SPD%T9
 ZT9T        => YDVARS%T%T9
 ZT9U        => YDVARS%U%T9
-CALL SC2PRG(YT9%MUL   ,PGMV    ,ZT9UL)
+ZT9UL       => YDVARS%U%DL
 ZT9V        => YDVARS%V%T9
-CALL SC2PRG(YT9%MVL   ,PGMV    ,ZT9VL)
+ZT9VL       => YDVARS%V%DL
 ZT9VOR      => YDVARS%VOR%T9
 !     ------------------------------------------------------------------
 

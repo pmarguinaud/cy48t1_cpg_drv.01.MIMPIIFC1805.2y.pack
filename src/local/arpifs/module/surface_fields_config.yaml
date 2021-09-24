@@ -176,10 +176,57 @@ diagnostic:
   - {name: NUDM, comment: nudging mask}
 
 - type: group
+  name: VCLIH
+  short: VH
+  dimension: 2
+  comment: convective cloud diagnostic fields
+  variables:
+  - {name: TCCH, comment: total convective cloudiness}
+  - {name: SCCH, comment: convective cloud summit}
+  - {name: BCCH, comment: convective cloud base}
+  - {name: PBLH, comment: PBL height}
+  - {name: SPSH, comment: variable for prognostic convection scheme (ALARO)}
+  - {name: QSH, comment: surface moisture historic variable (used by TOUCANS)}
+
+- type: group
+  name: VCLIK
+  short: VK
+  dimension: 2
+  comment: Convective cloud pseudo-historic fields
+  variables:
+  - {name: UDGRO, comment: ud top position (accsu)}
+
+- type: group
+  name: VCLIP
+  short: VP
+  dimension: 2
+  comment: deep soil diagnostic fields
+  variables:
+  - {name: TPC, comment: climatological deep layer temperature}
+  - {name: WPC, comment: climatological deep layer moisture}
+
+- type: group
+  name: VCLIV
+  short: VV
+  dimension: 2
+  comment: vegetation diagnostic fields
+  variables:
+  - {name: ARG, comment: silt percentage within soil}
+  - {name: SAB, comment: percentage of sand within the soil}
+  - {name: D2, comment: soil depth}
+  - {name: IVEG, comment: type of vegetation}
+  - {name: RSMIN, comment: stomatal minimum resistance}
+  - {name: LAI, comment: leaf area index}
+  - {name: HV, comment: resistance to evapotranspiration}
+  - {name: Z0H, comment: gravity * roughness length for heat}
+  - {name: ALS, comment: albedo of bare ground}
+  - {name: ALV, comment: albedo of vegetation}
+
+- type: group
   name: VCLIA
   short: VA
   dimension: 2
-  comment: climatological/geographical diagnostic fields
+  comment: aerosol diagnostic fields
   variables:
   - {name: SEA, comment: aerosol sea}
   - {name: LAN, comment: aerosol land}

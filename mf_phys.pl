@@ -27,7 +27,7 @@ for my $call (@call)
 
     my $stmt;
 
-    if ($arg[1]->textContent =~ m/^(?:PSP_(?:RR|SB|SG)|PSD_(?:VF|VA))$/o)
+    if ($arg[1]->textContent =~ m/^(?:PSP_(?:RR|SB|SG)|PSD_(?:VF|VA|VD|VH|VK|VP|VV))$/o)
       {
         my ($p, $x, $v) = map ({ $_->textContent } @arg);
         $x =~ s/^PS(P|D)_//o; my $z = $1;

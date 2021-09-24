@@ -12,7 +12,7 @@ my $F90 = "src/local/arpifs/phys_dmn/mf_phys.F90";
 
 my $d = &Fxtran::fxtran (location => $F90, fopts => [qw (-line-length 200)]);
 
-my $f = &Fxtran::fxtran (location => '.vimpack/src=/arpifs/module/field_variables_mod.F90', fopts => [qw (-line-length 200)]);
+my $f = &Fxtran::fxtran (location => '.vimpack/src=/.fypp/arpifs/module/field_variables_mod.F90', fopts => [qw (-line-length 200)]);
 
 my ($ft) = &F ('//T-construct[.//T-stmt[string (T-N)="FIELD_VARIABLES"]]', $f);
 my @fn = &F ('./component-decl-stmt//EN-N//text()', $ft, 1);
@@ -27,7 +27,7 @@ for my $call (@call)
 
     my $stmt;
 
-    if ($arg[1]->textContent =~ m/^(?:PSP_(?:RR|SB|SG)|PSD_(?:VF))$/o)
+    if ($arg[1]->textContent =~ m/^(?:PSP_(?:RR|SB|SG)|PSD_(?:VF|VA))$/o)
       {
         my ($p, $x, $v) = map ({ $_->textContent } @arg);
         $x =~ s/^PS(P|D)_//o; my $z = $1;

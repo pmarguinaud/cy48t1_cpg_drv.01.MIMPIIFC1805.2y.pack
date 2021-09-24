@@ -34,3 +34,4 @@ ics_*
 slurm-*.out
 *.new
 *.xml
+src/local/.fypp

@@ -9,7 +9,8 @@ use lib $Bin;
 use Fxtran;
 
 #my ($var, $typ, $mod) = qw (YDVARS FIELD_VARIABLES FIELD_VARIABLES_MOD);
-my ($var, $typ, $mod) = qw (YDSURFVARS SURFACE_VARIABLES SURFACE_VARIABLES_MOD);
+#my ($var, $typ, $mod) = qw (YDSURFVARS SURFACE_VARIABLES SURFACE_VARIABLES_MOD);
+my ($var, $typ, $mod) = qw (YDMF_PHYS_SURF MFPHYS_SURF_TYPE MFPHYS_SURFACE_TYPE_MOD);
 
 my @r = qw (APLPAR APL_AROME MF_PHYS CPG CPG_GP CPG_DYN CPG_DIA);
 

@@ -35,3 +35,9 @@ slurm-*.out
 *.new
 *.xml
 src/local/.fypp
+fypp/*.F90
+src/local/arpifs/module/field_registry_mod.F90
+src/local/arpifs/module/mfphys_surface_type_mod.F90
+src/local/arpifs/module/surface_variables_mod.F90
+src/local/arpifs/module/surface_views_module.F90
+src/local/arpifs/module/variable_module.F90

@@ -38,26 +38,21 @@ for my $F90 ("src/local/arpifs/adiab/cpg_dia.F90")
             my ($f, $t) = split (m/%/o, $p);
             $t =~ s/^MP/T/o;
             $t = "T0" if ($t eq 'T');
+
+            $t = '' if ($z eq 'D');
     
+            $t = $t ? "_$t" : "";
             
             my @ss = &F ('//EN-decl[string (EN-N)="?"]//shape-spec', $v, $d);
 #           print &Dumper ([$f, $t, $x, $v, scalar (@ss)]);
     
     
             $stmt = &n ("<pointer-a-stmt><E-1><named-E><N><n>$v</n></N></named-E></E-1> "
-                      . "<a>=&gt;</a> <E-2><named-E><N><n>YDSURFVARS</n></N><R-LT><component-R>%<ct>GS${z}_$x</ct></component-R>"
-                      . "<component-R>%<ct>V$f</ct></component-R><component-R>%<ct>F$t</ct></component-R>"
-                      . "<component-R>%<ct>DATA</ct></component-R> <array-R>(<section-subscript-LT>"
-                      . "<section-subscript><lower-bound><named-E><N><n>KBL</n></N></named-E></lower-bound>"
-                      . "</section-subscript></section-subscript-LT>)</array-R></R-LT></named-E></E-2></pointer-a-stmt>");
+                      . "<a>=&gt;</a> <E-2>"
+                      . "<named-E><N><n>YDMF_PHYS_SURF</n></N><R-LT><component-R>%<ct>GS${z}_$x</ct></component-R>"
+                      . "<component-R>%<ct>P${f}$t</ct></component-R></R-LT></named-E>"
+                      . "</E-2></pointer-a-stmt>");
     
-            my ($lt) = &F ('.//section-subscript-LT', $stmt);
-            
-            for (@ss)
-              {
-                $lt->insertBefore (&t (', '), $lt->firstChild);
-                $lt->insertBefore (&n ("<section-subscript>:</section-subscript>"), $lt->firstChild);
-              }
     
           }
         elsif ($arg[1]->textContent =~ m/^PGMV/o)

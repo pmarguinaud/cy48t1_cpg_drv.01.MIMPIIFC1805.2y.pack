@@ -481,6 +481,14 @@ diagnostic:
   variables: []
 
 - type: group
+  name: VEXTRDI
+  short: DI
+  dimension: 3
+  comment: targeted 3-d diagnostic fields
+  variables: 
+  - {name: XEDR, comment: Eddy diffusivity rate}
+
+- type: group
   name: VEXTR2
   short: X2
   dimension: 2

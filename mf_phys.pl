@@ -8,12 +8,13 @@ use File::Basename;
 use lib $Bin;
 use Fxtran;
 
-for my $F90 ("src/local/arpifs/phys_dmn/mf_phys.F90", "src/local/arpifs/adiab/cpg_gp.F90")
+#for my $F90 ("src/local/arpifs/phys_dmn/mf_phys.F90", "src/local/arpifs/adiab/cpg_gp.F90")
+for my $F90 ("src/local/arpifs/adiab/cpg_dia.F90")
   {
 
     my $d = &Fxtran::fxtran (location => $F90, fopts => [qw (-line-length 200)]);
     
-    my $f = &Fxtran::fxtran (location => '.vimpack/src=/.fypp/arpifs/module/field_variables_mod.F90', fopts => [qw (-line-length 200)]);
+    my $f = &Fxtran::fxtran (location => 'fypp/field_variables_mod.F90', fopts => [qw (-line-length 200)]);
     
     my ($ft) = &F ('//T-construct[.//T-stmt[string (T-N)="FIELD_VARIABLES"]]', $f);
     my @fn = &F ('./component-decl-stmt//EN-N//text()', $ft, 1);

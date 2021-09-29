@@ -486,3 +486,25 @@ diagnostic:
   dimension: 2
   comment: extra 2-d diagnostic fields
   variables: []
+
+- type: group
+  name: SFORC
+  short: SFO
+  dimension: 2
+  comment: Surface forcing for 1D model (MUSC)
+  variables: []
+
+- type: group
+  name: SFLUX
+  short: SFL
+  dimension: 2
+  comment: Surface flux for EDKF
+  variables: []
+
+- type: group
+  name: VO3ABC
+  short: VC
+  dimension: 2
+  comment: A,B and C (Climatological ozone profiles) diagnostic fields
+  variables: []
+

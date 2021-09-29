@@ -13,8 +13,7 @@ SUBROUTINE CPG_DIA(YDGEOMETRY,YDMF_PHYS_SURF,YDVARS,YDGMV,YDSURF,YDCFU,YDXFU,YDM
  & PCTY0,POMEGA,PKENE0,&
  & PRT0L,PRT0M,PRE0L,PRE0M,&
  & PNHPRE0F,PNHPRE0H,PQCHA0L,PQCHA0M,&
- & PSD_VF,PSP_SG,PSP_SB,PSP_RR,&
- & PSD_XP,PSD_XP2,PDHSF,&
+ & PDHSF,&
  & PALB,PCAPE,PCTOP,PCLCC,PCLCH,PCLCL,PCLCM,PCLCT,PCLPH,PVEIN,PCT,&
  & PDIFCQ,PDIFCQN,PDIFCQL,PDIFCS,PDIFTQ,PDIFTQN,PDIFTQL,PDIFTS,&
  & PFCCQL,PFCCQN,PFCHSP,PFCLL,PFCLN,PFCQNNG,PFCQLNG,PFCQNG,PFCS,&
@@ -36,7 +35,7 @@ SUBROUTINE CPG_DIA(YDGEOMETRY,YDMF_PHYS_SURF,YDVARS,YDGMV,YDSURF,YDCFU,YDXFU,YDM
  & PVISICLD,PVISIHYDRO,PMXCLWC,PTPWCLS,&
  !---------------------------------------------------------------------
  ! - INPUT/OUTPUT .
- & PDHCV,PDRNSHF,YDDDH,PSP_CL,PFTCNS)
+ & PDHCV,PDRNSHF,YDDDH,PFTCNS)
 
 !**** *CPG_DIA* - Grid point calculations: diagnostics.
 
@@ -87,10 +86,6 @@ SUBROUTINE CPG_DIA(YDGEOMETRY,YDMF_PHYS_SURF,YDVARS,YDGMV,YDSURF,YDCFU,YDXFU,YDM
 !        PNHPRE0H  : "pre" at half levels (time t).
 !        PQCHA0L   : zonal comp grad(log(pre/prehyd)).
 !        PQCHA0M   : merid comp grad(log(pre/prehyd)).
-!        PSD_VF    : diagnostic surface fields VF=VARSF.
-!        PSP_SG    : prognostic surface fields SG=SNOWG.
-!        PSP_SB    : prognostic surface fields SB=SOILB.
-!        PSP_RR    : prognostic surface fields RR=RESVR.
 !        PDHSF     : distribution of horizontal mean weights used for simplified radiation scheme.
 !        ---------------------- output of aplpar ------------------------------
 !        PALB      : model surface shortwave albedo.
@@ -183,8 +178,6 @@ SUBROUTINE CPG_DIA(YDGEOMETRY,YDMF_PHYS_SURF,YDVARS,YDGMV,YDSURF,YDCFU,YDXFU,YDM
 !        PVGST     : V-component of gusts (diagnostic).
 !        PVISICLD  : visibility due to cloud (ice and liquid) water
 !        PVISIHYRO : visibility due to precipitation
-!        PSD_XP    : Precipitation type diagnostic
-!        PSD_XP2   : Precipitation type diagnostic
 !        ---------------------- end of output of aplpar -----------------------
 !        PMOCON    : moisture convergence.
 !        PFDIS     : enthalpy flux due to dissipation of kinetic energy. 
@@ -218,7 +211,6 @@ SUBROUTINE CPG_DIA(YDGEOMETRY,YDMF_PHYS_SURF,YDVARS,YDGMV,YDSURF,YDCFU,YDXFU,YDM
 !                    pre-initialised with zeros.
 !        PDRNSHF   : Derivative of non solar surface fluxes
 !        YDDDH     : diagnostic superstructure
-!        PSP_CL    : diagnostic cls fields CL=CLS.
 
 !        Implicit arguments :
 !        --------------------
@@ -331,12 +323,6 @@ REAL(KIND=JPRB)   ,INTENT(IN)    :: PNHPRE0F(YDGEOMETRY%YRDIM%NPROMNH,YDGEOMETRY
 REAL(KIND=JPRB)   ,INTENT(IN)    :: PNHPRE0H(YDGEOMETRY%YRDIM%NPROMNH,0:YDGEOMETRY%YRDIMV%NFLEVG)
 REAL(KIND=JPRB)   ,INTENT(IN)    :: PQCHA0L(YDGEOMETRY%YRDIM%NPROMNH,YDGEOMETRY%YRDIMV%NFLEVG)
 REAL(KIND=JPRB)   ,INTENT(IN)    :: PQCHA0M(YDGEOMETRY%YRDIM%NPROMNH,YDGEOMETRY%YRDIMV%NFLEVG)
-REAL(KIND=JPRB)   ,INTENT(IN)    :: PSD_VF(YDGEOMETRY%YRDIM%NPROMA,YDSURF%YSD_VFD%NDIM)
-REAL(KIND=JPRB)   ,INTENT(IN)    :: PSP_SG(YDGEOMETRY%YRDIM%NPROMA,YDSURF%YSP_SGD%NLEVS,YDSURF%YSP_SGD%NDIM)
-REAL(KIND=JPRB)   ,INTENT(IN)    :: PSP_SB(YDGEOMETRY%YRDIM%NPROMA,YDSURF%YSP_SBD%NLEVS,YDSURF%YSP_SBD%NDIM)
-REAL(KIND=JPRB)   ,INTENT(IN)    :: PSP_RR(YDGEOMETRY%YRDIM%NPROMA,YDSURF%YSP_RRD%NDIM)
-REAL(KIND=JPRB)   ,INTENT(IN)    :: PSD_XP(YDGEOMETRY%YRDIM%NPROMA,YDSURF%YSD_XPD%NLEVS,YDSURF%YSD_XPD%NDIM)
-REAL(KIND=JPRB)   ,INTENT(IN)    :: PSD_XP2(YDGEOMETRY%YRDIM%NPROMA,YDSURF%YSD_XP2D%NLEVS,YDSURF%YSD_XP2D%NDIM)
 REAL(KIND=JPRB)   ,INTENT(IN)    :: PDHSF(YDGEOMETRY%YRDIM%NPROMA) 
 REAL(KIND=JPRB)   ,INTENT(IN)    :: PALB(YDGEOMETRY%YRDIM%NPROMM) 
 REAL(KIND=JPRB)   ,INTENT(IN)    :: PCAPE(YDGEOMETRY%YRDIM%NPROMM) 
@@ -463,7 +449,6 @@ REAL(KIND=JPRB)   ,INTENT(INOUT) :: PCOVPTOT(YDGEOMETRY%YRDIM%NPROMA,YDGEOMETRY%
 REAL(KIND=JPRB)   ,INTENT(IN)    :: PVISICLD(YDGEOMETRY%YRDIM%NPROMM)
 REAL(KIND=JPRB)   ,INTENT(IN)    :: PVISIHYDRO(YDGEOMETRY%YRDIM%NPROMM)
 REAL(KIND=JPRB)   ,INTENT(IN)    :: PMXCLWC(YDGEOMETRY%YRDIM%NPROMM)
-REAL(KIND=JPRB)   ,INTENT(INOUT) :: PSP_CL(YDGEOMETRY%YRDIM%NPROMA,YDSURF%YSP_CLD%NDIM)
 REAL(KIND=JPRB) ,INTENT(INOUT) :: PFTCNS(YDGEOMETRY%YRDIM%NPROMA,0:YDGEOMETRY%YRDIMV%NFLEVG,6)
 TYPE(TYP_DDH)     ,INTENT(INOUT) :: YDDDH 
 !     ------------------------------------------------------------------

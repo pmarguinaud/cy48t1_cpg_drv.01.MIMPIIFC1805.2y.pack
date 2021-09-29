@@ -187,6 +187,11 @@ diagnostic:
   - {name: PBLH, comment: PBL height}
   - {name: SPSH, comment: variable for prognostic convection scheme (ALARO)}
   - {name: QSH, comment: surface moisture historic variable (used by TOUCANS)}
+  - {name: PCL}
+  - {name: PSL}
+  - {name: PCN}
+  - {name: PSN}
+  - {name: EVA}
 
 - type: group
   name: VCLIK
@@ -487,6 +492,22 @@ diagnostic:
   comment: targeted 3-d diagnostic fields
   variables: 
   - {name: XEDR, comment: Eddy diffusivity rate}
+
+- type: group
+  name: VPRECIP
+  short: XP
+  dimension: 3
+  comment: 3-d diagnostic fields
+  variables: 
+  - {name: PRECIP, comment: Diagnostic of precipitations type}
+
+- type: group
+  name: VPRECIP2
+  short: XP2
+  dimension: 3
+  comment: 3-d diagnostic fields
+  variables: 
+  - {name: PRECIP2, comment: Diagnostic of precipitations type}
 
 - type: group
   name: VEXTR2

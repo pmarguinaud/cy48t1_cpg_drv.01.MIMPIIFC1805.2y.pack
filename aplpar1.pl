@@ -11,7 +11,7 @@ use Fxtran;
 my $mf_phys = &Fxtran::fxtran (location => "src/local/arpifs/phys_dmn/mf_phys.F90", 
                                fopts => [qw (-line-length 300)]);
 
-my $r = 'APLPAR';
+my $r = 'APL_AROME';
 
 
  print "\n" x 3, $r, "\n" x 3;
@@ -63,6 +63,8 @@ my $r = 'APLPAR';
      $ok{$argd} = 1;
      last unless ($count--);
    }
+
+ $ok{PEZDIAG} = 0;
 
  for my $argd (@argd)
    {

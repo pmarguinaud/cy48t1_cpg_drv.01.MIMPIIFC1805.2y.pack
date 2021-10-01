@@ -194,3 +194,5 @@ cat fort.4
 
 ls -lrt
 
+diffNODE.001_01 NODE.001_01 $PACK/NODE.001_01.ARO
+

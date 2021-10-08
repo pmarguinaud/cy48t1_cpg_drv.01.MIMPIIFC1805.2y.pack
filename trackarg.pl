@@ -12,11 +12,14 @@ use Associate;
 
 my $arg = shift;
 
+my $sub = shift;
+$sub ||= 'aplpar.F90';
+
 my @F90 = ("src/local/arpifs/control/gp_model.F90",
            "src/local/arpifs/adiab/cpg_drv.F90",
            "src/local/arpifs/adiab/cpg.F90",
            "src/local/arpifs/phys_dmn/mf_phys.F90",
-           "src/local/arpifs/phys_dmn/aplpar.F90");
+           "src/local/arpifs/phys_dmn/$sub");
 
 @F90 = reverse (@F90);
           
@@ -28,7 +31,7 @@ for my $d (@d)
     &Associate::resolveAssociates ($d);
   }
 
-my @n = map { &F ('//program-unit/subroutine-stmt/subroutine-N', $_, 1) } @d;
+my @n = map { &F ('//program-unit[not (ancestor::program-unit)]/subroutine-stmt/subroutine-N', $_, 1) } @d;
 
 my @trace;
 

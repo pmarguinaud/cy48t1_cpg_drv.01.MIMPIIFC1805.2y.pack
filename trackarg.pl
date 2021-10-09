@@ -13,13 +13,12 @@ use Associate;
 my $arg = shift;
 
 my $sub = shift;
-$sub ||= 'aplpar.F90';
 
 my @F90 = ("src/local/arpifs/control/gp_model.F90",
            "src/local/arpifs/adiab/cpg_drv.F90",
            "src/local/arpifs/adiab/cpg.F90",
            "src/local/arpifs/phys_dmn/mf_phys.F90",
-           "src/local/arpifs/phys_dmn/$sub");
+           $sub ? ("src/local/arpifs/phys_dmn/$sub") : ());
 
 @F90 = reverse (@F90);
           

@@ -1,0 +1,153 @@
+#:set AS_void            = []
+#:set AS_0_nflevg        = [ [ '0', 'NLEV' ] ]
+#:set AS_1_nflevg        = [ [ '1', 'NLEV' ] ]
+#:set AS_0_nflevg_ntssg1 = [ [ '0', 'NLEV' ], [ '1', 'YDDPHY%NTSSG+1' ] ]
+#:set AS_0_1             = [ [ '0', '1' ] ]
+#:set AS_ysp_sbd_nlevs   = [ [ '1', 'YDSURF%YSP_SBD%NLEVS' ] ]
+#:set AS_ntssg1          = [ [ '1', 'YDDPHY%NTSSG+1' ] ]
+#:set list = { &
+& "DIFCQ"          :   AS_0_nflevg,        "DIFCQL"         :   AS_0_nflevg,        "DIFCQN"         :   AS_0_nflevg,        &
+& "DIFCS"          :   AS_0_nflevg,        "DIFTQ"          :   AS_0_nflevg,        "DIFTQL"         :   AS_0_nflevg,        &
+& "DIFTQN"         :   AS_0_nflevg,        "DIFTS"          :   AS_0_nflevg,        "FCCQL"          :   AS_0_nflevg,        &
+& "FCCQN"          :   AS_0_nflevg,        "FCSQL"          :   AS_0_nflevg,        "FCSQN"          :   AS_0_nflevg,        &
+& "FCQLNG"         :   AS_0_nflevg,        "FCQNNG"         :   AS_0_nflevg,        "FCQNG"          :   AS_0_nflevg,        &
+& "FPLCL"          :   AS_0_nflevg,        "FPLCN"          :   AS_0_nflevg,        "FPLCG"          :   AS_0_nflevg,        &
+& "FPLCH"          :   AS_0_nflevg,        "FPLSL"          :   AS_0_nflevg,        "FPLSN"          :   AS_0_nflevg,        &
+& "FPLSG"          :   AS_0_nflevg,        "FPLSH"          :   AS_0_nflevg,        "FPFPSL"         :   AS_0_nflevg,        &
+& "FPFPSN"         :   AS_0_nflevg,        "FPFPSG"         :   AS_0_nflevg,        "FPFPCL"         :   AS_0_nflevg,        &
+& "FPFPCN"         :   AS_0_nflevg,        "FPEVPSL"        :   AS_0_nflevg,        "FPEVPSN"        :   AS_0_nflevg,        &
+& "FPEVPSG"        :   AS_0_nflevg,        "FPEVPCL"        :   AS_0_nflevg,        "FPEVPCN"        :   AS_0_nflevg,        &
+& "FPEVPCG"        :   AS_0_nflevg,        "FRSO"           :   AS_0_nflevg_ntssg1, "FRTH"           :   AS_0_nflevg_ntssg1, &
+& "STRCU"          :   AS_0_nflevg,        "STRCV"          :   AS_0_nflevg,        "STRDU"          :   AS_0_nflevg,        &
+& "STRDV"          :   AS_0_nflevg,        "STRTU"          :   AS_0_nflevg,        "STRTV"          :   AS_0_nflevg,        &
+& "STRMU"          :   AS_0_nflevg,        "STRMV"          :   AS_0_nflevg,        "DIFCQLC"        :   AS_0_nflevg,        &
+& "DIFCQIC"        :   AS_0_nflevg,        "FIMCC"          :   AS_0_nflevg,        "FEDQLC"         :   AS_0_nflevg,        &
+& "FEDQIC"         :   AS_0_nflevg,        "FEDQRC"         :   AS_0_nflevg,        "FEDQSC"         :   AS_0_nflevg,        &
+& "FCNEGQLC"       :   AS_0_nflevg,        "FCNEGQIC"       :   AS_0_nflevg,        "FCNEGQRC"       :   AS_0_nflevg,        &
+& "FCNEGQSC"       :   AS_0_nflevg,        "FRMH"           :   AS_0_nflevg,        "FCHOZ"          :   AS_0_nflevg,        &
+& "FDIS"           :   AS_0_nflevg,        "FHPSL"          :   AS_0_nflevg,        "FHPSN"          :   AS_0_nflevg,        &
+& "FHPSG"          :   AS_0_nflevg,        "FHPCL"          :   AS_0_nflevg,        "FHPCN"          :   AS_0_nflevg,        &
+& "FHSCL"          :   AS_0_nflevg,        "FHSCN"          :   AS_0_nflevg,        "FHPCG"          :   AS_0_nflevg,        &
+& "FHSSL"          :   AS_0_nflevg,        "FHSSN"          :   AS_0_nflevg,        "FEPFP"          :   AS_0_nflevg,        &
+& "FCMPCQ"         :   AS_0_nflevg,        "FCMPSN"         :   AS_0_nflevg,        "FHSSG"          :   AS_0_nflevg,        &
+& "FCMPSL"         :   AS_0_nflevg,        "FRSOC"          :   AS_0_1,             "FRTHC"          :   AS_0_1,             &
+& "FCHSP"          :   AS_ysp_sbd_nlevs,   "FCLL"           :   AS_ntssg1,          "FCLN"           :   AS_ntssg1,          &
+& "FCS"            :   AS_ntssg1,          "FEVL"           :   AS_ntssg1,          "FEVN"           :   AS_ntssg1,          &
+& "FEVV"           :   AS_void,            "FLWSP"          :   AS_void,            "FTR"            :   AS_void,            &
+& "FRSODS"         :   AS_void,            "FRSOPS"         :   AS_void,            "FRSDNI"         :   AS_void,            &
+& "FRSGNI"         :   AS_void,            "FRTHDS"         :   AS_void,            "FONTE"          :   AS_void,            &
+& "FGEL"           :   AS_void,            "FGELS"          :   AS_void,            "ALB"            :   AS_void,            &
+& "GZ0"            :   AS_void,            "GZ0H"           :   AS_void,            "RUISL"          :   AS_void,            &
+& "RUISP"          :   AS_void,            "RUISS"          :   AS_void,            "FRSOPT"         :   AS_void,            &
+& "FRSOLU"         :   AS_void,            "QCLS"           :   AS_void,            "TCLS"           :   AS_void,            &
+& "UCLS"           :   AS_void,            "VCLS"           :   AS_void,            "NUCLS"          :   AS_void,            &
+& "NVCLS"          :   AS_void,            "RHCLS"          :   AS_void,            "MRT"            :   AS_void,            &
+& "CLCH"           :   AS_void,            "CLCM"           :   AS_void,            "CLCL"           :   AS_void,            &
+& "CLCC"           :   AS_void,            "CLPH"           :   AS_void,            "VEIN"           :   AS_void,            &
+& "DRNSHF"         :   AS_void,            "CAPE"           :   AS_void,            "CTOP"           :   AS_void,            &
+& "MOCON"          :   AS_void,            "UGST"           :   AS_void,            "VGST"           :   AS_void,            &
+& "CT"             :   AS_void,            "TENDU"          :   AS_1_nflevg,        "TENDV"          :   AS_1_nflevg,        &
+& "FCQRNG"         :   AS_0_nflevg,        "FCQSNG"         :   AS_0_nflevg,        "FCQGNG"         :   AS_0_nflevg,        &
+& "DIAGH"          :   AS_void,            "VISICLD"        :   AS_void,            "FLASH"          :   AS_void,            &
+& "VISIHYD"        :   AS_void,            "MXCLWC"         :   AS_void,            "TPWCLS"         :   AS_void,            &
+& "CUCONVCA"       :   AS_void,            "NLCONVCA"       :   AS_void,                                                     &
+& }
+MODULE MF_PHYS_TYPE_MOD
+
+USE PARKIND1, ONLY : JPIM, JPRB
+USE FIELD_MODULE
+USE FIELD_REGISTRY_MOD
+
+IMPLICIT NONE
+
+TYPE MF_PHYS_TYPE
+#:for var in list
+  #:set ndim = 1 + len (list[var])
+  REAL (KIND=JPRB), POINTER, CONTIGUOUS :: ${var}$ (${", ".join ([":"] * ndim)}$) => NULL ()
+  TYPE (FIELD_${ndim+1}$D), POINTER :: F_${var}$ => NULL ()
+#:endfor
+CONTAINS
+  PROCEDURE :: INIT => MF_PHYS_TYPE_INIT
+  PROCEDURE :: UPDATE_VIEW => MF_PHYS_TYPE_UPDATE_VIEW
+  PROCEDURE :: FINAL => MF_PHYS_TYPE_FINAL
+END TYPE MF_PHYS_TYPE
+
+CONTAINS
+
+
+#:def gdim (d)
+  #:if d[0] == '0' 
+    #:set s = "+1"
+  #:elif d[0] == '1' 
+    #:set s = ""
+  #:else 
+    #:set s = "-" + d[0] + "+1"
+  #:endif
+  #:set s = d[1] + s
+$:s
+#:enddef gdim
+
+SUBROUTINE MF_PHYS_TYPE_INIT (SELF, REGISTRY, NLEV, &
+                            & YDDPHY, YDSURF, &
+                            & PERSISTENT)
+
+USE YOMDPHY, ONLY : TDPHY
+USE SURFACE_FIELDS_MIX, ONLY : TSURF
+
+CLASS (MF_PHYS_TYPE) :: SELF
+TYPE (FIELD_REGISTRY), INTENT (INOUT) :: REGISTRY
+INTEGER (KIND=JPIM),   INTENT (IN)    :: NLEV
+TYPE (TDPHY),          INTENT (IN)    :: YDDPHY
+TYPE (TSURF),          INTENT (IN)    :: YDSURF
+LOGICAL, OPTIONAL,     INTENT (IN)    :: PERSISTENT
+
+
+#:for var in list
+  #:set ndim = 1 + len (list[var])
+  #:if ndim == 1
+SELF%F_${var}$ => CREATE_TEMPORARY ("${var}$", GEOM=REGISTRY%GEOM, PERSISTENT=PERSISTENT)
+  #:elif ndim == 2
+    #:set s2 = gdim (list[var][0])
+SELF%F_${var}$ => CREATE_TEMPORARY ("${var}$", GEOM=REGISTRY%GEOM, NLEV=${s2}$, PERSISTENT=PERSISTENT)
+  #:elif ndim == 3
+    #:set s2 = gdim (list[var][0])
+    #:set s3 = gdim (list[var][1])
+SELF%F_${var}$ => CREATE_TEMPORARY ("${var}$", GEOM=REGISTRY%GEOM, NLEV=${s2}$, NDIM=${s3}$, PERSISTENT=PERSISTENT)
+  #:endif
+#:endfor
+
+END SUBROUTINE
+
+#:def pdim (d)
+  #:if all (map (lambda x: x[0] == '1', d))
+    #:set s = ""
+  #:else
+    #:set s = "(1:," + ", ".join (map (lambda x: x[0] + ":", d)) + ")"
+  #:endif
+$:s
+#:enddef pdim
+
+SUBROUTINE MF_PHYS_TYPE_UPDATE_VIEW (SELF, BLOCK_INDEX)
+
+CLASS (MF_PHYS_TYPE) :: SELF
+INTEGER(KIND=JPIM), INTENT (IN)   :: BLOCK_INDEX
+
+#:for var in list
+  #:set ss = pdim (list[var])
+SELF%${var}$ ${ss}$ => SELF%F_${var}$%GET_VIEW (BLOCK_INDEX)
+#:endfor
+
+END SUBROUTINE
+
+SUBROUTINE MF_PHYS_TYPE_FINAL (SELF)
+
+CLASS (MF_PHYS_TYPE) :: SELF
+
+#:for var in list
+CALL DELETE_TEMPORARY (SELF%F_${var}$)
+#:endfor
+
+END SUBROUTINE
+
+END MODULE MF_PHYS_TYPE_MOD
+

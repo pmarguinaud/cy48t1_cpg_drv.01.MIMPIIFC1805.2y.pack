@@ -732,8 +732,8 @@ ENDIF
 
 IF (LCUCONV_CA) THEN
 ! Quick fix. The arrays should rather be dimensionned with (nproma,ngpblks). REK
-  ZCUCONVCA(1:ICEND)=RCUCONVCA(IOFF:IOFF+ICEND-1)
-  ZNLCONVCA(1:ICEND)=RNLCONVCA(IOFF:IOFF+ICEND-1)
+  YDMF_PHYS%CUCONVCA(1:ICEND)=RCUCONVCA(IOFF:IOFF+ICEND-1)
+  YDMF_PHYS%NLCONVCA(1:ICEND)=RNLCONVCA(IOFF:IOFF+ICEND-1)
 ENDIF
 !     ------------------------------------------------------------------
 

@@ -15,7 +15,8 @@ use Fxtran;
 my ($var, $typ, $mod) = qw (YDMF_PHYS MF_PHYS_TYPE MF_PHYS_TYPE_MOD);
 
 
-my @r = qw (MF_PHYS CPG CPG_GP CPG_DYN CPG_DIA MF_PHYS_PREP CPDYSLDIA);
+#my @r = qw (MF_PHYS CPG CPG_GP CPG_DYN CPG_DIA MF_PHYS_PREP CPDYSLDIA);
+my @r = qw (MF_PHYS CPG CPG_DIA APLPAR APL_AROME);
 
 my $F90 = shift;
 

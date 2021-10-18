@@ -11,8 +11,8 @@ use Fxtran;
 #my ($var, $typ, $mod) = qw (YDVARS FIELD_VARIABLES FIELD_VARIABLES_MOD);
 #my ($var, $typ, $mod) = qw (YDSURFVARS SURFACE_VARIABLES SURFACE_VARIABLES_MOD);
 #my ($var, $typ, $mod) = qw (YDMF_PHYS_SURF MFPHYS_SURF_TYPE MFPHYS_SURFACE_TYPE_MOD);
-#my ($var, $typ, $mod) = qw (YDCPG_DYN0 CPG_DYN_TYPE CPG_DYN_TYPE_MOD);
-my ($var, $typ, $mod) = qw (YDMF_PHYS MF_PHYS_TYPE MF_PHYS_TYPE_MOD);
+my ($var, $typ, $mod) = qw (YDCPG_DYN0 CPG_DYN_TYPE CPG_DYN_TYPE_MOD);
+#my ($var, $typ, $mod) = qw (YDMF_PHYS MF_PHYS_TYPE MF_PHYS_TYPE_MOD);
 
 
 #my @r = qw (MF_PHYS CPG CPG_GP CPG_DYN CPG_DIA MF_PHYS_PREP CPDYSLDIA);

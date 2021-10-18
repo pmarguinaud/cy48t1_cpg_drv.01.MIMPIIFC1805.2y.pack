@@ -483,14 +483,14 @@ ASSOCIATE(NDIM=>YGFL%NDIM, NDIM1=>YGFL%NDIM1, NDIMPC=>YGFL%NDIMPC, &
 !              -------------------------------------------
 
 ZPHIF0           => YDCPG_DYN0%PHIF
-ZRCP0            => YDCPG_DYN0%RCP
+ZRCP0            => YDCPG_DYN0%RCP%ZVIEW
 ZPRE0F           => YDCPG_DYN0%PREF
-ZCTY0 (1:,0:,1:) => YDCPG_DYN0%CTY
+ZCTY0 (1:,0:,1:) => YDCPG_DYN0%CTY%ZVIEW
 ZPHI0 (1:, 0:)   => YDCPG_DYN0%PHI
 ZPRE0 (1:, 0:)   => YDCPG_DYN0%PRE
 
 ZPHIF9           => YDCPG_DYN9%PHIF
-ZRCP9            => YDCPG_DYN9%RCP
+ZRCP9            => YDCPG_DYN9%RCP%ZVIEW
 ZPRE9F           => YDCPG_DYN9%PREF
 ZWRL9            => YDCPG_DYN9%WRL
 ZPHI9 (1:, 0:)   => YDCPG_DYN9%PHI

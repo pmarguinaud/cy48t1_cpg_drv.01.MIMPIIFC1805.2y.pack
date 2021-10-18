@@ -1,53 +1,51 @@
 #:set ISARG = 0
 #:set ELARG = 1
 #:set NDIMS = 2
-#:set NCOND = 3
+#:set NTYPE = 3
+#:set NCOND = 4
+#:set NDEFS = 5
 #:set AS_void                 = []
 #:set AS_0_nflevg             = [ [ '0', 'NLEV' ] ]
 #:set AS_1_nflevg             = [ [ '1', 'NLEV' ] ]
-#:set AS_1_nflevg_yytrcp0     = [ [ '1', 'NLEV' ], [ '1', 'YYTRCP0%NDIM'     ] ]
-#:set AS_0_nflevg_yytcty0     = [ [ '0', 'NLEV' ], [ '1', 'YYTCTY0%NDIM'     ] ]
-#:set AS_0_nflevg_yythw0      = [ [ '0', 'NLEV' ], [ '1', 'YYTHW0%NDIM'      ] ]
-#:set AS_1_nflevg_yytxyb0     = [ [ '0', 'NLEV' ], [ '1', 'YYTXYB0%NDIM'     ] ]
-#:set AS_1_nflevg_yytxyb0_phy = [ [ '0', 'NLEV' ], [ '1', 'YYTXYB0_PHY%NDIM' ] ]
+#:set AS_4D                   = [ [], [] ]
 #:set list_cpg_dyn = { &                                                                                         
-& "PHI"            : [False, False, AS_0_nflevg,                                        ], &
-& "PRE"            : [False, False, AS_0_nflevg,                                        ], &
-& "PHIF"           : [True,  True,  AS_1_nflevg,                                        ], &
-& "RCP"            : [True,  True,  AS_1_nflevg_yytrcp0,                                ], &
-& "PREF"           : [True,  True,  AS_1_nflevg,                                        ], &
-& "CTY"            : [True,  False, AS_0_nflevg_yytcty0,                                ], &
-& "WRL"            : [True,  False, AS_1_nflevg,                                        ], &
-& "PREL"           : [False, False, AS_void,                                            ], &
-& "PREM"           : [False, False, AS_void,                                            ], &
-& "NHY"            : [False, False, AS_0_nflevg,                                        ], &
-& "PRE_PHY"        : [False, False, AS_0_nflevg,                                        ], &
-& "UVH"            : [False, False, AS_0_nflevg_yythw0,            "LLT0"               ], &
-& "GWFT"           : [False, False, AS_1_nflevg,                                        ], &
-& "KENE"           : [False, False, AS_1_nflevg,                   "LLT0"               ], &
-& "NHX"            : [False, False, AS_1_nflevg,                                        ], &
-& "PHIFL"          : [False, False, AS_1_nflevg,                   "LLT0"               ], &
-& "PHIFM"          : [False, False, AS_1_nflevg,                   "LLT0"               ], &
-& "PREF_PHY"       : [False, False, AS_1_nflevg,                                        ], &
-& "RTL"            : [False, False, AS_1_nflevg,                   "LLT0"               ], &
-& "RTM"            : [False, False, AS_1_nflevg,                   "LLT0"               ], &
-& "XYB"            : [False, False, AS_1_nflevg_yytxyb0,                                ], &
-& "PREHYD_PHY"     : [False, False, AS_0_nflevg,                   "LLMF_PHYS"          ], &
-& "PREHYDF_PHY"    : [False, False, AS_1_nflevg,                   "LLMF_PHYS"          ], &
-& "WL_PHY"         : [False, False, AS_1_nflevg,                   "LLMF_PHYS"          ], &
-& "WM_PHY"         : [False, False, AS_1_nflevg,                   "LLMF_PHYS"          ], &
-& "W_PHY"          : [False, False, AS_1_nflevg,                   "LLMF_PHYS"          ], &
-& "XYB_PHY"        : [False, False, AS_1_nflevg_yytxyb0_phy,       "LLMF_PHYS"          ], &
-& "DBBC"           : [False, False, AS_void,                       "LNHDYN .AND. LLT0"  ], &
-& "GWS"            : [False, False, AS_void,                       "LNHDYN .AND. LLT0"  ], &
-& "GWFL"           : [False, False, AS_1_nflevg,                   "LNHDYN .AND. LLT0"  ], &
-& "GWFM"           : [False, False, AS_1_nflevg,                   "LNHDYN .AND. LLT0"  ], &
-& "GWT"            : [False, False, AS_1_nflevg,                   "LNHDYN"             ], &
-& "NHPREF"         : [False, False, AS_1_nflevg,                   "LNHDYN"             ], &
-& "NHPREH"         : [False, False, AS_1_nflevg,                   "LNHDYN"             ], &
-& "QCHAL"          : [False, False, AS_1_nflevg,                   "LNHDYN .AND. LLT0"  ], &
-& "QCHAM"          : [False, False, AS_1_nflevg,                   "LNHDYN .AND. LLT0"  ], &
-& "RDPHI"          : [False, False, AS_1_nflevg,                   "LNHDYN .AND. LLT0"  ], &
+& "PHI"            : [False, False, AS_0_nflevg,      None,        None                 ], &
+& "PRE"            : [False, False, AS_0_nflevg,      None,        None                 ], &
+& "PHIF"           : [True,  True,  AS_1_nflevg,      None,        None                 ], &
+& "PREF"           : [True,  True,  AS_1_nflevg,      None,        None                 ], &
+& "WRL"            : [True,  False, AS_1_nflevg,      None,        None                 ], &
+& "PREL"           : [False, False, AS_void,          None,        None                 ], &
+& "PREM"           : [False, False, AS_void,          None,        None                 ], &
+& "NHY"            : [False, False, AS_0_nflevg,      None,        None                 ], &
+& "PRE_PHY"        : [False, False, AS_0_nflevg,      None,        None                 ], &
+& "GWFT"           : [False, False, AS_1_nflevg,      None,        None                 ], &
+& "KENE"           : [False, False, AS_1_nflevg,      None,        "LLT0"               ], &
+& "NHX"            : [False, False, AS_1_nflevg,      None,        None                 ], &
+& "PHIFL"          : [False, False, AS_1_nflevg,      None,        "LLT0"               ], &
+& "PHIFM"          : [False, False, AS_1_nflevg,      None,        "LLT0"               ], &
+& "PREF_PHY"       : [False, False, AS_1_nflevg,      None,        None                 ], &
+& "RTL"            : [False, False, AS_1_nflevg,      None,        "LLT0"               ], &
+& "RTM"            : [False, False, AS_1_nflevg,      None,        "LLT0"               ], &
+& "PREHYD_PHY"     : [False, False, AS_0_nflevg,      None,        "LLMF_PHYS"          ], &
+& "PREHYDF_PHY"    : [False, False, AS_1_nflevg,      None,        "LLMF_PHYS"          ], &
+& "WL_PHY"         : [False, False, AS_1_nflevg,      None,        "LLMF_PHYS"          ], &
+& "WM_PHY"         : [False, False, AS_1_nflevg,      None,        "LLMF_PHYS"          ], &
+& "W_PHY"          : [False, False, AS_1_nflevg,      None,        "LLMF_PHYS"          ], &
+& "RCP"            : [True,  True,  AS_4D,            "RCP",       None                 , "YLTRCP"     ], &
+& "CTY"            : [True,  False, AS_4D,            "CTY",       "LLT0"               , "YLTCTY"     ], &
+& "UVH"            : [False, False, AS_4D,            "HWIND",     "LLT0"               , "YLTHW"      ], &
+& "XYB"            : [False, False, AS_4D,            "XYB",       None                 , "YLTXYB"     ], &
+& "XYB_PHY"        : [False, False, AS_4D,            "XYB",       "LLMF_PHYS"          , "YLTXYB_PHY" ], &
+& "DBBC"           : [False, False, AS_void,          None,        "LNHDYN .AND. LLT0"  ], &
+& "GWS"            : [False, False, AS_void,          None,        "LNHDYN .AND. LLT0"  ], &
+& "GWFL"           : [False, False, AS_1_nflevg,      None,        "LNHDYN .AND. LLT0"  ], &
+& "GWFM"           : [False, False, AS_1_nflevg,      None,        "LNHDYN .AND. LLT0"  ], &
+& "GWT"            : [False, False, AS_1_nflevg,      None,        "LNHDYN"             ], &
+& "NHPREF"         : [False, False, AS_1_nflevg,      None,        "LNHDYN"             ], &
+& "NHPREH"         : [False, False, AS_1_nflevg,      None,        "LNHDYN"             ], &
+& "QCHAL"          : [False, False, AS_1_nflevg,      None,        "LNHDYN .AND. LLT0"  ], &
+& "QCHAM"          : [False, False, AS_1_nflevg,      None,        "LNHDYN .AND. LLT0"  ], &
+& "RDPHI"          : [False, False, AS_1_nflevg,      None,        "LNHDYN .AND. LLT0"  ], &
 & }
 
 #:set list_cpg_dyn_xyb = { &
@@ -92,6 +90,9 @@ IMPLICIT NONE
 
 #:def pcpg_dyn_4d_definition (name, list)
 TYPE CPG_DYN_${name}$_TYPE
+  LOGICAL :: LOWNED = .FALSE.
+  REAL (KIND=JPRB), POINTER :: ZDATA (:,:,:,:) => NULL ()
+  REAL (KIND=JPRB), POINTER :: ZVIEW (:,:,:) => NULL ()
 
 #:for var in list
   #:set ndim = 1 + len (list[var][NDIMS])
@@ -107,16 +108,24 @@ END TYPE
 #:enddef
 
 $:pcpg_dyn_4d_definition ("XYB",   list_cpg_dyn_xyb)
+
 $:pcpg_dyn_4d_definition ("HWIND", list_cpg_dyn_hwind)
+
 $:pcpg_dyn_4d_definition ("RCP",   list_cpg_dyn_rcp)
+
 $:pcpg_dyn_4d_definition ("CTY",   list_cpg_dyn_cty)
 
 TYPE CPG_DYN_TYPE
 
 #:for var in list_cpg_dyn
-  #:set ndim = 1 + len (list_cpg_dyn[var][NDIMS])
+  #:set elt = list_cpg_dyn[var]
+  #:if elt[NTYPE] is None
+    #:set ndim = 1 + len (elt[NDIMS])
   REAL (KIND=JPRB), POINTER, CONTIGUOUS :: ${var}$ (${", ".join ([":"] * ndim)}$) => NULL ()
   TYPE (FIELD_${ndim+1}$D), POINTER :: F_${var}$ => NULL ()
+  #:else
+  TYPE (CPG_DYN_${elt[NTYPE]}$_TYPE) :: ${var}$
+  #:endif
 #:endfor
 
 CONTAINS
@@ -183,22 +192,36 @@ LOGICAL, OPTIONAL,                  INTENT (IN)    :: PERSISTENT
 REAL (KIND=JPRB), OPTIONAL, TARGET, INTENT (IN)    :: P${name}$ (:, :, :, :)
 
 IF (PRESENT (P${name}$)) THEN
-
-#:for var in list
- IF (YDT${name}$%M_${var}$ > 0) THEN
-   SELF%F_${var}$ => CREATE_FIELD_WRAP ('${var}$', P${name}$ (:, :, YDT${name}$%M_${var}$, :))
- ENDIF
-#:endfor
-
+  SELF%ZDATA => P${name}$
+  SELF%LOWNED = .FALSE.
 ELSE
+  ALLOCATE (SELF%ZDATA (REGISTRY%NPROMA, NLEV, YDT${name}$%NDIM, REGISTRY%NBLOCKS))
+  SELF%LOWNED = .TRUE.
+ENDIF
 
 #:for var in list
  IF (YDT${name}$%M_${var}$ > 0) THEN
-$:temporary (var, list[var][NDIMS], "    ")
+   SELF%F_${var}$ => CREATE_FIELD_WRAP ('${var}$', SELF%ZDATA (:, :, YDT${name}$%M_${var}$, :))
  ENDIF
 #:endfor
 
-ENDIF
+#! IF (PRESENT (P${name}$)) THEN
+#! 
+#! #:for var in list
+#!  IF (YDT${name}$%M_${var}$ > 0) THEN
+#!    SELF%F_${var}$ => CREATE_FIELD_WRAP ('${var}$', P${name}$ (:, :, YDT${name}$%M_${var}$, :))
+#!  ENDIF
+#! #:endfor
+#! 
+#! ELSE
+#! 
+#! #:for var in list
+#!  IF (YDT${name}$%M_${var}$ > 0) THEN
+#! $:temporary (var, list[var][NDIMS], "    ")
+#!  ENDIF
+#! #:endfor
+#!
+#! ENDIF
 
 END SUBROUTINE
 
@@ -206,6 +229,8 @@ SUBROUTINE CPG_DYN_${name}$_TYPE_UPDATE_VIEW (SELF, BLOCK_INDEX)
 
 CLASS (CPG_DYN_${name}$_TYPE)     :: SELF
 INTEGER(KIND=JPIM), INTENT (IN)   :: BLOCK_INDEX
+
+SELF%ZVIEW => SELF%ZDATA (:,:,:,BLOCK_INDEX)
 
 #:for var in list
   #:set ss = pdim (list[var][NDIMS])
@@ -217,6 +242,9 @@ END SUBROUTINE
 SUBROUTINE CPG_DYN_${name}$_TYPE_FINAL (SELF)
 CLASS (CPG_DYN_${name}$_TYPE)          :: SELF
 
+IF (SELF%LOWNED) DEALLOCATE (SELF%ZDATA)
+SELF%ZDATA => NULL ()
+
 #:for var in list
 IF (ASSOCIATED (SELF%F_${var}$)) CALL DELETE_TEMPORARY (SELF%F_${var}$) 
 #:endfor
@@ -226,8 +254,11 @@ END SUBROUTINE
 
 
 $:pcpg_dyn_4d_methods ("XYB",   list_cpg_dyn_xyb)
+
 $:pcpg_dyn_4d_methods ("HWIND", list_cpg_dyn_hwind)
+
 $:pcpg_dyn_4d_methods ("RCP",   list_cpg_dyn_rcp)
+
 $:pcpg_dyn_4d_methods ("CTY",   list_cpg_dyn_cty)
 
 SUBROUTINE CPG_DYN_TYPE_INIT (SELF, KT, REGISTRY, NLEV, PERSISTENT, LDMF_PHYS &
@@ -240,6 +271,7 @@ SUBROUTINE CPG_DYN_TYPE_INIT (SELF, KT, REGISTRY, NLEV, PERSISTENT, LDMF_PHYS &
 
 USE INTDYN_MOD, ONLY : YYTCTY0, YYTRCP0, YYTHW0, YYTXYB0, YYTXYB0_PHY
 USE INTDYN_MOD, ONLY :          YYTRCP9, YYTHW9, YYTXYB9, YYTXYB9_PHY
+USE INTDYN_MOD, ONLY : TRCP, TCTY, THWIND, TXYB
 USE YOMCT0    , ONLY : LNHDYN
 
 CLASS (CPG_DYN_TYPE)                         :: SELF
@@ -256,7 +288,48 @@ REAL(KIND=JPRB),       INTENT (IN), OPTIONAL, TARGET  :: ${argn (var)}$(${", ".j
 #:endfor
 LOGICAL :: LLT0, LLMF_PHYS
 
+TYPE (TRCP)   , POINTER :: YLTRCP     
+TYPE (TCTY)   , POINTER :: YLTCTY     
+TYPE (THWIND) , POINTER :: YLTHW     
+TYPE (TXYB)   , POINTER :: YLTXYB     
+TYPE (TXYB)   , POINTER :: YLTXYB_PHY
+
+TYPE (TCTY),   TARGET :: YLTCTY0 
+TYPE (THWIND), TARGET :: YLTHW0, YLTHW9 
+TYPE (TRCP),   TARGET :: YLTRCP0, YLTRCP9 
+TYPE (TXYB),   TARGET :: YLTXYB0, YLTXYB0_PHY, YLTXYB9, YLTXYB9_PHY
+
+YLTCTY0     = YYTCTY0 
+YLTHW0      = YYTHW0 
+YLTHW9      = YYTHW9 
+YLTRCP0     = YYTRCP0 
+YLTRCP9     = YYTRCP9 
+YLTXYB0     = YYTXYB0 
+YLTXYB0_PHY = YYTXYB0_PHY 
+YLTXYB9     = YYTXYB9 
+YLTXYB9_PHY = YYTXYB9_PHY
+
 LLT0 = KT == 0
+
+YLTRCP     => NULL ()
+YLTCTY     => NULL ()
+YLTHW      => NULL ()
+YLTXYB     => NULL ()
+YLTXYB_PHY => NULL ()
+
+IF (KT == 0) THEN
+  YLTRCP     => YLTRCP0
+  YLTCTY     => YLTCTY0
+  YLTHW      => YLTHW0
+  YLTXYB     => YLTXYB0
+  YLTXYB_PHY => YLTXYB0_PHY
+ELSEIF (KT == 9) THEN
+  YLTRCP     => YLTRCP9
+  YLTCTY     => NULL ()
+  YLTHW      => YLTHW9
+  YLTXYB     => YLTXYB9
+  YLTXYB_PHY => YLTXYB9_PHY
+ENDIF
 
 LLMF_PHYS = .FALSE.
 IF (PRESENT (LDMF_PHYS)) THEN
@@ -264,16 +337,35 @@ IF (PRESENT (LDMF_PHYS)) THEN
 ENDIF
 
 #:for var in list_cpg_dyn
-  #:if list_cpg_dyn[var][ISARG]
-IF (PRESENT (${argn (var)}$)) THEN
-  SELF%F_${var}$ => CREATE_FIELD_WRAP ('${var}$', ${argn (var)}$)
-    #:if list_cpg_dyn[var][ELARG]
-ELSE
-$:temporary (var, list_cpg_dyn[var][NDIMS], "  ")
-    #:endif
-ENDIF
+  #:set elt = list_cpg_dyn[var]
+  #:if not elt[NCOND] is None
+    #:set ind = "  "
+IF (${elt[NCOND]}$) THEN
   #:else
-$:temporary (var, list_cpg_dyn[var][NDIMS], "")
+    #:set ind = ""
+  #:endif
+  #:if elt[NTYPE] is None
+    #:if elt[ISARG]
+${ind}$IF (PRESENT (${argn (var)}$)) THEN
+${ind}$  SELF%F_${var}$ => CREATE_FIELD_WRAP ('${var}$', ${argn (var)}$)
+      #:if elt[ELARG]
+${ind}$ELSE
+$:temporary (var, elt[NDIMS], ind + "  ")
+      #:endif
+${ind}$ENDIF
+    #:else
+$:temporary (var, elt[NDIMS], ind + "")
+    #:endif
+  #:else
+    #:set defs = elt[NDEFS]
+    #:if elt[ISARG]
+${ind}$CALL SELF%${var}$%INIT (REGISTRY, NLEV, ${defs}$, PERSISTENT, ${argn (var)}$)
+    #:else
+${ind}$CALL SELF%${var}$%INIT (REGISTRY, NLEV, ${defs}$, PERSISTENT)
+    #:endif
+  #:endif
+  #:if not elt[NCOND] is None
+ENDIF
   #:endif
 
 #:endfor
@@ -286,8 +378,13 @@ CLASS (CPG_DYN_TYPE)              :: SELF
 INTEGER(KIND=JPIM), INTENT (IN)   :: BLOCK_INDEX
 
 #:for var in list_cpg_dyn
-  #:set ss = pdim (list_cpg_dyn[var][NDIMS])
+  #:set elt = list_cpg_dyn[var]
+  #:if elt[NTYPE] is None
+    #:set ss = pdim (elt[NDIMS])
 IF (ASSOCIATED (SELF%F_${var}$)) SELF%${var}$ ${ss}$ => SELF%F_${var}$%GET_VIEW (BLOCK_INDEX)
+  #:else
+CALL SELF%${var}$%UPDATE_VIEW (BLOCK_INDEX)
+  #:endif
 #:endfor
 
 END SUBROUTINE
@@ -296,7 +393,12 @@ SUBROUTINE CPG_DYN_TYPE_FINAL (SELF)
 CLASS (CPG_DYN_TYPE)              :: SELF
 
 #:for var in list_cpg_dyn
+  #:set elt = list_cpg_dyn[var]
+  #:if elt[NTYPE] is None
 IF (ASSOCIATED (SELF%F_${var}$)) CALL DELETE_TEMPORARY (SELF%F_${var}$) 
+  #:else
+CALL SELF%${var}$%FINAL ()
+  #:endif
 #:endfor
 
 END SUBROUTINE 

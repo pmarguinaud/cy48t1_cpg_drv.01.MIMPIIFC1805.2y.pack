@@ -115,17 +115,17 @@ IF (LVERTFE) THEN
       !DIR$ IVDEP
       !CDIR NODEP
       DO JP=K1,K2
-        PXYB(JP,JL,X%M_DELP) = VAB%VDELA(JL)+VAB%VDELB(JL)*PRESH(JP,KFLEV)
+        ZDELP(JP,JL) = VAB%VDELA(JL)+VAB%VDELB(JL)*PRESH(JP,KFLEV)
         ZPRESF(JP,JL) = VAB%VAF(JL)+VAB%VBF(JL)*PRESH(JP,KFLEV)
         ZPRE(JP) = 1._JPRB/ZPRESF(JP,JL)
-        PXYB(JP,JL,X%M_LNPR) = PXYB(JP,JL,X%M_DELP)*ZPRE(JP)
+        ZLNPR(JP,JL) = ZDELP(JP,JL)*ZPRE(JP)
       ENDDO
 
       IF (LLDELP) THEN
         !DIR$ IVDEP
         !CDIR NODEP
         DO JP=K1,K2
-          PXYB(JP,JL,X%M_RDELP) = 1._JPRB/PXYB(JP,JL,X%M_DELP)
+          ZRDELP(JP,JL) = 1._JPRB/ZDELP(JP,JL)
         ENDDO
       ENDIF
 
@@ -133,7 +133,7 @@ IF (LVERTFE) THEN
         !DIR$ IVDEP
         !CDIR NODEP
         DO JP=K1,K2
-          PXYB(JP,JL,X%M_ALPH) = (PRESH(JP,JL)-ZPRESF(JP,JL))*ZPRE(JP)
+          ZALPH(JP,JL) = (PRESH(JP,JL)-ZPRESF(JP,JL))*ZPRE(JP)
         ENDDO
       ENDIF
 
@@ -141,7 +141,7 @@ IF (LVERTFE) THEN
         !DIR$ IVDEP
         !CDIR NODEP
         DO JP=K1,K2
-          PXYB(JP,JL,X%M_RTGR) = VAB%VBF(JL)*ZPRE(JP)
+          ZRTGR(JP,JL) = VAB%VBF(JL)*ZPRE(JP)
         ENDDO
       ENDIF
     ENDDO
@@ -206,31 +206,31 @@ ELSE
 
     IF (NDLNPR == 0) THEN
       IF (IFIRST == 2) THEN
-        ZXYB(K1:K2,1,X%M_LNPR) = LOG(PRESH(K1:K2,1)/TOPPRES)
+        ZLNPR(K1:K2,1) = LOG(PRESH(K1:K2,1)/TOPPRES)
 
         IF (LLDELP.OR.LLRTGR) THEN
           !DIR$ IVDEP
           !CDIR NODEP
           DO JP=K1,K2
-            ZXYB(JP,1,X%M_DELP) = PRESH(JP,1)-PRESH(JP,0)
-            ZXYB(JP,1,X%M_RDELP) = 1._JPRB/ZXYB(JP,1,X%M_DELP)
+            ZDELP(JP,1) = PRESH(JP,1)-PRESH(JP,0)
+            ZRDELP(JP,1) = 1._JPRB/ZDELP(JP,1)
           ENDDO
         ENDIF
 
-        IF (LLALPHA) ZXYB(K1:K2,1,X%M_ALPH) = RHYDR0
+        IF (LLALPHA) ZALPH(K1:K2,1) = RHYDR0
 
         IF (LLRTGR) THEN
           !DIR$ IVDEP
           !CDIR NODEP
           DO JP=K1,K2
-            ZXYB(JP,1,X%M_RTGR) = ZXYB(JP,1,X%M_RDELP)*VAB%VDELB(1)
+            ZRTGR(JP,1) = ZRDELP(JP,1)*VAB%VDELB(1)
           ENDDO
         ENDIF
 
         IF (LLRPP) THEN
           DO JP=K1,K2
-            ZXYB(JP,1,X%M_RPRE) = 1._JPRB/PRESH(JP,1)
-            ZXYB(JP,1,X%M_RPP) = 1._JPRB/(PRESH(JP,1)*TOPPRES)
+            ZRPRE(JP,1) = 1._JPRB/PRESH(JP,1)
+            ZRPP(JP,1) = 1._JPRB/(PRESH(JP,1)*TOPPRES)
           ENDDO
         ENDIF
       ENDIF
@@ -238,14 +238,14 @@ ELSE
       ZPRE(K1:K2) = 1._JPRB/PRESH(K1:K2,IFIRST-1)
 
       DO JL=IFIRST,KFLEV
-        ZXYB(K1:K2,JL,X%M_LNPR) = LOG(PRESH(K1:K2,JL)*ZPRE(K1:K2))
+        ZLNPR(K1:K2,JL) = LOG(PRESH(K1:K2,JL)*ZPRE(K1:K2))
 
         IF (LLDELP.OR.LLALPHA.OR.LLRTGR) THEN
           !DIR$ IVDEP
           !CDIR NODEP
           DO JP=K1,K2
-            ZXYB(JP,JL,X%M_DELP) = PRESH(JP,JL)-PRESH(JP,JL-1)
-            ZXYB(JP,JL,X%M_RDELP) = 1._JPRB/ZXYB(JP,JL,X%M_DELP)
+            ZDELP(JP,JL) = PRESH(JP,JL)-PRESH(JP,JL-1)
+            ZRDELP(JP,JL) = 1._JPRB/ZDELP(JP,JL)
           ENDDO
         ENDIF
 
@@ -253,8 +253,8 @@ ELSE
           !DIR$ IVDEP
           !CDIR NODEP
           DO JP=K1,K2
-            ZXYB(JP,JL,X%M_ALPH) = 1._JPRB-PRESH(JP,JL-1)*ZXYB(JP,JL,X%M_RDELP)*&
-              ZXYB(JP,JL,X%M_LNPR)
+            ZALPH(JP,JL) = 1._JPRB-PRESH(JP,JL-1)*ZRDELP(JP,JL)*&
+              ZLNPR(JP,JL)
           ENDDO
         ENDIF
 
@@ -262,8 +262,8 @@ ELSE
           !DIR$ IVDEP
           !CDIR NODEP
           DO JP=K1,K2
-            ZXYB(JP,JL,X%M_RTGR) = ZXYB(JP,JL,X%M_RDELP)*(VAB%VDELB(JL)+&
-              VAB%VC(JL)*ZXYB(JP,JL,X%M_LNPR)*ZXYB(JP,JL,X%M_RDELP))
+            ZRTGR(JP,JL) = ZRDELP(JP,JL)*(VAB%VDELB(JL)+&
+              VAB%VC(JL)*ZLNPR(JP,JL)*ZRDELP(JP,JL))
           ENDDO
         ENDIF
 
@@ -271,9 +271,9 @@ ELSE
           !DIR$ IVDEP
           !CDIR NODEP
           DO JP=K1,K2
-            ZXYB(JP,JL,X%M_RPRE) = 1._JPRB/PRESH(JP,JL)
-            ZXYB(JP,JL,X%M_RPP) = ZXYB(JP,JL,X%M_RPRE)*ZPRE(JP)
-            ZPRE(JP) = ZXYB(JP,JL,X%M_RPRE)
+            ZRPRE(JP,JL) = 1._JPRB/PRESH(JP,JL)
+            ZRPP(JP,JL) = ZRPRE(JP,JL)*ZPRE(JP)
+            ZPRE(JP) = ZRPRE(JP,JL)
           ENDDO
         ELSE
           ZPRE(K1:K2) = 1._JPRB/PRESH(K1:K2,JL)
@@ -286,14 +286,14 @@ ELSE
         ! optim: keep lnpr separate but consistent
         IF (LTEST) THEN
           DO JP=K1,K2
-            ZXYB(JP,JL,X%M_DELP) = PRESH(JP,JL)-PRESH(JP,JL-1)
-            ZXYB(JP,JL,X%M_RDELP) = 1._JPRB/ZXYB(JP,JL,X%M_DELP)
-            ZXYB(JP,JL,X%M_RPP) = 1._JPRB/(PRESH(JP,JL)*PRESH(JP,JL-1))
-            ZXYB(JP,JL,X%M_LNPR) = ZXYB(JP,JL,X%M_DELP)*SQRT(ZXYB(JP,JL,X%M_RPP))
+            ZDELP(JP,JL) = PRESH(JP,JL)-PRESH(JP,JL-1)
+            ZRDELP(JP,JL) = 1._JPRB/ZDELP(JP,JL)
+            ZRPP(JP,JL) = 1._JPRB/(PRESH(JP,JL)*PRESH(JP,JL-1))
+            ZLNPR(JP,JL) = ZDELP(JP,JL)*SQRT(ZRPP(JP,JL))
           ENDDO
         ELSE
           DO JP=K1,K2
-            ZXYB(JP,JL,X%M_LNPR) = (PRESH(JP,JL)-PRESH(JP,JL-1))/&
+            ZLNPR(JP,JL) = (PRESH(JP,JL)-PRESH(JP,JL-1))/&
               SQRT(PRESH(JP,JL)*PRESH(JP,JL-1))
           ENDDO
         ENDIF
@@ -302,8 +302,8 @@ ELSE
           !DIR$ IVDEP
           !CDIR NODEP
           DO JP=K1,K2
-            ZXYB(JP,JL,X%M_ALPH) = 1._JPRB-PRESH(JP,JL-1)*ZXYB(JP,JL,X%M_RDELP)*&
-              ZXYB(JP,JL,X%M_LNPR)
+            ZALPH(JP,JL) = 1._JPRB-PRESH(JP,JL-1)*ZRDELP(JP,JL)*&
+              ZLNPR(JP,JL)
           ENDDO
         ENDIF
 
@@ -311,40 +311,40 @@ ELSE
           !DIR$ IVDEP
           !CDIR NODEP
           DO JP=K1,K2
-            ZXYB(JP,JL,X%M_RTGR) = ZXYB(JP,JL,X%M_RDELP)*(VAB%VDELB(JL)+&
-              VAB%VC(JL)*ZXYB(JP,JL,X%M_LNPR)*ZXYB(JP,JL,X%M_RDELP))
+            ZRTGR(JP,JL) = ZRDELP(JP,JL)*(VAB%VDELB(JL)+&
+              VAB%VC(JL)*ZLNPR(JP,JL)*ZRDELP(JP,JL))
           ENDDO
         ENDIF
 
-        IF (LLRPP) ZXYB(K1:K2,JL,X%M_RPRE) = 1._JPRB/PRESH(K1:K2,JL)
+        IF (LLRPP) ZRPRE(K1:K2,JL) = 1._JPRB/PRESH(K1:K2,JL)
       ENDDO
 
       IF (IFIRST == 2) THEN
         !DIR$ IVDEP
         !CDIR NODEP
         DO JP=K1,K2
-          ZXYB(JP,1,X%M_DELP) = PRESH(JP,1)
-          ZXYB(JP,1,X%M_RDELP) = 1._JPRB/ZXYB(JP,1,X%M_DELP)
+          ZDELP(JP,1) = PRESH(JP,1)
+          ZRDELP(JP,1) = 1._JPRB/ZDELP(JP,1)
         ENDDO
 
         IF (NDLNPR == 1) THEN
-          ZXYB(K1:K2,1,X%M_LNPR) = 2._JPRB+RCVD/RD
+          ZLNPR(K1:K2,1) = 2._JPRB+RCVD/RD
         ELSE
           !DIR$ IVDEP
           !CDIR NODEP
           DO JP=K1,K2
-            ZXYB(JP,1,X%M_LNPR) = 1._JPRB+ZXYB(JP,2,X%M_LNPR)*&
-              (ZXYB(JP,1,X%M_DELP)/ZXYB(JP,2,X%M_DELP))*SQRT(PRESH(JP,2)/PRESH(JP,1))
+            ZLNPR(JP,1) = 1._JPRB+ZLNPR(JP,2)*&
+              (ZDELP(JP,1)/ZDELP(JP,2))*SQRT(PRESH(JP,2)/PRESH(JP,1))
           ENDDO
         ENDIF
 
-        IF (LLALPHA) ZXYB(K1:K2,1,X%M_ALPH) = 1._JPRB
+        IF (LLALPHA) ZALPH(K1:K2,1) = 1._JPRB
 
         IF (LLRTGR) THEN
           !DIR$ IVDEP
           !CDIR NODEP
           DO JP=K1,K2
-            ZXYB(JP,1,X%M_RTGR) = ZXYB(JP,1,X%M_RDELP)*VAB%VDELB(1)
+            ZRTGR(JP,1) = ZRDELP(JP,1)*VAB%VDELB(1)
           ENDDO
         ENDIF
 
@@ -352,8 +352,8 @@ ELSE
           !DIR$ IVDEP
           !CDIR NODEP
           DO JP=K1,K2
-            ZXYB(JP,1,X%M_RPRE) = 1._JPRB/PRESH(JP,1)
-            ZXYB(JP,1,X%M_RPP) = (ZXYB(JP,1,X%M_LNPR)*ZXYB(JP,1,X%M_RDELP))**2
+            ZRPRE(JP,1) = 1._JPRB/PRESH(JP,1)
+            ZRPP(JP,1) = (ZLNPR(JP,1)*ZRDELP(JP,1))**2
           ENDDO
         ENDIF
       ENDIF
@@ -371,7 +371,7 @@ ELSE
           !DIR$ IVDEP
           !CDIR NODEP
           DO JP=K1,K2
-            PRESF(JP,JL) = EXP(-ZXYB(JP,JL,X%M_ALPH))*PRESH(JP,JL)
+            PRESF(JP,JL) = EXP(-ZALPH(JP,JL))*PRESH(JP,JL)
           ENDDO
         ENDDO
       ENDIF
@@ -380,7 +380,7 @@ ELSE
         !DIR$ IVDEP
         !CDIR NODEP
         DO JP=K1,K2
-          PRESF(JP,JL) = (1._JPRB-ZXYB(JP,JL,X%M_ALPH))*PRESH(JP,JL)
+          PRESF(JP,JL) = (1._JPRB-ZALPH(JP,JL))*PRESH(JP,JL)
         ENDDO
       ENDDO
 
@@ -388,7 +388,7 @@ ELSE
         !DIR$ IVDEP
         !CDIR NODEP
         DO JP=K1,K2
-          PRESF(JP,1) = PRESH(JP,1)/ZXYB(JP,1,X%M_LNPR)
+          PRESF(JP,1) = PRESH(JP,1)/ZLNPR(JP,1)
         ENDDO
       ENDIF
     ENDIF

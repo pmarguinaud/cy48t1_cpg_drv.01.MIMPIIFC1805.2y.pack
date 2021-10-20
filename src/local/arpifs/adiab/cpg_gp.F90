@@ -540,16 +540,12 @@ ELSE
    !---------------------------------------------------------------------
    ! - INPUT .
    & KST,KEND,KSTGLO,LLUVH,LLGPXX,LDLDIAB,LMPA,&
-   & KIBL,YDOROG%OROG,POROGL,POROGM,PRE0L,PRE0M,&
+   & KIBL,YDOROG%OROG,POROGL,POROGM,&
    !---------------------------------------------------------------------
    ! - INPUT/OUTPUT .
-   & PGFL,PGMV,PRE0,PRE9,&
+   & PGFL,PGMV,&
    !---------------------------------------------------------------------
    ! - OUTPUT .
-   & PRE0F,&
-   & PHI0,PHIF0,PHI0FL,PHI0FM,PGWFT0,PKENE0,&
-   & PRT0L,PRT0M,&
-   & PRE9F,PHI9,PHIF9,PGWFT9,&
    & PATND)
 ENDIF
 

@@ -1,6 +1,7 @@
 #!/bin/bash
 
 set -x
+set -e
 
 cd fypp
 
@@ -13,8 +14,11 @@ do
   then
     cp $b.F90 ../src/local/arpifs/module/$b.F90
   else
+    set +e
     cmp $b.F90 ../src/local/arpifs/module/$b.F90
-    if [ $? -ne 0 ]
+    c=$?
+    set -e
+    if [ $c -ne 0 ]
     then
       cp $b.F90 ../src/local/arpifs/module/$b.F90
     fi

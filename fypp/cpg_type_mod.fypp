@@ -82,7 +82,7 @@
 & }
 
 
-MODULE CPG_DYN_TYPE_MOD
+MODULE CPG_TYPE_MOD
 
 USE FIELD_MODULE
 USE FIELD_REGISTRY_MOD
@@ -92,7 +92,7 @@ IMPLICIT NONE
 
 
 #:def pcpg_dyn_4d_definition (name, list)
-TYPE CPG_DYN_${name}$_TYPE
+TYPE CPG_${name}$_TYPE
   LOGICAL :: LOWNED = .FALSE.
   REAL (KIND=JPRB), POINTER :: ZDATA (:,:,:,:) => NULL ()
   REAL (KIND=JPRB), POINTER :: ZVIEW (:,:,:) => NULL ()
@@ -104,9 +104,9 @@ TYPE CPG_DYN_${name}$_TYPE
 #:endfor
 
 CONTAINS
-  PROCEDURE :: INIT => CPG_DYN_${name}$_TYPE_INIT
-  PROCEDURE :: UPDATE_VIEW => CPG_DYN_${name}$_TYPE_UPDATE_VIEW
-  PROCEDURE :: FINAL => CPG_DYN_${name}$_TYPE_FINAL
+  PROCEDURE :: INIT => CPG_${name}$_TYPE_INIT
+  PROCEDURE :: UPDATE_VIEW => CPG_${name}$_TYPE_UPDATE_VIEW
+  PROCEDURE :: FINAL => CPG_${name}$_TYPE_FINAL
 END TYPE 
 #:enddef
 
@@ -128,7 +128,7 @@ TYPE CPG_${name}$_TYPE
   REAL (KIND=JPRB), POINTER, CONTIGUOUS :: ${var}$ (${", ".join ([":"] * ndim)}$) => NULL ()
   TYPE (FIELD_${ndim+1}$D), POINTER :: F_${var}$ => NULL ()
   #:else
-  TYPE (CPG_DYN_${elt[NTYPE]}$_TYPE) :: ${var}$
+  TYPE (CPG_${elt[NTYPE]}$_TYPE) :: ${var}$
   #:endif
 #:endfor
 
@@ -189,11 +189,11 @@ $:s
 
 
 #:def pcpg_dyn_4d_methods (name, list)
-SUBROUTINE CPG_DYN_${name}$_TYPE_INIT (SELF, REGISTRY, NLEV, YDT${name}$, PERSISTENT, P${name}$)
+SUBROUTINE CPG_${name}$_TYPE_INIT (SELF, REGISTRY, NLEV, YDT${name}$, PERSISTENT, P${name}$)
 
 USE INTDYN_MOD, ONLY : T${name}$
 
-CLASS (CPG_DYN_${name}$_TYPE)                      :: SELF
+CLASS (CPG_${name}$_TYPE)                          :: SELF
 TYPE (FIELD_REGISTRY),              INTENT (INOUT) :: REGISTRY
 INTEGER (KIND=JPIM),                INTENT (IN)    :: NLEV
 TYPE (T${name}$),                   INTENT (IN)    :: YDT${name}$
@@ -234,9 +234,9 @@ ENDIF
 
 END SUBROUTINE
 
-SUBROUTINE CPG_DYN_${name}$_TYPE_UPDATE_VIEW (SELF, BLOCK_INDEX)
+SUBROUTINE CPG_${name}$_TYPE_UPDATE_VIEW (SELF, BLOCK_INDEX)
 
-CLASS (CPG_DYN_${name}$_TYPE)     :: SELF
+CLASS (CPG_${name}$_TYPE)         :: SELF
 INTEGER(KIND=JPIM), INTENT (IN)   :: BLOCK_INDEX
 
 SELF%ZVIEW => SELF%ZDATA (:,:,:,BLOCK_INDEX)
@@ -248,8 +248,8 @@ IF (ASSOCIATED (SELF%F_${var}$)) SELF%${var}$ ${ss}$ => SELF%F_${var}$%GET_VIEW 
 
 END SUBROUTINE
 
-SUBROUTINE CPG_DYN_${name}$_TYPE_FINAL (SELF)
-CLASS (CPG_DYN_${name}$_TYPE)          :: SELF
+SUBROUTINE CPG_${name}$_TYPE_FINAL (SELF)
+CLASS (CPG_${name}$_TYPE)          :: SELF
 
 IF (SELF%LOWNED) DEALLOCATE (SELF%ZDATA)
 SELF%ZDATA => NULL ()
@@ -418,5 +418,5 @@ $:pcpg_type_methods ("DYN", list_cpg_dyn)
 
 $:pcpg_type_methods ("PHY", list_cpg_phy)
 
-END MODULE CPG_DYN_TYPE_MOD
+END MODULE CPG_TYPE_MOD
 

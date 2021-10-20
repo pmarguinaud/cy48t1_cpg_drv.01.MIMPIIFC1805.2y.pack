@@ -35,8 +35,11 @@ mkdir -p $TMPDIR
 
 cd $TMPDIR
 
+for NAM in NHEE NHQE
+do
 
-
+mkdir -p $NAM
+cd $NAM
 
 # Choose your test case resolution
 
@@ -157,6 +160,10 @@ xpnam --delta="
 /
 " --inplace EXSEG1.nam
 
+xpnam --delta="
+$(cat $PACK/$NAM.nam)
+" --inplace fort.4
+
 perl -i -ne ' print unless (m/CROUGH/o) ' EXSEG1.nam
 
 # Set up grib_api environment
@@ -186,13 +193,19 @@ cat fort.4
 
 # Run the model; use your mpirun
 
-
+pack=$PACK
+#ack=/home/mf/dp/marp/gco/packs/cy48t1_main.01.MIMPIIFC1805.2y.pack
 
 /opt/softs/mpiauto/mpiauto --verbose --wrap --wrap-stdeo --nouse-slurm-mpi --prefix-mpirun '/usr/bin/time -f "time=%e"' \
-    --nnp $NTASK_FC --nn $NNODE_FC --openmp $NOPMP_FC -- $PACK/bin/MASTERODB \
- -- --nnp $NTASK_IO --nn $NNODE_IO --openmp $NOPMP_IO -- $PACK/bin/MASTERODB 
+    --nnp $NTASK_FC --nn $NNODE_FC --openmp $NOPMP_FC -- $pack/bin/MASTERODB \
+ -- --nnp $NTASK_IO --nn $NNODE_IO --openmp $NOPMP_IO -- $pack/bin/MASTERODB 
 
 ls -lrt
 
-diffNODE.001_01 NODE.001_01 $PACK/NODE.001_01.ARO
+diffNODE.001_01 NODE.001_01 $PACK/NODE.001_01.$NAM
+
+cd ..
+
+done
+
 

@@ -34,7 +34,7 @@
 & "GWFM"           : [False, False, AS_1_nflevg,      None,        "LNHDYN .AND. LLT0"  ], &
 & "GWT"            : [False, False, AS_1_nflevg,      None,        "LNHDYN"             ], &
 & "NHPREF"         : [False, False, AS_1_nflevg,      None,        "LNHDYN"             ], &
-& "NHPREH"         : [False, False, AS_1_nflevg,      None,        "LNHDYN"             ], &
+& "NHPREH"         : [False, False, AS_0_nflevg,      None,        "LNHDYN"             ], &
 & "QCHAL"          : [False, False, AS_1_nflevg,      None,        "LNHDYN .AND. LLT0"  ], &
 & "QCHAM"          : [False, False, AS_1_nflevg,      None,        "LNHDYN .AND. LLT0"  ], &
 & "RDPHI"          : [False, False, AS_1_nflevg,      None,        "LNHDYN .AND. LLT0"  ], &

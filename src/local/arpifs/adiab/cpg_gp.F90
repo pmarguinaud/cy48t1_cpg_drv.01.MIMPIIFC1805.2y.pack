@@ -515,17 +515,15 @@ ELSEIF (LNHEE) THEN
    !---------------------------------------------------------------------
    ! - INPUT .
    & KST,KEND,KSTGLO,LLGPXX,LDLDIAB,LMPA,&
-   & KIBL,YDOROG%OROG,POROGL,POROGM,ZOROGLL,ZOROGMM,ZOROGLM,PRE0L,PRE0M,&
+   & KIBL,YDOROG%OROG,POROGL,POROGM,ZOROGLL,ZOROGMM,ZOROGLM,&
    !---------------------------------------------------------------------
    ! - INPUT/OUTPUT .
-   & PGFL,PGMV,PRE0,PRE9,&
+   & PGFL,PGMV,&
    !---------------------------------------------------------------------
    ! - OUTPUT .
-   & PRE0F,PNHPRE0F,PNHPRE0H,&
-   & PHI0,PHIF0,PHI0FL,PHI0FM,PGWFT0,ZGWHT0,PGWT0,PGWS,PGWFL,PGWFM,ZGDW0,PKENE0,&
-   & PRT0L,PRT0M,&
-   & PRE9F,PNHPRE9F,PNHPRE9H,PHI9,PHIF9,PGWFT9,ZGWHT9,PGWT9,ZGDW9,&
-   & PATND,PDBBC,PRDPHI,PNHXT0,PNHXT9,PNHYT0,PNHYT9,PQCHA0L,PQCHA0M)
+   & ZGWHT0,ZGDW0,&
+   & ZGWHT9,ZGDW9,&
+   & PATND)
 ELSE
   ! * Hydrostatic model:
   PNHXT0(:,:)=0.0_JPRB

@@ -487,8 +487,6 @@ IF (LNHQE) THEN
    & PGFL,PGMV,&
    !---------------------------------------------------------------------
    ! - OUTPUT .
-   & ZGWHT0,ZGDW0,&
-   & ZGWHT9,ZGDW9,&
    & PATND)
 ELSEIF (LNHEE) THEN
   ! * NHEE model:
@@ -503,8 +501,6 @@ ELSEIF (LNHEE) THEN
    & PGFL,PGMV,&
    !---------------------------------------------------------------------
    ! - OUTPUT .
-   & ZGWHT0,ZGDW0,&
-   & ZGWHT9,ZGDW9,&
    & PATND)
 ELSE
   ! * Hydrostatic model:

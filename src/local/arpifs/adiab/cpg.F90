@@ -310,8 +310,9 @@ TYPE (TRAJ_SLAG_TYPE),INTENT(INOUT) :: PTRAJ_SLAG
 TYPE(TYP_DDH)        , INTENT(INOUT) :: YDDDH
 !     ------------------------------------------------------------------
 ! - derivatives of orography.
-REAL(KIND=JPRB) :: ZOROGL(YDGEOMETRY%YRDIM%NPROMA)                    ! cf. POROGL in CPG_GP
-REAL(KIND=JPRB) :: ZOROGM(YDGEOMETRY%YRDIM%NPROMA)                    ! cf. POROGM in CPG_GP
+REAL(KIND=JPRB), POINTER, CONTIGUOUS :: ZOROGL(:)
+REAL(KIND=JPRB), POINTER, CONTIGUOUS :: ZOROGM(:)
+
 ! - other auxiliary quantities at time 0.
 REAL(KIND=JPRB), POINTER, CONTIGUOUS :: ZPRE0F(:,:)                   
 REAL(KIND=JPRB), POINTER, CONTIGUOUS :: ZRCP0(:,:,:)                   
@@ -487,6 +488,9 @@ ASSOCIATE(NDIM=>YGFL%NDIM, NDIM1=>YGFL%NDIM1, NDIMPC=>YGFL%NDIMPC, &
 
 !*       3.    READ BUFFERS, COMPUTE AUXILIARY QUANTITIES.
 !              -------------------------------------------
+
+ZOROGL             => YDCPG_DYN0%OROGL
+ZOROGM             => YDCPG_DYN0%OROGM
 
 ZPHIF0             => YDCPG_DYN0%PHIF
 ZRCP0              => YDCPG_DYN0%RCP%ZVIEW

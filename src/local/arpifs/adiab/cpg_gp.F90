@@ -481,7 +481,7 @@ IF (LNHQE) THEN
    !---------------------------------------------------------------------
    ! - INPUT .
    & KST,KEND,KSTGLO,LLGPXX,LDLDIAB,LMPA,&
-   & KIBL,YDOROG%OROG,ZOROGLL,ZOROGMM,ZOROGLM,ZPRE9L,ZPRE9M,&
+   & KIBL,YDOROG%OROG,ZPRE9L,ZPRE9M,&
    !---------------------------------------------------------------------
    ! - INPUT/OUTPUT .
    & PGFL,PGMV,&
@@ -497,7 +497,7 @@ ELSEIF (LNHEE) THEN
    !---------------------------------------------------------------------
    ! - INPUT .
    & KST,KEND,KSTGLO,LLGPXX,LDLDIAB,LMPA,&
-   & KIBL,YDOROG%OROG,ZOROGLL,ZOROGMM,ZOROGLM,&
+   & KIBL,YDOROG%OROG,&
    !---------------------------------------------------------------------
    ! - INPUT/OUTPUT .
    & PGFL,PGMV,&

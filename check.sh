@@ -15,4 +15,5 @@ fi
 done
 
 grep NORMDIFF $F
+grep NORMDIFF $F | grep '0.000000000e+00' | wc -l
 

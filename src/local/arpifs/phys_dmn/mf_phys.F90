@@ -1052,7 +1052,6 @@ IF (LLDIAB.AND.(.NOT.LMPA)) THEN
            & KBL,                                          & 
            & KGPCOMP,                                      & 
            & YDCFU%NFRRC,                                  & 
-#ifdef UNDEF
            & PDTPHY,                                       & 
            & YDCSGEOM%RINDX,                               & 
            & YDCSGEOM%RINDY,                               & 
@@ -1105,7 +1104,6 @@ IF (LLDIAB.AND.(.NOT.LMPA)) THEN
            & YDMF_PHYS_SURF%GSP_SB%PTL_T0,                 & 
            & YDMF_PHYS_SURF%GSP_RR%PW_T0,                  & 
            & YDMF_PHYS_SURF%GSP_RR%PIC_T0,                 & 
-#endif
            & PCTY0(1,1,YYTCTY0%M_VVEL),                    & 
            & PEMTD,                                        & 
            & PEMTU,                                        & 

@@ -49,7 +49,7 @@ SUBROUTINE APLPAR(YDGEOMETRY,YDMF_PHYS,YDCPG_DYN,YDMF_PHYS_SURF,YDVARS,YDSURF, Y
  & PCLCT  , &
  & KCLPH  , &
  & PDPRECIPS,PDPRECIPS2,&
- & PTENDPTKE,PKUROV_H,PKTROV_H,&
+ & PEZDIAG,PTENDPTKE,PKUROV_H,PKTROV_H,&
  & PTENDEXT_DEP, PTRAJ_PHYS,PTDISS,YDDDH,&
  & PFTCNS, &
  & PGP2DSPP )
@@ -1042,6 +1042,7 @@ REAL(KIND=JPRB)   ,INTENT(INOUT) :: PQSATS(KLON)
 REAL(KIND=JPRB)   ,INTENT(OUT)   :: PCLCT(KLON)
 INTEGER(KIND=JPIM),INTENT(OUT)   :: KCLPH(KLON)
 REAL(KIND=JPRB)   ,INTENT(INOUT) :: PFTCNS(KLON,0:KLEV,6)
+REAL(KIND=JPRB)   ,INTENT(INOUT) :: PEZDIAG(KLON,KLEV,YDMODEL%YRML_GCONF%YGFL%NGFL_EZDIAG)
 REAL(KIND=JPRB)   ,INTENT(OUT)   :: PTENDPTKE(KLON,KLEV)
 REAL(KIND=JPRB)   ,INTENT(OUT)   :: PKUROV_H(KLON,KLEV)
 REAL(KIND=JPRB)   ,INTENT(OUT)   :: PKTROV_H(KLON,KLEV)
@@ -1603,7 +1604,6 @@ REAL(KIND=JPRB) :: ZHOOK_HANDLE
 #include "acpluis.intfb.h"
 #include "acpluiz.intfb.h"
 #include "acradcoef.intfb.h"
-#include "recmwf_dum.intfb.h"
 #include "recmwf.intfb.h"
 #include "acdayd.intfb.h"
 #include "acrso.intfb.h"
@@ -2030,10 +2030,7 @@ IF (LMPHYS) THEN
   ZZI_RHO=1.0_JPRB
   ZZZ=0.0_JPRB
   ZAERD=0.0_JPRB
-
-  DO JDIAG = 1, YDMODEL%YRML_GCONF%YGFL%NGFL_EZDIAG
-    YDVARS%EZDIAG(JDIAG)%T0 = 0._JPRB
-  ENDDO
+  PEZDIAG=0.0_JPRB
 
 !Initialisation des scalaires passifs pour aro_ground_param
   DO JGFL=1,NGFL_EXT
@@ -3030,10 +3027,7 @@ IF(LMPHYS) THEN
                  & NGFL_EZDIAG,&
                  & ZZI_PEZDIAG(KIDIA:KFDIA,:,:)           )
 
-
-  DO JDIAG = 1, YDMODEL%YRML_GCONF%YGFL%NGFL_EZDIAG
-    YDVARS%EZDIAG(JDIAG)%T0 (KIDIA:KFDIA,:) = ZZI_PEZDIAG(KIDIA:KFDIA,:,JDIAG)
-  ENDDO
+  PEZDIAG(KIDIA:KFDIA,:,:)=ZZI_PEZDIAG(KIDIA:KFDIA,:,:)
 
 ! return to aladin environment (inversion des niveaux)
    DO JGFL=1,NGFL_EXT
@@ -3568,29 +3562,13 @@ IF(LMPHYS) THEN
 
     ! ---- Intermittent call to radiation scheme
     IF (LLCALLRAD) THEN
-WRITE (0, *) __FILE__, ':', __LINE__, " KBL = ", KBL
-      CALL RECMWF_DUM(YDGEOMETRY%YRDIMV,YDMODEL,     &
-       &  KIDIA , KFDIA, KLON  , KLEV   ,         &
-       &  ZALBD , ZALBP, PAPRS , PAPRSF ,         &
-       &  PNEB  , ZQO3 , ZAER  , PDELP  , PEMIS , &
-       &  PMU0M , ZQV  , PQSAT , PQICE  , PQLI  , & 
-       &  ZQS   , ZQR  , YDMF_PHYS_SURF%GSD_VF%PLSM  , PT     , PTS   , &
-       &  PGP2DSPP, YDVARS%EZDIAG(YSPP_CONFIG%IEZDIAG_POS)%T0, &
-       &  PEMTD , PEMTU, PTRSO ,                   &
-       &  YDMF_PHYS%FRTHC, YDMF_PHYS%FRTH, YDMF_PHYS%FRSOC   , YDMF_PHYS%FRSO ,&
-       &  ZSFSWDIR     , ZSFSWDIF , ZFSDNN , ZFSDNV,&
-       &  ZCTRSO,ZCEMTR, ZTRSOD ,&
-       &  ZTRSODIR, ZTRSODIF,&
-       &  ZPIZA_DST,ZCGA_DST,ZTAUREL_DST,ZAERINDS,&
-       &  PGELAM, PGEMU, PGPAR, PMU0LU , YDMF_PHYS%ALB, PVRMOON)
-WRITE (0, *) __FILE__, ':', __LINE__; CALL FLUSH (0)
       CALL RECMWF(YDGEOMETRY%YRDIMV,YDMODEL,     &
        &  KIDIA , KFDIA, KLON  , KLEV   ,         &
        &  ZALBD , ZALBP, PAPRS , PAPRSF ,         &
        &  PNEB  , ZQO3 , ZAER  , PDELP  , PEMIS , &
        &  PMU0M , ZQV  , PQSAT , PQICE  , PQLI  , & 
        &  ZQS   , ZQR  , YDMF_PHYS_SURF%GSD_VF%PLSM  , PT     , PTS   , &
-       &  PGP2DSPP, YDVARS%EZDIAG(YSPP_CONFIG%IEZDIAG_POS)%T0, &
+       &  PGP2DSPP, PEZDIAG, &
        &  PEMTD , PEMTU, PTRSO ,                   &
        &  YDMF_PHYS%FRTHC, YDMF_PHYS%FRTH, YDMF_PHYS%FRSOC   , YDMF_PHYS%FRSO ,&
        &  ZSFSWDIR     , ZSFSWDIF , ZFSDNN , ZFSDNV,&

@@ -52,15 +52,15 @@ TYPE, EXTENDS(VARIABLE_BASE) :: VARIABLE_${rank}$D
   ! Note that storing things like NLEV would break templating
 
   ! Array view pointers, to be set up from associated fields
-  REAL(KIND=JPRB), POINTER :: P(${shape}$)  => NULL()  ! Basic field at t
-  REAL(KIND=JPRB), POINTER :: T0(${shape}$) => NULL()  ! Basic field at t (alias of P)
-  REAL(KIND=JPRB), POINTER :: T1(${shape}$) => NULL()  ! Basic field at t+dt
-  REAL(KIND=JPRB), POINTER :: T9(${shape}$) => NULL()  ! Basic field at t-dt
-  REAL(KIND=JPRB), POINTER :: PH9(${shape}$)=> NULL()  ! Basic field for physics
-  REAL(KIND=JPRB), POINTER :: DL(${shape}$) => NULL()  ! Zonal derivative field
-  REAL(KIND=JPRB), POINTER :: DM(${shape}$) => NULL()  ! Meridional derivative field
-  REAL(KIND=JPRB), POINTER :: DL9(${shape}$) => NULL()  ! Zonal derivative field at t-dt
-  REAL(KIND=JPRB), POINTER :: DM9(${shape}$) => NULL()  ! Meridional derivative field at t-dt
+  REAL(KIND=JPRB), POINTER, CONTIGUOUS :: P(${shape}$)  => NULL()  ! Basic field at t
+  REAL(KIND=JPRB), POINTER, CONTIGUOUS :: T0(${shape}$) => NULL()  ! Basic field at t (alias of P)
+  REAL(KIND=JPRB), POINTER, CONTIGUOUS :: T1(${shape}$) => NULL()  ! Basic field at t+dt
+  REAL(KIND=JPRB), POINTER, CONTIGUOUS :: T9(${shape}$) => NULL()  ! Basic field at t-dt
+  REAL(KIND=JPRB), POINTER, CONTIGUOUS :: PH9(${shape}$)=> NULL()  ! Basic field for physics
+  REAL(KIND=JPRB), POINTER, CONTIGUOUS :: DL(${shape}$) => NULL()  ! Zonal derivative field
+  REAL(KIND=JPRB), POINTER, CONTIGUOUS :: DM(${shape}$) => NULL()  ! Meridional derivative field
+  REAL(KIND=JPRB), POINTER, CONTIGUOUS :: DL9(${shape}$) => NULL()  ! Zonal derivative field at t-dt
+  REAL(KIND=JPRB), POINTER, CONTIGUOUS :: DM9(${shape}$) => NULL()  ! Meridional derivative field at t-dt
 
   ! Pointers to associated FIELD objects
   TYPE(FIELD_${rank}$D), POINTER :: FT0 => NULL()  ! Basic field at t
@@ -201,16 +201,49 @@ CONTAINS
     ! Update the internal data view pointers of all associated fields
     CLASS(VARIABLE_${rank}$D) :: SELF
     INTEGER(KIND=JPIM), INTENT(IN) :: BLOCK_INDEX
+    REAL(KIND=JPRB), TARGET, SAVE :: ZDUM(${ ', '.join (['1'] * (rank-1)) }$)
 
     ! Set on-object data view pointers from storage FIELDS
-    IF (ASSOCIATED(SELF%FT0))  SELF%T0 => SELF%FT0%GET_VIEW(BLOCK_INDEX)
-    IF (ASSOCIATED(SELF%FT1))  SELF%T1 => SELF%FT1%GET_VIEW(BLOCK_INDEX)
-    IF (ASSOCIATED(SELF%FT9))  SELF%T9 => SELF%FT9%GET_VIEW(BLOCK_INDEX)
-    IF (ASSOCIATED(SELF%FPH9)) SELF%PH9=> SELF%FPH9%GET_VIEW(BLOCK_INDEX)
-    IF (ASSOCIATED(SELF%FDL))  SELF%DL => SELF%FDL%GET_VIEW(BLOCK_INDEX)
-    IF (ASSOCIATED(SELF%FDM))  SELF%DM => SELF%FDM%GET_VIEW(BLOCK_INDEX)
-    IF (ASSOCIATED(SELF%FDL9)) SELF%DL9=> SELF%FDL9%GET_VIEW(BLOCK_INDEX)
-    IF (ASSOCIATED(SELF%FDM9)) SELF%DM9=> SELF%FDM9%GET_VIEW(BLOCK_INDEX)
+    IF (ASSOCIATED(SELF%FT0))  THEN
+      SELF%T0 => SELF%FT0%GET_VIEW(BLOCK_INDEX)
+    ELSE
+      SELF%T0 => ZDUM
+    ENDIF
+    IF (ASSOCIATED(SELF%FT1))  THEN
+      SELF%T1 => SELF%FT1%GET_VIEW(BLOCK_INDEX)
+    ELSE
+      SELF%T1 => ZDUM
+    ENDIF
+    IF (ASSOCIATED(SELF%FT9))  THEN
+      SELF%T9 => SELF%FT9%GET_VIEW(BLOCK_INDEX)
+    ELSE
+      SELF%T9 => ZDUM
+    ENDIF
+    IF (ASSOCIATED(SELF%FPH9)) THEN
+      SELF%PH9=> SELF%FPH9%GET_VIEW(BLOCK_INDEX)
+    ELSE
+      SELF%PH9 => ZDUM
+    ENDIF
+    IF (ASSOCIATED(SELF%FDL))  THEN
+      SELF%DL => SELF%FDL%GET_VIEW(BLOCK_INDEX)
+    ELSE
+      SELF%DL => ZDUM
+    ENDIF
+    IF (ASSOCIATED(SELF%FDM))  THEN
+      SELF%DM => SELF%FDM%GET_VIEW(BLOCK_INDEX)
+    ELSE
+      SELF%DM => ZDUM
+    ENDIF
+    IF (ASSOCIATED(SELF%FDL9)) THEN
+      SELF%DL9=> SELF%FDL9%GET_VIEW(BLOCK_INDEX)
+    ELSE
+      SELF%DL9 => ZDUM
+    ENDIF
+    IF (ASSOCIATED(SELF%FDM9)) THEN
+      SELF%DM9=> SELF%FDM9%GET_VIEW(BLOCK_INDEX)
+    ELSE
+      SELF%DM9 => ZDUM
+    ENDIF
     SELF%P => SELF%T0  ! Alias T0 pointer
   END SUBROUTINE VARIABLE_${rank}$D_UPDATE_VIEW
 #:endfor

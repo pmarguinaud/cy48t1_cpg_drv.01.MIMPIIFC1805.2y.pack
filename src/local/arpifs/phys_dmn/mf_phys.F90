@@ -667,6 +667,7 @@ REAL(KIND=JPRB) :: ZHOOK_HANDLE
 
 #include "abor1.intfb.h"
 #include "apl_arome.intfb.h"
+#include "aplpar_dum.intfb.h"
 #include "aplpar.intfb.h"
 #include "aplpar2intflex.intfb.h"
 #include "aplpars.intfb.h"
@@ -1027,6 +1028,185 @@ IF (LLDIAB.AND.(.NOT.LMPA)) THEN
       ENDIF
 
       ITDIA=1_JPIM
+      CALL APLPAR_DUM( &
+           & YDGEOMETRY,                                   & 
+           & YDMF_PHYS,                                    & 
+           & YDCPG_DYN0,                                   & 
+           & YDMF_PHYS_SURF,                               & 
+           & YDVARS,                                       & 
+           & YDSURF,                                       & 
+           & YDXFU,                                        & 
+           & YDCFU,                                        & 
+           & YDMODEL,                                      & 
+           & KST,                                          & 
+           & KEND,                                         & 
+           & NPROMA,                                       & 
+           & ITDIA,                                        & 
+           & NFLEVG,                                       & 
+           & KSTGLO,                                       & 
+           & NVCLIS,                                       & 
+           & YSD_VVD%NUMFLDS,                              & 
+           & NSTEP,                                        & 
+           & NTSSG,                                        & 
+           & YSP_SBD%NLEVS,                                & 
+           & KBL,                                          & 
+           & KGPCOMP,                                      & 
+           & YDCFU%NFRRC,                                  & 
+#ifdef UNDEF
+           & PDTPHY,                                       & 
+           & YDCSGEOM%RINDX,                               & 
+           & YDCSGEOM%RINDY,                               & 
+           & LLXFUMSE,                                     & 
+           & PHI0,                                         & 
+           & PRE0,                                         & 
+           & PHIF0,                                        & 
+           & PRE0F,                                        & 
+           & PXYB0(1,1,YYTXYB0_PHY%M_ALPH),                & 
+           & PXYB0(1,1,YYTXYB0_PHY%M_DELP),                & 
+           & PXYB0(1,1,YYTXYB0_PHY%M_LNPR),                & 
+           & PXYB0(1,1,YYTXYB0_PHY%M_RDELP),               & 
+           & YDGSGEOM%RCORI,                               & 
+           & ZP1EXT,                                       & 
+           & YDVARS%U%T0,                                  & 
+           & YDVARS%V%T0,                                  & 
+           & YDVARS%T%T0,                                  & 
+           & YDVARS%Q%T0,                                  & 
+           & YDVARS%I%T0,                                  & 
+           & YDVARS%L%T0,                                  & 
+           & YDVARS%S%T0,                                  & 
+           & YDVARS%R%T0,                                  & 
+           & YDVARS%G%T0,                                  & 
+           & YDVARS%TKE%T0,                                & 
+           & YDVARS%EFB1%T0,                               & 
+           & YDVARS%EFB2%T0,                               & 
+           & YDVARS%EFB3%T0,                               & 
+           & YDVARS%CVV%T0,                                & 
+           & YDVARS%O3%T0,                                 & 
+           & ZP1CHEM,                                      & 
+           & ZP1NOGW,                                      & 
+           & ZP2NOGW,                                      & 
+           & PGFL,                                         & 
+           & YDVARS%VOR%T0,                                & 
+           & PRCP0(1,1,YYTRCP0%M_CP),                      & 
+           & ZCVGQ,                                        & 
+           & PRCP0(1,1,YYTRCP0%M_R),                       & 
+           & PKOZO,                                        & 
+           & ZFPLCH,                                       & 
+           & ZFPLSH,                                       & 
+           & PCTY0(1,0,YYTCTY0%M_EVEL),                    & 
+           & PGPAR,                                        & 
+           & YDMF_PHYS_SURF%GSP_SG%PF_T0,                  & 
+           & YDMF_PHYS_SURF%GSP_SG%PA_T0,                  & 
+           & YDMF_PHYS_SURF%GSP_SG%PR_T0,                  & 
+           & YDMF_PHYS_SURF%GSP_SB%PT_T0,                  & 
+           & YDMF_PHYS_SURF%GSP_RR%PT_T0,                  & 
+           & YDMF_PHYS_SURF%GSP_RR%PFC_T0,                 & 
+           & YDMF_PHYS_SURF%GSP_SB%PQ_T0,                  & 
+           & YDMF_PHYS_SURF%GSP_SB%PTL_T0,                 & 
+           & YDMF_PHYS_SURF%GSP_RR%PW_T0,                  & 
+           & YDMF_PHYS_SURF%GSP_RR%PIC_T0,                 & 
+#endif
+           & PCTY0(1,1,YYTCTY0%M_VVEL),                    & 
+           & PEMTD,                                        & 
+           & PEMTU,                                        & 
+           & PTRSW,                                        & 
+           & PRMOON,                                       & 
+           & ZMU0,                                         & 
+           & ZMU0LU,                                       & 
+           & ZMU0M,                                        & 
+           & ZMU0N,                                        & 
+           & YDGSGEOM%GELAM,                               & 
+           & YDGSGEOM%GEMU,                                & 
+           & YDGSGEOM%GM,                                  & 
+           & ZAC,                                          & 
+           & ZAC_HC,                                       & 
+           & ZMCOR,                                        & 
+           & ZMMU0,                                        & 
+           & PDHSF,                                        & 
+           & ZMRAB3C,                                      & 
+           & ZMRAB3N,                                      & 
+           & ZMRAB4C,                                      & 
+           & ZMRAB4N,                                      & 
+           & ZMRAB6C,                                      & 
+           & ZMRAB6N,                                      & 
+           & ZMRAT1C,                                      & 
+           & ZMRAT1N,                                      & 
+           & ZMRAT2C,                                      & 
+           & ZMRAT2N,                                      & 
+           & ZMRAT3C,                                      & 
+           & ZMRAT3N,                                      & 
+           & ZMRAT4C,                                      & 
+           & ZMRAT4N,                                      & 
+           & ZMRAT5C,                                      & 
+           & ZMRAT5N,                                      & 
+           & YDOROG%OROG,                                  & 
+           & PWT0,                                         & 
+           & YDVARS%DIV%T0,                                & 
+           & YDVARS%U%DL,                                  & 
+           & YDVARS%V%DL,                                  & 
+           & PWT0L,                                        & 
+           & PWT0M,                                        & 
+           & PGDEOSI,                                      & 
+           & PGUEOSI,                                      & 
+           & PGMU0,                                        & 
+           & PGMU0_MIN,                                    & 
+           & PGMU0_MAX,                                    & 
+           & PGDEOTI,                                      & 
+           & PGDEOTI2,                                     & 
+           & PGUEOTI,                                      & 
+           & PGUEOTI2,                                     & 
+           & PGEOLT,                                       & 
+           & PGEOXT,                                       & 
+           & PGRPROX,                                      & 
+           & PGMIXP,                                       & 
+           & PGFLUXC,                                      & 
+           & PGRSURF,                                      & 
+           & ZDIFEXT,                                      & 
+           & ZFRMQ,                                        & 
+           & ZCPS,                                         & 
+           & ZLHS,                                         & 
+           & ZRS,                                          & 
+           & ZLH,                                          & 
+           & ZLSCPE,                                       & 
+           & PNEB,                                         & 
+           & PQICE,                                        & 
+           & PQLI,                                         & 
+           & ZQRCONV,                                      & 
+           & ZQSCONV,                                      & 
+           & ZQSAT,                                        & 
+           & ZQW,                                          & 
+           & PRH,                                          & 
+           & ZTW,                                          & 
+           & ZCD,                                          & 
+           & ZCDN,                                         & 
+           & ZCH,                                          & 
+           & ZC1,                                          & 
+           & ZC2,                                          & 
+           & ZEMIS,                                        & 
+           & ZFEVI,                                        & 
+           & ZFTKE,                                        & 
+           & ZFTKEI,                                       & 
+           & ZFEFB1,                                       & 
+           & ZFEFB2,                                       & 
+           & ZFEFB3,                                       & 
+           & ZNEIJ,                                        & 
+           & ZVEG,                                         & 
+           & PQS,                                          & 
+           & ZQSATS,                                       & 
+           & PCLCT,                                        & 
+           & ICLPH,                                        & 
+           & ZDPRECIPS,                                    & 
+           & ZDPRECIPS2,                                   & 
+           & ZTENDPTKE,                                    & 
+           & ZKUROV_H,                                     & 
+           & ZKTROV_H,                                     & 
+           & ZTENDEXT_DEP,                                 & 
+           & PTRAJ_PHYS,                                   & 
+           & ZEDR,                                         & 
+           & YDDDH,                                        & 
+           & PFTCNS,                                       & 
+           & ZGP2DSPP)                                     
+
       CALL APLPAR(YDGEOMETRY,YDMF_PHYS,YDCPG_DYN0,YDMF_PHYS_SURF,YDVARS,YDSURF, YDXFU, YDCFU, YDMODEL, KST    , KEND   , NPROMA ,&
        & ITDIA  , NFLEVG  , KSTGLO,&
        & NVCLIS , YSD_VVD%NUMFLDS ,&

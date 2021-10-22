@@ -667,7 +667,6 @@ REAL(KIND=JPRB) :: ZHOOK_HANDLE
 
 #include "abor1.intfb.h"
 #include "apl_arome.intfb.h"
-#include "aplpar_dum.intfb.h"
 #include "aplpar.intfb.h"
 #include "aplpar2intflex.intfb.h"
 #include "aplpars.intfb.h"
@@ -768,28 +767,24 @@ ASSOCIATE(MVTS=>YDPARAR%MVTS, NRR=>YDPARAR%NRR, NGPAR=>YDPARAR%NGPAR, CMF_UPDRAF
  & NSTOP=>YDRIP%NSTOP, NLIMA=>YGFL%NLIMA, YLIMA=>YGFL%YLIMA)
 
 
-WRITE (0, *) __FILE__, ':', __LINE__, SIZE (YDVARS%CHEM)
-WRITE (0, *) __FILE__, ':', __LINE__, SIZE (YDVARS%EXT)
-WRITE (0, *) __FILE__, ':', __LINE__, SIZE (YDVARS%NOGW)
-
-ZP1CHEM     => YDVARS%CHEM(1)%T0
-ZP1CHEM9    => YDVARS%CHEM(1)%T9
+CALL SC2PRG(1,YCHEM(:)%MP,PGFL  ,ZP1CHEM)     !  YDVARS%CHEM(1)%T0
+CALL SC2PRG(1,YCHEM(:)%MP9,PGFL ,ZP1CHEM9)    !  YDVARS%CHEM(1)%T9
 CALL SC2PRG(YEFB1%MP1 ,ZTENDGFL ,ZPTENDEFB11)
 CALL SC2PRG(YEFB2%MP1 ,ZTENDGFL ,ZPTENDEFB21)
 CALL SC2PRG(YEFB3%MP1 ,ZTENDGFL ,ZPTENDEFB31)
-ZP1EXT      => YDVARS%EXT(1)%T0
-ZP1EXT9     => YDVARS%EXT(1)%T9
+CALL SC2PRG(1,YEXT(:)%MP,PGFL   ,ZP1EXT)      !  YDVARS%EXT(1)%T0
+CALL SC2PRG(1,YEXT(:)%MP9,PGFL  ,ZP1EXT9)     !  YDVARS%EXT(1)%T9
 CALL SC2PRG(YG%MP1    ,ZTENDGFL ,ZPTENDG1)
 CALL SC2PRG(YICONV%MP1,ZTENDGFL ,ZPTENDICONV1)
 CALL SC2PRG(YI%MP1    ,ZTENDGFL ,ZPTENDI1)
 CALL SC2PRG(YLCONV%MP1,ZTENDGFL ,ZPTENDLCONV1)
-ZP1LIMA     => YDVARS%LIMA(1)%T0
-ZP1LIMA9    => YDVARS%LIMA(1)%T9
+CALL SC2PRG(1,YLIMA(:)%MP,PGFL  ,ZP1LIMA)     !  YDVARS%LIMA(1)%T0
+CALL SC2PRG(1,YLIMA(:)%MP9,PGFL ,ZP1LIMA9)    !  YDVARS%LIMA(1)%T9
 CALL SC2PRG(YL%MP1    ,ZTENDGFL ,ZPTENDL1)
-ZP1NOGW     => YDVARS%NOGW(1)%T0
-ZP1NOGW9    => YDVARS%NOGW(1)%T9
-ZP2NOGW     => YDVARS%NOGW(2)%T0
-ZP2NOGW9    => YDVARS%NOGW(2)%T9
+CALL SC2PRG(1,YNOGW(:)%MP,PGFL  ,ZP1NOGW)     !  YDVARS%NOGW(1)%T0
+CALL SC2PRG(1,YNOGW(:)%MP9,PGFL ,ZP1NOGW9)    !  YDVARS%NOGW(1)%T9 
+CALL SC2PRG(2,YNOGW(:)%MP,PGFL  ,ZP2NOGW)     !  YDVARS%NOGW(2)%T0
+CALL SC2PRG(2,YNOGW(:)%MP9,PGFL ,ZP2NOGW9)    !  YDVARS%NOGW(2)%T9 
 CALL SC2PRG(YQ%MP1    ,ZTENDGFL ,ZPTENDQ1)
 CALL SC2PRG(YRCONV%MP1,ZTENDGFL ,ZPTENDRCONV1)
 CALL SC2PRG(YR%MP1    ,ZTENDGFL ,ZPTENDR1)
@@ -1032,188 +1027,6 @@ IF (LLDIAB.AND.(.NOT.LMPA)) THEN
       ENDIF
 
       ITDIA=1_JPIM
-
-WRITE (0, *) __FILE__, ':', __LINE__ ; CALL FLUSH (0)
-
-      CALL APLPAR_DUM( &
-!          & YDGEOMETRY,                                   & 
-!          & YDMF_PHYS,                                    & 
-!          & YDCPG_DYN0,                                   & 
-!          & YDMF_PHYS_SURF,                               & 
-!          & YDVARS,                                       & 
-!          & YDSURF,                                       & 
-!          & YDXFU,                                        & 
-!          & YDCFU,                                        & 
-           & YDMODEL,                                      & 
-!          & KST,                                          & 
-!          & KEND,                                         & 
-           & NPROMA,                                       & 
-!          & ITDIA,                                        & 
-           & NFLEVG,                                       & 
-!          & KSTGLO,                                       & 
-!          & NVCLIS,                                       & 
-!          & YSD_VVD%NUMFLDS,                              & 
-!          & NSTEP,                                        & 
-!          & NTSSG,                                        & 
-!          & YSP_SBD%NLEVS,                                & 
-!          & KBL,                                          & 
-!          & KGPCOMP,                                      & 
-!          & YDCFU%NFRRC,                                  & 
-!          & PDTPHY,                                       & 
-!          & YDCSGEOM%RINDX,                               & 
-!          & YDCSGEOM%RINDY,                               & 
-!          & LLXFUMSE,                                     & 
-!          & PHI0,                                         & 
-!          & PRE0,                                         & 
-!          & PHIF0,                                        & 
-!          & PRE0F,                                        & 
-!          & PXYB0(1,1,YYTXYB0_PHY%M_ALPH),                & 
-!          & PXYB0(1,1,YYTXYB0_PHY%M_DELP),                & 
-!          & PXYB0(1,1,YYTXYB0_PHY%M_LNPR),                & 
-!          & PXYB0(1,1,YYTXYB0_PHY%M_RDELP),               & 
-!          & YDGSGEOM%RCORI,                               & 
-!          & ZP1EXT,                                       & 
-!          & YDVARS%U%T0,                                  & 
-!          & YDVARS%V%T0,                                  & 
-!          & YDVARS%T%T0,                                  & 
-!          & YDVARS%Q%T0,                                  & 
-!          & YDVARS%I%T0,                                  & 
-!          & YDVARS%L%T0,                                  & 
-!          & YDVARS%S%T0,                                  & 
-!          & YDVARS%R%T0,                                  & 
-!          & YDVARS%G%T0,                                  & 
-!          & YDVARS%TKE%T0,                                & 
-!          & YDVARS%EFB1%T0,                               & 
-!          & YDVARS%EFB2%T0,                               & 
-!          & YDVARS%EFB3%T0,                               & 
-!          & YDVARS%CVV%T0,                                & 
-!          & YDVARS%O3%T0,                                 & 
-           & ZP1CHEM,                                      & 
-           & ZP1NOGW,                                      & 
-           & ZP2NOGW,                                      & 
-           & PGFL                                          & 
-!          & YDVARS%VOR%T0                                 & 
-!          & PRCP0(1,1,YYTRCP0%M_CP),                      & 
-!          & ZCVGQ,                                        & 
-!          & PRCP0(1,1,YYTRCP0%M_R),                       & 
-!          & PKOZO,                                        & 
-!          & ZFPLCH,                                       & 
-!          & ZFPLSH,                                       & 
-!          & PCTY0(1,0,YYTCTY0%M_EVEL),                    & 
-!          & PGPAR,                                        & 
-!          & YDMF_PHYS_SURF%GSP_SG%PF_T0,                  & 
-!          & YDMF_PHYS_SURF%GSP_SG%PA_T0,                  & 
-!          & YDMF_PHYS_SURF%GSP_SG%PR_T0,                  & 
-!          & YDMF_PHYS_SURF%GSP_SB%PT_T0,                  & 
-!          & YDMF_PHYS_SURF%GSP_RR%PT_T0,                  & 
-!          & YDMF_PHYS_SURF%GSP_RR%PFC_T0,                 & 
-!          & YDMF_PHYS_SURF%GSP_SB%PQ_T0,                  & 
-!          & YDMF_PHYS_SURF%GSP_SB%PTL_T0,                 & 
-!          & YDMF_PHYS_SURF%GSP_RR%PW_T0,                  & 
-!          & YDMF_PHYS_SURF%GSP_RR%PIC_T0,                 & 
-!          & PCTY0(1,1,YYTCTY0%M_VVEL),                    & 
-!          & PEMTD,                                        & 
-!          & PEMTU,                                        & 
-!          & PTRSW,                                        & 
-!          & PRMOON,                                       & 
-!          & ZMU0,                                         & 
-!          & ZMU0LU,                                       & 
-!          & ZMU0M,                                        & 
-!          & ZMU0N,                                        & 
-!          & YDGSGEOM%GELAM,                               & 
-!          & YDGSGEOM%GEMU,                                & 
-!          & YDGSGEOM%GM,                                  & 
-!          & ZAC,                                          & 
-!          & ZAC_HC,                                       & 
-!          & ZMCOR,                                        & 
-!          & ZMMU0,                                        & 
-!          & PDHSF,                                        & 
-!          & ZMRAB3C,                                      & 
-!          & ZMRAB3N,                                      & 
-!          & ZMRAB4C,                                      & 
-!          & ZMRAB4N,                                      & 
-!          & ZMRAB6C,                                      & 
-!          & ZMRAB6N,                                      & 
-!          & ZMRAT1C,                                      & 
-!          & ZMRAT1N,                                      & 
-!          & ZMRAT2C,                                      & 
-!          & ZMRAT2N,                                      & 
-!          & ZMRAT3C,                                      & 
-!          & ZMRAT3N,                                      & 
-!          & ZMRAT4C,                                      & 
-!          & ZMRAT4N,                                      & 
-!          & ZMRAT5C,                                      & 
-!          & ZMRAT5N,                                      & 
-!          & YDOROG%OROG,                                  & 
-!          & PWT0,                                         & 
-!          & YDVARS%DIV%T0,                                & 
-!          & YDVARS%U%DL,                                  & 
-!          & YDVARS%V%DL,                                  & 
-!          & PWT0L,                                        & 
-!          & PWT0M,                                        & 
-!          & PGDEOSI,                                      & 
-!          & PGUEOSI,                                      & 
-!          & PGMU0,                                        & 
-!          & PGMU0_MIN,                                    & 
-!          & PGMU0_MAX,                                    & 
-!          & PGDEOTI,                                      & 
-!          & PGDEOTI2,                                     & 
-!          & PGUEOTI,                                      & 
-!          & PGUEOTI2,                                     & 
-!          & PGEOLT,                                       & 
-!          & PGEOXT,                                       & 
-!          & PGRPROX,                                      & 
-!          & PGMIXP,                                       & 
-!          & PGFLUXC,                                      & 
-!          & PGRSURF,                                      & 
-!          & ZDIFEXT,                                      & 
-!          & ZFRMQ,                                        & 
-!          & ZCPS,                                         & 
-!          & ZLHS,                                         & 
-!          & ZRS,                                          & 
-!          & ZLH,                                          & 
-!          & ZLSCPE,                                       & 
-!          & PNEB,                                         & 
-!          & PQICE,                                        & 
-!          & PQLI,                                         & 
-!          & ZQRCONV,                                      & 
-!          & ZQSCONV,                                      & 
-!          & ZQSAT,                                        & 
-!          & ZQW,                                          & 
-!          & PRH,                                          & 
-!          & ZTW,                                          & 
-!          & ZCD,                                          & 
-!          & ZCDN,                                         & 
-!          & ZCH,                                          & 
-!          & ZC1,                                          & 
-!          & ZC2,                                          & 
-!          & ZEMIS,                                        & 
-!          & ZFEVI,                                        & 
-!          & ZFTKE,                                        & 
-!          & ZFTKEI,                                       & 
-!          & ZFEFB1,                                       & 
-!          & ZFEFB2,                                       & 
-!          & ZFEFB3,                                       & 
-!          & ZNEIJ,                                        & 
-!          & ZVEG,                                         & 
-!          & PQS,                                          & 
-!          & ZQSATS,                                       & 
-!          & PCLCT,                                        & 
-!          & ICLPH,                                        & 
-!          & ZDPRECIPS,                                    & 
-!          & ZDPRECIPS2,                                   & 
-!          & ZTENDPTKE,                                    & 
-!          & ZKUROV_H,                                     & 
-!          & ZKTROV_H,                                     & 
-!          & ZTENDEXT_DEP,                                 & 
-!          & PTRAJ_PHYS,                                   & 
-!          & ZEDR,                                         & 
-!          & YDDDH,                                        & 
-!          & PFTCNS,                                       & 
-!          & ZGP2DSPP                                      &
-           & )                                     
-WRITE (0, *) __FILE__, ':', __LINE__ ; CALL FLUSH (0)
-
       CALL APLPAR(YDGEOMETRY,YDMF_PHYS,YDCPG_DYN0,YDMF_PHYS_SURF,YDVARS,YDSURF, YDXFU, YDCFU, YDMODEL, KST    , KEND   , NPROMA ,&
        & ITDIA  , NFLEVG  , KSTGLO,&
        & NVCLIS , YSD_VVD%NUMFLDS ,&

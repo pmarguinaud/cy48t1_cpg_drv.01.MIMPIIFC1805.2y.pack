@@ -150,6 +150,8 @@ $:pcpg_type_definition ("DYN", list_cpg_dyn)
 
 $:pcpg_type_definition ("PHY", list_cpg_phy)
 
+REAL(KIND=JPRB), PRIVATE, SAVE, TARGET :: ZDUM1 (1), ZDUM2 (1, 1), ZDUM3 (1,1,1)
+
 CONTAINS
 
 #:def gdim (d)
@@ -250,7 +252,12 @@ SELF%ZVIEW => SELF%ZDATA (:,:,:,BLOCK_INDEX)
 
 #:for var in list
   #:set ss = pdim (list[var][NDIMS])
-IF (ASSOCIATED (SELF%F_${var}$)) SELF%${var}$ ${ss}$ => SELF%F_${var}$%GET_VIEW (BLOCK_INDEX)
+  #:set ndim = 1 + len (list[var][NDIMS])
+IF (ASSOCIATED (SELF%F_${var}$)) THEN  
+  SELF%${var}$ ${ss}$ => SELF%F_${var}$%GET_VIEW (BLOCK_INDEX)
+ELSE
+  SELF%${var}$ ${ss}$ => ZDUM${ndim}$
+ENDIF
 #:endfor
 
 END SUBROUTINE
@@ -398,7 +405,12 @@ INTEGER(KIND=JPIM), INTENT (IN)   :: BLOCK_INDEX
   #:set elt = list[var]
   #:if elt[NTYPE] is None
     #:set ss = pdim (elt[NDIMS])
-IF (ASSOCIATED (SELF%F_${var}$)) SELF%${var}$ ${ss}$ => SELF%F_${var}$%GET_VIEW (BLOCK_INDEX)
+    #:set ndim = 1 + len (elt[NDIMS])
+IF (ASSOCIATED (SELF%F_${var}$)) THEN
+  SELF%${var}$ ${ss}$ => SELF%F_${var}$%GET_VIEW (BLOCK_INDEX)
+ELSE
+  SELF%${var}$ ${ss}$ => ZDUM${ndim}$
+ENDIF
   #:else
 CALL SELF%${var}$%UPDATE_VIEW (BLOCK_INDEX)
   #:endif

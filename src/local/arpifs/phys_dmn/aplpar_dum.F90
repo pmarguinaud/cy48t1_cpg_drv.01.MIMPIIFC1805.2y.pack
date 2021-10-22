@@ -37,26 +37,26 @@ SUBROUTINE APLPAR_DUM(&
 !  & PRDELP,             & 
 !  & PRCORI,             & 
 !  & PSV,                & 
-   & PU,                 & 
-   & PV,                 & 
-   & PT,                 & 
-   & PQ,                 & 
-   & PQI,                & 
-   & PQL,                & 
-   & PQSRES,             & 
-   & PQRRES,             & 
-   & PG,                 & 
-   & PTKE,               & 
-   & PEFB1,              & 
-   & PEFB2,              & 
-   & PEFB3,              & 
-   & PCVV,               & 
-   & PO3,                & 
+!  & PU,                 & 
+!  & PV,                 & 
+!  & PT,                 & 
+!  & PQ,                 & 
+!  & PQI,                & 
+!  & PQL,                & 
+!  & PQSRES,             & 
+!  & PQRRES,             & 
+!  & PG,                 & 
+!  & PTKE,               & 
+!  & PEFB1,              & 
+!  & PEFB2,              & 
+!  & PEFB3,              & 
+!  & PCVV,               & 
+!  & PO3,                & 
    & PCHEM,              & 
    & PNOGWDU,            & 
    & PNOGWDV,            & 
-   & PGFL,               & 
-   & PVORT0              & 
+   & PGFL                & 
+!  & PVORT0              & 
 !  & PCP,                & 
 !  & PCVGQ,              & 
 !  & PR,                 & 
@@ -245,26 +245,26 @@ IMPLICIT NONE
 !  REAL(KIND=JPRB)   ,INTENT(IN)    :: PRDELP(KLON,KLEV)
 !  REAL(KIND=JPRB)   ,INTENT(IN)    :: PRCORI(KLON)
 !  REAL(KIND=JPRB)   ,INTENT(IN)    :: PSV(KLON,KLEV,YDMODEL%YRML_GCONF%YGFL%NGFL_EXT)
-   REAL(KIND=JPRB)   ,INTENT(INOUT) :: PU(KLON,KLEV)
-   REAL(KIND=JPRB)   ,INTENT(INOUT) :: PV(KLON,KLEV)
-   REAL(KIND=JPRB)   ,INTENT(INOUT) :: PT(KLON,KLEV)
-   REAL(KIND=JPRB)   ,INTENT(INOUT) :: PQ(KLON,KLEV)
-   REAL(KIND=JPRB)   ,INTENT(IN)    :: PQI(KLON,KLEV)
-   REAL(KIND=JPRB)   ,INTENT(IN)    :: PQL(KLON,KLEV)
-   REAL(KIND=JPRB)   ,INTENT(INOUT) :: PQSRES(KLON,KLEV)
-   REAL(KIND=JPRB)   ,INTENT(INOUT) :: PQRRES(KLON,KLEV)
-   REAL(KIND=JPRB)   ,INTENT(INOUT) :: PG(KLON,KLEV)
-   REAL(KIND=JPRB)   ,INTENT(INOUT) :: PTKE(KLON,KLEV)
-   REAL(KIND=JPRB)   ,INTENT(INOUT) :: PEFB1(KLON,KLEV)
-   REAL(KIND=JPRB)   ,INTENT(INOUT) :: PEFB2(KLON,KLEV)
-   REAL(KIND=JPRB)   ,INTENT(INOUT) :: PEFB3(KLON,KLEV)
-   REAL(KIND=JPRB)   ,INTENT(INOUT) :: PCVV(KLON,KLEV)
-   REAL(KIND=JPRB)   ,INTENT(IN)    :: PO3(KLON,KLEV)
+!  REAL(KIND=JPRB)   ,INTENT(INOUT) :: PU(KLON,KLEV)
+!  REAL(KIND=JPRB)   ,INTENT(INOUT) :: PV(KLON,KLEV)
+!  REAL(KIND=JPRB)   ,INTENT(INOUT) :: PT(KLON,KLEV)
+!  REAL(KIND=JPRB)   ,INTENT(INOUT) :: PQ(KLON,KLEV)
+!  REAL(KIND=JPRB)   ,INTENT(IN)    :: PQI(KLON,KLEV)
+!  REAL(KIND=JPRB)   ,INTENT(IN)    :: PQL(KLON,KLEV)
+!  REAL(KIND=JPRB)   ,INTENT(INOUT) :: PQSRES(KLON,KLEV)
+!  REAL(KIND=JPRB)   ,INTENT(INOUT) :: PQRRES(KLON,KLEV)
+!  REAL(KIND=JPRB)   ,INTENT(INOUT) :: PG(KLON,KLEV)
+!  REAL(KIND=JPRB)   ,INTENT(INOUT) :: PTKE(KLON,KLEV)
+!  REAL(KIND=JPRB)   ,INTENT(INOUT) :: PEFB1(KLON,KLEV)
+!  REAL(KIND=JPRB)   ,INTENT(INOUT) :: PEFB2(KLON,KLEV)
+!  REAL(KIND=JPRB)   ,INTENT(INOUT) :: PEFB3(KLON,KLEV)
+!  REAL(KIND=JPRB)   ,INTENT(INOUT) :: PCVV(KLON,KLEV)
+!  REAL(KIND=JPRB)   ,INTENT(IN)    :: PO3(KLON,KLEV)
    REAL(KIND=JPRB)   ,INTENT(INOUT) :: PCHEM(KLON,KLEV,YDMODEL%YRML_GCONF%YGFL%NCHEM)
    REAL(KIND=JPRB)   ,INTENT(INOUT) :: PNOGWDU(KLON,KLEV)
    REAL(KIND=JPRB)   ,INTENT(INOUT) :: PNOGWDV(KLON,KLEV)
    REAL(KIND=JPRB)   ,INTENT(INOUT) :: PGFL(KLON,KLEV,YDMODEL%YRML_GCONF%YGFL%NDIM)
-   REAL(KIND=JPRB)   ,INTENT(IN)    :: PVORT0(KLON,KLEV)
+!  REAL(KIND=JPRB)   ,INTENT(IN)    :: PVORT0(KLON,KLEV)
 !  REAL(KIND=JPRB)   ,INTENT(INOUT) :: PCP(KLON,KLEV)
 !  REAL(KIND=JPRB)   ,INTENT(INOUT) :: PCVGQ(KLON,KLEV)
 !  REAL(KIND=JPRB)   ,INTENT(INOUT) :: PR(KLON,KLEV)

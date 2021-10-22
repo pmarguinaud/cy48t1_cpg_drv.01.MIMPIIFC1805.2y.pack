@@ -768,6 +768,10 @@ ASSOCIATE(MVTS=>YDPARAR%MVTS, NRR=>YDPARAR%NRR, NGPAR=>YDPARAR%NGPAR, CMF_UPDRAF
  & NSTOP=>YDRIP%NSTOP, NLIMA=>YGFL%NLIMA, YLIMA=>YGFL%YLIMA)
 
 
+WRITE (0, *) __FILE__, ':', __LINE__, SIZE (YDVARS%CHEM)
+WRITE (0, *) __FILE__, ':', __LINE__, SIZE (YDVARS%EXT)
+WRITE (0, *) __FILE__, ':', __LINE__, SIZE (YDVARS%NOGW)
+
 ZP1CHEM     => YDVARS%CHEM(1)%T0
 ZP1CHEM9    => YDVARS%CHEM(1)%T9
 CALL SC2PRG(YEFB1%MP1 ,ZTENDGFL ,ZPTENDEFB11)
@@ -1028,6 +1032,9 @@ IF (LLDIAB.AND.(.NOT.LMPA)) THEN
       ENDIF
 
       ITDIA=1_JPIM
+
+WRITE (0, *) __FILE__, ':', __LINE__ ; CALL FLUSH (0)
+
       CALL APLPAR_DUM( &
 !          & YDGEOMETRY,                                   & 
 !          & YDMF_PHYS,                                    & 
@@ -1066,26 +1073,26 @@ IF (LLDIAB.AND.(.NOT.LMPA)) THEN
 !          & PXYB0(1,1,YYTXYB0_PHY%M_RDELP),               & 
 !          & YDGSGEOM%RCORI,                               & 
 !          & ZP1EXT,                                       & 
-           & YDVARS%U%T0,                                  & 
-           & YDVARS%V%T0,                                  & 
-           & YDVARS%T%T0,                                  & 
-           & YDVARS%Q%T0,                                  & 
-           & YDVARS%I%T0,                                  & 
-           & YDVARS%L%T0,                                  & 
-           & YDVARS%S%T0,                                  & 
-           & YDVARS%R%T0,                                  & 
-           & YDVARS%G%T0,                                  & 
-           & YDVARS%TKE%T0,                                & 
-           & YDVARS%EFB1%T0,                               & 
-           & YDVARS%EFB2%T0,                               & 
-           & YDVARS%EFB3%T0,                               & 
-           & YDVARS%CVV%T0,                                & 
-           & YDVARS%O3%T0,                                 & 
+!          & YDVARS%U%T0,                                  & 
+!          & YDVARS%V%T0,                                  & 
+!          & YDVARS%T%T0,                                  & 
+!          & YDVARS%Q%T0,                                  & 
+!          & YDVARS%I%T0,                                  & 
+!          & YDVARS%L%T0,                                  & 
+!          & YDVARS%S%T0,                                  & 
+!          & YDVARS%R%T0,                                  & 
+!          & YDVARS%G%T0,                                  & 
+!          & YDVARS%TKE%T0,                                & 
+!          & YDVARS%EFB1%T0,                               & 
+!          & YDVARS%EFB2%T0,                               & 
+!          & YDVARS%EFB3%T0,                               & 
+!          & YDVARS%CVV%T0,                                & 
+!          & YDVARS%O3%T0,                                 & 
            & ZP1CHEM,                                      & 
            & ZP1NOGW,                                      & 
            & ZP2NOGW,                                      & 
-           & PGFL,                                         & 
-           & YDVARS%VOR%T0                                 & 
+           & PGFL                                          & 
+!          & YDVARS%VOR%T0                                 & 
 !          & PRCP0(1,1,YYTRCP0%M_CP),                      & 
 !          & ZCVGQ,                                        & 
 !          & PRCP0(1,1,YYTRCP0%M_R),                       & 
@@ -1205,6 +1212,7 @@ IF (LLDIAB.AND.(.NOT.LMPA)) THEN
 !          & PFTCNS,                                       & 
 !          & ZGP2DSPP                                      &
            & )                                     
+WRITE (0, *) __FILE__, ':', __LINE__ ; CALL FLUSH (0)
 
       CALL APLPAR(YDGEOMETRY,YDMF_PHYS,YDCPG_DYN0,YDMF_PHYS_SURF,YDVARS,YDSURF, YDXFU, YDCFU, YDMODEL, KST    , KEND   , NPROMA ,&
        & ITDIA  , NFLEVG  , KSTGLO,&

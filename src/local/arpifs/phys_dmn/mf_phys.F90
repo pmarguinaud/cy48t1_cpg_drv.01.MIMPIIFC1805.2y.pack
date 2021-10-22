@@ -1053,19 +1053,19 @@ IF (LLDIAB.AND.(.NOT.LMPA)) THEN
            & KGPCOMP,                                      & 
            & YDCFU%NFRRC,                                  & 
            & PDTPHY,                                       & 
-           & YDCSGEOM%RINDX,                               & 
-           & YDCSGEOM%RINDY,                               & 
+!          & YDCSGEOM%RINDX,                               & 
+!          & YDCSGEOM%RINDY,                               & 
            & LLXFUMSE,                                     & 
-           & PHI0,                                         & 
-           & PRE0,                                         & 
-           & PHIF0,                                        & 
-           & PRE0F,                                        & 
-           & PXYB0(1,1,YYTXYB0_PHY%M_ALPH),                & 
-           & PXYB0(1,1,YYTXYB0_PHY%M_DELP),                & 
-           & PXYB0(1,1,YYTXYB0_PHY%M_LNPR),                & 
-           & PXYB0(1,1,YYTXYB0_PHY%M_RDELP),               & 
-           & YDGSGEOM%RCORI,                               & 
-           & ZP1EXT,                                       & 
+!          & PHI0,                                         & 
+!          & PRE0,                                         & 
+!          & PHIF0,                                        & 
+!          & PRE0F,                                        & 
+!          & PXYB0(1,1,YYTXYB0_PHY%M_ALPH),                & 
+!          & PXYB0(1,1,YYTXYB0_PHY%M_DELP),                & 
+!          & PXYB0(1,1,YYTXYB0_PHY%M_LNPR),                & 
+!          & PXYB0(1,1,YYTXYB0_PHY%M_RDELP),               & 
+!          & YDGSGEOM%RCORI,                               & 
+!          & ZP1EXT,                                       & 
            & YDVARS%U%T0,                                  & 
            & YDVARS%V%T0,                                  & 
            & YDVARS%T%T0,                                  & 
@@ -1086,25 +1086,25 @@ IF (LLDIAB.AND.(.NOT.LMPA)) THEN
            & ZP2NOGW,                                      & 
            & PGFL,                                         & 
            & YDVARS%VOR%T0,                                & 
-           & PRCP0(1,1,YYTRCP0%M_CP),                      & 
-           & ZCVGQ,                                        & 
-           & PRCP0(1,1,YYTRCP0%M_R),                       & 
-           & PKOZO,                                        & 
-           & ZFPLCH,                                       & 
-           & ZFPLSH,                                       & 
-           & PCTY0(1,0,YYTCTY0%M_EVEL),                    & 
-           & PGPAR,                                        & 
-           & YDMF_PHYS_SURF%GSP_SG%PF_T0,                  & 
-           & YDMF_PHYS_SURF%GSP_SG%PA_T0,                  & 
-           & YDMF_PHYS_SURF%GSP_SG%PR_T0,                  & 
-           & YDMF_PHYS_SURF%GSP_SB%PT_T0,                  & 
-           & YDMF_PHYS_SURF%GSP_RR%PT_T0,                  & 
-           & YDMF_PHYS_SURF%GSP_RR%PFC_T0,                 & 
-           & YDMF_PHYS_SURF%GSP_SB%PQ_T0,                  & 
-           & YDMF_PHYS_SURF%GSP_SB%PTL_T0,                 & 
-           & YDMF_PHYS_SURF%GSP_RR%PW_T0,                  & 
-           & YDMF_PHYS_SURF%GSP_RR%PIC_T0,                 & 
-           & PCTY0(1,1,YYTCTY0%M_VVEL),                    & 
+!          & PRCP0(1,1,YYTRCP0%M_CP),                      & 
+!          & ZCVGQ,                                        & 
+!          & PRCP0(1,1,YYTRCP0%M_R),                       & 
+!          & PKOZO,                                        & 
+!          & ZFPLCH,                                       & 
+!          & ZFPLSH,                                       & 
+!          & PCTY0(1,0,YYTCTY0%M_EVEL),                    & 
+!          & PGPAR,                                        & 
+!          & YDMF_PHYS_SURF%GSP_SG%PF_T0,                  & 
+!          & YDMF_PHYS_SURF%GSP_SG%PA_T0,                  & 
+!          & YDMF_PHYS_SURF%GSP_SG%PR_T0,                  & 
+!          & YDMF_PHYS_SURF%GSP_SB%PT_T0,                  & 
+!          & YDMF_PHYS_SURF%GSP_RR%PT_T0,                  & 
+!          & YDMF_PHYS_SURF%GSP_RR%PFC_T0,                 & 
+!          & YDMF_PHYS_SURF%GSP_SB%PQ_T0,                  & 
+!          & YDMF_PHYS_SURF%GSP_SB%PTL_T0,                 & 
+!          & YDMF_PHYS_SURF%GSP_RR%PW_T0,                  & 
+!          & YDMF_PHYS_SURF%GSP_RR%PIC_T0,                 & 
+!          & PCTY0(1,1,YYTCTY0%M_VVEL),                    & 
 !          & PEMTD,                                        & 
 !          & PEMTU,                                        & 
 !          & PTRSW,                                        & 

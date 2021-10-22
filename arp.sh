@@ -36,7 +36,7 @@ mkdir -p $TMPDIR
 cd $TMPDIR
 
 
-for NAM in ARP LACE LTWOTL=F
+for NAM in ARP LACE LTWOTL=F.ARP
 do
 
 mkdir -p $NAM

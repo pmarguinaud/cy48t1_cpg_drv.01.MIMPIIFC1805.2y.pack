@@ -35,11 +35,14 @@ mkdir -p $TMPDIR
 
 cd $TMPDIR
 
-for NAM in NHEE NHQE
+for NAM1 in LTWOTL=T.ARO LTWOTL=F.ARO
 do
 
-mkdir -p $NAM
-cd $NAM
+for NAM2 in NHEE NHQE
+do
+
+mkdir -p $NAM1.$NAM2
+cd $NAM1.$NAM2
 
 # Choose your test case resolution
 
@@ -161,7 +164,11 @@ xpnam --delta="
 " --inplace EXSEG1.nam
 
 xpnam --delta="
-$(cat $PACK/$NAM.nam)
+$(cat $PACK/$NAM1.nam)
+" --inplace fort.4
+
+xpnam --delta="
+$(cat $PACK/$NAM2.nam)
 " --inplace fort.4
 
 perl -i -ne ' print unless (m/CROUGH/o) ' EXSEG1.nam
@@ -202,10 +209,11 @@ pack=$PACK
 
 ls -lrt
 
-diffNODE.001_01 NODE.001_01 $PACK/NODE.001_01.$NAM
+#diffNODE.001_01 NODE.001_01 $PACK/NODE.001_01.$NAM1
 
 cd ..
 
+done
 done
 
 

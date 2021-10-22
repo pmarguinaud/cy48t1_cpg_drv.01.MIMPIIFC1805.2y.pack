@@ -1603,6 +1603,7 @@ REAL(KIND=JPRB) :: ZHOOK_HANDLE
 #include "acpluis.intfb.h"
 #include "acpluiz.intfb.h"
 #include "acradcoef.intfb.h"
+#include "recmwf_dum.intfb.h"
 #include "recmwf.intfb.h"
 #include "acdayd.intfb.h"
 #include "acrso.intfb.h"
@@ -3567,6 +3568,22 @@ IF(LMPHYS) THEN
 
     ! ---- Intermittent call to radiation scheme
     IF (LLCALLRAD) THEN
+WRITE (0, *) __FILE__, ':', __LINE__, " KBL = ", KBL
+      CALL RECMWF_DUM(YDGEOMETRY%YRDIMV,YDMODEL,     &
+       &  KIDIA , KFDIA, KLON  , KLEV   ,         &
+       &  ZALBD , ZALBP, PAPRS , PAPRSF ,         &
+       &  PNEB  , ZQO3 , ZAER  , PDELP  , PEMIS , &
+       &  PMU0M , ZQV  , PQSAT , PQICE  , PQLI  , & 
+       &  ZQS   , ZQR  , YDMF_PHYS_SURF%GSD_VF%PLSM  , PT     , PTS   , &
+       &  PGP2DSPP, YDVARS%EZDIAG(YSPP_CONFIG%IEZDIAG_POS)%T0, &
+       &  PEMTD , PEMTU, PTRSO ,                   &
+       &  YDMF_PHYS%FRTHC, YDMF_PHYS%FRTH, YDMF_PHYS%FRSOC   , YDMF_PHYS%FRSO ,&
+       &  ZSFSWDIR     , ZSFSWDIF , ZFSDNN , ZFSDNV,&
+       &  ZCTRSO,ZCEMTR, ZTRSOD ,&
+       &  ZTRSODIR, ZTRSODIF,&
+       &  ZPIZA_DST,ZCGA_DST,ZTAUREL_DST,ZAERINDS,&
+       &  PGELAM, PGEMU, PGPAR, PMU0LU , YDMF_PHYS%ALB, PVRMOON)
+WRITE (0, *) __FILE__, ':', __LINE__; CALL FLUSH (0)
       CALL RECMWF(YDGEOMETRY%YRDIMV,YDMODEL,     &
        &  KIDIA , KFDIA, KLON  , KLEV   ,         &
        &  ZALBD , ZALBP, PAPRS , PAPRSF ,         &

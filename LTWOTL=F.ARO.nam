@@ -51,6 +51,6 @@
 /
 &NAMRIP
   TSTEP=10,
-  CSTOP='t70',
+  CSTOP='t50',
 /
 

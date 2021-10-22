@@ -171,6 +171,22 @@ xpnam --delta="
 $(cat $PACK/$NAM2.nam)
 " --inplace fort.4
 
+perl -e '
+for (1 .. 100)
+  {
+    my $i = $_-1;
+    print "  NSDITS($_)=$i,\n"
+  }' > nsdist.nam
+
+perl -i -ne ' print unless (m/\bNSDITS\b/o) ' fort.4
+
+xpnam --delta="
+&NAMCT0
+   NSDITS(0)=100,
+$(cat nsdist.nam)
+/
+" --inplace fort.4
+
 perl -i -ne ' print unless (m/CROUGH/o) ' EXSEG1.nam
 
 # Set up grib_api environment
@@ -201,7 +217,7 @@ cat fort.4
 # Run the model; use your mpirun
 
 pack=$PACK
-#pack=/home/mf/dp/marp/gco/packs/cy48t1_main.01.MIMPIIFC1805.2y.pack
+#ack=/home/mf/dp/marp/gco/packs/cy48t1_main.01.MIMPIIFC1805.2y.pack
 
 /opt/softs/mpiauto/mpiauto --verbose --wrap --wrap-stdeo --nouse-slurm-mpi --prefix-mpirun '/usr/bin/time -f "time=%e"' \
     --nnp $NTASK_FC --nn $NNODE_FC --openmp $NOPMP_FC -- $pack/bin/MASTERODB \

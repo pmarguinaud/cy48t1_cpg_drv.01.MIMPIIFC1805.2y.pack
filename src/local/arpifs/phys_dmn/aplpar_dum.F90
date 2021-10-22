@@ -1,18 +1,18 @@
 
 SUBROUTINE APLPAR_DUM(&
-   & YDGEOMETRY,         & 
-   & YDMF_PHYS,          & 
-   & YDCPG_DYN,          & 
-   & YDMF_PHYS_SURF,     & 
-   & YDVARS,             & 
-   & YDSURF,             & 
-   & YDXFU,              & 
-   & YDCFU,              & 
+!  & YDGEOMETRY,         & 
+!  & YDMF_PHYS,          & 
+!  & YDCPG_DYN,          & 
+!  & YDMF_PHYS_SURF,     & 
+!  & YDVARS,             & 
+!  & YDSURF,             & 
+!  & YDXFU,              & 
+!  & YDCFU,              & 
    & YDMODEL,            & 
-   & KIDIA,              & 
-   & KFDIA,              & 
+!  & KIDIA,              & 
+!  & KFDIA,              & 
    & KLON,               & 
-   & KTDIA,              & 
+!  & KTDIA,              & 
    & KLEV,               & 
 !  & KSTGLO,             & 
 !  & KVCLIS,             & 
@@ -208,19 +208,19 @@ USE SPP_MOD  , ONLY : YSPP, YSPP_CONFIG
 
 IMPLICIT NONE
 
-   TYPE(GEOMETRY)    ,INTENT(IN)    :: YDGEOMETRY
-   TYPE(MF_PHYS_TYPE),INTENT(INOUT) :: YDMF_PHYS
-   TYPE(CPG_DYN_TYPE),INTENT(INOUT) :: YDCPG_DYN
-   TYPE(MFPHYS_SURF_TYPE),INTENT(INOUT) :: YDMF_PHYS_SURF
-   TYPE(FIELD_VARIABLES),INTENT(INOUT) :: YDVARS
-   TYPE(TSURF)       ,INTENT(INOUT) :: YDSURF
-   TYPE(TXFU)        ,INTENT(INOUT) :: YDXFU
-   TYPE(TCFU)        ,INTENT(INOUT) :: YDCFU
+!  TYPE(GEOMETRY)    ,INTENT(IN)    :: YDGEOMETRY
+!  TYPE(MF_PHYS_TYPE),INTENT(INOUT) :: YDMF_PHYS
+!  TYPE(CPG_DYN_TYPE),INTENT(INOUT) :: YDCPG_DYN
+!  TYPE(MFPHYS_SURF_TYPE),INTENT(INOUT) :: YDMF_PHYS_SURF
+!  TYPE(FIELD_VARIABLES),INTENT(INOUT) :: YDVARS
+!  TYPE(TSURF)       ,INTENT(INOUT) :: YDSURF
+!  TYPE(TXFU)        ,INTENT(INOUT) :: YDXFU
+!  TYPE(TCFU)        ,INTENT(INOUT) :: YDCFU
    TYPE(MODEL)       ,INTENT(INOUT),TARGET :: YDMODEL
-   INTEGER(KIND=JPIM),INTENT(IN)    :: KIDIA
-   INTEGER(KIND=JPIM),INTENT(IN)    :: KFDIA
+!  INTEGER(KIND=JPIM),INTENT(IN)    :: KIDIA
+!  INTEGER(KIND=JPIM),INTENT(IN)    :: KFDIA
    INTEGER(KIND=JPIM),INTENT(IN)    :: KLON
-   INTEGER(KIND=JPIM),INTENT(IN)    :: KTDIA
+!  INTEGER(KIND=JPIM),INTENT(IN)    :: KTDIA
    INTEGER(KIND=JPIM),INTENT(IN)    :: KLEV
 !  INTEGER(KIND=JPIM),INTENT(IN)    :: KSTGLO
 !  INTEGER(KIND=JPIM),INTENT(IN)    :: KVCLIS

@@ -1029,19 +1029,19 @@ IF (LLDIAB.AND.(.NOT.LMPA)) THEN
 
       ITDIA=1_JPIM
       CALL APLPAR_DUM( &
-           & YDGEOMETRY,                                   & 
-           & YDMF_PHYS,                                    & 
-           & YDCPG_DYN0,                                   & 
-           & YDMF_PHYS_SURF,                               & 
-           & YDVARS,                                       & 
-           & YDSURF,                                       & 
-           & YDXFU,                                        & 
-           & YDCFU,                                        & 
+!          & YDGEOMETRY,                                   & 
+!          & YDMF_PHYS,                                    & 
+!          & YDCPG_DYN0,                                   & 
+!          & YDMF_PHYS_SURF,                               & 
+!          & YDVARS,                                       & 
+!          & YDSURF,                                       & 
+!          & YDXFU,                                        & 
+!          & YDCFU,                                        & 
            & YDMODEL,                                      & 
-           & KST,                                          & 
-           & KEND,                                         & 
+!          & KST,                                          & 
+!          & KEND,                                         & 
            & NPROMA,                                       & 
-           & ITDIA,                                        & 
+!          & ITDIA,                                        & 
            & NFLEVG,                                       & 
 !          & KSTGLO,                                       & 
 !          & NVCLIS,                                       & 

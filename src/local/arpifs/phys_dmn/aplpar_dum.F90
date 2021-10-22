@@ -14,19 +14,19 @@ SUBROUTINE APLPAR_DUM(&
    & KLON,               & 
    & KTDIA,              & 
    & KLEV,               & 
-   & KSTGLO,             & 
-   & KVCLIS,             & 
-   & KVCLIV,             & 
-   & KSTEP,              & 
-   & KSGST,              & 
-   & KCSS,               & 
-   & KBL,                & 
-   & KGPCOMP,            & 
-   & KNFRRC,             & 
-   & PDT,                & 
+!  & KSTGLO,             & 
+!  & KVCLIS,             & 
+!  & KVCLIV,             & 
+!  & KSTEP,              & 
+!  & KSGST,              & 
+!  & KCSS,               & 
+!  & KBL,                & 
+!  & KGPCOMP,            & 
+!  & KNFRRC,             & 
+!  & PDT,                & 
 !  & PINDX,              & 
 !  & PINDY,              & 
-   & LDXFUMSE,           & 
+!  & LDXFUMSE,           & 
 !  & PAPHI,              & 
 !  & PAPRS,              & 
 !  & PAPHIF,             & 
@@ -56,7 +56,7 @@ SUBROUTINE APLPAR_DUM(&
    & PNOGWDU,            & 
    & PNOGWDV,            & 
    & PGFL,               & 
-   & PVORT0,             & 
+   & PVORT0              & 
 !  & PCP,                & 
 !  & PCVGQ,              & 
 !  & PR,                 & 
@@ -174,7 +174,8 @@ SUBROUTINE APLPAR_DUM(&
 !  & PTDISS,             & 
 !  & YDDDH,              & 
 !  & PFTCNS,             & 
-   & PGP2DSPP)           
+!  & PGP2DSPP            &
+   & )           
 
 USE GEOMETRY_MOD       , ONLY : GEOMETRY
 USE MF_PHYS_TYPE_MOD   , ONLY : MF_PHYS_TYPE
@@ -221,19 +222,19 @@ IMPLICIT NONE
    INTEGER(KIND=JPIM),INTENT(IN)    :: KLON
    INTEGER(KIND=JPIM),INTENT(IN)    :: KTDIA
    INTEGER(KIND=JPIM),INTENT(IN)    :: KLEV
-   INTEGER(KIND=JPIM),INTENT(IN)    :: KSTGLO
-   INTEGER(KIND=JPIM),INTENT(IN)    :: KVCLIS
-   INTEGER(KIND=JPIM),INTENT(IN)    :: KVCLIV
-   INTEGER(KIND=JPIM),INTENT(IN)    :: KSTEP
-   INTEGER(KIND=JPIM),INTENT(IN)    :: KSGST
-   INTEGER(KIND=JPIM),INTENT(IN)    :: KCSS
-   INTEGER(KIND=JPIM),INTENT(IN)    :: KBL
-   INTEGER(KIND=JPIM),INTENT(IN)    :: KGPCOMP
-   INTEGER(KIND=JPIM),INTENT(IN)    :: KNFRRC
-   REAL(KIND=JPRB)   ,INTENT(IN)    :: PDT
+!  INTEGER(KIND=JPIM),INTENT(IN)    :: KSTGLO
+!  INTEGER(KIND=JPIM),INTENT(IN)    :: KVCLIS
+!  INTEGER(KIND=JPIM),INTENT(IN)    :: KVCLIV
+!  INTEGER(KIND=JPIM),INTENT(IN)    :: KSTEP
+!  INTEGER(KIND=JPIM),INTENT(IN)    :: KSGST
+!  INTEGER(KIND=JPIM),INTENT(IN)    :: KCSS
+!  INTEGER(KIND=JPIM),INTENT(IN)    :: KBL
+!  INTEGER(KIND=JPIM),INTENT(IN)    :: KGPCOMP
+!  INTEGER(KIND=JPIM),INTENT(IN)    :: KNFRRC
+!  REAL(KIND=JPRB)   ,INTENT(IN)    :: PDT
 !  REAL(KIND=JPRB)   ,INTENT(IN)    :: PINDX(KLON)
 !  REAL(KIND=JPRB)   ,INTENT(IN)    :: PINDY(KLON)
-   LOGICAL           ,INTENT(IN)    :: LDXFUMSE
+!  LOGICAL           ,INTENT(IN)    :: LDXFUMSE
 !  REAL(KIND=JPRB)   ,INTENT(IN)    :: PAPHI(KLON,0:KLEV)
 !  REAL(KIND=JPRB)   ,INTENT(IN)    :: PAPRS(KLON,0:KLEV)
 !  REAL(KIND=JPRB)   ,INTENT(IN)    :: PAPHIF(KLON,KLEV)
@@ -381,5 +382,5 @@ IMPLICIT NONE
 !  REAL(KIND=JPRB)   ,INTENT(INOUT) :: PTDISS(KLON,KLEV)
 !  TYPE(TYP_DDH), INTENT(INOUT)     :: YDDDH
 !  REAL(KIND=JPRB)   ,INTENT(INOUT) :: PFTCNS(KLON,0:KLEV,6)
-   REAL(KIND=JPRB)   ,INTENT(INOUT) :: PGP2DSPP(KLON,YSPP%N2D)
+!  REAL(KIND=JPRB)   ,INTENT(INOUT) :: PGP2DSPP(KLON,YSPP%N2D)
 END SUBROUTINE APLPAR_DUM

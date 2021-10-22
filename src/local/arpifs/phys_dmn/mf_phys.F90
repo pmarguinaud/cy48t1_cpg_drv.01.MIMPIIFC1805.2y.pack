@@ -1043,19 +1043,19 @@ IF (LLDIAB.AND.(.NOT.LMPA)) THEN
            & NPROMA,                                       & 
            & ITDIA,                                        & 
            & NFLEVG,                                       & 
-           & KSTGLO,                                       & 
-           & NVCLIS,                                       & 
-           & YSD_VVD%NUMFLDS,                              & 
-           & NSTEP,                                        & 
-           & NTSSG,                                        & 
-           & YSP_SBD%NLEVS,                                & 
-           & KBL,                                          & 
-           & KGPCOMP,                                      & 
-           & YDCFU%NFRRC,                                  & 
-           & PDTPHY,                                       & 
+!          & KSTGLO,                                       & 
+!          & NVCLIS,                                       & 
+!          & YSD_VVD%NUMFLDS,                              & 
+!          & NSTEP,                                        & 
+!          & NTSSG,                                        & 
+!          & YSP_SBD%NLEVS,                                & 
+!          & KBL,                                          & 
+!          & KGPCOMP,                                      & 
+!          & YDCFU%NFRRC,                                  & 
+!          & PDTPHY,                                       & 
 !          & YDCSGEOM%RINDX,                               & 
 !          & YDCSGEOM%RINDY,                               & 
-           & LLXFUMSE,                                     & 
+!          & LLXFUMSE,                                     & 
 !          & PHI0,                                         & 
 !          & PRE0,                                         & 
 !          & PHIF0,                                        & 
@@ -1085,7 +1085,7 @@ IF (LLDIAB.AND.(.NOT.LMPA)) THEN
            & ZP1NOGW,                                      & 
            & ZP2NOGW,                                      & 
            & PGFL,                                         & 
-           & YDVARS%VOR%T0,                                & 
+           & YDVARS%VOR%T0                                 & 
 !          & PRCP0(1,1,YYTRCP0%M_CP),                      & 
 !          & ZCVGQ,                                        & 
 !          & PRCP0(1,1,YYTRCP0%M_R),                       & 
@@ -1203,7 +1203,8 @@ IF (LLDIAB.AND.(.NOT.LMPA)) THEN
 !          & ZEDR,                                         & 
 !          & YDDDH,                                        & 
 !          & PFTCNS,                                       & 
-           & ZGP2DSPP)                                     
+!          & ZGP2DSPP                                      &
+           & )                                     
 
       CALL APLPAR(YDGEOMETRY,YDMF_PHYS,YDCPG_DYN0,YDMF_PHYS_SURF,YDVARS,YDSURF, YDXFU, YDCFU, YDMODEL, KST    , KEND   , NPROMA ,&
        & ITDIA  , NFLEVG  , KSTGLO,&

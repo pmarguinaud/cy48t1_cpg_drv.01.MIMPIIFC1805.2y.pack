@@ -8,7 +8,7 @@
 #:set AS_0_nflevg             = [ [ '0', 'NLEV' ] ]
 #:set AS_1_nflevg             = [ [ '1', 'NLEV' ] ]
 #:set AS_4D                   = [ [], [] ]
-#:set list_cpg_dyn = { &                                                                                         
+#:set vars_cpg_dyn = { &                                                                                         
 & "OROGL"          : [False, False, AS_void,          None,        "LLT0"               ], &
 & "OROGM"          : [False, False, AS_void,          None,        "LLT0"               ], &
 & "OROGLL"         : [False, False, AS_void,          None,        "LNHDYN .AND. LLT0"  ], &
@@ -47,7 +47,7 @@
 & "RDPHI"          : [False, False, AS_1_nflevg,      None,        "LNHDYN .AND. LLT0"  ], &
 & }
 
-#:set list_cpg_phy = { &                                                                                         
+#:set vars_cpg_phy = { &                                                                                         
 & "PRE"            : [False, False, AS_0_nflevg,      None,        "LLMF_PHYS"          ], &
 & "PREF"           : [False, False, AS_1_nflevg,      None,        "LLMF_PHYS"          ], &
 & "PREHYD"         : [False, False, AS_0_nflevg,      None,        "LLMF_PHYS"          ], &
@@ -58,7 +58,7 @@
 & "XYB"            : [False, False, AS_4D,            "XYB",       "LLMF_PHYS"          , "YLTXYB_PHY" ], &
 & }
 
-#:set list_cpg_dyn_xyb = { &
+#:set vars_cpg_dyn_xyb = { &
 & "DELP"           : [False, False, AS_1_nflevg,                                        ], & 
 & "RDELP"          : [False, False, AS_1_nflevg,                                        ], &
 & "LNPR"           : [False, False, AS_1_nflevg,                                        ], &
@@ -68,19 +68,19 @@
 & "RPP"            : [False, False, AS_1_nflevg,                                        ], &
 & }
 
-#:set list_cpg_dyn_hwind = { &
+#:set vars_cpg_dyn_hwind = { &
 & "UH"             : [False, False, AS_0_nflevg,                                        ], &
 & "VH"             : [False, False, AS_0_nflevg,                                        ], &
 & "WWI"            : [False, False, AS_0_nflevg,                                        ], &
 & }
 
-#:set list_cpg_dyn_rcp = { &
+#:set vars_cpg_dyn_rcp = { &
 & "CP"             : [False, False, AS_1_nflevg,                                        ], &
 & "R"              : [False, False, AS_1_nflevg,                                        ], &
 & "KAP"            : [False, False, AS_1_nflevg,                                        ], &
 & }
 
-#:set list_cpg_dyn_cty = { &
+#:set vars_cpg_dyn_cty = { &
 & "EVEL"           : [False, False, AS_0_nflevg,                                        ], &
 & "VVEL"           : [False, False, AS_0_nflevg,                                        ], &
 & "PSDIV"          : [False, False, AS_0_nflevg,                                        ], &
@@ -98,14 +98,14 @@ USE PARKIND1, ONLY : JPRB, JPIM
 IMPLICIT NONE
 
 
-#:def pcpg_dyn_4d_definition (name, list)
+#:def pcpg_dyn_4d_definition (name, vars)
 TYPE CPG_${name}$_TYPE
   LOGICAL :: LOWNED = .FALSE.
   REAL (KIND=JPRB), POINTER :: ZDATA (:,:,:,:) => NULL ()
   REAL (KIND=JPRB), POINTER :: ZVIEW (:,:,:) => NULL ()
 
-#:for var in list
-  #:set ndim = 1 + len (list[var][NDIMS])
+#:for var in vars
+  #:set ndim = 1 + len (vars[var][NDIMS])
   REAL (KIND=JPRB), POINTER, CONTIGUOUS :: ${var}$ (${", ".join ([":"] * ndim)}$) => NULL ()
   TYPE (FIELD_${ndim+1}$D), POINTER :: F_${var}$ => NULL ()
 #:endfor
@@ -117,19 +117,19 @@ CONTAINS
 END TYPE 
 #:enddef
 
-$:pcpg_dyn_4d_definition ("XYB",   list_cpg_dyn_xyb)
+$:pcpg_dyn_4d_definition ("XYB",   vars_cpg_dyn_xyb)
 
-$:pcpg_dyn_4d_definition ("HWIND", list_cpg_dyn_hwind)
+$:pcpg_dyn_4d_definition ("HWIND", vars_cpg_dyn_hwind)
 
-$:pcpg_dyn_4d_definition ("RCP",   list_cpg_dyn_rcp)
+$:pcpg_dyn_4d_definition ("RCP",   vars_cpg_dyn_rcp)
 
-$:pcpg_dyn_4d_definition ("CTY",   list_cpg_dyn_cty)
+$:pcpg_dyn_4d_definition ("CTY",   vars_cpg_dyn_cty)
 
-#:def pcpg_type_definition (name, list)
+#:def pcpg_type_definition (name, vars)
 TYPE CPG_${name}$_TYPE
 
-#:for var in list
-  #:set elt = list[var]
+#:for var in vars
+  #:set elt = vars[var]
   #:if elt[NTYPE] is None
     #:set ndim = 1 + len (elt[NDIMS])
   REAL (KIND=JPRB), POINTER, CONTIGUOUS :: ${var}$ (${", ".join ([":"] * ndim)}$) => NULL ()
@@ -146,9 +146,9 @@ CONTAINS
 END TYPE
 #:enddef pcpg_type_definition
 
-$:pcpg_type_definition ("DYN", list_cpg_dyn)
+$:pcpg_type_definition ("DYN", vars_cpg_dyn)
 
-$:pcpg_type_definition ("PHY", list_cpg_phy)
+$:pcpg_type_definition ("PHY", vars_cpg_phy)
 
 REAL(KIND=JPRB), PRIVATE, SAVE, TARGET :: ZDUM1 (1), ZDUM2 (1, 1), ZDUM3 (1,1,1)
 
@@ -197,7 +197,7 @@ $:s
 #:enddef pdim
 
 
-#:def pcpg_dyn_4d_methods (name, list)
+#:def pcpg_dyn_4d_methods (name, vars)
 SUBROUTINE CPG_${name}$_TYPE_INIT (SELF, REGISTRY, NLEV, YDT${name}$, PERSISTENT, P${name}$)
 
 USE INTDYN_MOD, ONLY : T${name}$
@@ -213,11 +213,13 @@ IF (PRESENT (P${name}$)) THEN
   SELF%ZDATA => P${name}$
   SELF%LOWNED = .FALSE.
 ELSE
-  ALLOCATE (SELF%ZDATA (REGISTRY%NPROMA, NLEV, YDT${name}$%NDIM, REGISTRY%NBLOCKS))
+#:set var = list (vars.keys ())[0]
+#:set s2 = gdim (vars[var][NDIMS][0])
+  ALLOCATE (SELF%ZDATA (REGISTRY%NPROMA, ${s2}$, YDT${name}$%NDIM, REGISTRY%NBLOCKS))
   SELF%LOWNED = .TRUE.
 ENDIF
 
-#:for var in list
+#:for var in vars
  IF (YDT${name}$%M_${var}$ > 0) THEN
    SELF%F_${var}$ => CREATE_FIELD_WRAP ('${var}$', SELF%ZDATA (:, :, YDT${name}$%M_${var}$, :))
  ENDIF
@@ -225,7 +227,7 @@ ENDIF
 
 #! IF (PRESENT (P${name}$)) THEN
 #! 
-#! #:for var in list
+#! #:for var in vars
 #!  IF (YDT${name}$%M_${var}$ > 0) THEN
 #!    SELF%F_${var}$ => CREATE_FIELD_WRAP ('${var}$', P${name}$ (:, :, YDT${name}$%M_${var}$, :))
 #!  ENDIF
@@ -233,9 +235,9 @@ ENDIF
 #! 
 #! ELSE
 #! 
-#! #:for var in list
+#! #:for var in vars
 #!  IF (YDT${name}$%M_${var}$ > 0) THEN
-#! $:temporary (var, list[var][NDIMS], "    ")
+#! $:temporary (var, vars[var][NDIMS], "    ")
 #!  ENDIF
 #! #:endfor
 #!
@@ -250,9 +252,9 @@ INTEGER(KIND=JPIM), INTENT (IN)   :: BLOCK_INDEX
 
 SELF%ZVIEW => SELF%ZDATA (:,:,:,BLOCK_INDEX)
 
-#:for var in list
-  #:set ss = pdim (list[var][NDIMS])
-  #:set ndim = 1 + len (list[var][NDIMS])
+#:for var in vars
+  #:set ss = pdim (vars[var][NDIMS])
+  #:set ndim = 1 + len (vars[var][NDIMS])
 IF (ASSOCIATED (SELF%F_${var}$)) THEN  
   SELF%${var}$ ${ss}$ => SELF%F_${var}$%GET_VIEW (BLOCK_INDEX)
 ELSE
@@ -268,7 +270,7 @@ CLASS (CPG_${name}$_TYPE)          :: SELF
 IF (SELF%LOWNED) DEALLOCATE (SELF%ZDATA)
 SELF%ZDATA => NULL ()
 
-#:for var in list
+#:for var in vars
 IF (ASSOCIATED (SELF%F_${var}$)) CALL DELETE_TEMPORARY (SELF%F_${var}$) 
 #:endfor
 
@@ -276,18 +278,18 @@ END SUBROUTINE
 #:enddef
 
 
-$:pcpg_dyn_4d_methods ("XYB",   list_cpg_dyn_xyb)
+$:pcpg_dyn_4d_methods ("XYB",   vars_cpg_dyn_xyb)
 
-$:pcpg_dyn_4d_methods ("HWIND", list_cpg_dyn_hwind)
+$:pcpg_dyn_4d_methods ("HWIND", vars_cpg_dyn_hwind)
 
-$:pcpg_dyn_4d_methods ("RCP",   list_cpg_dyn_rcp)
+$:pcpg_dyn_4d_methods ("RCP",   vars_cpg_dyn_rcp)
 
-$:pcpg_dyn_4d_methods ("CTY",   list_cpg_dyn_cty)
+$:pcpg_dyn_4d_methods ("CTY",   vars_cpg_dyn_cty)
 
-#:def pcpg_type_methods (name, list)
+#:def pcpg_type_methods (name, vars)
 SUBROUTINE CPG_${name}$_TYPE_INIT (SELF, KT, REGISTRY, NLEV, PERSISTENT, LDMF_PHYS &
-#:for var in list
-  #:if list[var][ISARG]
+#:for var in vars
+  #:if vars[var][ISARG]
                            &, ${argn (var)}$ &
   #:endif
 #:endfor
@@ -304,9 +306,9 @@ TYPE (FIELD_REGISTRY),        INTENT (INOUT) :: REGISTRY
 INTEGER (KIND=JPIM),          INTENT (IN)    :: NLEV
 LOGICAL, OPTIONAL,            INTENT (IN)    :: PERSISTENT
 LOGICAL, OPTIONAL,            INTENT (IN)    :: LDMF_PHYS
-#:for var in list
-  #:if list[var][ISARG]
-    #:set ndim = 1 + len (list[var][NDIMS]) + 1
+#:for var in vars
+  #:if vars[var][ISARG]
+    #:set ndim = 1 + len (vars[var][NDIMS]) + 1
 REAL(KIND=JPRB),       INTENT (IN), OPTIONAL, TARGET  :: ${argn (var)}$(${", ".join ([":"] * ndim)}$)
   #:endif
 #:endfor
@@ -360,8 +362,8 @@ IF (PRESENT (LDMF_PHYS)) THEN
   LLMF_PHYS = LDMF_PHYS
 ENDIF
 
-#:for var in list
-  #:set elt = list[var]
+#:for var in vars
+  #:set elt = vars[var]
   #:if not elt[NCOND] is None
     #:set ind = "  "
 IF (${elt[NCOND]}$) THEN
@@ -401,8 +403,8 @@ SUBROUTINE CPG_${name}$_TYPE_UPDATE_VIEW (SELF, BLOCK_INDEX)
 CLASS (CPG_${name}$_TYPE)         :: SELF
 INTEGER(KIND=JPIM), INTENT (IN)   :: BLOCK_INDEX
 
-#:for var in list
-  #:set elt = list[var]
+#:for var in vars
+  #:set elt = vars[var]
   #:if elt[NTYPE] is None
     #:set ss = pdim (elt[NDIMS])
     #:set ndim = 1 + len (elt[NDIMS])
@@ -421,8 +423,8 @@ END SUBROUTINE
 SUBROUTINE CPG_${name}$_TYPE_FINAL (SELF)
 CLASS (CPG_${name}$_TYPE)         :: SELF
 
-#:for var in list
-  #:set elt = list[var]
+#:for var in vars
+  #:set elt = vars[var]
   #:if elt[NTYPE] is None
 IF (ASSOCIATED (SELF%F_${var}$)) CALL DELETE_TEMPORARY (SELF%F_${var}$) 
   #:else
@@ -433,9 +435,9 @@ CALL SELF%${var}$%FINAL ()
 END SUBROUTINE 
 #:enddef pcpg_type_methods
 
-$:pcpg_type_methods ("DYN", list_cpg_dyn)
+$:pcpg_type_methods ("DYN", vars_cpg_dyn)
 
-$:pcpg_type_methods ("PHY", list_cpg_phy)
+$:pcpg_type_methods ("PHY", vars_cpg_phy)
 
 END MODULE CPG_TYPE_MOD
 

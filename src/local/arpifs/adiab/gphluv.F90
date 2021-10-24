@@ -82,7 +82,7 @@ REAL(KIND=JPRB)   ,INTENT(INOUT), OPTIONAL, TARGET :: PVH(KPROMA,0:YDDIMV%NFLEVG
 
 !     ------------------------------------------------------------------
 
-REAL(KIND=JPRB), POINTER :: ZWWI (:, :), ZUH (:,:), ZVH (:,:)
+REAL(KIND=JPRB), POINTER, CONTIGUOUS :: ZWWI (:, :), ZUH (:,:), ZVH (:,:)
 
 INTEGER(KIND=JPIM) :: JROF, JLEV
 REAL(KIND=JPRB) :: ZWW
@@ -94,17 +94,19 @@ REAL(KIND=JPRB) :: ZHOOK_HANDLE
 IF (LHOOK) CALL DR_HOOK('GPHLUV',0,ZHOOK_HANDLE)
 ASSOCIATE(NFLEVG=>YDDIMV%NFLEVG)
 
+ZWWI => NULL ()
+ZUH  => NULL ()
+ZVH  => NULL ()
+
 IF (PRESENT (PUVH)) THEN
   ZWWI (1:, 0:) => PUVH(:,:,YYTHW%M_WWI)
   ZUH  (1:, 0:) => PUVH(:,:,YYTHW%M_UH)
   ZVH  (1:, 0:) => PUVH(:,:,YYTHW%M_VH)
-ELSEIF (PRESENT (PWWI) .AND. PRESENT (PUH) .AND. PRESENT (PVH)) THEN
-  ZWWI (1:, 0:) => PWWI
-  ZUH  (1:, 0:) => PUH
-  ZVH  (1:, 0:) => PVH
-ELSE
-  CALL ABOR1 ('GPHLUV: PUVH OR PWWI/PUH/PVH REQUIRED')
 ENDIF
+
+IF (PRESENT (PWWI)) ZWWI (1:, 0:) => PWWI
+IF (PRESENT (PUH )) ZUH  (1:, 0:) => PUH
+IF (PRESENT (PVH )) ZVH  (1:, 0:) => PVH
 
 !     ------------------------------------------------------------------
 

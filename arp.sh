@@ -188,7 +188,7 @@ cat fort.4
     --nnp $NTASK_FC --nn $NNODE_FC --openmp $NOPMP_FC -- $PACK/bin/MASTERODB \
  -- --nnp $NTASK_IO --nn $NNODE_IO --openmp $NOPMP_IO -- $PACK/bin/MASTERODB 
 
-diffNODE.001_01 NODE.001_01 $PACK/NODE.001_01.$NAM
+diffNODE.001_01 NODE.001_01 $PACK/ref/NODE.001_01.$NAM
 
 ls -lrt
 

@@ -152,7 +152,7 @@ xpnam --delta="
 " --inplace fort.4
 
 xpnam --delta="
-$(cat $PACK/$NAM.nam)
+$(cat $PACK/nam/$NAM.nam)
 " --inplace fort.4
 
 # Set up grib_api environment

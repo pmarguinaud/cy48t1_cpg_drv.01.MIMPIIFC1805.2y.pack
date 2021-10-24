@@ -164,11 +164,11 @@ xpnam --delta="
 " --inplace EXSEG1.nam
 
 xpnam --delta="
-$(cat $PACK/$NAM1.nam)
+$(cat $PACK/nam/$NAM1.nam)
 " --inplace fort.4
 
 xpnam --delta="
-$(cat $PACK/$NAM2.nam)
+$(cat $PACK/nam/$NAM2.nam)
 " --inplace fort.4
 
 perl -e '

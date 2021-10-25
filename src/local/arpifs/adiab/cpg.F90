@@ -316,40 +316,9 @@ TYPE(TYP_DDH)        , INTENT(INOUT) :: YDDDH
 ! - other auxiliary quantities at time 0.
                    
 REAL(KIND=JPRB), POINTER, CONTIGUOUS :: ZRCP0(:,:,:)                   
-                   
-                    
 REAL(KIND=JPRB), POINTER, CONTIGUOUS :: ZCTY0(:,:,:)                  
 REAL(KIND=JPRB), POINTER, CONTIGUOUS :: ZXYB0(:,:,:)
 REAL(KIND=JPRB), POINTER, CONTIGUOUS :: ZUVH0(:,:,:)
-                   
-    
-  
-                    
-                    
-        
-        
-      
-      
-       
-       
-        
-      
-     
-     
-                    
-            
-            
-                     
-             
-            
-
-
-
-
-
-
-
-
 REAL(KIND=JPRB), POINTER, CONTIGUOUS :: ZXYB0_PHY(:,:,:)
 
 ! - adiabatic Lagrangian tendencies
@@ -373,21 +342,6 @@ REAL(KIND=JPRB) :: ZCLCT(YDGEOMETRY%YRDIM%NPROMA)                     ! cf. PCLC
                                     
 REAL(KIND=JPRB), POINTER, CONTIGUOUS :: ZXYB9(:,:,:)
 REAL(KIND=JPRB), POINTER, CONTIGUOUS :: ZRCP9(:,:,:)                                   
-                                     
-                                    
-                                    
-        
-      
-            
-           
-             
-           
-
-
-
-
-
-
 REAL(KIND=JPRB), POINTER, CONTIGUOUS :: ZXYB9_PHY(:,:,:)
 
 ! - other quantities.
@@ -489,67 +443,13 @@ ASSOCIATE(NDIM=>YGFL%NDIM, NDIM1=>YGFL%NDIM1, NDIMPC=>YGFL%NDIMPC, &
 !*       3.    READ BUFFERS, COMPUTE AUXILIARY QUANTITIES.
 !              -------------------------------------------
 
-
-
-
-
 ZRCP0              => YDCPG_DYN0%RCP%ZVIEW
-
 ZCTY0 (1:,0:,1:)   => YDCPG_DYN0%CTY%ZVIEW
-
-
 ZXYB0              => YDCPG_DYN0%XYB%ZVIEW
 ZUVH0 (1:, 0:, 1:) => YDCPG_DYN0%UVH%ZVIEW
-  
-
-    
-    
-     
-     
-   
-   
-    
-    
-
-
-   
-   
-     
-    
-     
-      
-     
-     
-
-
-
-
-
-
-
-
 ZXYB0_PHY          => YDCPG_PHY0%XYB%ZVIEW
-
-
 ZRCP9              => YDCPG_DYN9%RCP%ZVIEW
-
-
-
-
 ZXYB9              => YDCPG_DYN9%XYB%ZVIEW
-
-
-
-
-
-
-
-
-
-
-
-
-
 ZXYB9_PHY          => YDCPG_PHY9%XYB%ZVIEW
 
 ZGPAR(:,:)=0.0_JPRB

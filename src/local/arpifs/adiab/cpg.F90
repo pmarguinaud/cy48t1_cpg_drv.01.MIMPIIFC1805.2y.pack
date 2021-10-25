@@ -310,46 +310,46 @@ TYPE (TRAJ_SLAG_TYPE),INTENT(INOUT) :: PTRAJ_SLAG
 TYPE(TYP_DDH)        , INTENT(INOUT) :: YDDDH
 !     ------------------------------------------------------------------
 ! - derivatives of orography.
-REAL(KIND=JPRB), POINTER, CONTIGUOUS :: ZOROGL(:)
-REAL(KIND=JPRB), POINTER, CONTIGUOUS :: ZOROGM(:)
+
+
 
 ! - other auxiliary quantities at time 0.
-REAL(KIND=JPRB), POINTER, CONTIGUOUS :: ZPRE0F(:,:)                   
+                   
 REAL(KIND=JPRB), POINTER, CONTIGUOUS :: ZRCP0(:,:,:)                   
-REAL(KIND=JPRB), POINTER, CONTIGUOUS :: ZPHIF0(:,:)                   
-REAL(KIND=JPRB), POINTER, CONTIGUOUS :: ZPRE0(:,:)                    
+                   
+                    
 REAL(KIND=JPRB), POINTER, CONTIGUOUS :: ZCTY0(:,:,:)                  
 REAL(KIND=JPRB), POINTER, CONTIGUOUS :: ZXYB0(:,:,:)
 REAL(KIND=JPRB), POINTER, CONTIGUOUS :: ZUVH0(:,:,:)
-REAL(KIND=JPRB), POINTER, CONTIGUOUS :: ZPHI0(:,:)                   
-REAL(KIND=JPRB), POINTER, CONTIGUOUS :: ZNHPRE0F(:,:)    
-REAL(KIND=JPRB), POINTER, CONTIGUOUS :: ZNHPRE0H(:,:)  
-REAL(KIND=JPRB), POINTER, CONTIGUOUS :: ZPRE0L(:)                    
-REAL(KIND=JPRB), POINTER, CONTIGUOUS :: ZPRE0M(:)                    
-REAL(KIND=JPRB), POINTER, CONTIGUOUS :: ZRT0L(:,:)        
-REAL(KIND=JPRB), POINTER, CONTIGUOUS :: ZRT0M(:,:)        
-REAL(KIND=JPRB), POINTER, CONTIGUOUS :: ZPHI0FL(:,:)      
-REAL(KIND=JPRB), POINTER, CONTIGUOUS :: ZPHI0FM(:,:)      
-REAL(KIND=JPRB), POINTER, CONTIGUOUS :: ZGWFT0(:,:)       
-REAL(KIND=JPRB), POINTER, CONTIGUOUS :: ZKENE0(:,:)       
-REAL(KIND=JPRB), POINTER, CONTIGUOUS :: ZNHX0(:,:)        
-REAL(KIND=JPRB), POINTER, CONTIGUOUS :: ZNHY0(:,:)      
-REAL(KIND=JPRB), POINTER, CONTIGUOUS :: ZQCHA0L(:,:)     
-REAL(KIND=JPRB), POINTER, CONTIGUOUS :: ZQCHA0M(:,:)     
-REAL(KIND=JPRB), POINTER, CONTIGUOUS :: ZDBBC(:)                    
-REAL(KIND=JPRB), POINTER, CONTIGUOUS :: ZRDPHI(:,:)            
-REAL(KIND=JPRB), POINTER, CONTIGUOUS :: ZGWT0(:,:)            
-REAL(KIND=JPRB), POINTER, CONTIGUOUS :: ZGWS(:)                     
-REAL(KIND=JPRB), POINTER, CONTIGUOUS :: ZGWFL(:,:)             
-REAL(KIND=JPRB), POINTER, CONTIGUOUS :: ZGWFM(:,:)            
+                   
+    
+  
+                    
+                    
+        
+        
+      
+      
+       
+       
+        
+      
+     
+     
+                    
+            
+            
+                     
+             
+            
 
-REAL(KIND=JPRB), POINTER, CONTIGUOUS :: ZPRE0_PHY(:,:)
-REAL(KIND=JPRB), POINTER, CONTIGUOUS :: ZPRE0F_PHY(:,:)
-REAL(KIND=JPRB), POINTER, CONTIGUOUS :: ZW0_PHY(:,:)
-REAL(KIND=JPRB), POINTER, CONTIGUOUS :: ZW0L_PHY(:,:)
-REAL(KIND=JPRB), POINTER, CONTIGUOUS :: ZW0M_PHY(:,:)
-REAL(KIND=JPRB), POINTER, CONTIGUOUS :: ZPREHYD0F_PHY(:,:)
-REAL(KIND=JPRB), POINTER, CONTIGUOUS :: ZPREHYD0_PHY(:,:)
+
+
+
+
+
+
+
 REAL(KIND=JPRB), POINTER, CONTIGUOUS :: ZXYB0_PHY(:,:,:)
 
 ! - adiabatic Lagrangian tendencies
@@ -369,25 +369,25 @@ REAL(KIND=JPRB) :: ZDHCV(YDGEOMETRY%YRDIM%NPROMA,0:YDGEOMETRY%YRDIMV%NFLEVG,YDMO
 REAL(KIND=JPRB) :: ZCLCT(YDGEOMETRY%YRDIM%NPROMA)                     ! cf. PCLCT in MF_PHYS
 
 ! - quantities at time 9
-REAL(KIND=JPRB), POINTER, CONTIGUOUS :: ZPRE9(:,:)                                     
-REAL(KIND=JPRB), POINTER, CONTIGUOUS :: ZPRE9F(:,:)                                    
+                                     
+                                    
 REAL(KIND=JPRB), POINTER, CONTIGUOUS :: ZXYB9(:,:,:)
 REAL(KIND=JPRB), POINTER, CONTIGUOUS :: ZRCP9(:,:,:)                                   
-REAL(KIND=JPRB), POINTER, CONTIGUOUS :: ZPHI9(:,:)                                     
-REAL(KIND=JPRB), POINTER, CONTIGUOUS :: ZPHIF9(:,:)                                    
-REAL(KIND=JPRB), POINTER, CONTIGUOUS :: ZWRL9(:,:)                                    
-REAL(KIND=JPRB), POINTER, CONTIGUOUS :: ZNHPRE9F(:,:)        
-REAL(KIND=JPRB), POINTER, CONTIGUOUS :: ZNHPRE9H(:,:)      
-REAL(KIND=JPRB), POINTER, CONTIGUOUS :: ZGWFT9(:,:)            
-REAL(KIND=JPRB), POINTER, CONTIGUOUS :: ZGWT9(:,:)           
-REAL(KIND=JPRB), POINTER, CONTIGUOUS :: ZNHX9(:,:)             
-REAL(KIND=JPRB), POINTER, CONTIGUOUS :: ZNHY9(:,:)           
+                                     
+                                    
+                                    
+        
+      
+            
+           
+             
+           
 
-REAL(KIND=JPRB), POINTER, CONTIGUOUS :: ZW9_PHY(:,:)
-REAL(KIND=JPRB), POINTER, CONTIGUOUS :: ZPRE9_PHY(:,:)
-REAL(KIND=JPRB), POINTER, CONTIGUOUS :: ZPRE9F_PHY(:,:)
-REAL(KIND=JPRB), POINTER, CONTIGUOUS :: ZPREHYD9F_PHY(:,:)
-REAL(KIND=JPRB), POINTER, CONTIGUOUS :: ZPREHYD9_PHY(:,:)
+
+
+
+
+
 REAL(KIND=JPRB), POINTER, CONTIGUOUS :: ZXYB9_PHY(:,:,:)
 
 ! - other quantities.
@@ -489,67 +489,67 @@ ASSOCIATE(NDIM=>YGFL%NDIM, NDIM1=>YGFL%NDIM1, NDIMPC=>YGFL%NDIMPC, &
 !*       3.    READ BUFFERS, COMPUTE AUXILIARY QUANTITIES.
 !              -------------------------------------------
 
-ZOROGL             => YDCPG_DYN0%OROGL
-ZOROGM             => YDCPG_DYN0%OROGM
 
-ZPHIF0             => YDCPG_DYN0%PHIF
+
+
+
 ZRCP0              => YDCPG_DYN0%RCP%ZVIEW
-ZPRE0F             => YDCPG_DYN0%PREF
+
 ZCTY0 (1:,0:,1:)   => YDCPG_DYN0%CTY%ZVIEW
-ZPHI0 (1:, 0:)     => YDCPG_DYN0%PHI
-ZPRE0 (1:, 0:)     => YDCPG_DYN0%PRE
+
+
 ZXYB0              => YDCPG_DYN0%XYB%ZVIEW
 ZUVH0 (1:, 0:, 1:) => YDCPG_DYN0%UVH%ZVIEW
-ZNHPRE0F           => YDCPG_DYN0%NHPREF  
-ZNHPRE0H(1:,0:)    => YDCPG_DYN0%NHPREH
-ZPRE0L             => YDCPG_DYN0%PREL    
-ZPRE0M             => YDCPG_DYN0%PREM    
-ZRT0L              => YDCPG_DYN0%RTL     
-ZRT0M              => YDCPG_DYN0%RTM     
-ZPHI0FL            => YDCPG_DYN0%PHIFL   
-ZPHI0FM            => YDCPG_DYN0%PHIFM   
-ZGWFT0             => YDCPG_DYN0%GWFT    
-ZKENE0             => YDCPG_DYN0%KENE    
-ZNHX0              => YDCPG_DYN0%NHX
-ZNHY0(1:,0:)       => YDCPG_DYN0%NHY
-ZQCHA0L            => YDCPG_DYN0%QCHAL   
-ZQCHA0M            => YDCPG_DYN0%QCHAM   
-ZDBBC              => YDCPG_DYN0%DBBC     
-ZRDPHI             => YDCPG_DYN0%RDPHI    
-ZGWT0              => YDCPG_DYN0%GWT     
-ZGWS               => YDCPG_DYN0%GWS      
-ZGWFL              => YDCPG_DYN0%GWFL     
-ZGWFM              => YDCPG_DYN0%GWFM     
+  
 
-ZPRE0_PHY(1:,0:)   => YDCPG_PHY0%PRE
-ZPRE0F_PHY         => YDCPG_PHY0%PREF
-ZW0_PHY            => YDCPG_PHY0%W
-ZW0L_PHY           => YDCPG_PHY0%WL
-ZW0M_PHY           => YDCPG_PHY0%WM
-ZPREHYD0F_PHY      => YDCPG_PHY0%PREHYDF
-ZPREHYD0_PHY(1:,0:)=> YDCPG_PHY0%PREHYD
+    
+    
+     
+     
+   
+   
+    
+    
+
+
+   
+   
+     
+    
+     
+      
+     
+     
+
+
+
+
+
+
+
+
 ZXYB0_PHY          => YDCPG_PHY0%XYB%ZVIEW
 
-ZPHIF9             => YDCPG_DYN9%PHIF
+
 ZRCP9              => YDCPG_DYN9%RCP%ZVIEW
-ZPRE9F             => YDCPG_DYN9%PREF
-ZWRL9              => YDCPG_DYN9%WRL
-ZPHI9 (1:, 0:)     => YDCPG_DYN9%PHI
-ZPRE9 (1:, 0:)     => YDCPG_DYN9%PRE
+
+
+
+
 ZXYB9              => YDCPG_DYN9%XYB%ZVIEW
 
-ZNHPRE9F           => YDCPG_DYN9%NHPREF
-ZNHPRE9H(1:,0:)    => YDCPG_DYN9%NHPREH
-ZGWFT9             => YDCPG_DYN9%GWFT
-ZGWT9              => YDCPG_DYN9%GWT
-ZNHX9              => YDCPG_DYN9%NHX
-ZNHY9(1:,0:)       => YDCPG_DYN9%NHY
 
-ZW9_PHY            => YDCPG_PHY9%W
-ZPRE9_PHY(1:,0:)   => YDCPG_PHY9%PRE
-ZPRE9F_PHY         => YDCPG_PHY9%PREF
-ZPREHYD9F_PHY      => YDCPG_PHY9%PREHYDF
-ZPREHYD9_PHY(1:,0:)=> YDCPG_PHY9%PREHYD
+
+
+
+
+
+
+
+
+
+
+
 ZXYB9_PHY          => YDCPG_PHY9%XYB%ZVIEW
 
 ZGPAR(:,:)=0.0_JPRB

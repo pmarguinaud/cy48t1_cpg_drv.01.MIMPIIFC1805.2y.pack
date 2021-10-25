@@ -574,13 +574,13 @@ CALL CPG_GP(YDGEOMETRY,YDCPG_DYN0,YDCPG_DYN9,YDMF_PHYS_SURF,YDVARS,&
  & KIBL,&
  !---------------------------------------------------------------------
  ! - INPUT/OUTPUT .
- & PGFL,PGMV,PGMVS,&
+ & PGFL,&
  & PGMVTNDSL_DDH,PGFLTNDSL_DDH,&
  !---------------------------------------------------------------------
  ! - OUTPUT .
  & ZOROGL,ZOROGM,&
  & ZGPAR,PB2,&
- & PGMVT1,PGMVT1S,PGFLT1,&
+ & PGFLT1,&
  & ZKOZO,ZQS,ZQICE,ZQLI,ZQRAIN,ZQSNOW,&
  & ZATND,&
  & PEXTRA,YDDDH)

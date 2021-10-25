@@ -19,11 +19,12 @@ for my $ap (@ap)
     my ($E1) = &F ('./E-1/ANY-E', $ap);
     my ($E2) = &F ('./E-2/ANY-E', $ap);
     next if ($E2->textContent =~ m/\(/o);
+    next if ($E2->textContent =~ m/ZVIEW/o);
 
 
     my ($N1) = &F ('./N', $E1, 1);
 
-    my @expr = &F ('//named-E/N[string(.)="?"]', $N1, $d);
+    my @expr = &F ('//named-E/N[string(.)="?"][not (./R-LT)]', $N1, $d);
 
     for my $expr (@expr)
       {

@@ -309,18 +309,6 @@ TYPE (TRAJ_PHYS_TYPE),INTENT(INOUT) :: PTRAJ_PHYS
 TYPE (TRAJ_SLAG_TYPE),INTENT(INOUT) :: PTRAJ_SLAG
 TYPE(TYP_DDH)        , INTENT(INOUT) :: YDDDH
 !     ------------------------------------------------------------------
-! - derivatives of orography.
-
-
-
-! - other auxiliary quantities at time 0.
-                   
-REAL(KIND=JPRB), POINTER, CONTIGUOUS :: ZRCP0(:,:,:)                   
-REAL(KIND=JPRB), POINTER, CONTIGUOUS :: ZCTY0(:,:,:)                  
-REAL(KIND=JPRB), POINTER, CONTIGUOUS :: ZXYB0(:,:,:)
-REAL(KIND=JPRB), POINTER, CONTIGUOUS :: ZUVH0(:,:,:)
-REAL(KIND=JPRB), POINTER, CONTIGUOUS :: ZXYB0_PHY(:,:,:)
-
 ! - adiabatic Lagrangian tendencies
 REAL(KIND=JPRB) :: ZATND(YDGEOMETRY%YRDIM%NPROMA,YDGEOMETRY%YRDIMV%NFLEVG,YYTTND%NDIM)
 ! - miscellaneous NPROMA-dimensioned arrays.
@@ -336,14 +324,6 @@ REAL(KIND=JPRB) :: ZQSOL(YDGEOMETRY%YRDIM%NPROMA)                     ! cf. PQSO
 REAL(KIND=JPRB) :: ZDHSF(YDGEOMETRY%YRDIM%NPROMA)                     ! cf. PDHSF in CPG_DIA
 REAL(KIND=JPRB) :: ZDHCV(YDGEOMETRY%YRDIM%NPROMA,0:YDGEOMETRY%YRDIMV%NFLEVG,YDMODEL%YRML_DIAG%YRMDDH%NDHCVSUN)   ! cf. PDHCV in CPG_DIA
 REAL(KIND=JPRB) :: ZCLCT(YDGEOMETRY%YRDIM%NPROMA)                     ! cf. PCLCT in MF_PHYS
-
-! - quantities at time 9
-                                     
-                                    
-REAL(KIND=JPRB), POINTER, CONTIGUOUS :: ZXYB9(:,:,:)
-REAL(KIND=JPRB), POINTER, CONTIGUOUS :: ZRCP9(:,:,:)                                   
-REAL(KIND=JPRB), POINTER, CONTIGUOUS :: ZXYB9_PHY(:,:,:)
-
 ! - other quantities.
 REAL(KIND=JPRB) :: ZGPAR(YDGEOMETRY%YRDIM%NPROMM,YDMODEL%YRML_PHY_MF%YRPARAR%NGPAR+1)             ! cf. PGPAR in CPG_GP
 REAL(KIND=JPRB) :: ZSLBUF1AU(YDGEOMETRY%YRDIM%NPROMA,YDMODEL%YRML_DYN%YRPTRSLB1%NFLDSLB1)        ! local version of SLBUF1
@@ -443,15 +423,6 @@ ASSOCIATE(NDIM=>YGFL%NDIM, NDIM1=>YGFL%NDIM1, NDIMPC=>YGFL%NDIMPC, &
 
 !*       3.    READ BUFFERS, COMPUTE AUXILIARY QUANTITIES.
 !              -------------------------------------------
-
-ZRCP0              => YDCPG_DYN0%RCP%ZVIEW
-ZCTY0 (1:,0:,1:)   => YDCPG_DYN0%CTY%ZVIEW
-ZXYB0              => YDCPG_DYN0%XYB%ZVIEW
-ZUVH0 (1:, 0:, 1:) => YDCPG_DYN0%UVH%ZVIEW
-ZXYB0_PHY          => YDCPG_PHY0%XYB%ZVIEW
-ZRCP9              => YDCPG_DYN9%RCP%ZVIEW
-ZXYB9              => YDCPG_DYN9%XYB%ZVIEW
-ZXYB9_PHY          => YDCPG_PHY9%XYB%ZVIEW
 
 ZGPAR(:,:)=0.0_JPRB
 

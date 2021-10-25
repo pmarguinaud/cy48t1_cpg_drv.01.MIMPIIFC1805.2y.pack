@@ -19,6 +19,7 @@ for my $F90 (@ARGV)
     my @fn = &F ('./component-decl-stmt//EN-N//text()', $ft, 1);
     
     my @expr = &F ('//named-E[string(N)="PGMV" or string(N)="PGFL" or string(N)="PGMVS"]', $d);
+    my @expr = &F ('//named-E[string(N)="PGMV" or string(N)="PGFL" or string(N)="PGMVS" or string(N)="PGMVT1"]', $d);
 
     for my $expr (@expr)
       {

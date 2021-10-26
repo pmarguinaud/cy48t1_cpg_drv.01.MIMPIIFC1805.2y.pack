@@ -8,6 +8,8 @@
 #:set AS_0_nflevg             = [ [ '0', 'NLEV' ] ]
 #:set AS_1_nflevg             = [ [ '1', 'NLEV' ] ]
 #:set AS_0_nflevg_6           = [ [ '1', 'NLEV' ], [ '1', '6' ] ]
+#:set AS_0_NSORAYFRm1         = [ [ '0', 'YDPHY%NSORAYFR-1' ] ]
+#:set AS_0_nflevg_2           = [ [ '1', 'NLEV' ], [ '1', '2' ] ]
 #:set AS_4D                   = [ [], [] ]
 
 #:set vars_cpg_dyn = { &                                                                                         
@@ -79,6 +81,25 @@
 & "TSOL"           : [False, False, AS_void,          None,        None                 ], &
 & "FTCNS"          : [False, False, AS_0_nflevg_6,    None,        None                 ], &
 & }
+
+#:set vars_cpg_opt = { &
+& "GDEOSI"         : [True,  False, AS_0_nflevg_2,    None,        "LLMF_PHYS"          ], &
+& "GUEOSI"         : [True,  False, AS_0_nflevg_2,    None,        "LLMF_PHYS"          ], &
+& "GMU0"           : [True,  False, AS_0_NSORAYFRm1,  None,        "LLMF_PHYS"          ], &
+& "GMU0_MIN"       : [True,  False, AS_void,          None,        "LLMF_PHYS"          ], &
+& "GMU0_MAX"       : [True,  False, AS_void,          None,        "LLMF_PHYS"          ], &
+& "GDEOTI"         : [True,  False, AS_0_nflevg,      None,        "LLMF_PHYS"          ], &
+& "GDEOTI2"        : [True,  False, AS_0_nflevg,      None,        "LLMF_PHYS"          ], &
+& "GUEOTI"         : [True,  False, AS_0_nflevg,      None,        "LLMF_PHYS"          ], &
+& "GUEOTI2"        : [True,  False, AS_0_nflevg,      None,        "LLMF_PHYS"          ], &
+& "GEOLT"          : [True,  False, AS_1_nflevg,      None,        "LLMF_PHYS"          ], &
+& "GEOXT"          : [True,  False, AS_1_nflevg,      None,        "LLMF_PHYS"          ], &
+& "GRPROX"         : [True,  False, AS_0_nflevg,      None,        "LLMF_PHYS"          ], &
+& "GMIXP"          : [True,  False, AS_0_nflevg,      None,        "LLMF_PHYS"          ], &
+& "GFLUXC"         : [True,  False, AS_0_nflevg,      None,        "LLMF_PHYS"          ], &
+& "GRSURF"         : [True,  False, AS_void,          None,        "LLMF_PHYS"          ], &
+& }
+
 
 #:set vars_cpg_dyn_xyb = { &
 & "DELP"           : [False, False, AS_1_nflevg,                                        ], & 
@@ -160,6 +181,7 @@ $:pcpg_dyn_4d_definition ("CTY",   vars_cpg_dyn_cty)
 
 $:pcpg_dyn_4d_definition ("TND",   vars_cpg_dyn_tnd)
 
+
 #:def pcpg_type_definition (name, vars)
 TYPE CPG_${name}$_TYPE
 
@@ -181,11 +203,13 @@ CONTAINS
 END TYPE
 #:enddef pcpg_type_definition
 
-$:pcpg_type_definition ("DYN", vars_cpg_dyn)
+$:pcpg_type_definition ("DYN",  vars_cpg_dyn )
 
-$:pcpg_type_definition ("PHY", vars_cpg_phy)
+$:pcpg_type_definition ("PHY",  vars_cpg_phy )
 
 $:pcpg_type_definition ("MISC", vars_cpg_misc)
+
+$:pcpg_type_definition ("OPT",  vars_cpg_opt )
 
 REAL(KIND=JPRB), PRIVATE, SAVE, TARGET :: ZDUM1 (1), ZDUM2 (1, 1), ZDUM3 (1,1,1)
 
@@ -512,6 +536,8 @@ $:pcpg_type_methods ("DYN" , vars_cpg_dyn )
 $:pcpg_type_methods ("PHY" , vars_cpg_phy )
 
 $:pcpg_type_methods ("MISC", vars_cpg_misc)
+
+$:pcpg_type_methods ("OPT",  vars_cpg_opt )
 
 END MODULE CPG_TYPE_MOD
 

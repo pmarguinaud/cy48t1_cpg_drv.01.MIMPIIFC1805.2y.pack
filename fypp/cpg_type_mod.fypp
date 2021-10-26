@@ -7,30 +7,9 @@
 #:set AS_void                 = []
 #:set AS_0_nflevg             = [ [ '0', 'NLEV' ] ]
 #:set AS_1_nflevg             = [ [ '1', 'NLEV' ] ]
+#:set AS_0_nflevg_6           = [ [ '1', 'NLEV' ], [ '1', '6' ] ]
 #:set AS_4D                   = [ [], [] ]
-#
-#!   #:set vars_cpg_misc = { &
-#!   & "ATND"           : [False, False, YDGEOMETRY%YRDIM%NPROMA,YDGEOMETRY%YRDIMV%NFLEVG,YYTTND%NDIM)
-#!   & "KOZO"           : [False, False, YDGEOMETRY%YRDIM%NPROMA,YDGEOMETRY%YRDIMV%NFLEVG*YDMODEL%YRML_PHY_G%YRDPHY%NVCLIS+1)     
-#!   & "NEB"            : [False, False, YDGEOMETRY%YRDIM%NPROMA,YDGEOMETRY%YRDIMV%NFLEVG)               
-#!   & "QLI"            : [False, False, YDGEOMETRY%YRDIM%NPROMA,YDGEOMETRY%YRDIMV%NFLEVG)               
-#!   & "QICE"           : [False, False, YDGEOMETRY%YRDIM%NPROMA,YDGEOMETRY%YRDIMV%NFLEVG)              
-#!   & "QRAIN"          : [False, False, YDGEOMETRY%YRDIM%NPROMA,YDGEOMETRY%YRDIMV%NFLEVG)             
-#!   & "QSNOW"          : [False, False, YDGEOMETRY%YRDIM%NPROMA,YDGEOMETRY%YRDIMV%NFLEVG)             
-#!   & "RH"             : [False, False, YDGEOMETRY%YRDIM%NPROMA,YDGEOMETRY%YRDIMV%NFLEVG)                
-#!   & "QS"             : [False, False, YDGEOMETRY%YRDIM%NPROMA)                       
-#!   & "QSOL"           : [False, False, YDGEOMETRY%YRDIM%NPROMA)                     
-#!   & "DHSF"           : [False, False, YDGEOMETRY%YRDIM%NPROMA)                     
-#!   & "DHCV"           : [False, False, YDGEOMETRY%YRDIM%NPROMA,0:YDGEOMETRY%YRDIMV%NFLEVG,YDMODEL%YRML_DIAG%YRMDDH%NDHCVSUN)   
-#!   & "CLCT"           : [False, False, YDGEOMETRY%YRDIM%NPROMA)                     
-#!   & "GPAR"           : [False, False, YDGEOMETRY%YRDIM%NPROMM,YDMODEL%YRML_PHY_MF%YRPARAR%NGPAR+1)             
-#!   & "SLBUF1AU"       : [False, False, YDGEOMETRY%YRDIM%NPROMA,YDMODEL%YRML_DYN%YRPTRSLB1%NFLDSLB1)        
-#!   & "LSM"            : [False, False, YDGEOMETRY%YRDIM%NPROMA)                      
-#!   & "TSOL"           : [False, False, YDGEOMETRY%YRDIM%NPROMA)                     
-#!   & "FTCNS"          : [False, False, YDGEOMETRY%YRDIM%NPROMA,0:YDGEOMETRY%YRDIMV%NFLEVG,6)
-#!   & }
 
-#
 #:set vars_cpg_dyn = { &                                                                                         
 & "OROGL"          : [False, False, AS_void,          None,        "LLT0"               ], &
 & "OROGM"          : [False, False, AS_void,          None,        "LLT0"               ], &
@@ -81,6 +60,26 @@
 & "XYB"            : [False, False, AS_4D,            "XYB",       "LLMF_PHYS"          , "YLTXYB_PHY" ], &
 & }
 
+#! & "KOZO"           : [False, False, YDGEOMETRY%YRDIMV%NFLEVG,YDMODEL%YRML_PHY_G%YRDPHY%NVCLIS)     
+#! & "DHCV"           : [False, False, AS_0_nflevg,YDMODEL%YRML_DIAG%YRMDDH%NDHCVSUN)   
+#! & "GPAR"           : [False, False, YDMODEL%YRML_PHY_MF%YRPARAR%NGPAR+1)             
+
+#:set vars_cpg_misc = { &
+& "NEB"            : [False, False, AS_1_nflevg,      None,        None                 ], &
+& "QLI"            : [False, False, AS_1_nflevg,      None,        None                 ], &
+& "QICE"           : [False, False, AS_1_nflevg,      None,        None                 ], &
+& "QRAIN"          : [False, False, AS_1_nflevg,      None,        None                 ], &
+& "QSNOW"          : [False, False, AS_1_nflevg,      None,        None                 ], &
+& "RH"             : [False, False, AS_1_nflevg,      None,        None                 ], &
+& "QS"             : [False, False, AS_void,          None,        None                 ], &
+& "QSOL"           : [False, False, AS_void,          None,        None                 ], &
+& "DHSF"           : [False, False, AS_void,          None,        None                 ], &
+& "CLCT"           : [False, False, AS_void,          None,        None                 ], &
+& "LSM"            : [False, False, AS_void,          None,        None                 ], &
+& "TSOL"           : [False, False, AS_void,          None,        None                 ], &
+& "FTCNS"          : [False, False, AS_0_nflevg_6,    None,        None                 ], &
+& }
+
 #:set vars_cpg_dyn_xyb = { &
 & "DELP"           : [False, False, AS_1_nflevg,                                        ], & 
 & "RDELP"          : [False, False, AS_1_nflevg,                                        ], &
@@ -109,6 +108,17 @@
 & "PSDIV"          : [False, False, AS_0_nflevg,                                        ], &
 & "PSDVBC"         : [False, False, AS_0_nflevg,                                        ], &
 & "DIVDP"          : [False, False, AS_0_nflevg,                                        ], &
+& }
+
+#:set vars_cpg_dyn_tnd = { &
+& "TNDU"           : [False, False, AS_1_nflevg,                                        ], &
+& "TNDV"           : [False, False, AS_1_nflevg,                                        ], &
+& "TNDU_NOC"       : [False, False, AS_1_nflevg,                                        ], &
+& "TNDV_NOC"       : [False, False, AS_1_nflevg,                                        ], &
+& "TNDT"           : [False, False, AS_1_nflevg,                                        ], &
+& "TNDPD"          : [False, False, AS_1_nflevg,                                        ], &
+& "TNDVD"          : [False, False, AS_1_nflevg,                                        ], &
+& "TNDGW"          : [False, False, AS_1_nflevg,                                        ], &
 & }
 
 
@@ -148,6 +158,8 @@ $:pcpg_dyn_4d_definition ("RCP",   vars_cpg_dyn_rcp)
 
 $:pcpg_dyn_4d_definition ("CTY",   vars_cpg_dyn_cty)
 
+$:pcpg_dyn_4d_definition ("TND",   vars_cpg_dyn_tnd)
+
 #:def pcpg_type_definition (name, vars)
 TYPE CPG_${name}$_TYPE
 
@@ -172,6 +184,8 @@ END TYPE
 $:pcpg_type_definition ("DYN", vars_cpg_dyn)
 
 $:pcpg_type_definition ("PHY", vars_cpg_phy)
+
+$:pcpg_type_definition ("MISC", vars_cpg_misc)
 
 REAL(KIND=JPRB), PRIVATE, SAVE, TARGET :: ZDUM1 (1), ZDUM2 (1, 1), ZDUM3 (1,1,1)
 
@@ -309,8 +323,29 @@ $:pcpg_dyn_4d_methods ("RCP",   vars_cpg_dyn_rcp)
 
 $:pcpg_dyn_4d_methods ("CTY",   vars_cpg_dyn_cty)
 
+$:pcpg_dyn_4d_methods ("TND",   vars_cpg_dyn_tnd)
+
 #:def pcpg_type_methods (name, vars)
-SUBROUTINE CPG_${name}$_TYPE_INIT (SELF, KT, REGISTRY, NLEV, PERSISTENT, LDMF_PHYS &
+
+#:set use_type = False
+#:set use_llt0 = False
+#:for var in vars
+  #:if vars[var][NTYPE]
+    #:set use_type = True
+  #:endif
+  #:if vars[var][NCOND]
+    #:if "LLT0" in vars[var][NCOND]
+      #:set use_llt0 = True
+    #:endif
+  #:endif
+#:endfor
+#:set use_llt0 = use_llt0 or use_type
+
+SUBROUTINE CPG_${name}$_TYPE_INIT (SELF &
+#:if use_llt0
+                                & , KT  &
+#:endif
+                                & , REGISTRY, NLEV, PERSISTENT, LDMF_PHYS &
 #:for var in vars
   #:if vars[var][ISARG]
                            &, ${argn (var)}$ &
@@ -318,13 +353,17 @@ SUBROUTINE CPG_${name}$_TYPE_INIT (SELF, KT, REGISTRY, NLEV, PERSISTENT, LDMF_PH
 #:endfor
                            &)
 
+#:if use_type
 USE INTDYN_MOD, ONLY : YYTCTY0, YYTRCP0, YYTHW0, YYTXYB0, YYTXYB0_PHY
 USE INTDYN_MOD, ONLY :          YYTRCP9, YYTHW9, YYTXYB9, YYTXYB9_PHY
 USE INTDYN_MOD, ONLY : TRCP, TCTY, THWIND, TXYB
+#:endif
 USE YOMCT0    , ONLY : LNHDYN
 
 CLASS (CPG_${name}$_TYPE)                    :: SELF
+#:if use_llt0
 INTEGER(KIND=JPIM),           INTENT (IN)    :: KT
+#:endif
 TYPE (FIELD_REGISTRY),        INTENT (INOUT) :: REGISTRY
 INTEGER (KIND=JPIM),          INTENT (IN)    :: NLEV
 LOGICAL, OPTIONAL,            INTENT (IN)    :: PERSISTENT
@@ -335,8 +374,13 @@ LOGICAL, OPTIONAL,            INTENT (IN)    :: LDMF_PHYS
 REAL(KIND=JPRB),       INTENT (IN), OPTIONAL, TARGET  :: ${argn (var)}$(${", ".join ([":"] * ndim)}$)
   #:endif
 #:endfor
-LOGICAL :: LLT0, LLMF_PHYS
 
+#:if use_llt0
+LOGICAL :: LLT0
+#:endif
+LOGICAL :: LLMF_PHYS
+
+#:if use_type
 TYPE (TRCP)   , POINTER :: YLTRCP     
 TYPE (TCTY)   , POINTER :: YLTCTY     
 TYPE (THWIND) , POINTER :: YLTHW     
@@ -357,9 +401,13 @@ YLTXYB0     = YYTXYB0
 YLTXYB0_PHY = YYTXYB0_PHY 
 YLTXYB9     = YYTXYB9 
 YLTXYB9_PHY = YYTXYB9_PHY
+#:endif
 
+#:if use_llt0
 LLT0 = KT == 0
+#:endif
 
+#:if use_type
 YLTRCP     => NULL ()
 YLTCTY     => NULL ()
 YLTHW      => NULL ()
@@ -379,6 +427,7 @@ ELSEIF (KT == 9) THEN
   YLTXYB     => YLTXYB9
   YLTXYB_PHY => YLTXYB9_PHY
 ENDIF
+#:endif
 
 LLMF_PHYS = .FALSE.
 IF (PRESENT (LDMF_PHYS)) THEN
@@ -458,9 +507,11 @@ CALL SELF%${var}$%FINAL ()
 END SUBROUTINE 
 #:enddef pcpg_type_methods
 
-$:pcpg_type_methods ("DYN", vars_cpg_dyn)
+$:pcpg_type_methods ("DYN" , vars_cpg_dyn )
 
-$:pcpg_type_methods ("PHY", vars_cpg_phy)
+$:pcpg_type_methods ("PHY" , vars_cpg_phy )
+
+$:pcpg_type_methods ("MISC", vars_cpg_misc)
 
 END MODULE CPG_TYPE_MOD
 

@@ -16,6 +16,8 @@ my @ap = &F ('//pointer-a-stmt', $d);
 
 for my $ap (@ap)
   {
+print $ap->textContent, "\n";
+
     my ($E1) = &F ('./E-1/ANY-E', $ap);
     my ($E2) = &F ('./E-2/ANY-E', $ap);
     next if ($E2->textContent =~ m/\(/o);

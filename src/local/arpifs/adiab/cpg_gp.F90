@@ -407,7 +407,7 @@ IF (NCURRENT_ITER == 0) THEN
 !*     1.6   SURFACE VARIABLES.
 
   IF (LDLDIAB.OR.LSPHLC.OR.LSIMPH) THEN
-    PQS(KST:KEND)=0.0_JPRB
+    YDCPG_MISC%QS(KST:KEND)=0.0_JPRB
     IF(LDLFSTEP .AND. .NOT. LTWOTL) THEN
       CALL GPPOPER(YDDYN,'SET9TO0',YDFIELDS%YRSURF,KBL=KBL)
     ENDIF
@@ -467,7 +467,7 @@ IF (LNHQE) THEN
    & PGFL,&
    !---------------------------------------------------------------------
    ! - OUTPUT .
-   & PATND)
+   & YDCPG_TND%ZVIEW)
 ELSEIF (LNHEE) THEN
   ! * NHEE model:
   LLGPXX=.NOT.(LSLAG.AND.(NVDVAR == 4 .OR. NVDVAR == 5).AND.ND4SYS==2)
@@ -481,7 +481,7 @@ ELSEIF (LNHEE) THEN
    & PGFL,&
    !---------------------------------------------------------------------
    ! - OUTPUT .
-   & PATND)
+   & YDCPG_TND%ZVIEW)
 ELSE
   ! * Hydrostatic model:
   YDCPG_DYN0%NHX(:,:)=0.0_JPRB
@@ -502,7 +502,7 @@ ELSE
    & PGFL,&
    !---------------------------------------------------------------------
    ! - OUTPUT .
-   & PATND)
+   & YDCPG_TND%ZVIEW)
 ENDIF
 
 !     ------------------------------------------------------------------
@@ -520,7 +520,7 @@ CALL GPINISLB(&
  & YDVARS%U%T1,YDVARS%V%T1,YDVARS%T%T1,PGFLT1,&
  & YDVARS%SPD%T1,YDVARS%SVD%T1,YDVARS%NHX%T1,&
  & YDVARS%SP%T1,&
- & PB2,PQICE,PQLI,PQRAIN,PQSNOW,&
+ & PB2,YDCPG_MISC%QICE,YDCPG_MISC%QLI,YDCPG_MISC%QRAIN,YDCPG_MISC%QSNOW,&
  & PGWFT0=YDCPG_DYN0%GWFT,PGDW0=YDCPG_DYN0%GDW,PGWS0=YDCPG_DYN0%GWHT(:,NFLEVG)) 
 
 IF (NCURRENT_ITER == 0) THEN
@@ -552,7 +552,7 @@ IF (LSFORC) THEN
    & YDVARS%U%T0,YDVARS%V%T0,&
    & YDVARS%T%T0,YDVARS%Q%T0,&
    ! most likely not correct : & PATND,ZATND_Q,PGFLT1(1,1,YQ%MP),YDDDH)
-   & PATND,ZATND_Q,PGFLT1(:,:,YQ%MP1),YDDDH)
+   & YDCPG_TND%ZVIEW,ZATND_Q,PGFLT1(:,:,YQ%MP1),YDDDH)
 ENDIF
 
 !     ------------------------------------------------------------------

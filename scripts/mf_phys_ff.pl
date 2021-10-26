@@ -27,7 +27,7 @@ for my $call (&F ('.//call-stmt[string(procedure-designator)="?"]', $name, $d1))
       {
         my $actual = $actual[$i]->textContent;
         next if ($actual =~ m/\(/o);
-        next unless ($actual =~ m/^(?:YDCPG_DYN0|YDCPG_DYN9|YDCPG_PHY0|YDCPG_PHY9)%/o);
+        next unless ($actual =~ m/^(?:YDCPG_DYN0|YDCPG_DYN9|YDCPG_PHY0|YDCPG_PHY9|YDCPG_TND|YDCPG_MISC)%/o);
         $d2a{$dummy[$i]} = $actual;
       }
 

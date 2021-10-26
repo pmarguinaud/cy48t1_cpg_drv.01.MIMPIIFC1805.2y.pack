@@ -31,7 +31,7 @@ for my $en_decl (&F ('.//EN-decl', $d))
       }
     elsif ($en_decl->previousSibling)
       {
-        $en_decl->nextSibling->unbindNode;
+        $en_decl->previousSibling->unbindNode;
         $en_decl->unbindNode;
       }
     else

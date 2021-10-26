@@ -10,7 +10,7 @@ use Fxtran;
 
 my $F90 = "src/local/arpifs/phys_dmn/mf_phys.F90";
 
-my $d = &Fxtran::fxtran (location => $F90, fopts => [qw (-line-length 200)]);
+my $d = &Fxtran::fxtran (location => $F90, fopts => [qw (-line-length 300)]);
 
 
 for my $r (qw (APLPAR APL_AROME))

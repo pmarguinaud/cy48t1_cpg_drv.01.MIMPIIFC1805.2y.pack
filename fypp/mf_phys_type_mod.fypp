@@ -5,7 +5,7 @@
 #:set AS_0_1             = [ [ '0', '1' ] ]
 #:set AS_ysp_sbd_nlevs   = [ [ '1', 'YDSURF%YSP_SBD%NLEVS' ] ]
 #:set AS_ntssg1          = [ [ '1', 'YDDPHY%NTSSG+1' ] ]
-#:set list = { &
+#:set vars = { &
 & "DIFCQ"          :   AS_0_nflevg,        "DIFCQL"         :   AS_0_nflevg,        "DIFCQN"         :   AS_0_nflevg,        &
 & "DIFCS"          :   AS_0_nflevg,        "DIFTQ"          :   AS_0_nflevg,        "DIFTQL"         :   AS_0_nflevg,        &
 & "DIFTQN"         :   AS_0_nflevg,        "DIFTS"          :   AS_0_nflevg,        "FCCQL"          :   AS_0_nflevg,        &
@@ -60,12 +60,20 @@ USE FIELD_REGISTRY_MOD
 
 IMPLICIT NONE
 
-TYPE MF_PHYS_TYPE
-#:for var in list
-  #:set ndim = 1 + len (list[var])
+TYPE MF_PHYS_OUT_TYPE
+#:for var in vars
+  #:set ndim = 1 + len (vars[var])
   REAL (KIND=JPRB), POINTER, CONTIGUOUS :: ${var}$ (${", ".join ([":"] * ndim)}$) => NULL ()
   TYPE (FIELD_${ndim+1}$D), POINTER :: F_${var}$ => NULL ()
 #:endfor
+CONTAINS
+  PROCEDURE :: INIT => MF_PHYS_OUT_TYPE_INIT
+  PROCEDURE :: UPDATE_VIEW => MF_PHYS_OUT_TYPE_UPDATE_VIEW
+  PROCEDURE :: FINAL => MF_PHYS_OUT_TYPE_FINAL
+END TYPE MF_PHYS_OUT_TYPE
+
+TYPE MF_PHYS_TYPE
+  TYPE (MF_PHYS_OUT_TYPE) :: OUT
 CONTAINS
   PROCEDURE :: INIT => MF_PHYS_TYPE_INIT
   PROCEDURE :: UPDATE_VIEW => MF_PHYS_TYPE_UPDATE_VIEW
@@ -87,14 +95,14 @@ CONTAINS
 $:s
 #:enddef gdim
 
-SUBROUTINE MF_PHYS_TYPE_INIT (SELF, REGISTRY, NLEV, &
-                            & YDDPHY, YDSURF, &
-                            & PERSISTENT)
+SUBROUTINE MF_PHYS_OUT_TYPE_INIT (SELF, REGISTRY, NLEV, &
+                                & YDDPHY, YDSURF, &
+                                & PERSISTENT)
 
 USE YOMDPHY, ONLY : TDPHY
 USE SURFACE_FIELDS_MIX, ONLY : TSURF
 
-CLASS (MF_PHYS_TYPE) :: SELF
+CLASS (MF_PHYS_OUT_TYPE) :: SELF
 TYPE (FIELD_REGISTRY), INTENT (INOUT) :: REGISTRY
 INTEGER (KIND=JPIM),   INTENT (IN)    :: NLEV
 TYPE (TDPHY),          INTENT (IN)    :: YDDPHY
@@ -102,16 +110,16 @@ TYPE (TSURF),          INTENT (IN)    :: YDSURF
 LOGICAL, OPTIONAL,     INTENT (IN)    :: PERSISTENT
 
 
-#:for var in list
-  #:set ndim = 1 + len (list[var])
+#:for var in vars
+  #:set ndim = 1 + len (vars[var])
   #:if ndim == 1
 SELF%F_${var}$ => CREATE_TEMPORARY ("${var}$", GEOM=REGISTRY%GEOM, PERSISTENT=PERSISTENT)
   #:elif ndim == 2
-    #:set s2 = gdim (list[var][0])
+    #:set s2 = gdim (vars[var][0])
 SELF%F_${var}$ => CREATE_TEMPORARY ("${var}$", GEOM=REGISTRY%GEOM, NLEV=${s2}$, PERSISTENT=PERSISTENT)
   #:elif ndim == 3
-    #:set s2 = gdim (list[var][0])
-    #:set s3 = gdim (list[var][1])
+    #:set s2 = gdim (vars[var][0])
+    #:set s3 = gdim (vars[var][1])
 SELF%F_${var}$ => CREATE_TEMPORARY ("${var}$", GEOM=REGISTRY%GEOM, NLEV=${s2}$, NDIM=${s3}$, PERSISTENT=PERSISTENT)
   #:endif
 #:endfor
@@ -127,15 +135,52 @@ END SUBROUTINE
 $:s
 #:enddef pdim
 
+SUBROUTINE MF_PHYS_OUT_TYPE_UPDATE_VIEW (SELF, BLOCK_INDEX)
+
+CLASS (MF_PHYS_OUT_TYPE) :: SELF
+INTEGER(KIND=JPIM), INTENT (IN)   :: BLOCK_INDEX
+
+#:for var in vars
+  #:set ss = pdim (vars[var])
+SELF%${var}$ ${ss}$ => SELF%F_${var}$%GET_VIEW (BLOCK_INDEX)
+#:endfor
+
+END SUBROUTINE
+
+SUBROUTINE MF_PHYS_OUT_TYPE_FINAL (SELF)
+
+CLASS (MF_PHYS_OUT_TYPE) :: SELF
+
+#:for var in vars
+CALL DELETE_TEMPORARY (SELF%F_${var}$)
+#:endfor
+
+END SUBROUTINE
+
+SUBROUTINE MF_PHYS_TYPE_INIT (SELF, REGISTRY, NLEV, &
+                            & YDDPHY, YDSURF, &
+                            & PERSISTENT)
+
+USE YOMDPHY, ONLY : TDPHY
+USE SURFACE_FIELDS_MIX, ONLY : TSURF
+
+CLASS (MF_PHYS_TYPE) :: SELF
+TYPE (FIELD_REGISTRY), INTENT (INOUT) :: REGISTRY
+INTEGER (KIND=JPIM),   INTENT (IN)    :: NLEV
+TYPE (TDPHY),          INTENT (IN)    :: YDDPHY
+TYPE (TSURF),          INTENT (IN)    :: YDSURF
+LOGICAL, OPTIONAL,     INTENT (IN)    :: PERSISTENT
+
+CALL SELF%OUT%INIT (REGISTRY, NLEV, YDDPHY, YDSURF, PERSISTENT)
+
+END SUBROUTINE
+
 SUBROUTINE MF_PHYS_TYPE_UPDATE_VIEW (SELF, BLOCK_INDEX)
 
 CLASS (MF_PHYS_TYPE) :: SELF
 INTEGER(KIND=JPIM), INTENT (IN)   :: BLOCK_INDEX
 
-#:for var in list
-  #:set ss = pdim (list[var])
-SELF%${var}$ ${ss}$ => SELF%F_${var}$%GET_VIEW (BLOCK_INDEX)
-#:endfor
+CALL SELF%OUT%UPDATE_VIEW (BLOCK_INDEX)
 
 END SUBROUTINE
 
@@ -143,9 +188,7 @@ SUBROUTINE MF_PHYS_TYPE_FINAL (SELF)
 
 CLASS (MF_PHYS_TYPE) :: SELF
 
-#:for var in list
-CALL DELETE_TEMPORARY (SELF%F_${var}$)
-#:endfor
+CALL SELF%OUT%FINAL ()
 
 END SUBROUTINE
 

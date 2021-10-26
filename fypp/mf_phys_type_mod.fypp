@@ -5,7 +5,7 @@
 #:set AS_0_1             = [ [ '0', '1' ] ]
 #:set AS_ysp_sbd_nlevs   = [ [ '1', 'YDSURF%YSP_SBD%NLEVS' ] ]
 #:set AS_ntssg1          = [ [ '1', 'YDDPHY%NTSSG+1' ] ]
-#:set vars = { &
+#:set mf_phys_out_vars = { &
 & "DIFCQ"          :   AS_0_nflevg,        "DIFCQL"         :   AS_0_nflevg,        "DIFCQN"         :   AS_0_nflevg,        &
 & "DIFCS"          :   AS_0_nflevg,        "DIFTQ"          :   AS_0_nflevg,        "DIFTQL"         :   AS_0_nflevg,        &
 & "DIFTQN"         :   AS_0_nflevg,        "DIFTS"          :   AS_0_nflevg,        "FCCQL"          :   AS_0_nflevg,        &
@@ -52,6 +52,8 @@
 & "VISIHYD"        :   AS_void,            "MXCLWC"         :   AS_void,            "TPWCLS"         :   AS_void,            &
 & "CUCONVCA"       :   AS_void,            "NLCONVCA"       :   AS_void,                                                     &
 & }
+
+
 MODULE MF_PHYS_TYPE_MOD
 
 USE PARKIND1, ONLY : JPIM, JPRB
@@ -60,17 +62,21 @@ USE FIELD_REGISTRY_MOD
 
 IMPLICIT NONE
 
-TYPE MF_PHYS_OUT_TYPE
+#:def mf_phys_def_type (name, vars)
+TYPE MF_PHYS_${name}$_TYPE
 #:for var in vars
   #:set ndim = 1 + len (vars[var])
   REAL (KIND=JPRB), POINTER, CONTIGUOUS :: ${var}$ (${", ".join ([":"] * ndim)}$) => NULL ()
   TYPE (FIELD_${ndim+1}$D), POINTER :: F_${var}$ => NULL ()
 #:endfor
 CONTAINS
-  PROCEDURE :: INIT => MF_PHYS_OUT_TYPE_INIT
-  PROCEDURE :: UPDATE_VIEW => MF_PHYS_OUT_TYPE_UPDATE_VIEW
-  PROCEDURE :: FINAL => MF_PHYS_OUT_TYPE_FINAL
-END TYPE MF_PHYS_OUT_TYPE
+  PROCEDURE :: INIT => MF_PHYS_${name}$_TYPE_INIT
+  PROCEDURE :: UPDATE_VIEW => MF_PHYS_${name}$_TYPE_UPDATE_VIEW
+  PROCEDURE :: FINAL => MF_PHYS_${name}$_TYPE_FINAL
+END TYPE MF_PHYS_${name}$_TYPE
+#:enddef
+
+$:mf_phys_def_type ("OUT",  mf_phys_out_vars )
 
 TYPE MF_PHYS_TYPE
   TYPE (MF_PHYS_OUT_TYPE) :: OUT
@@ -95,14 +101,15 @@ CONTAINS
 $:s
 #:enddef gdim
 
-SUBROUTINE MF_PHYS_OUT_TYPE_INIT (SELF, REGISTRY, NLEV, &
+#:def mf_phys_def_methods (name, vars)
+SUBROUTINE MF_PHYS_${name}$_TYPE_INIT (SELF, REGISTRY, NLEV, &
                                 & YDDPHY, YDSURF, &
                                 & PERSISTENT)
 
 USE YOMDPHY, ONLY : TDPHY
 USE SURFACE_FIELDS_MIX, ONLY : TSURF
 
-CLASS (MF_PHYS_OUT_TYPE) :: SELF
+CLASS (MF_PHYS_${name}$_TYPE) :: SELF
 TYPE (FIELD_REGISTRY), INTENT (INOUT) :: REGISTRY
 INTEGER (KIND=JPIM),   INTENT (IN)    :: NLEV
 TYPE (TDPHY),          INTENT (IN)    :: YDDPHY
@@ -135,9 +142,9 @@ END SUBROUTINE
 $:s
 #:enddef pdim
 
-SUBROUTINE MF_PHYS_OUT_TYPE_UPDATE_VIEW (SELF, BLOCK_INDEX)
+SUBROUTINE MF_PHYS_${name}$_TYPE_UPDATE_VIEW (SELF, BLOCK_INDEX)
 
-CLASS (MF_PHYS_OUT_TYPE) :: SELF
+CLASS (MF_PHYS_${name}$_TYPE) :: SELF
 INTEGER(KIND=JPIM), INTENT (IN)   :: BLOCK_INDEX
 
 #:for var in vars
@@ -147,15 +154,18 @@ SELF%${var}$ ${ss}$ => SELF%F_${var}$%GET_VIEW (BLOCK_INDEX)
 
 END SUBROUTINE
 
-SUBROUTINE MF_PHYS_OUT_TYPE_FINAL (SELF)
+SUBROUTINE MF_PHYS_${name}$_TYPE_FINAL (SELF)
 
-CLASS (MF_PHYS_OUT_TYPE) :: SELF
+CLASS (MF_PHYS_${name}$_TYPE) :: SELF
 
 #:for var in vars
 CALL DELETE_TEMPORARY (SELF%F_${var}$)
 #:endfor
 
 END SUBROUTINE
+#:enddef
+
+$:mf_phys_def_methods ("OUT", mf_phys_out_vars)
 
 SUBROUTINE MF_PHYS_TYPE_INIT (SELF, REGISTRY, NLEV, &
                             & YDDPHY, YDSURF, &

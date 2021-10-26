@@ -8,6 +8,29 @@
 #:set AS_0_nflevg             = [ [ '0', 'NLEV' ] ]
 #:set AS_1_nflevg             = [ [ '1', 'NLEV' ] ]
 #:set AS_4D                   = [ [], [] ]
+#
+#!   #:set vars_cpg_misc = { &
+#!   & "ATND"           : [False, False, YDGEOMETRY%YRDIM%NPROMA,YDGEOMETRY%YRDIMV%NFLEVG,YYTTND%NDIM)
+#!   & "KOZO"           : [False, False, YDGEOMETRY%YRDIM%NPROMA,YDGEOMETRY%YRDIMV%NFLEVG*YDMODEL%YRML_PHY_G%YRDPHY%NVCLIS+1)     
+#!   & "NEB"            : [False, False, YDGEOMETRY%YRDIM%NPROMA,YDGEOMETRY%YRDIMV%NFLEVG)               
+#!   & "QLI"            : [False, False, YDGEOMETRY%YRDIM%NPROMA,YDGEOMETRY%YRDIMV%NFLEVG)               
+#!   & "QICE"           : [False, False, YDGEOMETRY%YRDIM%NPROMA,YDGEOMETRY%YRDIMV%NFLEVG)              
+#!   & "QRAIN"          : [False, False, YDGEOMETRY%YRDIM%NPROMA,YDGEOMETRY%YRDIMV%NFLEVG)             
+#!   & "QSNOW"          : [False, False, YDGEOMETRY%YRDIM%NPROMA,YDGEOMETRY%YRDIMV%NFLEVG)             
+#!   & "RH"             : [False, False, YDGEOMETRY%YRDIM%NPROMA,YDGEOMETRY%YRDIMV%NFLEVG)                
+#!   & "QS"             : [False, False, YDGEOMETRY%YRDIM%NPROMA)                       
+#!   & "QSOL"           : [False, False, YDGEOMETRY%YRDIM%NPROMA)                     
+#!   & "DHSF"           : [False, False, YDGEOMETRY%YRDIM%NPROMA)                     
+#!   & "DHCV"           : [False, False, YDGEOMETRY%YRDIM%NPROMA,0:YDGEOMETRY%YRDIMV%NFLEVG,YDMODEL%YRML_DIAG%YRMDDH%NDHCVSUN)   
+#!   & "CLCT"           : [False, False, YDGEOMETRY%YRDIM%NPROMA)                     
+#!   & "GPAR"           : [False, False, YDGEOMETRY%YRDIM%NPROMM,YDMODEL%YRML_PHY_MF%YRPARAR%NGPAR+1)             
+#!   & "SLBUF1AU"       : [False, False, YDGEOMETRY%YRDIM%NPROMA,YDMODEL%YRML_DYN%YRPTRSLB1%NFLDSLB1)        
+#!   & "LSM"            : [False, False, YDGEOMETRY%YRDIM%NPROMA)                      
+#!   & "TSOL"           : [False, False, YDGEOMETRY%YRDIM%NPROMA)                     
+#!   & "FTCNS"          : [False, False, YDGEOMETRY%YRDIM%NPROMA,0:YDGEOMETRY%YRDIMV%NFLEVG,6)
+#!   & }
+
+#
 #:set vars_cpg_dyn = { &                                                                                         
 & "OROGL"          : [False, False, AS_void,          None,        "LLT0"               ], &
 & "OROGM"          : [False, False, AS_void,          None,        "LLT0"               ], &

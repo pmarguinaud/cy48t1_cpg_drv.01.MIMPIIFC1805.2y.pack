@@ -14,8 +14,8 @@ use Fxtran;
 #my ($var, $typ, $mod) = qw (YDCPG_DYN9 CPG_DYN_TYPE CPG_DYN_TYPE_MOD);
 #my ($var, $typ, $mod) = qw (YDMF_PHYS MF_PHYS_TYPE MF_PHYS_TYPE_MOD);
 #my ($var, $typ, $mod) = qw (YDCPG_TND CPG_TND_TYPE CPG_DYN_TYPE_MOD);
-#my ($var, $typ, $mod) = qw (YDCPG_MISC CPG_MISC_TYPE CPG_DYN_TYPE_MOD);
-my ($var, $typ, $mod) = qw (YDCPG_TND CPG_TND_TYPE CPG_DYN_TYPE_MOD);
+my ($var, $typ, $mod) = qw (YDCPG_MISC CPG_MISC_TYPE CPG_DYN_TYPE_MOD);
+#my ($var, $typ, $mod) = qw (YDCPG_TND CPG_TND_TYPE CPG_DYN_TYPE_MOD);
 
 
 #my @r = qw (MF_PHYS CPG CPG_GP CPG_DYN CPG_DIA MF_PHYS_PREP CPDYSLDIA);

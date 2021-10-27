@@ -579,8 +579,6 @@ DO JKGLO=1,KGPCOMP,NPROMA
    & ZDT,ZDTPHY,ZTE,ZBETADT,YDSL,PGFLSLP(:,:,:,IBL),PSAVTEND(:,:,:,IBL),&
    & PGMVTNDHD_DDH(:,:,:,IBL),PGFLTNDHD_DDH(:,:,:,IBL),PGPSDT2D(:,:,IBL),PSD_PF(:,:,:,IBL),&
    & PGMV(:,:,:,IBL),PGMVS(:,:,IBL),PGFL(:,:,:,IBL),PGFLPC(:,:,:,IBL),PGFLPT(:,:,:,IBL),&
-   & PSP_RR(:,:,IBL),&
-   & PSD_VF(:,:,IBL),&
    & PSD_XA(:,:,:,IBL),&
    & PEMTD(:,:,IBL),PEMTU(:,:,IBL),PTRSW(:,:,IBL),PRMOON(:,IBL),PGMVTNDSI_DDH(:,:,:,IBL),&
    & IWSETTLOFF(:,IBL),PB1,PB2(:,:,IBL),PGMVT1(:,:,:,IBL),PGMVT1S(:,:,IBL),PGFLT1(:,:,:,IBL),PEXTRA(:,:,:,IBL),&

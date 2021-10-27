@@ -8,8 +8,9 @@
 #:set AS_0_1             = [ [ '0', '1' ] ]
 #:set AS_ysp_sbd_nlevs   = [ [ '1', 'YDSURF%YSP_SBD%NLEVS' ] ]
 #:set AS_ntssg1          = [ [ '1', 'YDDPHY%NTSSG+1' ] ]
-#:set AS_0_nflevg_2           = [ [ '1', 'NLEV' ], [ '1', '2' ] ]
-#:set AS_0_NSORAYFRm1         = [ [ '0', 'YDPHY%NSORAYFR-1' ] ]
+#:set AS_0_nflevg_2      = [ [ '1', 'NLEV' ], [ '1', '2' ] ]
+#:set AS_0_NSORAYFRm1    = [ [ '0', 'YDPHY%NSORAYFR-1' ] ]
+#:set AS_NGRAD_1_nflevg  = [ [ '1', 'YDARPHY%NGRADIENTS' ], [ '1', 'NLEV' ] ]
 
 #:set vars_mf_phys_out = { &
 & "DIFCQ"          : [False, False, AS_0_nflevg,        None,                 None,                ], &
@@ -173,6 +174,10 @@
 & "Q"              : [True,  False, AS_1_nflevg,        None,                 "LLMF_PHYS"          ], &
 & }
 
+#:set vars_mf_phys_gra = { &
+& "G"              : [True,  False, AS_NGRAD_1_nflevg,  None,                 "LLMF_PHYS"          ], &
+& }
+
 #:endmute
 MODULE MF_PHYS_TYPE_MOD
 
@@ -185,11 +190,13 @@ IMPLICIT NONE
 $:pcpg_type_definition ("MF_PHYS_OUT_TYPE",  vars_mf_phys_out)
 $:pcpg_type_definition ("MF_PHYS_OPT_TYPE" , vars_mf_phys_opt)
 $:pcpg_type_definition ("MF_PHYS_FOR_TYPE" , vars_mf_phys_for)
+$:pcpg_type_definition ("MF_PHYS_GRA_TYPE" , vars_mf_phys_gra)
 
 TYPE MF_PHYS_TYPE
   TYPE (MF_PHYS_OUT_TYPE) :: OUT
   TYPE (MF_PHYS_OPT_TYPE) :: OPT
   TYPE (MF_PHYS_FOR_TYPE) :: FOR
+  TYPE (MF_PHYS_GRA_TYPE) :: GRA
 CONTAINS
   PROCEDURE :: UPDATE_VIEW => MF_PHYS_TYPE_UPDATE_VIEW
   PROCEDURE :: FINAL => MF_PHYS_TYPE_FINAL
@@ -205,6 +212,8 @@ $:pcpg_type_methods ("MF_PHYS_OPT_TYPE", vars_mf_phys_opt)
 
 $:pcpg_type_methods ("MF_PHYS_FOR_TYPE", vars_mf_phys_for)
 
+$:pcpg_type_methods ("MF_PHYS_GRA_TYPE", vars_mf_phys_gra)
+
 SUBROUTINE MF_PHYS_TYPE_UPDATE_VIEW (SELF, BLOCK_INDEX)
 
 CLASS (MF_PHYS_TYPE) :: SELF
@@ -213,6 +222,7 @@ INTEGER(KIND=JPIM), INTENT (IN)   :: BLOCK_INDEX
 CALL SELF%OUT%UPDATE_VIEW (BLOCK_INDEX)
 CALL SELF%OPT%UPDATE_VIEW (BLOCK_INDEX)
 CALL SELF%FOR%UPDATE_VIEW (BLOCK_INDEX)
+CALL SELF%GRA%UPDATE_VIEW (BLOCK_INDEX)
 
 END SUBROUTINE
 
@@ -223,6 +233,7 @@ CLASS (MF_PHYS_TYPE) :: SELF
 CALL SELF%OUT%FINAL ()
 CALL SELF%OPT%FINAL ()
 CALL SELF%FOR%FINAL ()
+CALL SELF%GRA%FINAL ()
 
 END SUBROUTINE
 

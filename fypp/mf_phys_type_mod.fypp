@@ -8,6 +8,8 @@
 #:set AS_0_1             = [ [ '0', '1' ] ]
 #:set AS_ysp_sbd_nlevs   = [ [ '1', 'YDSURF%YSP_SBD%NLEVS' ] ]
 #:set AS_ntssg1          = [ [ '1', 'YDDPHY%NTSSG+1' ] ]
+#:set AS_0_nflevg_2           = [ [ '1', 'NLEV' ], [ '1', '2' ] ]
+#:set AS_0_NSORAYFRm1         = [ [ '0', 'YDPHY%NSORAYFR-1' ] ]
 
 #:set vars_mf_phys_out = { &
 & "DIFCQ"          : [False, False, AS_0_nflevg,        None,                 None,                ], &
@@ -145,6 +147,25 @@
 & "CUCONVCA"       : [False, False, AS_void,            None,                 None,                ], &
 & "NLCONVCA"       : [False, False, AS_void,            None,                 None,                ], &
 & }
+
+#:set vars_mf_phys_opt = { &
+& "GDEOSI"         : [True,  False, AS_0_nflevg_2,      None,                 "LLMF_PHYS"          ], &
+& "GUEOSI"         : [True,  False, AS_0_nflevg_2,      None,                 "LLMF_PHYS"          ], &
+& "GMU0"           : [True,  False, AS_0_NSORAYFRm1,    None,                 "LLMF_PHYS"          ], &
+& "GMU0_MIN"       : [True,  False, AS_void,            None,                 "LLMF_PHYS"          ], &
+& "GMU0_MAX"       : [True,  False, AS_void,            None,                 "LLMF_PHYS"          ], &
+& "GDEOTI"         : [True,  False, AS_0_nflevg,        None,                 "LLMF_PHYS"          ], &
+& "GDEOTI2"        : [True,  False, AS_0_nflevg,        None,                 "LLMF_PHYS"          ], &
+& "GUEOTI"         : [True,  False, AS_0_nflevg,        None,                 "LLMF_PHYS"          ], &
+& "GUEOTI2"        : [True,  False, AS_0_nflevg,        None,                 "LLMF_PHYS"          ], &
+& "GEOLT"          : [True,  False, AS_1_nflevg,        None,                 "LLMF_PHYS"          ], &
+& "GEOXT"          : [True,  False, AS_1_nflevg,        None,                 "LLMF_PHYS"          ], &
+& "GRPROX"         : [True,  False, AS_0_nflevg,        None,                 "LLMF_PHYS"          ], &
+& "GMIXP"          : [True,  False, AS_0_nflevg,        None,                 "LLMF_PHYS"          ], &
+& "GFLUXC"         : [True,  False, AS_0_nflevg,        None,                 "LLMF_PHYS"          ], &
+& "GRSURF"         : [True,  False, AS_void,            None,                 "LLMF_PHYS"          ], &
+& }
+
 #:endmute
 
 MODULE MF_PHYS_TYPE_MOD
@@ -156,11 +177,12 @@ USE FIELD_REGISTRY_MOD
 IMPLICIT NONE
 
 $:pcpg_type_definition ("MF_PHYS_OUT_TYPE",  vars_mf_phys_out)
+$:pcpg_type_definition ("MF_PHYS_OPT_TYPE" , vars_mf_phys_opt)
 
 TYPE MF_PHYS_TYPE
   TYPE (MF_PHYS_OUT_TYPE) :: OUT
+  TYPE (MF_PHYS_OPT_TYPE) :: OPT
 CONTAINS
-  PROCEDURE :: INIT => MF_PHYS_TYPE_INIT
   PROCEDURE :: UPDATE_VIEW => MF_PHYS_TYPE_UPDATE_VIEW
   PROCEDURE :: FINAL => MF_PHYS_TYPE_FINAL
 END TYPE MF_PHYS_TYPE
@@ -171,23 +193,7 @@ CONTAINS
 
 $:pcpg_type_methods ("MF_PHYS_OUT_TYPE", vars_mf_phys_out)
 
-SUBROUTINE MF_PHYS_TYPE_INIT (SELF, REGISTRY, NLEV, &
-                            & YDDPHY, YDSURF, &
-                            & PERSISTENT)
-
-USE YOMDPHY, ONLY : TDPHY
-USE SURFACE_FIELDS_MIX, ONLY : TSURF
-
-CLASS (MF_PHYS_TYPE) :: SELF
-TYPE (FIELD_REGISTRY), INTENT (INOUT) :: REGISTRY
-INTEGER (KIND=JPIM),   INTENT (IN)    :: NLEV
-TYPE (TDPHY),          INTENT (IN)    :: YDDPHY
-TYPE (TSURF),          INTENT (IN)    :: YDSURF
-LOGICAL, OPTIONAL,     INTENT (IN)    :: PERSISTENT
-
-CALL SELF%OUT%INIT (REGISTRY, NLEV, YDDPHY, YDSURF, PERSISTENT)
-
-END SUBROUTINE
+$:pcpg_type_methods ("MF_PHYS_OPT_TYPE", vars_mf_phys_opt)
 
 SUBROUTINE MF_PHYS_TYPE_UPDATE_VIEW (SELF, BLOCK_INDEX)
 

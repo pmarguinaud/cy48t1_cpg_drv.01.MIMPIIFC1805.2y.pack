@@ -1,9 +1,6 @@
-#:set ISARG = 0
-#:set ELARG = 1
-#:set NDIMS = 2
-#:set NTYPE = 3
-#:set NCOND = 4
-#:set NDEFS = 5
+#:mute
+#:include "cpg_macros.fypp"
+
 #:set AS_void                 = []
 #:set AS_0_nflevg             = [ [ '0', 'NLEV' ] ]
 #:set AS_1_nflevg             = [ [ '1', 'NLEV' ] ]
@@ -142,7 +139,7 @@
 & "TNDGW"          : [False, False, AS_1_nflevg,                                        ], &
 & }
 
-
+#:endmute
 MODULE CPG_TYPE_MOD
 
 USE FIELD_MODULE
@@ -150,26 +147,6 @@ USE FIELD_REGISTRY_MOD
 USE PARKIND1, ONLY : JPRB, JPIM
 
 IMPLICIT NONE
-
-
-#:def pcpg_dyn_4d_definition (name, vars)
-TYPE CPG_${name}$_TYPE
-  LOGICAL :: LOWNED = .FALSE.
-  REAL (KIND=JPRB), POINTER :: ZDATA (:,:,:,:) => NULL ()
-  REAL (KIND=JPRB), POINTER :: ZVIEW (:,:,:) => NULL ()
-
-#:for var in vars
-  #:set ndim = 1 + len (vars[var][NDIMS])
-  REAL (KIND=JPRB), POINTER, CONTIGUOUS :: ${var}$ (${", ".join ([":"] * ndim)}$) => NULL ()
-  TYPE (FIELD_${ndim+1}$D), POINTER :: F_${var}$ => NULL ()
-#:endfor
-
-CONTAINS
-  PROCEDURE :: INIT => CPG_${name}$_TYPE_INIT
-  PROCEDURE :: UPDATE_VIEW => CPG_${name}$_TYPE_UPDATE_VIEW
-  PROCEDURE :: FINAL => CPG_${name}$_TYPE_FINAL
-END TYPE 
-#:enddef
 
 $:pcpg_dyn_4d_definition ("XYB",   vars_cpg_dyn_xyb)
 
@@ -180,28 +157,6 @@ $:pcpg_dyn_4d_definition ("RCP",   vars_cpg_dyn_rcp)
 $:pcpg_dyn_4d_definition ("CTY",   vars_cpg_dyn_cty)
 
 $:pcpg_dyn_4d_definition ("TND",   vars_cpg_dyn_tnd)
-
-
-#:def pcpg_type_definition (name, vars)
-TYPE CPG_${name}$_TYPE
-
-#:for var in vars
-  #:set elt = vars[var]
-  #:if elt[NTYPE] is None
-    #:set ndim = 1 + len (elt[NDIMS])
-  REAL (KIND=JPRB), POINTER, CONTIGUOUS :: ${var}$ (${", ".join ([":"] * ndim)}$) => NULL ()
-  TYPE (FIELD_${ndim+1}$D), POINTER :: F_${var}$ => NULL ()
-  #:else
-  TYPE (CPG_${elt[NTYPE]}$_TYPE) :: ${var}$
-  #:endif
-#:endfor
-
-CONTAINS
-  PROCEDURE :: INIT => CPG_${name}$_TYPE_INIT
-  PROCEDURE :: UPDATE_VIEW => CPG_${name}$_TYPE_UPDATE_VIEW
-  PROCEDURE :: FINAL => CPG_${name}$_TYPE_FINAL
-END TYPE
-#:enddef pcpg_type_definition
 
 $:pcpg_type_definition ("DYN",  vars_cpg_dyn )
 
@@ -215,130 +170,6 @@ REAL(KIND=JPRB), PRIVATE, SAVE, TARGET :: ZDUM1 (1), ZDUM2 (1, 1), ZDUM3 (1,1,1)
 
 CONTAINS
 
-#:def gdim (d)
-  #:if d[0] == '0' 
-    #:set s = "+1"
-  #:elif d[0] == '1' 
-    #:set s = ""
-  #:else 
-    #:set s = "-" + d[0] + "+1"
-  #:endif
-  #:set s = d[1] + s
-$:s
-#:enddef gdim
-
-#:def temporary (var, dim, ind)
-  #:set ndim = 1 + len (dim)
-  #:if ndim == 1
-${ind}$SELF%F_${var}$ => CREATE_TEMPORARY ("${var}$", GEOM=REGISTRY%GEOM, PERSISTENT=PERSISTENT)
-  #:elif ndim == 2
-    #:set s2 = gdim (dim[0])
-${ind}$SELF%F_${var}$ => CREATE_TEMPORARY ("${var}$", GEOM=REGISTRY%GEOM, NLEV=${s2}$, PERSISTENT=PERSISTENT)
-  #:elif ndim == 3
-    #:set s2 = gdim (dim[0])
-    #:set s3 = gdim (dim[1])
-${ind}$SELF%F_${var}$ => CREATE_TEMPORARY ("${var}$", GEOM=REGISTRY%GEOM, NLEV=${s2}$, NDIM=${s3}$, PERSISTENT=PERSISTENT)
-  #:endif
-#:enddef temporary
-
-#:def argn (a)
-  #:if a[0:1] != "P"
-    #:set a = "P" + a
-  #:endif
-$:a
-#:enddef argn
-
-#:def pdim (d)
-  #:if all (map (lambda x: x[0] == '1', d))
-    #:set s = ""
-  #:else
-    #:set s = "(1:," + ", ".join (map (lambda x: x[0] + ":", d)) + ")"
-  #:endif
-$:s
-#:enddef pdim
-
-
-#:def pcpg_dyn_4d_methods (name, vars)
-SUBROUTINE CPG_${name}$_TYPE_INIT (SELF, REGISTRY, NLEV, YDT${name}$, PERSISTENT, P${name}$)
-
-USE INTDYN_MOD, ONLY : T${name}$
-
-CLASS (CPG_${name}$_TYPE)                          :: SELF
-TYPE (FIELD_REGISTRY),              INTENT (INOUT) :: REGISTRY
-INTEGER (KIND=JPIM),                INTENT (IN)    :: NLEV
-TYPE (T${name}$),                   INTENT (IN)    :: YDT${name}$
-LOGICAL, OPTIONAL,                  INTENT (IN)    :: PERSISTENT
-REAL (KIND=JPRB), OPTIONAL, TARGET, INTENT (IN)    :: P${name}$ (:, :, :, :)
-
-IF (PRESENT (P${name}$)) THEN
-  SELF%ZDATA => P${name}$
-  SELF%LOWNED = .FALSE.
-ELSE
-#:set var = list (vars.keys ())[0]
-#:set s2 = gdim (vars[var][NDIMS][0])
-  ALLOCATE (SELF%ZDATA (REGISTRY%NPROMA, ${s2}$, YDT${name}$%NDIM, REGISTRY%NBLOCKS))
-  SELF%LOWNED = .TRUE.
-ENDIF
-
-#:for var in vars
- IF (YDT${name}$%M_${var}$ > 0) THEN
-   SELF%F_${var}$ => CREATE_FIELD_WRAP ('${var}$', SELF%ZDATA (:, :, YDT${name}$%M_${var}$, :))
- ENDIF
-#:endfor
-
-#! IF (PRESENT (P${name}$)) THEN
-#! 
-#! #:for var in vars
-#!  IF (YDT${name}$%M_${var}$ > 0) THEN
-#!    SELF%F_${var}$ => CREATE_FIELD_WRAP ('${var}$', P${name}$ (:, :, YDT${name}$%M_${var}$, :))
-#!  ENDIF
-#! #:endfor
-#! 
-#! ELSE
-#! 
-#! #:for var in vars
-#!  IF (YDT${name}$%M_${var}$ > 0) THEN
-#! $:temporary (var, vars[var][NDIMS], "    ")
-#!  ENDIF
-#! #:endfor
-#!
-#! ENDIF
-
-END SUBROUTINE
-
-SUBROUTINE CPG_${name}$_TYPE_UPDATE_VIEW (SELF, BLOCK_INDEX)
-
-CLASS (CPG_${name}$_TYPE)         :: SELF
-INTEGER(KIND=JPIM), INTENT (IN)   :: BLOCK_INDEX
-
-SELF%ZVIEW => SELF%ZDATA (:,:,:,BLOCK_INDEX)
-
-#:for var in vars
-  #:set ss = pdim (vars[var][NDIMS])
-  #:set ndim = 1 + len (vars[var][NDIMS])
-IF (ASSOCIATED (SELF%F_${var}$)) THEN  
-  SELF%${var}$ ${ss}$ => SELF%F_${var}$%GET_VIEW (BLOCK_INDEX)
-ELSE
-  SELF%${var}$ ${ss}$ => ZDUM${ndim}$
-ENDIF
-#:endfor
-
-END SUBROUTINE
-
-SUBROUTINE CPG_${name}$_TYPE_FINAL (SELF)
-CLASS (CPG_${name}$_TYPE)          :: SELF
-
-IF (SELF%LOWNED) DEALLOCATE (SELF%ZDATA)
-SELF%ZDATA => NULL ()
-
-#:for var in vars
-IF (ASSOCIATED (SELF%F_${var}$)) CALL DELETE_TEMPORARY (SELF%F_${var}$) 
-#:endfor
-
-END SUBROUTINE 
-#:enddef
-
-
 $:pcpg_dyn_4d_methods ("XYB",   vars_cpg_dyn_xyb)
 
 $:pcpg_dyn_4d_methods ("HWIND", vars_cpg_dyn_hwind)
@@ -348,188 +179,6 @@ $:pcpg_dyn_4d_methods ("RCP",   vars_cpg_dyn_rcp)
 $:pcpg_dyn_4d_methods ("CTY",   vars_cpg_dyn_cty)
 
 $:pcpg_dyn_4d_methods ("TND",   vars_cpg_dyn_tnd)
-
-#:def pcpg_type_methods (name, vars)
-
-#:set use_type = False
-#:set use_llt0 = False
-#:for var in vars
-  #:if vars[var][NTYPE]
-    #:set use_type = True
-  #:endif
-  #:if vars[var][NCOND]
-    #:if "LLT0" in vars[var][NCOND]
-      #:set use_llt0 = True
-    #:endif
-  #:endif
-#:endfor
-#:set use_llt0 = use_llt0 or use_type
-
-SUBROUTINE CPG_${name}$_TYPE_INIT (SELF &
-#:if use_llt0
-                                & , KT  &
-#:endif
-                                & , REGISTRY, NLEV, PERSISTENT, LDMF_PHYS &
-#:for var in vars
-  #:if vars[var][ISARG]
-                           &, ${argn (var)}$ &
-  #:endif
-#:endfor
-                           &)
-
-#:if use_type
-USE INTDYN_MOD, ONLY : YYTCTY0, YYTRCP0, YYTHW0, YYTXYB0, YYTXYB0_PHY
-USE INTDYN_MOD, ONLY :          YYTRCP9, YYTHW9, YYTXYB9, YYTXYB9_PHY
-USE INTDYN_MOD, ONLY : TRCP, TCTY, THWIND, TXYB
-#:endif
-USE YOMCT0    , ONLY : LNHDYN
-
-CLASS (CPG_${name}$_TYPE)                    :: SELF
-#:if use_llt0
-INTEGER(KIND=JPIM),           INTENT (IN)    :: KT
-#:endif
-TYPE (FIELD_REGISTRY),        INTENT (INOUT) :: REGISTRY
-INTEGER (KIND=JPIM),          INTENT (IN)    :: NLEV
-LOGICAL, OPTIONAL,            INTENT (IN)    :: PERSISTENT
-LOGICAL, OPTIONAL,            INTENT (IN)    :: LDMF_PHYS
-#:for var in vars
-  #:if vars[var][ISARG]
-    #:set ndim = 1 + len (vars[var][NDIMS]) + 1
-REAL(KIND=JPRB),       INTENT (IN), OPTIONAL, TARGET  :: ${argn (var)}$(${", ".join ([":"] * ndim)}$)
-  #:endif
-#:endfor
-
-#:if use_llt0
-LOGICAL :: LLT0
-#:endif
-LOGICAL :: LLMF_PHYS
-
-#:if use_type
-TYPE (TRCP)   , POINTER :: YLTRCP     
-TYPE (TCTY)   , POINTER :: YLTCTY     
-TYPE (THWIND) , POINTER :: YLTHW     
-TYPE (TXYB)   , POINTER :: YLTXYB     
-TYPE (TXYB)   , POINTER :: YLTXYB_PHY
-
-TYPE (TCTY),   TARGET :: YLTCTY0 
-TYPE (THWIND), TARGET :: YLTHW0, YLTHW9 
-TYPE (TRCP),   TARGET :: YLTRCP0, YLTRCP9 
-TYPE (TXYB),   TARGET :: YLTXYB0, YLTXYB0_PHY, YLTXYB9, YLTXYB9_PHY
-
-YLTCTY0     = YYTCTY0 
-YLTHW0      = YYTHW0 
-YLTHW9      = YYTHW9 
-YLTRCP0     = YYTRCP0 
-YLTRCP9     = YYTRCP9 
-YLTXYB0     = YYTXYB0 
-YLTXYB0_PHY = YYTXYB0_PHY 
-YLTXYB9     = YYTXYB9 
-YLTXYB9_PHY = YYTXYB9_PHY
-#:endif
-
-#:if use_llt0
-LLT0 = KT == 0
-#:endif
-
-#:if use_type
-YLTRCP     => NULL ()
-YLTCTY     => NULL ()
-YLTHW      => NULL ()
-YLTXYB     => NULL ()
-YLTXYB_PHY => NULL ()
-
-IF (KT == 0) THEN
-  YLTRCP     => YLTRCP0
-  YLTCTY     => YLTCTY0
-  YLTHW      => YLTHW0
-  YLTXYB     => YLTXYB0
-  YLTXYB_PHY => YLTXYB0_PHY
-ELSEIF (KT == 9) THEN
-  YLTRCP     => YLTRCP9
-  YLTCTY     => NULL ()
-  YLTHW      => YLTHW9
-  YLTXYB     => YLTXYB9
-  YLTXYB_PHY => YLTXYB9_PHY
-ENDIF
-#:endif
-
-LLMF_PHYS = .FALSE.
-IF (PRESENT (LDMF_PHYS)) THEN
-  LLMF_PHYS = LDMF_PHYS
-ENDIF
-
-#:for var in vars
-  #:set elt = vars[var]
-  #:if not elt[NCOND] is None
-    #:set ind = "  "
-IF (${elt[NCOND]}$) THEN
-  #:else
-    #:set ind = ""
-  #:endif
-  #:if elt[NTYPE] is None
-    #:if elt[ISARG]
-${ind}$IF (PRESENT (${argn (var)}$)) THEN
-${ind}$  SELF%F_${var}$ => CREATE_FIELD_WRAP ('${var}$', ${argn (var)}$)
-      #:if elt[ELARG]
-${ind}$ELSE
-$:temporary (var, elt[NDIMS], ind + "  ")
-      #:endif
-${ind}$ENDIF
-    #:else
-$:temporary (var, elt[NDIMS], ind + "")
-    #:endif
-  #:else
-    #:set defs = elt[NDEFS]
-    #:if elt[ISARG]
-${ind}$CALL SELF%${var}$%INIT (REGISTRY, NLEV, ${defs}$, PERSISTENT, ${argn (var)}$)
-    #:else
-${ind}$CALL SELF%${var}$%INIT (REGISTRY, NLEV, ${defs}$, PERSISTENT)
-    #:endif
-  #:endif
-  #:if not elt[NCOND] is None
-ENDIF
-  #:endif
-
-#:endfor
-
-END SUBROUTINE
-
-SUBROUTINE CPG_${name}$_TYPE_UPDATE_VIEW (SELF, BLOCK_INDEX)
-
-CLASS (CPG_${name}$_TYPE)         :: SELF
-INTEGER(KIND=JPIM), INTENT (IN)   :: BLOCK_INDEX
-
-#:for var in vars
-  #:set elt = vars[var]
-  #:if elt[NTYPE] is None
-    #:set ss = pdim (elt[NDIMS])
-    #:set ndim = 1 + len (elt[NDIMS])
-IF (ASSOCIATED (SELF%F_${var}$)) THEN
-  SELF%${var}$ ${ss}$ => SELF%F_${var}$%GET_VIEW (BLOCK_INDEX)
-ELSE
-  SELF%${var}$ ${ss}$ => ZDUM${ndim}$
-ENDIF
-  #:else
-CALL SELF%${var}$%UPDATE_VIEW (BLOCK_INDEX)
-  #:endif
-#:endfor
-
-END SUBROUTINE
-
-SUBROUTINE CPG_${name}$_TYPE_FINAL (SELF)
-CLASS (CPG_${name}$_TYPE)         :: SELF
-
-#:for var in vars
-  #:set elt = vars[var]
-  #:if elt[NTYPE] is None
-IF (ASSOCIATED (SELF%F_${var}$)) CALL DELETE_TEMPORARY (SELF%F_${var}$) 
-  #:else
-CALL SELF%${var}$%FINAL ()
-  #:endif
-#:endfor
-
-END SUBROUTINE 
-#:enddef pcpg_type_methods
 
 $:pcpg_type_methods ("DYN" , vars_cpg_dyn )
 

@@ -577,10 +577,9 @@ DO JKGLO=1,KGPCOMP,NPROMA
    & PGMVTNDHD_DDH(:,:,:,IBL),PGFLTNDHD_DDH(:,:,:,IBL),PGPSDT2D(:,:,IBL),PSD_PF(:,:,:,IBL),&
    & PGRADIENT(:,:,:,IBL),&
    & PGMV(:,:,:,IBL),PGMVS(:,:,IBL),PGFL(:,:,:,IBL),PGFLPC(:,:,:,IBL),PGFLPT(:,:,:,IBL),&
-   & PSP_SB(:,:,:,IBL),PSP_SG(:,:,:,IBL),PSP_RR(:,:,IBL),PSP_CL(:,:,IBL), &
-   & PSD_VF(:,:,IBL),PSD_VP(:,:,IBL),&
-   & PSD_VV(:,:,IBL),PSD_VH(:,:,IBL),PSD_VK(:,:,IBL),PSD_VA(:,:,IBL),PSD_VC(:,:,IBL),PSD_VD(:,:,IBL),&
-   & PSD_SFL(:,:,IBL),PSD_SFO(:,:,IBL),PSD_XA(:,:,:,IBL),PSD_DI(:,:,:,IBL),PSD_XP(:,:,:,IBL),PSD_XP2(:,:,:,IBL),&
+   & PSP_RR(:,:,IBL),&
+   & PSD_VF(:,:,IBL),&
+   & PSD_XA(:,:,:,IBL),&
    & PEMTD(:,:,IBL),PEMTU(:,:,IBL),PTRSW(:,:,IBL),PRMOON(:,IBL),PGMVTNDSI_DDH(:,:,:,IBL),&
    & IWSETTLOFF(:,IBL),PB1,PB2(:,:,IBL),PGMVT1(:,:,:,IBL),PGMVT1S(:,:,IBL),PGFLT1(:,:,:,IBL),PEXTRA(:,:,:,IBL),&
    & PGMVTNDSL_DDH(:,:,:,IBL),PGFLTNDSL_DDH(:,:,:,IBL),ZTRAJEC_PHYS,ZTRAJEC_SLAG,YDDDH)

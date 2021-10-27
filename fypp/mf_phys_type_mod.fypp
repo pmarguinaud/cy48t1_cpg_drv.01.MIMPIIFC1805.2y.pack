@@ -1,3 +1,6 @@
+#:mute
+#:include "cpg_macros.fypp"
+
 #:set AS_void            = []
 #:set AS_0_nflevg        = [ [ '0', 'NLEV' ] ]
 #:set AS_1_nflevg        = [ [ '1', 'NLEV' ] ]
@@ -5,54 +8,144 @@
 #:set AS_0_1             = [ [ '0', '1' ] ]
 #:set AS_ysp_sbd_nlevs   = [ [ '1', 'YDSURF%YSP_SBD%NLEVS' ] ]
 #:set AS_ntssg1          = [ [ '1', 'YDDPHY%NTSSG+1' ] ]
-#:set mf_phys_out_vars = { &
-& "DIFCQ"          :   AS_0_nflevg,        "DIFCQL"         :   AS_0_nflevg,        "DIFCQN"         :   AS_0_nflevg,        &
-& "DIFCS"          :   AS_0_nflevg,        "DIFTQ"          :   AS_0_nflevg,        "DIFTQL"         :   AS_0_nflevg,        &
-& "DIFTQN"         :   AS_0_nflevg,        "DIFTS"          :   AS_0_nflevg,        "FCCQL"          :   AS_0_nflevg,        &
-& "FCCQN"          :   AS_0_nflevg,        "FCSQL"          :   AS_0_nflevg,        "FCSQN"          :   AS_0_nflevg,        &
-& "FCQLNG"         :   AS_0_nflevg,        "FCQNNG"         :   AS_0_nflevg,        "FCQNG"          :   AS_0_nflevg,        &
-& "FPLCL"          :   AS_0_nflevg,        "FPLCN"          :   AS_0_nflevg,        "FPLCG"          :   AS_0_nflevg,        &
-& "FPLCH"          :   AS_0_nflevg,        "FPLSL"          :   AS_0_nflevg,        "FPLSN"          :   AS_0_nflevg,        &
-& "FPLSG"          :   AS_0_nflevg,        "FPLSH"          :   AS_0_nflevg,        "FPFPSL"         :   AS_0_nflevg,        &
-& "FPFPSN"         :   AS_0_nflevg,        "FPFPSG"         :   AS_0_nflevg,        "FPFPCL"         :   AS_0_nflevg,        &
-& "FPFPCN"         :   AS_0_nflevg,        "FPEVPSL"        :   AS_0_nflevg,        "FPEVPSN"        :   AS_0_nflevg,        &
-& "FPEVPSG"        :   AS_0_nflevg,        "FPEVPCL"        :   AS_0_nflevg,        "FPEVPCN"        :   AS_0_nflevg,        &
-& "FPEVPCG"        :   AS_0_nflevg,        "FRSO"           :   AS_0_nflevg_ntssg1, "FRTH"           :   AS_0_nflevg_ntssg1, &
-& "STRCU"          :   AS_0_nflevg,        "STRCV"          :   AS_0_nflevg,        "STRDU"          :   AS_0_nflevg,        &
-& "STRDV"          :   AS_0_nflevg,        "STRTU"          :   AS_0_nflevg,        "STRTV"          :   AS_0_nflevg,        &
-& "STRMU"          :   AS_0_nflevg,        "STRMV"          :   AS_0_nflevg,        "DIFCQLC"        :   AS_0_nflevg,        &
-& "DIFCQIC"        :   AS_0_nflevg,        "FIMCC"          :   AS_0_nflevg,        "FEDQLC"         :   AS_0_nflevg,        &
-& "FEDQIC"         :   AS_0_nflevg,        "FEDQRC"         :   AS_0_nflevg,        "FEDQSC"         :   AS_0_nflevg,        &
-& "FCNEGQLC"       :   AS_0_nflevg,        "FCNEGQIC"       :   AS_0_nflevg,        "FCNEGQRC"       :   AS_0_nflevg,        &
-& "FCNEGQSC"       :   AS_0_nflevg,        "FRMH"           :   AS_0_nflevg,        "FCHOZ"          :   AS_0_nflevg,        &
-& "FDIS"           :   AS_0_nflevg,        "FHPSL"          :   AS_0_nflevg,        "FHPSN"          :   AS_0_nflevg,        &
-& "FHPSG"          :   AS_0_nflevg,        "FHPCL"          :   AS_0_nflevg,        "FHPCN"          :   AS_0_nflevg,        &
-& "FHSCL"          :   AS_0_nflevg,        "FHSCN"          :   AS_0_nflevg,        "FHPCG"          :   AS_0_nflevg,        &
-& "FHSSL"          :   AS_0_nflevg,        "FHSSN"          :   AS_0_nflevg,        "FEPFP"          :   AS_0_nflevg,        &
-& "FCMPCQ"         :   AS_0_nflevg,        "FCMPSN"         :   AS_0_nflevg,        "FHSSG"          :   AS_0_nflevg,        &
-& "FCMPSL"         :   AS_0_nflevg,        "FRSOC"          :   AS_0_1,             "FRTHC"          :   AS_0_1,             &
-& "FCHSP"          :   AS_ysp_sbd_nlevs,   "FCLL"           :   AS_ntssg1,          "FCLN"           :   AS_ntssg1,          &
-& "FCS"            :   AS_ntssg1,          "FEVL"           :   AS_ntssg1,          "FEVN"           :   AS_ntssg1,          &
-& "FEVV"           :   AS_void,            "FLWSP"          :   AS_void,            "FTR"            :   AS_void,            &
-& "FRSODS"         :   AS_void,            "FRSOPS"         :   AS_void,            "FRSDNI"         :   AS_void,            &
-& "FRSGNI"         :   AS_void,            "FRTHDS"         :   AS_void,            "FONTE"          :   AS_void,            &
-& "FGEL"           :   AS_void,            "FGELS"          :   AS_void,            "ALB"            :   AS_void,            &
-& "GZ0"            :   AS_void,            "GZ0H"           :   AS_void,            "RUISL"          :   AS_void,            &
-& "RUISP"          :   AS_void,            "RUISS"          :   AS_void,            "FRSOPT"         :   AS_void,            &
-& "FRSOLU"         :   AS_void,            "QCLS"           :   AS_void,            "TCLS"           :   AS_void,            &
-& "UCLS"           :   AS_void,            "VCLS"           :   AS_void,            "NUCLS"          :   AS_void,            &
-& "NVCLS"          :   AS_void,            "RHCLS"          :   AS_void,            "MRT"            :   AS_void,            &
-& "CLCH"           :   AS_void,            "CLCM"           :   AS_void,            "CLCL"           :   AS_void,            &
-& "CLCC"           :   AS_void,            "CLPH"           :   AS_void,            "VEIN"           :   AS_void,            &
-& "DRNSHF"         :   AS_void,            "CAPE"           :   AS_void,            "CTOP"           :   AS_void,            &
-& "MOCON"          :   AS_void,            "UGST"           :   AS_void,            "VGST"           :   AS_void,            &
-& "CT"             :   AS_void,            "TENDU"          :   AS_1_nflevg,        "TENDV"          :   AS_1_nflevg,        &
-& "FCQRNG"         :   AS_0_nflevg,        "FCQSNG"         :   AS_0_nflevg,        "FCQGNG"         :   AS_0_nflevg,        &
-& "DIAGH"          :   AS_void,            "VISICLD"        :   AS_void,            "FLASH"          :   AS_void,            &
-& "VISIHYD"        :   AS_void,            "MXCLWC"         :   AS_void,            "TPWCLS"         :   AS_void,            &
-& "CUCONVCA"       :   AS_void,            "NLCONVCA"       :   AS_void,                                                     &
-& }
 
+#:set vars_mf_phys_out = { &
+& "DIFCQ"          : [False, False, AS_0_nflevg,        None,                 None,                ], &
+& "DIFCQL"         : [False, False, AS_0_nflevg,        None,                 None,                ], &
+& "DIFCQN"         : [False, False, AS_0_nflevg,        None,                 None,                ], &
+& "DIFCS"          : [False, False, AS_0_nflevg,        None,                 None,                ], &
+& "DIFTQ"          : [False, False, AS_0_nflevg,        None,                 None,                ], &
+& "DIFTQL"         : [False, False, AS_0_nflevg,        None,                 None,                ], &
+& "DIFTQN"         : [False, False, AS_0_nflevg,        None,                 None,                ], &
+& "DIFTS"          : [False, False, AS_0_nflevg,        None,                 None,                ], &
+& "FCCQL"          : [False, False, AS_0_nflevg,        None,                 None,                ], &
+& "FCCQN"          : [False, False, AS_0_nflevg,        None,                 None,                ], &
+& "FCSQL"          : [False, False, AS_0_nflevg,        None,                 None,                ], &
+& "FCSQN"          : [False, False, AS_0_nflevg,        None,                 None,                ], &
+& "FCQLNG"         : [False, False, AS_0_nflevg,        None,                 None,                ], &
+& "FCQNNG"         : [False, False, AS_0_nflevg,        None,                 None,                ], &
+& "FCQNG"          : [False, False, AS_0_nflevg,        None,                 None,                ], &
+& "FPLCL"          : [False, False, AS_0_nflevg,        None,                 None,                ], &
+& "FPLCN"          : [False, False, AS_0_nflevg,        None,                 None,                ], &
+& "FPLCG"          : [False, False, AS_0_nflevg,        None,                 None,                ], &
+& "FPLCH"          : [False, False, AS_0_nflevg,        None,                 None,                ], &
+& "FPLSL"          : [False, False, AS_0_nflevg,        None,                 None,                ], &
+& "FPLSN"          : [False, False, AS_0_nflevg,        None,                 None,                ], &
+& "FPLSG"          : [False, False, AS_0_nflevg,        None,                 None,                ], &
+& "FPLSH"          : [False, False, AS_0_nflevg,        None,                 None,                ], &
+& "FPFPSL"         : [False, False, AS_0_nflevg,        None,                 None,                ], &
+& "FPFPSN"         : [False, False, AS_0_nflevg,        None,                 None,                ], &
+& "FPFPSG"         : [False, False, AS_0_nflevg,        None,                 None,                ], &
+& "FPFPCL"         : [False, False, AS_0_nflevg,        None,                 None,                ], &
+& "FPFPCN"         : [False, False, AS_0_nflevg,        None,                 None,                ], &
+& "FPEVPSL"        : [False, False, AS_0_nflevg,        None,                 None,                ], &
+& "FPEVPSN"        : [False, False, AS_0_nflevg,        None,                 None,                ], &
+& "FPEVPSG"        : [False, False, AS_0_nflevg,        None,                 None,                ], &
+& "FPEVPCL"        : [False, False, AS_0_nflevg,        None,                 None,                ], &
+& "FPEVPCN"        : [False, False, AS_0_nflevg,        None,                 None,                ], &
+& "FPEVPCG"        : [False, False, AS_0_nflevg,        None,                 None,                ], &
+& "FRSO"           : [False, False, AS_0_nflevg_ntssg1, None,                 None,                ], &
+& "FRTH"           : [False, False, AS_0_nflevg_ntssg1, None,                 None,                ], &
+& "STRCU"          : [False, False, AS_0_nflevg,        None,                 None,                ], &
+& "STRCV"          : [False, False, AS_0_nflevg,        None,                 None,                ], &
+& "STRDU"          : [False, False, AS_0_nflevg,        None,                 None,                ], &
+& "STRDV"          : [False, False, AS_0_nflevg,        None,                 None,                ], &
+& "STRTU"          : [False, False, AS_0_nflevg,        None,                 None,                ], &
+& "STRTV"          : [False, False, AS_0_nflevg,        None,                 None,                ], &
+& "STRMU"          : [False, False, AS_0_nflevg,        None,                 None,                ], &
+& "STRMV"          : [False, False, AS_0_nflevg,        None,                 None,                ], &
+& "DIFCQLC"        : [False, False, AS_0_nflevg,        None,                 None,                ], &
+& "DIFCQIC"        : [False, False, AS_0_nflevg,        None,                 None,                ], &
+& "FIMCC"          : [False, False, AS_0_nflevg,        None,                 None,                ], &
+& "FEDQLC"         : [False, False, AS_0_nflevg,        None,                 None,                ], &
+& "FEDQIC"         : [False, False, AS_0_nflevg,        None,                 None,                ], &
+& "FEDQRC"         : [False, False, AS_0_nflevg,        None,                 None,                ], &
+& "FEDQSC"         : [False, False, AS_0_nflevg,        None,                 None,                ], &
+& "FCNEGQLC"       : [False, False, AS_0_nflevg,        None,                 None,                ], &
+& "FCNEGQIC"       : [False, False, AS_0_nflevg,        None,                 None,                ], &
+& "FCNEGQRC"       : [False, False, AS_0_nflevg,        None,                 None,                ], &
+& "FCNEGQSC"       : [False, False, AS_0_nflevg,        None,                 None,                ], &
+& "FRMH"           : [False, False, AS_0_nflevg,        None,                 None,                ], &
+& "FCHOZ"          : [False, False, AS_0_nflevg,        None,                 None,                ], &
+& "FDIS"           : [False, False, AS_0_nflevg,        None,                 None,                ], &
+& "FHPSL"          : [False, False, AS_0_nflevg,        None,                 None,                ], &
+& "FHPSN"          : [False, False, AS_0_nflevg,        None,                 None,                ], &
+& "FHPSG"          : [False, False, AS_0_nflevg,        None,                 None,                ], &
+& "FHPCL"          : [False, False, AS_0_nflevg,        None,                 None,                ], &
+& "FHPCN"          : [False, False, AS_0_nflevg,        None,                 None,                ], &
+& "FHSCL"          : [False, False, AS_0_nflevg,        None,                 None,                ], &
+& "FHSCN"          : [False, False, AS_0_nflevg,        None,                 None,                ], &
+& "FHPCG"          : [False, False, AS_0_nflevg,        None,                 None,                ], &
+& "FHSSL"          : [False, False, AS_0_nflevg,        None,                 None,                ], &
+& "FHSSN"          : [False, False, AS_0_nflevg,        None,                 None,                ], &
+& "FEPFP"          : [False, False, AS_0_nflevg,        None,                 None,                ], &
+& "FCMPCQ"         : [False, False, AS_0_nflevg,        None,                 None,                ], &
+& "FCMPSN"         : [False, False, AS_0_nflevg,        None,                 None,                ], &
+& "FHSSG"          : [False, False, AS_0_nflevg,        None,                 None,                ], &
+& "FCMPSL"         : [False, False, AS_0_nflevg,        None,                 None,                ], &
+& "FRSOC"          : [False, False, AS_0_1,             None,                 None,                ], &
+& "FRTHC"          : [False, False, AS_0_1,             None,                 None,                ], &
+& "FCHSP"          : [False, False, AS_ysp_sbd_nlevs,   None,                 None,                ], &
+& "FCLL"           : [False, False, AS_ntssg1,          None,                 None,                ], &
+& "FCLN"           : [False, False, AS_ntssg1,          None,                 None,                ], &
+& "FCS"            : [False, False, AS_ntssg1,          None,                 None,                ], &
+& "FEVL"           : [False, False, AS_ntssg1,          None,                 None,                ], &
+& "FEVN"           : [False, False, AS_ntssg1,          None,                 None,                ], &
+& "FEVV"           : [False, False, AS_void,            None,                 None,                ], &
+& "FLWSP"          : [False, False, AS_void,            None,                 None,                ], &
+& "FTR"            : [False, False, AS_void,            None,                 None,                ], &
+& "FRSODS"         : [False, False, AS_void,            None,                 None,                ], &
+& "FRSOPS"         : [False, False, AS_void,            None,                 None,                ], &
+& "FRSDNI"         : [False, False, AS_void,            None,                 None,                ], &
+& "FRSGNI"         : [False, False, AS_void,            None,                 None,                ], &
+& "FRTHDS"         : [False, False, AS_void,            None,                 None,                ], &
+& "FONTE"          : [False, False, AS_void,            None,                 None,                ], &
+& "FGEL"           : [False, False, AS_void,            None,                 None,                ], &
+& "FGELS"          : [False, False, AS_void,            None,                 None,                ], &
+& "ALB"            : [False, False, AS_void,            None,                 None,                ], &
+& "GZ0"            : [False, False, AS_void,            None,                 None,                ], &
+& "GZ0H"           : [False, False, AS_void,            None,                 None,                ], &
+& "RUISL"          : [False, False, AS_void,            None,                 None,                ], &
+& "RUISP"          : [False, False, AS_void,            None,                 None,                ], &
+& "RUISS"          : [False, False, AS_void,            None,                 None,                ], &
+& "FRSOPT"         : [False, False, AS_void,            None,                 None,                ], &
+& "FRSOLU"         : [False, False, AS_void,            None,                 None,                ], &
+& "QCLS"           : [False, False, AS_void,            None,                 None,                ], &
+& "TCLS"           : [False, False, AS_void,            None,                 None,                ], &
+& "UCLS"           : [False, False, AS_void,            None,                 None,                ], &
+& "VCLS"           : [False, False, AS_void,            None,                 None,                ], &
+& "NUCLS"          : [False, False, AS_void,            None,                 None,                ], &
+& "NVCLS"          : [False, False, AS_void,            None,                 None,                ], &
+& "RHCLS"          : [False, False, AS_void,            None,                 None,                ], &
+& "MRT"            : [False, False, AS_void,            None,                 None,                ], &
+& "CLCH"           : [False, False, AS_void,            None,                 None,                ], &
+& "CLCM"           : [False, False, AS_void,            None,                 None,                ], &
+& "CLCL"           : [False, False, AS_void,            None,                 None,                ], &
+& "CLCC"           : [False, False, AS_void,            None,                 None,                ], &
+& "CLPH"           : [False, False, AS_void,            None,                 None,                ], &
+& "VEIN"           : [False, False, AS_void,            None,                 None,                ], &
+& "DRNSHF"         : [False, False, AS_void,            None,                 None,                ], &
+& "CAPE"           : [False, False, AS_void,            None,                 None,                ], &
+& "CTOP"           : [False, False, AS_void,            None,                 None,                ], &
+& "MOCON"          : [False, False, AS_void,            None,                 None,                ], &
+& "UGST"           : [False, False, AS_void,            None,                 None,                ], &
+& "VGST"           : [False, False, AS_void,            None,                 None,                ], &
+& "CT"             : [False, False, AS_void,            None,                 None,                ], &
+& "TENDU"          : [False, False, AS_1_nflevg,        None,                 None,                ], &
+& "TENDV"          : [False, False, AS_1_nflevg,        None,                 None,                ], &
+& "FCQRNG"         : [False, False, AS_0_nflevg,        None,                 None,                ], &
+& "FCQSNG"         : [False, False, AS_0_nflevg,        None,                 None,                ], &
+& "FCQGNG"         : [False, False, AS_0_nflevg,        None,                 None,                ], &
+& "DIAGH"          : [False, False, AS_void,            None,                 None,                ], &
+& "VISICLD"        : [False, False, AS_void,            None,                 None,                ], &
+& "FLASH"          : [False, False, AS_void,            None,                 None,                ], &
+& "VISIHYD"        : [False, False, AS_void,            None,                 None,                ], &
+& "MXCLWC"         : [False, False, AS_void,            None,                 None,                ], &
+& "TPWCLS"         : [False, False, AS_void,            None,                 None,                ], &
+& "CUCONVCA"       : [False, False, AS_void,            None,                 None,                ], &
+& "NLCONVCA"       : [False, False, AS_void,            None,                 None,                ], &
+& }
+#:endmute
 
 MODULE MF_PHYS_TYPE_MOD
 
@@ -62,21 +155,7 @@ USE FIELD_REGISTRY_MOD
 
 IMPLICIT NONE
 
-#:def mf_phys_def_type (name, vars)
-TYPE MF_PHYS_${name}$_TYPE
-#:for var in vars
-  #:set ndim = 1 + len (vars[var])
-  REAL (KIND=JPRB), POINTER, CONTIGUOUS :: ${var}$ (${", ".join ([":"] * ndim)}$) => NULL ()
-  TYPE (FIELD_${ndim+1}$D), POINTER :: F_${var}$ => NULL ()
-#:endfor
-CONTAINS
-  PROCEDURE :: INIT => MF_PHYS_${name}$_TYPE_INIT
-  PROCEDURE :: UPDATE_VIEW => MF_PHYS_${name}$_TYPE_UPDATE_VIEW
-  PROCEDURE :: FINAL => MF_PHYS_${name}$_TYPE_FINAL
-END TYPE MF_PHYS_${name}$_TYPE
-#:enddef
-
-$:mf_phys_def_type ("OUT",  mf_phys_out_vars )
+$:pcpg_type_definition ("MF_PHYS_OUT_TYPE",  vars_mf_phys_out)
 
 TYPE MF_PHYS_TYPE
   TYPE (MF_PHYS_OUT_TYPE) :: OUT
@@ -86,86 +165,11 @@ CONTAINS
   PROCEDURE :: FINAL => MF_PHYS_TYPE_FINAL
 END TYPE MF_PHYS_TYPE
 
+REAL(KIND=JPRB), PRIVATE, SAVE, TARGET :: ZDUM1 (1), ZDUM2 (1, 1), ZDUM3 (1,1,1)
+
 CONTAINS
 
-
-#:def gdim (d)
-  #:if d[0] == '0' 
-    #:set s = "+1"
-  #:elif d[0] == '1' 
-    #:set s = ""
-  #:else 
-    #:set s = "-" + d[0] + "+1"
-  #:endif
-  #:set s = d[1] + s
-$:s
-#:enddef gdim
-
-#:def mf_phys_def_methods (name, vars)
-SUBROUTINE MF_PHYS_${name}$_TYPE_INIT (SELF, REGISTRY, NLEV, &
-                                & YDDPHY, YDSURF, &
-                                & PERSISTENT)
-
-USE YOMDPHY, ONLY : TDPHY
-USE SURFACE_FIELDS_MIX, ONLY : TSURF
-
-CLASS (MF_PHYS_${name}$_TYPE) :: SELF
-TYPE (FIELD_REGISTRY), INTENT (INOUT) :: REGISTRY
-INTEGER (KIND=JPIM),   INTENT (IN)    :: NLEV
-TYPE (TDPHY),          INTENT (IN)    :: YDDPHY
-TYPE (TSURF),          INTENT (IN)    :: YDSURF
-LOGICAL, OPTIONAL,     INTENT (IN)    :: PERSISTENT
-
-
-#:for var in vars
-  #:set ndim = 1 + len (vars[var])
-  #:if ndim == 1
-SELF%F_${var}$ => CREATE_TEMPORARY ("${var}$", GEOM=REGISTRY%GEOM, PERSISTENT=PERSISTENT)
-  #:elif ndim == 2
-    #:set s2 = gdim (vars[var][0])
-SELF%F_${var}$ => CREATE_TEMPORARY ("${var}$", GEOM=REGISTRY%GEOM, NLEV=${s2}$, PERSISTENT=PERSISTENT)
-  #:elif ndim == 3
-    #:set s2 = gdim (vars[var][0])
-    #:set s3 = gdim (vars[var][1])
-SELF%F_${var}$ => CREATE_TEMPORARY ("${var}$", GEOM=REGISTRY%GEOM, NLEV=${s2}$, NDIM=${s3}$, PERSISTENT=PERSISTENT)
-  #:endif
-#:endfor
-
-END SUBROUTINE
-
-#:def pdim (d)
-  #:if all (map (lambda x: x[0] == '1', d))
-    #:set s = ""
-  #:else
-    #:set s = "(1:," + ", ".join (map (lambda x: x[0] + ":", d)) + ")"
-  #:endif
-$:s
-#:enddef pdim
-
-SUBROUTINE MF_PHYS_${name}$_TYPE_UPDATE_VIEW (SELF, BLOCK_INDEX)
-
-CLASS (MF_PHYS_${name}$_TYPE) :: SELF
-INTEGER(KIND=JPIM), INTENT (IN)   :: BLOCK_INDEX
-
-#:for var in vars
-  #:set ss = pdim (vars[var])
-SELF%${var}$ ${ss}$ => SELF%F_${var}$%GET_VIEW (BLOCK_INDEX)
-#:endfor
-
-END SUBROUTINE
-
-SUBROUTINE MF_PHYS_${name}$_TYPE_FINAL (SELF)
-
-CLASS (MF_PHYS_${name}$_TYPE) :: SELF
-
-#:for var in vars
-CALL DELETE_TEMPORARY (SELF%F_${var}$)
-#:endfor
-
-END SUBROUTINE
-#:enddef
-
-$:mf_phys_def_methods ("OUT", mf_phys_out_vars)
+$:pcpg_type_methods ("MF_PHYS_OUT_TYPE", vars_mf_phys_out)
 
 SUBROUTINE MF_PHYS_TYPE_INIT (SELF, REGISTRY, NLEV, &
                             & YDDPHY, YDSURF, &

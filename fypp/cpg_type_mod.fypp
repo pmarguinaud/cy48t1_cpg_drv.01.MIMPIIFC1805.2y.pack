@@ -10,53 +10,53 @@
 #:set AS_4D                   = [ [], [] ]
 
 #:set vars_cpg_dyn = { &                                                                                         
-& "OROGL"          : [False, False, AS_void,          None,        "LLT0"               ], &
-& "OROGM"          : [False, False, AS_void,          None,        "LLT0"               ], &
-& "OROGLL"         : [False, False, AS_void,          None,        "LNHDYN .AND. LLT0"  ], &
-& "OROGMM"         : [False, False, AS_void,          None,        "LNHDYN .AND. LLT0"  ], &
-& "OROGLM"         : [False, False, AS_void,          None,        "LNHDYN .AND. LLT0"  ], &
-& "GDW"            : [False, False, AS_1_nflevg,      None,        "LNHDYN"             ], &
-& "GWHT"           : [False, False, AS_0_nflevg,      None,        None                 ], &
-& "PHI"            : [False, False, AS_0_nflevg,      None,        None                 ], &
-& "PRE"            : [False, False, AS_0_nflevg,      None,        None                 ], &
-& "PHIF"           : [True,  True,  AS_1_nflevg,      None,        None                 ], &
-& "PREF"           : [True,  True,  AS_1_nflevg,      None,        None                 ], &
-& "WRL"            : [True,  False, AS_1_nflevg,      None,        None                 ], &
-& "PREL"           : [False, False, AS_void,          None,        None                 ], &
-& "PREM"           : [False, False, AS_void,          None,        None                 ], &
-& "NHY"            : [False, False, AS_0_nflevg,      None,        None                 ], &
-& "GWFT"           : [False, False, AS_1_nflevg,      None,        None                 ], &
-& "KENE"           : [False, False, AS_1_nflevg,      None,        "LLT0"               ], &
-& "NHX"            : [False, False, AS_1_nflevg,      None,        None                 ], &
-& "PHIFL"          : [False, False, AS_1_nflevg,      None,        "LLT0"               ], &
-& "PHIFM"          : [False, False, AS_1_nflevg,      None,        "LLT0"               ], &
-& "RTL"            : [False, False, AS_1_nflevg,      None,        "LLT0"               ], &
-& "RTM"            : [False, False, AS_1_nflevg,      None,        "LLT0"               ], &
-& "RCP"            : [True,  True,  AS_4D,            "RCP",       None                 , "YLTRCP"     ], &
-& "CTY"            : [True,  False, AS_4D,            "CTY",       "LLT0"               , "YLTCTY"     ], &
-& "UVH"            : [False, False, AS_4D,            "HWIND",     "LLT0"               , "YLTHW"      ], &
-& "XYB"            : [False, False, AS_4D,            "XYB",       None                 , "YLTXYB"     ], &
-& "DBBC"           : [False, False, AS_void,          None,        "LNHDYN .AND. LLT0"  ], &
-& "GWS"            : [False, False, AS_void,          None,        "LNHDYN .AND. LLT0"  ], &
-& "GWFL"           : [False, False, AS_1_nflevg,      None,        "LNHDYN .AND. LLT0"  ], &
-& "GWFM"           : [False, False, AS_1_nflevg,      None,        "LNHDYN .AND. LLT0"  ], &
-& "GWT"            : [False, False, AS_1_nflevg,      None,        "LNHDYN"             ], &
-& "NHPREF"         : [False, False, AS_1_nflevg,      None,        "LNHDYN"             ], &
-& "NHPREH"         : [False, False, AS_0_nflevg,      None,        "LNHDYN"             ], &
-& "QCHAL"          : [False, False, AS_1_nflevg,      None,        "LNHDYN .AND. LLT0"  ], &
-& "QCHAM"          : [False, False, AS_1_nflevg,      None,        "LNHDYN .AND. LLT0"  ], &
-& "RDPHI"          : [False, False, AS_1_nflevg,      None,        "LNHDYN .AND. LLT0"  ], &
+& "OROGL"          : [False, False, AS_void,            None,                 "LLT0"               ], &
+& "OROGM"          : [False, False, AS_void,            None,                 "LLT0"               ], &
+& "OROGLL"         : [False, False, AS_void,            None,                 "LNHDYN .AND. LLT0"  ], &
+& "OROGMM"         : [False, False, AS_void,            None,                 "LNHDYN .AND. LLT0"  ], &
+& "OROGLM"         : [False, False, AS_void,            None,                 "LNHDYN .AND. LLT0"  ], &
+& "GDW"            : [False, False, AS_1_nflevg,        None,                 "LNHDYN"             ], &
+& "GWHT"           : [False, False, AS_0_nflevg,        None,                 None                 ], &
+& "PHI"            : [False, False, AS_0_nflevg,        None,                 None                 ], &
+& "PRE"            : [False, False, AS_0_nflevg,        None,                 None                 ], &
+& "PHIF"           : [True,  True,  AS_1_nflevg,        None,                 None                 ], &
+& "PREF"           : [True,  True,  AS_1_nflevg,        None,                 None                 ], &
+& "WRL"            : [True,  False, AS_1_nflevg,        None,                 None                 ], &
+& "PREL"           : [False, False, AS_void,            None,                 None                 ], &
+& "PREM"           : [False, False, AS_void,            None,                 None                 ], &
+& "NHY"            : [False, False, AS_0_nflevg,        None,                 None                 ], &
+& "GWFT"           : [False, False, AS_1_nflevg,        None,                 None                 ], &
+& "KENE"           : [False, False, AS_1_nflevg,        None,                 "LLT0"               ], &
+& "NHX"            : [False, False, AS_1_nflevg,        None,                 None                 ], &
+& "PHIFL"          : [False, False, AS_1_nflevg,        None,                 "LLT0"               ], &
+& "PHIFM"          : [False, False, AS_1_nflevg,        None,                 "LLT0"               ], &
+& "RTL"            : [False, False, AS_1_nflevg,        None,                 "LLT0"               ], &
+& "RTM"            : [False, False, AS_1_nflevg,        None,                 "LLT0"               ], &
+& "RCP"            : [True,  True,  AS_4D,              "CPG_RCP_TYPE",       None                 , "YLTRCP"     ], &
+& "CTY"            : [True,  False, AS_4D,              "CPG_CTY_TYPE",       "LLT0"               , "YLTCTY"     ], &
+& "UVH"            : [False, False, AS_4D,              "CPG_HWIND_TYPE",     "LLT0"               , "YLTHW"      ], &
+& "XYB"            : [False, False, AS_4D,              "CPG_XYB_TYPE",       None                 , "YLTXYB"     ], &
+& "DBBC"           : [False, False, AS_void,            None,                 "LNHDYN .AND. LLT0"  ], &
+& "GWS"            : [False, False, AS_void,            None,                 "LNHDYN .AND. LLT0"  ], &
+& "GWFL"           : [False, False, AS_1_nflevg,        None,                 "LNHDYN .AND. LLT0"  ], &
+& "GWFM"           : [False, False, AS_1_nflevg,        None,                 "LNHDYN .AND. LLT0"  ], &
+& "GWT"            : [False, False, AS_1_nflevg,        None,                 "LNHDYN"             ], &
+& "NHPREF"         : [False, False, AS_1_nflevg,        None,                 "LNHDYN"             ], &
+& "NHPREH"         : [False, False, AS_0_nflevg,        None,                 "LNHDYN"             ], &
+& "QCHAL"          : [False, False, AS_1_nflevg,        None,                 "LNHDYN .AND. LLT0"  ], &
+& "QCHAM"          : [False, False, AS_1_nflevg,        None,                 "LNHDYN .AND. LLT0"  ], &
+& "RDPHI"          : [False, False, AS_1_nflevg,        None,                 "LNHDYN .AND. LLT0"  ], &
 & }
 
-#:set vars_cpg_phy = { &                                                                                         
-& "PRE"            : [False, False, AS_0_nflevg,      None,        "LLMF_PHYS"          ], &
-& "PREF"           : [False, False, AS_1_nflevg,      None,        "LLMF_PHYS"          ], &
-& "PREHYD"         : [False, False, AS_0_nflevg,      None,        "LLMF_PHYS"          ], &
-& "PREHYDF"        : [False, False, AS_1_nflevg,      None,        "LLMF_PHYS"          ], &
-& "WL"             : [False, False, AS_1_nflevg,      None,        "LLMF_PHYS"          ], &
-& "WM"             : [False, False, AS_1_nflevg,      None,        "LLMF_PHYS"          ], &
-& "W"              : [False, False, AS_1_nflevg,      None,        "LLMF_PHYS"          ], &
-& "XYB"            : [False, False, AS_4D,            "XYB",       "LLMF_PHYS"          , "YLTXYB_PHY" ], &
+#:set vars_cpg_phy = { &                                                                                           
+& "PRE"            : [False, False, AS_0_nflevg,        None,                 "LLMF_PHYS"          ], &
+& "PREF"           : [False, False, AS_1_nflevg,        None,                 "LLMF_PHYS"          ], &
+& "PREHYD"         : [False, False, AS_0_nflevg,        None,                 "LLMF_PHYS"          ], &
+& "PREHYDF"        : [False, False, AS_1_nflevg,        None,                 "LLMF_PHYS"          ], &
+& "WL"             : [False, False, AS_1_nflevg,        None,                 "LLMF_PHYS"          ], &
+& "WM"             : [False, False, AS_1_nflevg,        None,                 "LLMF_PHYS"          ], &
+& "W"              : [False, False, AS_1_nflevg,        None,                 "LLMF_PHYS"          ], &
+& "XYB"            : [False, False, AS_4D,              "CPG_XYB_TYPE",       "LLMF_PHYS"          , "YLTXYB_PHY" ], &
 & }
 
 #! & "KOZO"           : [False, False, YDGEOMETRY%YRDIMV%NFLEVG,YDMODEL%YRML_PHY_G%YRDPHY%NVCLIS)     
@@ -64,79 +64,79 @@
 #! & "GPAR"           : [False, False, YDMODEL%YRML_PHY_MF%YRPARAR%NGPAR+1)             
 
 #:set vars_cpg_misc = { &
-& "NEB"            : [False, False, AS_1_nflevg,      None,        None                 ], &
-& "QLI"            : [False, False, AS_1_nflevg,      None,        None                 ], &
-& "QICE"           : [False, False, AS_1_nflevg,      None,        None                 ], &
-& "QRAIN"          : [False, False, AS_1_nflevg,      None,        None                 ], &
-& "QSNOW"          : [False, False, AS_1_nflevg,      None,        None                 ], &
-& "RH"             : [False, False, AS_1_nflevg,      None,        None                 ], &
-& "QS"             : [False, False, AS_void,          None,        None                 ], &
-& "QSOL"           : [False, False, AS_void,          None,        None                 ], &
-& "DHSF"           : [False, False, AS_void,          None,        None                 ], &
-& "CLCT"           : [False, False, AS_void,          None,        None                 ], &
-& "LSM"            : [False, False, AS_void,          None,        None                 ], &
-& "TSOL"           : [False, False, AS_void,          None,        None                 ], &
-& "FTCNS"          : [False, False, AS_0_nflevg_6,    None,        None                 ], &
+& "NEB"            : [False, False, AS_1_nflevg,        None,                 None                 ], &
+& "QLI"            : [False, False, AS_1_nflevg,        None,                 None                 ], &
+& "QICE"           : [False, False, AS_1_nflevg,        None,                 None                 ], &
+& "QRAIN"          : [False, False, AS_1_nflevg,        None,                 None                 ], &
+& "QSNOW"          : [False, False, AS_1_nflevg,        None,                 None                 ], &
+& "RH"             : [False, False, AS_1_nflevg,        None,                 None                 ], &
+& "QS"             : [False, False, AS_void,            None,                 None                 ], &
+& "QSOL"           : [False, False, AS_void,            None,                 None                 ], &
+& "DHSF"           : [False, False, AS_void,            None,                 None                 ], &
+& "CLCT"           : [False, False, AS_void,            None,                 None                 ], &
+& "LSM"            : [False, False, AS_void,            None,                 None                 ], &
+& "TSOL"           : [False, False, AS_void,            None,                 None                 ], &
+& "FTCNS"          : [False, False, AS_0_nflevg_6,      None,                 None                 ], &
 & }
 
 #:set vars_cpg_opt = { &
-& "GDEOSI"         : [True,  False, AS_0_nflevg_2,    None,        "LLMF_PHYS"          ], &
-& "GUEOSI"         : [True,  False, AS_0_nflevg_2,    None,        "LLMF_PHYS"          ], &
-& "GMU0"           : [True,  False, AS_0_NSORAYFRm1,  None,        "LLMF_PHYS"          ], &
-& "GMU0_MIN"       : [True,  False, AS_void,          None,        "LLMF_PHYS"          ], &
-& "GMU0_MAX"       : [True,  False, AS_void,          None,        "LLMF_PHYS"          ], &
-& "GDEOTI"         : [True,  False, AS_0_nflevg,      None,        "LLMF_PHYS"          ], &
-& "GDEOTI2"        : [True,  False, AS_0_nflevg,      None,        "LLMF_PHYS"          ], &
-& "GUEOTI"         : [True,  False, AS_0_nflevg,      None,        "LLMF_PHYS"          ], &
-& "GUEOTI2"        : [True,  False, AS_0_nflevg,      None,        "LLMF_PHYS"          ], &
-& "GEOLT"          : [True,  False, AS_1_nflevg,      None,        "LLMF_PHYS"          ], &
-& "GEOXT"          : [True,  False, AS_1_nflevg,      None,        "LLMF_PHYS"          ], &
-& "GRPROX"         : [True,  False, AS_0_nflevg,      None,        "LLMF_PHYS"          ], &
-& "GMIXP"          : [True,  False, AS_0_nflevg,      None,        "LLMF_PHYS"          ], &
-& "GFLUXC"         : [True,  False, AS_0_nflevg,      None,        "LLMF_PHYS"          ], &
-& "GRSURF"         : [True,  False, AS_void,          None,        "LLMF_PHYS"          ], &
+& "GDEOSI"         : [True,  False, AS_0_nflevg_2,      None,                 "LLMF_PHYS"          ], &
+& "GUEOSI"         : [True,  False, AS_0_nflevg_2,      None,                 "LLMF_PHYS"          ], &
+& "GMU0"           : [True,  False, AS_0_NSORAYFRm1,    None,                 "LLMF_PHYS"          ], &
+& "GMU0_MIN"       : [True,  False, AS_void,            None,                 "LLMF_PHYS"          ], &
+& "GMU0_MAX"       : [True,  False, AS_void,            None,                 "LLMF_PHYS"          ], &
+& "GDEOTI"         : [True,  False, AS_0_nflevg,        None,                 "LLMF_PHYS"          ], &
+& "GDEOTI2"        : [True,  False, AS_0_nflevg,        None,                 "LLMF_PHYS"          ], &
+& "GUEOTI"         : [True,  False, AS_0_nflevg,        None,                 "LLMF_PHYS"          ], &
+& "GUEOTI2"        : [True,  False, AS_0_nflevg,        None,                 "LLMF_PHYS"          ], &
+& "GEOLT"          : [True,  False, AS_1_nflevg,        None,                 "LLMF_PHYS"          ], &
+& "GEOXT"          : [True,  False, AS_1_nflevg,        None,                 "LLMF_PHYS"          ], &
+& "GRPROX"         : [True,  False, AS_0_nflevg,        None,                 "LLMF_PHYS"          ], &
+& "GMIXP"          : [True,  False, AS_0_nflevg,        None,                 "LLMF_PHYS"          ], &
+& "GFLUXC"         : [True,  False, AS_0_nflevg,        None,                 "LLMF_PHYS"          ], &
+& "GRSURF"         : [True,  False, AS_void,            None,                 "LLMF_PHYS"          ], &
 & }
 
 
 #:set vars_cpg_dyn_xyb = { &
-& "DELP"           : [False, False, AS_1_nflevg,                                        ], & 
-& "RDELP"          : [False, False, AS_1_nflevg,                                        ], &
-& "LNPR"           : [False, False, AS_1_nflevg,                                        ], &
-& "ALPH"           : [False, False, AS_1_nflevg,                                        ], &
-& "RTGR"           : [False, False, AS_1_nflevg,                                        ], &
-& "RPRE"           : [False, False, AS_1_nflevg,                                        ], &
-& "RPP"            : [False, False, AS_1_nflevg,                                        ], &
+& "DELP"           : [False, False, AS_1_nflevg,   ], & 
+& "RDELP"          : [False, False, AS_1_nflevg,   ], &
+& "LNPR"           : [False, False, AS_1_nflevg,   ], &
+& "ALPH"           : [False, False, AS_1_nflevg,   ], &
+& "RTGR"           : [False, False, AS_1_nflevg,   ], &
+& "RPRE"           : [False, False, AS_1_nflevg,   ], &
+& "RPP"            : [False, False, AS_1_nflevg,   ], &
 & }
 
 #:set vars_cpg_dyn_hwind = { &
-& "UH"             : [False, False, AS_0_nflevg,                                        ], &
-& "VH"             : [False, False, AS_0_nflevg,                                        ], &
-& "WWI"            : [False, False, AS_0_nflevg,                                        ], &
+& "UH"             : [False, False, AS_0_nflevg,   ], &
+& "VH"             : [False, False, AS_0_nflevg,   ], &
+& "WWI"            : [False, False, AS_0_nflevg,   ], &
 & }
 
 #:set vars_cpg_dyn_rcp = { &
-& "CP"             : [False, False, AS_1_nflevg,                                        ], &
-& "R"              : [False, False, AS_1_nflevg,                                        ], &
-& "KAP"            : [False, False, AS_1_nflevg,                                        ], &
+& "CP"             : [False, False, AS_1_nflevg,   ], &
+& "R"              : [False, False, AS_1_nflevg,   ], &
+& "KAP"            : [False, False, AS_1_nflevg,   ], &
 & }
 
 #:set vars_cpg_dyn_cty = { &
-& "EVEL"           : [False, False, AS_0_nflevg,                                        ], &
-& "VVEL"           : [False, False, AS_0_nflevg,                                        ], &
-& "PSDIV"          : [False, False, AS_0_nflevg,                                        ], &
-& "PSDVBC"         : [False, False, AS_0_nflevg,                                        ], &
-& "DIVDP"          : [False, False, AS_0_nflevg,                                        ], &
+& "EVEL"           : [False, False, AS_0_nflevg,   ], &
+& "VVEL"           : [False, False, AS_0_nflevg,   ], &
+& "PSDIV"          : [False, False, AS_0_nflevg,   ], &
+& "PSDVBC"         : [False, False, AS_0_nflevg,   ], &
+& "DIVDP"          : [False, False, AS_0_nflevg,   ], &
 & }
 
 #:set vars_cpg_dyn_tnd = { &
-& "TNDU"           : [False, False, AS_1_nflevg,                                        ], &
-& "TNDV"           : [False, False, AS_1_nflevg,                                        ], &
-& "TNDU_NOC"       : [False, False, AS_1_nflevg,                                        ], &
-& "TNDV_NOC"       : [False, False, AS_1_nflevg,                                        ], &
-& "TNDT"           : [False, False, AS_1_nflevg,                                        ], &
-& "TNDPD"          : [False, False, AS_1_nflevg,                                        ], &
-& "TNDVD"          : [False, False, AS_1_nflevg,                                        ], &
-& "TNDGW"          : [False, False, AS_1_nflevg,                                        ], &
+& "TNDU"           : [False, False, AS_1_nflevg,   ], &
+& "TNDV"           : [False, False, AS_1_nflevg,   ], &
+& "TNDU_NOC"       : [False, False, AS_1_nflevg,   ], &
+& "TNDV_NOC"       : [False, False, AS_1_nflevg,   ], &
+& "TNDT"           : [False, False, AS_1_nflevg,   ], &
+& "TNDPD"          : [False, False, AS_1_nflevg,   ], &
+& "TNDVD"          : [False, False, AS_1_nflevg,   ], &
+& "TNDGW"          : [False, False, AS_1_nflevg,   ], &
 & }
 
 #:endmute
@@ -148,45 +148,45 @@ USE PARKIND1, ONLY : JPRB, JPIM
 
 IMPLICIT NONE
 
-$:pcpg_dyn_4d_definition ("XYB",   vars_cpg_dyn_xyb)
+$:pcpg_intdyn_definition ("CPG_XYB_TYPE"  , vars_cpg_dyn_xyb  )
 
-$:pcpg_dyn_4d_definition ("HWIND", vars_cpg_dyn_hwind)
+$:pcpg_intdyn_definition ("CPG_HWIND_TYPE", vars_cpg_dyn_hwind)
 
-$:pcpg_dyn_4d_definition ("RCP",   vars_cpg_dyn_rcp)
+$:pcpg_intdyn_definition ("CPG_RCP_TYPE"  , vars_cpg_dyn_rcp  )
 
-$:pcpg_dyn_4d_definition ("CTY",   vars_cpg_dyn_cty)
+$:pcpg_intdyn_definition ("CPG_CTY_TYPE"  , vars_cpg_dyn_cty  )
 
-$:pcpg_dyn_4d_definition ("TND",   vars_cpg_dyn_tnd)
+$:pcpg_intdyn_definition ("CPG_TND_TYPE",   vars_cpg_dyn_tnd  )
 
-$:pcpg_type_definition ("DYN",  vars_cpg_dyn )
+$:pcpg_type_definition ("CPG_DYN_TYPE" ,  vars_cpg_dyn )
 
-$:pcpg_type_definition ("PHY",  vars_cpg_phy )
+$:pcpg_type_definition ("CPG_PHY_TYPE" ,  vars_cpg_phy )
 
-$:pcpg_type_definition ("MISC", vars_cpg_misc)
+$:pcpg_type_definition ("CPG_MISC_TYPE", vars_cpg_misc )
 
-$:pcpg_type_definition ("OPT",  vars_cpg_opt )
+$:pcpg_type_definition ("CPG_OPT_TYPE" ,  vars_cpg_opt )
 
 REAL(KIND=JPRB), PRIVATE, SAVE, TARGET :: ZDUM1 (1), ZDUM2 (1, 1), ZDUM3 (1,1,1)
 
 CONTAINS
 
-$:pcpg_dyn_4d_methods ("XYB",   vars_cpg_dyn_xyb)
+$:pcpg_intdyn_methods ("CPG_XYB_TYPE"  , vars_cpg_dyn_xyb  ,"XYB"  )
 
-$:pcpg_dyn_4d_methods ("HWIND", vars_cpg_dyn_hwind)
+$:pcpg_intdyn_methods ("CPG_HWIND_TYPE", vars_cpg_dyn_hwind,"HWIND")
 
-$:pcpg_dyn_4d_methods ("RCP",   vars_cpg_dyn_rcp)
+$:pcpg_intdyn_methods ("CPG_RCP_TYPE"  , vars_cpg_dyn_rcp  ,"RCP"  )
 
-$:pcpg_dyn_4d_methods ("CTY",   vars_cpg_dyn_cty)
+$:pcpg_intdyn_methods ("CPG_CTY_TYPE"  , vars_cpg_dyn_cty  ,"CTY"  )
 
-$:pcpg_dyn_4d_methods ("TND",   vars_cpg_dyn_tnd)
+$:pcpg_intdyn_methods ("CPG_TND_TYPE"  , vars_cpg_dyn_tnd  ,"TND"  )
 
-$:pcpg_type_methods ("DYN" , vars_cpg_dyn )
+$:pcpg_type_methods ("CPG_DYN_TYPE" , vars_cpg_dyn , use_intdyn=True)
 
-$:pcpg_type_methods ("PHY" , vars_cpg_phy )
+$:pcpg_type_methods ("CPG_PHY_TYPE" , vars_cpg_phy , use_intdyn=True)
 
-$:pcpg_type_methods ("MISC", vars_cpg_misc)
+$:pcpg_type_methods ("CPG_MISC_TYPE", vars_cpg_misc)
 
-$:pcpg_type_methods ("OPT",  vars_cpg_opt )
+$:pcpg_type_methods ("CPG_OPT_TYPE",  vars_cpg_opt )
 
 END MODULE CPG_TYPE_MOD
 

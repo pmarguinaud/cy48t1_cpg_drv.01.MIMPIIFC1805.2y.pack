@@ -7,6 +7,13 @@ cd fypp
 
 for f in *.fypp
 do
+
+  if [ $f = "cpg_macros.fypp" ]
+  then
+    continue
+  fi
+
+
   b=$(basename $f .fypp)
   /opt/softs/anaconda3/bin/fypp -m os -M . -m yaml -m field_config ./$b.fypp ./$b.F90
 

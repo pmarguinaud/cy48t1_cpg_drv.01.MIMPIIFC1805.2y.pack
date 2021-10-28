@@ -56,10 +56,16 @@ CONTAINS
 #:def associate_t (t)
   SELF%YCPG_DYN => YDCPG_DYN${t}$
   SELF%YCPG_PHY => YDCPG_PHY${t}$
-  SELF%P1EXT  => P1EXT${t}$
-  SELF%P1CHEM => P1CHEM${t}$
-  SELF%P1NOGW => P1NOGW${t}$
-  SELF%P2NOGW => P2NOGW${t}$
+
+  SELF%P1EXT  => ZDUM
+  SELF%P1CHEM => ZDUM
+  SELF%P1NOGW => ZDUM
+  SELF%P2NOGW => ZDUM
+
+  IF (ASSOCIATED (P1EXT${t}$ )) SELF%P1EXT  => P1EXT${t}$
+  IF (ASSOCIATED (P1CHEM${t}$)) SELF%P1CHEM => P1CHEM${t}$
+  IF (ASSOCIATED (P1NOGW${t}$)) SELF%P1NOGW => P1NOGW${t}$
+  IF (ASSOCIATED (P2NOGW${t}$)) SELF%P2NOGW => P2NOGW${t}$
 
 #:for var in vars_ydvars
   SELF%${var}$ (LBOUND (YDVARS%${var}$%T${t}$,1):, LBOUND (YDVARS%${var}$%T${t}$,2):) => YDVARS%${var}$%T${t}$
@@ -98,6 +104,7 @@ REAL (KIND=JPRB), POINTER :: P1EXT0  (:,:), P1EXT9  (:,:)
 REAL (KIND=JPRB), POINTER :: P1CHEM0 (:,:), P1CHEM9 (:,:)
 REAL (KIND=JPRB), POINTER :: P1NOGW0 (:,:), P1NOGW9 (:,:)
 REAL (KIND=JPRB), POINTER :: P2NOGW0 (:,:), P2NOGW9 (:,:)
+REAL (KIND=JPRB), TARGET, SAVE :: ZDUM (1, 1)
 
 IF (LDT0) THEN
 $:associate_t ('0')

@@ -1,0 +1,2167 @@
+! Rank and shape definitions for simple templating
+!
+! Note that the ranks encode coneptual dimensions here, eg. FIELD_2D encodes
+! a surface field and FIELD_3D represents a field with a vertical component.
+
+MODULE FIELD_MODULE
+  ! The FIELD types provided by this module provide data abstractions that
+  ! decouple data storage in memory from the data views used in thread-parallel
+  ! sections of the code. They are intended to thinly wrap ATLAS_FIELD
+  ! objects and provide additional features that may later be
+  ! incorporated into Atlas. They can also provide backward-compatibility
+  ! for non-Atlas execution modes.
+
+USE PARKIND1, ONLY: JPIM, JPRB
+USE OML_MOD, ONLY: OML_MAX_THREADS, OML_MY_THREAD
+USE IEEE_ARITHMETIC, ONLY: IEEE_SIGNALING_NAN
+
+IMPLICIT NONE
+
+TYPE FIELD_2D
+  ! A FIELD encapsulates a single multi-dimensional array and can
+  ! provide block-indexed "views" of the data for automating the
+  ! allocation and parallel iterration of NPROMA blocks.
+  CHARACTER(:), ALLOCATABLE :: NAME
+
+  ! The data view to be used in thread-parallel sections
+  !
+  ! The underlying view pointer is of rank-1, since we always
+  ! the horizontal component as a single dimension.
+  REAL(KIND=JPRB), POINTER :: VIEW(:) => NULL()
+
+  ! TODO: Atlas-based field data storage field
+  ! TODO: Do we still need to use pointers here?
+  ! TYPE(ATLAS_FIELD), POINTER :: DATA
+
+  ! Storage pointer for non-Atlas backward-compatibility mode
+  !
+  ! The underlying storage pointer has the rank as the dimension,
+  ! where the innermost dimension represents the horizontal and
+  ! the outermost one is the block index.
+  REAL(KIND=JPRB), POINTER :: DATA(:,:) => NULL()
+
+  ! Number of blocks used in the data layout
+  INTEGER :: NBLOCKS
+
+  ! Flag indicating whether this field stores real data
+  LOGICAL :: ACTIVE = .FALSE.
+  ! Flag indicating the use a single block-buffer per thread
+  LOGICAL :: THREAD_BUFFER = .FALSE.
+  ! Flag indicating whether we own the allocated base array
+  LOGICAL :: OWNED = .TRUE.
+
+CONTAINS
+
+  PROCEDURE :: CLONE => FIELD_2D_CLONE
+  PROCEDURE :: UPDATE_VIEW => FIELD_2D_UPDATE_VIEW
+  PROCEDURE :: EXTRACT_VIEW => FIELD_2D_EXTRACT_VIEW
+  PROCEDURE :: GET_VIEW => FIELD_2D_GET_VIEW
+  PROCEDURE :: FINAL => FIELD_2D_FINAL
+
+END TYPE FIELD_2D
+
+TYPE FIELD_3D
+  ! A FIELD encapsulates a single multi-dimensional array and can
+  ! provide block-indexed "views" of the data for automating the
+  ! allocation and parallel iterration of NPROMA blocks.
+  CHARACTER(:), ALLOCATABLE :: NAME
+
+  ! The data view to be used in thread-parallel sections
+  !
+  ! The underlying view pointer is of rank-1, since we always
+  ! the horizontal component as a single dimension.
+  REAL(KIND=JPRB), POINTER :: VIEW(:,:) => NULL()
+
+  ! TODO: Atlas-based field data storage field
+  ! TODO: Do we still need to use pointers here?
+  ! TYPE(ATLAS_FIELD), POINTER :: DATA
+
+  ! Storage pointer for non-Atlas backward-compatibility mode
+  !
+  ! The underlying storage pointer has the rank as the dimension,
+  ! where the innermost dimension represents the horizontal and
+  ! the outermost one is the block index.
+  REAL(KIND=JPRB), POINTER :: DATA(:,:,:) => NULL()
+
+  ! Number of blocks used in the data layout
+  INTEGER :: NBLOCKS
+
+  ! Flag indicating whether this field stores real data
+  LOGICAL :: ACTIVE = .FALSE.
+  ! Flag indicating the use a single block-buffer per thread
+  LOGICAL :: THREAD_BUFFER = .FALSE.
+  ! Flag indicating whether we own the allocated base array
+  LOGICAL :: OWNED = .TRUE.
+
+CONTAINS
+
+  PROCEDURE :: CLONE => FIELD_3D_CLONE
+  PROCEDURE :: UPDATE_VIEW => FIELD_3D_UPDATE_VIEW
+  PROCEDURE :: EXTRACT_VIEW => FIELD_3D_EXTRACT_VIEW
+  PROCEDURE :: GET_VIEW => FIELD_3D_GET_VIEW
+  PROCEDURE :: FINAL => FIELD_3D_FINAL
+
+END TYPE FIELD_3D
+
+TYPE FIELD_4D
+  ! A FIELD encapsulates a single multi-dimensional array and can
+  ! provide block-indexed "views" of the data for automating the
+  ! allocation and parallel iterration of NPROMA blocks.
+  CHARACTER(:), ALLOCATABLE :: NAME
+
+  ! The data view to be used in thread-parallel sections
+  !
+  ! The underlying view pointer is of rank-1, since we always
+  ! the horizontal component as a single dimension.
+  REAL(KIND=JPRB), POINTER :: VIEW(:,:,:) => NULL()
+
+  ! TODO: Atlas-based field data storage field
+  ! TODO: Do we still need to use pointers here?
+  ! TYPE(ATLAS_FIELD), POINTER :: DATA
+
+  ! Storage pointer for non-Atlas backward-compatibility mode
+  !
+  ! The underlying storage pointer has the rank as the dimension,
+  ! where the innermost dimension represents the horizontal and
+  ! the outermost one is the block index.
+  REAL(KIND=JPRB), POINTER :: DATA(:,:,:,:) => NULL()
+
+  ! Number of blocks used in the data layout
+  INTEGER :: NBLOCKS
+
+  ! Flag indicating whether this field stores real data
+  LOGICAL :: ACTIVE = .FALSE.
+  ! Flag indicating the use a single block-buffer per thread
+  LOGICAL :: THREAD_BUFFER = .FALSE.
+  ! Flag indicating whether we own the allocated base array
+  LOGICAL :: OWNED = .TRUE.
+
+CONTAINS
+
+  PROCEDURE :: CLONE => FIELD_4D_CLONE
+  PROCEDURE :: UPDATE_VIEW => FIELD_4D_UPDATE_VIEW
+  PROCEDURE :: EXTRACT_VIEW => FIELD_4D_EXTRACT_VIEW
+  PROCEDURE :: GET_VIEW => FIELD_4D_GET_VIEW
+  PROCEDURE :: FINAL => FIELD_4D_FINAL
+
+END TYPE FIELD_4D
+
+TYPE FIELD_INT2D
+  ! A FIELD encapsulates a single multi-dimensional array and can
+  ! provide block-indexed "views" of the data for automating the
+  ! allocation and parallel iterration of NPROMA blocks.
+  CHARACTER(:), ALLOCATABLE :: NAME
+
+  ! The data view to be used in thread-parallel sections
+  !
+  ! The underlying view pointer is of rank-1, since we always
+  ! the horizontal component as a single dimension.
+  INTEGER(KIND=JPIM), POINTER :: VIEW(:) => NULL()
+
+  ! TODO: Atlas-based field data storage field
+  ! TODO: Do we still need to use pointers here?
+  ! TYPE(ATLAS_FIELD), POINTER :: DATA
+
+  ! Storage pointer for non-Atlas backward-compatibility mode
+  !
+  ! The underlying storage pointer has the rank as the dimension,
+  ! where the innermost dimension represents the horizontal and
+  ! the outermost one is the block index.
+  INTEGER(KIND=JPIM), POINTER :: DATA(:,:) => NULL()
+
+  ! Number of blocks used in the data layout
+  INTEGER :: NBLOCKS
+
+  ! Flag indicating whether this field stores real data
+  LOGICAL :: ACTIVE = .FALSE.
+  ! Flag indicating the use a single block-buffer per thread
+  LOGICAL :: THREAD_BUFFER = .FALSE.
+  ! Flag indicating whether we own the allocated base array
+  LOGICAL :: OWNED = .TRUE.
+
+CONTAINS
+
+  PROCEDURE :: CLONE => FIELD_INT2D_CLONE
+  PROCEDURE :: UPDATE_VIEW => FIELD_INT2D_UPDATE_VIEW
+  PROCEDURE :: EXTRACT_VIEW => FIELD_INT2D_EXTRACT_VIEW
+  PROCEDURE :: GET_VIEW => FIELD_INT2D_GET_VIEW
+  PROCEDURE :: FINAL => FIELD_INT2D_FINAL
+
+END TYPE FIELD_INT2D
+
+TYPE FIELD_INT3D
+  ! A FIELD encapsulates a single multi-dimensional array and can
+  ! provide block-indexed "views" of the data for automating the
+  ! allocation and parallel iterration of NPROMA blocks.
+  CHARACTER(:), ALLOCATABLE :: NAME
+
+  ! The data view to be used in thread-parallel sections
+  !
+  ! The underlying view pointer is of rank-1, since we always
+  ! the horizontal component as a single dimension.
+  INTEGER(KIND=JPIM), POINTER :: VIEW(:,:) => NULL()
+
+  ! TODO: Atlas-based field data storage field
+  ! TODO: Do we still need to use pointers here?
+  ! TYPE(ATLAS_FIELD), POINTER :: DATA
+
+  ! Storage pointer for non-Atlas backward-compatibility mode
+  !
+  ! The underlying storage pointer has the rank as the dimension,
+  ! where the innermost dimension represents the horizontal and
+  ! the outermost one is the block index.
+  INTEGER(KIND=JPIM), POINTER :: DATA(:,:,:) => NULL()
+
+  ! Number of blocks used in the data layout
+  INTEGER :: NBLOCKS
+
+  ! Flag indicating whether this field stores real data
+  LOGICAL :: ACTIVE = .FALSE.
+  ! Flag indicating the use a single block-buffer per thread
+  LOGICAL :: THREAD_BUFFER = .FALSE.
+  ! Flag indicating whether we own the allocated base array
+  LOGICAL :: OWNED = .TRUE.
+
+CONTAINS
+
+  PROCEDURE :: CLONE => FIELD_INT3D_CLONE
+  PROCEDURE :: UPDATE_VIEW => FIELD_INT3D_UPDATE_VIEW
+  PROCEDURE :: EXTRACT_VIEW => FIELD_INT3D_EXTRACT_VIEW
+  PROCEDURE :: GET_VIEW => FIELD_INT3D_GET_VIEW
+  PROCEDURE :: FINAL => FIELD_INT3D_FINAL
+
+END TYPE FIELD_INT3D
+
+TYPE FIELD_INT4D
+  ! A FIELD encapsulates a single multi-dimensional array and can
+  ! provide block-indexed "views" of the data for automating the
+  ! allocation and parallel iterration of NPROMA blocks.
+  CHARACTER(:), ALLOCATABLE :: NAME
+
+  ! The data view to be used in thread-parallel sections
+  !
+  ! The underlying view pointer is of rank-1, since we always
+  ! the horizontal component as a single dimension.
+  INTEGER(KIND=JPIM), POINTER :: VIEW(:,:,:) => NULL()
+
+  ! TODO: Atlas-based field data storage field
+  ! TODO: Do we still need to use pointers here?
+  ! TYPE(ATLAS_FIELD), POINTER :: DATA
+
+  ! Storage pointer for non-Atlas backward-compatibility mode
+  !
+  ! The underlying storage pointer has the rank as the dimension,
+  ! where the innermost dimension represents the horizontal and
+  ! the outermost one is the block index.
+  INTEGER(KIND=JPIM), POINTER :: DATA(:,:,:,:) => NULL()
+
+  ! Number of blocks used in the data layout
+  INTEGER :: NBLOCKS
+
+  ! Flag indicating whether this field stores real data
+  LOGICAL :: ACTIVE = .FALSE.
+  ! Flag indicating the use a single block-buffer per thread
+  LOGICAL :: THREAD_BUFFER = .FALSE.
+  ! Flag indicating whether we own the allocated base array
+  LOGICAL :: OWNED = .TRUE.
+
+CONTAINS
+
+  PROCEDURE :: CLONE => FIELD_INT4D_CLONE
+  PROCEDURE :: UPDATE_VIEW => FIELD_INT4D_UPDATE_VIEW
+  PROCEDURE :: EXTRACT_VIEW => FIELD_INT4D_EXTRACT_VIEW
+  PROCEDURE :: GET_VIEW => FIELD_INT4D_GET_VIEW
+  PROCEDURE :: FINAL => FIELD_INT4D_FINAL
+
+END TYPE FIELD_INT4D
+
+TYPE FIELD_LOG2D
+  ! A FIELD encapsulates a single multi-dimensional array and can
+  ! provide block-indexed "views" of the data for automating the
+  ! allocation and parallel iterration of NPROMA blocks.
+  CHARACTER(:), ALLOCATABLE :: NAME
+
+  ! The data view to be used in thread-parallel sections
+  !
+  ! The underlying view pointer is of rank-1, since we always
+  ! the horizontal component as a single dimension.
+  LOGICAL, POINTER :: VIEW(:) => NULL()
+
+  ! TODO: Atlas-based field data storage field
+  ! TODO: Do we still need to use pointers here?
+  ! TYPE(ATLAS_FIELD), POINTER :: DATA
+
+  ! Storage pointer for non-Atlas backward-compatibility mode
+  !
+  ! The underlying storage pointer has the rank as the dimension,
+  ! where the innermost dimension represents the horizontal and
+  ! the outermost one is the block index.
+  LOGICAL, POINTER :: DATA(:,:) => NULL()
+
+  ! Number of blocks used in the data layout
+  INTEGER :: NBLOCKS
+
+  ! Flag indicating whether this field stores real data
+  LOGICAL :: ACTIVE = .FALSE.
+  ! Flag indicating the use a single block-buffer per thread
+  LOGICAL :: THREAD_BUFFER = .FALSE.
+  ! Flag indicating whether we own the allocated base array
+  LOGICAL :: OWNED = .TRUE.
+
+CONTAINS
+
+  PROCEDURE :: CLONE => FIELD_LOG2D_CLONE
+  PROCEDURE :: UPDATE_VIEW => FIELD_LOG2D_UPDATE_VIEW
+  PROCEDURE :: EXTRACT_VIEW => FIELD_LOG2D_EXTRACT_VIEW
+  PROCEDURE :: GET_VIEW => FIELD_LOG2D_GET_VIEW
+  PROCEDURE :: FINAL => FIELD_LOG2D_FINAL
+
+END TYPE FIELD_LOG2D
+
+TYPE FIELD_LOG3D
+  ! A FIELD encapsulates a single multi-dimensional array and can
+  ! provide block-indexed "views" of the data for automating the
+  ! allocation and parallel iterration of NPROMA blocks.
+  CHARACTER(:), ALLOCATABLE :: NAME
+
+  ! The data view to be used in thread-parallel sections
+  !
+  ! The underlying view pointer is of rank-1, since we always
+  ! the horizontal component as a single dimension.
+  LOGICAL, POINTER :: VIEW(:,:) => NULL()
+
+  ! TODO: Atlas-based field data storage field
+  ! TODO: Do we still need to use pointers here?
+  ! TYPE(ATLAS_FIELD), POINTER :: DATA
+
+  ! Storage pointer for non-Atlas backward-compatibility mode
+  !
+  ! The underlying storage pointer has the rank as the dimension,
+  ! where the innermost dimension represents the horizontal and
+  ! the outermost one is the block index.
+  LOGICAL, POINTER :: DATA(:,:,:) => NULL()
+
+  ! Number of blocks used in the data layout
+  INTEGER :: NBLOCKS
+
+  ! Flag indicating whether this field stores real data
+  LOGICAL :: ACTIVE = .FALSE.
+  ! Flag indicating the use a single block-buffer per thread
+  LOGICAL :: THREAD_BUFFER = .FALSE.
+  ! Flag indicating whether we own the allocated base array
+  LOGICAL :: OWNED = .TRUE.
+
+CONTAINS
+
+  PROCEDURE :: CLONE => FIELD_LOG3D_CLONE
+  PROCEDURE :: UPDATE_VIEW => FIELD_LOG3D_UPDATE_VIEW
+  PROCEDURE :: EXTRACT_VIEW => FIELD_LOG3D_EXTRACT_VIEW
+  PROCEDURE :: GET_VIEW => FIELD_LOG3D_GET_VIEW
+  PROCEDURE :: FINAL => FIELD_LOG3D_FINAL
+
+END TYPE FIELD_LOG3D
+
+TYPE FIELD_LOG4D
+  ! A FIELD encapsulates a single multi-dimensional array and can
+  ! provide block-indexed "views" of the data for automating the
+  ! allocation and parallel iterration of NPROMA blocks.
+  CHARACTER(:), ALLOCATABLE :: NAME
+
+  ! The data view to be used in thread-parallel sections
+  !
+  ! The underlying view pointer is of rank-1, since we always
+  ! the horizontal component as a single dimension.
+  LOGICAL, POINTER :: VIEW(:,:,:) => NULL()
+
+  ! TODO: Atlas-based field data storage field
+  ! TODO: Do we still need to use pointers here?
+  ! TYPE(ATLAS_FIELD), POINTER :: DATA
+
+  ! Storage pointer for non-Atlas backward-compatibility mode
+  !
+  ! The underlying storage pointer has the rank as the dimension,
+  ! where the innermost dimension represents the horizontal and
+  ! the outermost one is the block index.
+  LOGICAL, POINTER :: DATA(:,:,:,:) => NULL()
+
+  ! Number of blocks used in the data layout
+  INTEGER :: NBLOCKS
+
+  ! Flag indicating whether this field stores real data
+  LOGICAL :: ACTIVE = .FALSE.
+  ! Flag indicating the use a single block-buffer per thread
+  LOGICAL :: THREAD_BUFFER = .FALSE.
+  ! Flag indicating whether we own the allocated base array
+  LOGICAL :: OWNED = .TRUE.
+
+CONTAINS
+
+  PROCEDURE :: CLONE => FIELD_LOG4D_CLONE
+  PROCEDURE :: UPDATE_VIEW => FIELD_LOG4D_UPDATE_VIEW
+  PROCEDURE :: EXTRACT_VIEW => FIELD_LOG4D_EXTRACT_VIEW
+  PROCEDURE :: GET_VIEW => FIELD_LOG4D_GET_VIEW
+  PROCEDURE :: FINAL => FIELD_LOG4D_FINAL
+
+END TYPE FIELD_LOG4D
+
+
+TYPE FIELD_2D_PTR
+  ! Struct to hold references to field objects
+  TYPE(FIELD_2D), POINTER :: PTR => NULL()
+END TYPE FIELD_2D_PTR
+
+TYPE FIELD_2D_VIEW
+  ! Struct to hold array views, so we can make arrays of them
+  REAL(KIND=JPRB), POINTER :: P(:) => NULL()
+END TYPE FIELD_2D_VIEW
+
+TYPE FIELD_3D_PTR
+  ! Struct to hold references to field objects
+  TYPE(FIELD_3D), POINTER :: PTR => NULL()
+END TYPE FIELD_3D_PTR
+
+TYPE FIELD_3D_VIEW
+  ! Struct to hold array views, so we can make arrays of them
+  REAL(KIND=JPRB), POINTER :: P(:,:) => NULL()
+END TYPE FIELD_3D_VIEW
+
+TYPE FIELD_4D_PTR
+  ! Struct to hold references to field objects
+  TYPE(FIELD_4D), POINTER :: PTR => NULL()
+END TYPE FIELD_4D_PTR
+
+TYPE FIELD_4D_VIEW
+  ! Struct to hold array views, so we can make arrays of them
+  REAL(KIND=JPRB), POINTER :: P(:,:,:) => NULL()
+END TYPE FIELD_4D_VIEW
+
+
+INTERFACE FIELD_2D
+  MODULE PROCEDURE :: FIELD_2D_WRAP
+  ! MODULE PROCEDURE :: FIELD_2D_EMPTY
+  MODULE PROCEDURE :: FIELD_2D_ALLOCATE
+END INTERFACE
+
+INTERFACE FIELD_3D
+  MODULE PROCEDURE :: FIELD_3D_WRAP
+  ! MODULE PROCEDURE :: FIELD_3D_EMPTY
+  MODULE PROCEDURE :: FIELD_3D_ALLOCATE
+END INTERFACE
+
+INTERFACE FIELD_4D
+  MODULE PROCEDURE :: FIELD_4D_WRAP
+  ! MODULE PROCEDURE :: FIELD_4D_EMPTY
+  MODULE PROCEDURE :: FIELD_4D_ALLOCATE
+END INTERFACE
+
+INTERFACE FIELD_INT2D
+  MODULE PROCEDURE :: FIELD_INT2D_WRAP
+  ! MODULE PROCEDURE :: FIELD_INT2D_EMPTY
+  MODULE PROCEDURE :: FIELD_INT2D_ALLOCATE
+END INTERFACE
+
+INTERFACE FIELD_INT3D
+  MODULE PROCEDURE :: FIELD_INT3D_WRAP
+  ! MODULE PROCEDURE :: FIELD_INT3D_EMPTY
+  MODULE PROCEDURE :: FIELD_INT3D_ALLOCATE
+END INTERFACE
+
+INTERFACE FIELD_INT4D
+  MODULE PROCEDURE :: FIELD_INT4D_WRAP
+  ! MODULE PROCEDURE :: FIELD_INT4D_EMPTY
+  MODULE PROCEDURE :: FIELD_INT4D_ALLOCATE
+END INTERFACE
+
+INTERFACE FIELD_LOG2D
+  MODULE PROCEDURE :: FIELD_LOG2D_WRAP
+  ! MODULE PROCEDURE :: FIELD_LOG2D_EMPTY
+  MODULE PROCEDURE :: FIELD_LOG2D_ALLOCATE
+END INTERFACE
+
+INTERFACE FIELD_LOG3D
+  MODULE PROCEDURE :: FIELD_LOG3D_WRAP
+  ! MODULE PROCEDURE :: FIELD_LOG3D_EMPTY
+  MODULE PROCEDURE :: FIELD_LOG3D_ALLOCATE
+END INTERFACE
+
+INTERFACE FIELD_LOG4D
+  MODULE PROCEDURE :: FIELD_LOG4D_WRAP
+  ! MODULE PROCEDURE :: FIELD_LOG4D_EMPTY
+  MODULE PROCEDURE :: FIELD_LOG4D_ALLOCATE
+END INTERFACE
+
+
+INTERFACE FILL_BUFFER
+  MODULE PROCEDURE :: FILL_BUFFER_2D, FILL_BUFFER_3D, FILL_BUFFER_4D
+  MODULE PROCEDURE :: FILL_BUFFER_INT2D, FILL_BUFFER_INT3D, FILL_BUFFER_INT4D
+  MODULE PROCEDURE :: FILL_BUFFER_LOG2D, FILL_BUFFER_LOG3D, FILL_BUFFER_LOG4D
+END INTERFACE FILL_BUFFER
+
+CONTAINS
+
+  SUBROUTINE FILL_BUFFER_2D(BUFFER, INDEX)
+    ! Utility routine to fill data buffers (views)
+    REAL(KIND=JPRB), POINTER, INTENT(INOUT) :: BUFFER(:)
+    INTEGER(KIND=JPIM), INTENT(IN) :: INDEX
+    INTEGER(KIND=JPIM) :: IDX
+
+    IDX = INDEX+1
+    BUFFER(IDX:) = BUFFER(INDEX)
+  END SUBROUTINE FILL_BUFFER_2D
+
+  SUBROUTINE FILL_BUFFER_3D(BUFFER, INDEX)
+    ! Utility routine to fill data buffers (views)
+    REAL(KIND=JPRB), POINTER, INTENT(INOUT) :: BUFFER(:,:)
+    INTEGER(KIND=JPIM), INTENT(IN) :: INDEX
+    INTEGER(KIND=JPIM) :: I, IDX
+
+    IDX = INDEX+1
+    DO I=1, SIZE(BUFFER, 2)
+      BUFFER(IDX:,I) = BUFFER(INDEX,I)
+    END DO
+  END SUBROUTINE FILL_BUFFER_3D
+
+  SUBROUTINE FILL_BUFFER_4D(BUFFER, INDEX)
+    ! Utility routine to fill data buffers (views)
+    REAL(KIND=JPRB), POINTER, INTENT(INOUT) :: BUFFER(:,:,:)
+    INTEGER(KIND=JPIM), INTENT(IN) :: INDEX
+    INTEGER(KIND=JPIM) :: I, J, IDX
+
+    IDX = INDEX+1
+    DO I=1, SIZE(BUFFER, 2)
+      DO J=1, SIZE(BUFFER, 3)
+        BUFFER(IDX:,I,J) = BUFFER(INDEX,I,J)
+      END DO
+    END DO
+  END SUBROUTINE FILL_BUFFER_4D
+
+  SUBROUTINE FILL_BUFFER_INT2D(BUFFER, INDEX)
+    ! Utility routine to fill data buffers (views)
+    INTEGER(KIND=JPIM), POINTER, INTENT(INOUT) :: BUFFER(:)
+    INTEGER(KIND=JPIM), INTENT(IN) :: INDEX
+    INTEGER(KIND=JPIM) :: IDX
+
+    IDX = INDEX+1
+    BUFFER(IDX:) = BUFFER(INDEX)
+  END SUBROUTINE FILL_BUFFER_INT2D
+
+  SUBROUTINE FILL_BUFFER_INT3D(BUFFER, INDEX)
+    ! Utility routine to fill data buffers (views)
+    INTEGER(KIND=JPIM), POINTER, INTENT(INOUT) :: BUFFER(:,:)
+    INTEGER(KIND=JPIM), INTENT(IN) :: INDEX
+    INTEGER(KIND=JPIM) :: I, IDX
+
+    IDX = INDEX+1
+    DO I=1, SIZE(BUFFER, 2)
+      BUFFER(IDX:,I) = BUFFER(INDEX,I)
+    END DO
+  END SUBROUTINE FILL_BUFFER_INT3D
+
+  SUBROUTINE FILL_BUFFER_INT4D(BUFFER, INDEX)
+    ! Utility routine to fill data buffers (views)
+    INTEGER(KIND=JPIM), POINTER, INTENT(INOUT) :: BUFFER(:,:,:)
+    INTEGER(KIND=JPIM), INTENT(IN) :: INDEX
+    INTEGER(KIND=JPIM) :: I, J, IDX
+
+    IDX = INDEX+1
+    DO I=1, SIZE(BUFFER, 2)
+      DO J=1, SIZE(BUFFER, 3)
+        BUFFER(IDX:,I,J) = BUFFER(INDEX,I,J)
+      END DO
+    END DO
+  END SUBROUTINE FILL_BUFFER_INT4D
+
+  SUBROUTINE FILL_BUFFER_LOG2D(BUFFER, INDEX)
+    ! Utility routine to fill data buffers (views)
+    LOGICAL, POINTER, INTENT(INOUT) :: BUFFER(:)
+    INTEGER(KIND=JPIM), INTENT(IN) :: INDEX
+    INTEGER(KIND=JPIM) :: IDX
+
+    IDX = INDEX+1
+    BUFFER(IDX:) = BUFFER(INDEX)
+  END SUBROUTINE FILL_BUFFER_LOG2D
+
+  SUBROUTINE FILL_BUFFER_LOG3D(BUFFER, INDEX)
+    ! Utility routine to fill data buffers (views)
+    LOGICAL, POINTER, INTENT(INOUT) :: BUFFER(:,:)
+    INTEGER(KIND=JPIM), INTENT(IN) :: INDEX
+    INTEGER(KIND=JPIM) :: I, IDX
+
+    IDX = INDEX+1
+    DO I=1, SIZE(BUFFER, 2)
+      BUFFER(IDX:,I) = BUFFER(INDEX,I)
+    END DO
+  END SUBROUTINE FILL_BUFFER_LOG3D
+
+  SUBROUTINE FILL_BUFFER_LOG4D(BUFFER, INDEX)
+    ! Utility routine to fill data buffers (views)
+    LOGICAL, POINTER, INTENT(INOUT) :: BUFFER(:,:,:)
+    INTEGER(KIND=JPIM), INTENT(IN) :: INDEX
+    INTEGER(KIND=JPIM) :: I, J, IDX
+
+    IDX = INDEX+1
+    DO I=1, SIZE(BUFFER, 2)
+      DO J=1, SIZE(BUFFER, 3)
+        BUFFER(IDX:,I,J) = BUFFER(INDEX,I,J)
+      END DO
+    END DO
+  END SUBROUTINE FILL_BUFFER_LOG4D
+
+
+  FUNCTION FIELD_2D_EMPTY(NAME, SHAPE) RESULT(SELF)
+    ! Create FIELD object by wrapping existing data
+    !
+    ! If a SHAPE is provided, a single empty buffer block-sized buffer
+    ! will be allocated under %VIEW and used by all threads in a
+    ! thread-parallel region to avoid segfault when dereferencing NULL
+    ! pointers. Otherwise %DATA and %VIEW will always be unassociated.
+    TYPE(FIELD_2D) :: SELF
+    CHARACTER(LEN=*), INTENT(IN) :: NAME
+    INTEGER(KIND=JPIM), OPTIONAL, INTENT(IN) :: SHAPE(1)
+
+    SELF%NAME = NAME
+    SELF%DATA => NULL()
+    IF (PRESENT(SHAPE)) THEN
+      ALLOCATE(SELF%VIEW(SHAPE(1)))
+    END IF
+    SELF%ACTIVE = .FALSE.
+    SELF%THREAD_BUFFER = .FALSE.
+    SELF%OWNED = .FALSE.
+    SELF%NBLOCKS = 0
+  END FUNCTION FIELD_2D_EMPTY
+
+  FUNCTION FIELD_3D_EMPTY(NAME, SHAPE) RESULT(SELF)
+    ! Create FIELD object by wrapping existing data
+    !
+    ! If a SHAPE is provided, a single empty buffer block-sized buffer
+    ! will be allocated under %VIEW and used by all threads in a
+    ! thread-parallel region to avoid segfault when dereferencing NULL
+    ! pointers. Otherwise %DATA and %VIEW will always be unassociated.
+    TYPE(FIELD_3D) :: SELF
+    CHARACTER(LEN=*), INTENT(IN) :: NAME
+    INTEGER(KIND=JPIM), OPTIONAL, INTENT(IN) :: SHAPE(2)
+
+    SELF%NAME = NAME
+    SELF%DATA => NULL()
+    IF (PRESENT(SHAPE)) THEN
+      ALLOCATE(SELF%VIEW(SHAPE(1),SHAPE(2)))
+    END IF
+    SELF%ACTIVE = .FALSE.
+    SELF%THREAD_BUFFER = .FALSE.
+    SELF%OWNED = .FALSE.
+    SELF%NBLOCKS = 0
+  END FUNCTION FIELD_3D_EMPTY
+
+  FUNCTION FIELD_4D_EMPTY(NAME, SHAPE) RESULT(SELF)
+    ! Create FIELD object by wrapping existing data
+    !
+    ! If a SHAPE is provided, a single empty buffer block-sized buffer
+    ! will be allocated under %VIEW and used by all threads in a
+    ! thread-parallel region to avoid segfault when dereferencing NULL
+    ! pointers. Otherwise %DATA and %VIEW will always be unassociated.
+    TYPE(FIELD_4D) :: SELF
+    CHARACTER(LEN=*), INTENT(IN) :: NAME
+    INTEGER(KIND=JPIM), OPTIONAL, INTENT(IN) :: SHAPE(3)
+
+    SELF%NAME = NAME
+    SELF%DATA => NULL()
+    IF (PRESENT(SHAPE)) THEN
+      ALLOCATE(SELF%VIEW(SHAPE(1),SHAPE(2),SHAPE(3)))
+    END IF
+    SELF%ACTIVE = .FALSE.
+    SELF%THREAD_BUFFER = .FALSE.
+    SELF%OWNED = .FALSE.
+    SELF%NBLOCKS = 0
+  END FUNCTION FIELD_4D_EMPTY
+
+  FUNCTION FIELD_INT2D_EMPTY(NAME, SHAPE) RESULT(SELF)
+    ! Create FIELD object by wrapping existing data
+    !
+    ! If a SHAPE is provided, a single empty buffer block-sized buffer
+    ! will be allocated under %VIEW and used by all threads in a
+    ! thread-parallel region to avoid segfault when dereferencing NULL
+    ! pointers. Otherwise %DATA and %VIEW will always be unassociated.
+    TYPE(FIELD_INT2D) :: SELF
+    CHARACTER(LEN=*), INTENT(IN) :: NAME
+    INTEGER(KIND=JPIM), OPTIONAL, INTENT(IN) :: SHAPE(1)
+
+    SELF%NAME = NAME
+    SELF%DATA => NULL()
+    IF (PRESENT(SHAPE)) THEN
+      ALLOCATE(SELF%VIEW(SHAPE(1)))
+    END IF
+    SELF%ACTIVE = .FALSE.
+    SELF%THREAD_BUFFER = .FALSE.
+    SELF%OWNED = .FALSE.
+    SELF%NBLOCKS = 0
+  END FUNCTION FIELD_INT2D_EMPTY
+
+  FUNCTION FIELD_INT3D_EMPTY(NAME, SHAPE) RESULT(SELF)
+    ! Create FIELD object by wrapping existing data
+    !
+    ! If a SHAPE is provided, a single empty buffer block-sized buffer
+    ! will be allocated under %VIEW and used by all threads in a
+    ! thread-parallel region to avoid segfault when dereferencing NULL
+    ! pointers. Otherwise %DATA and %VIEW will always be unassociated.
+    TYPE(FIELD_INT3D) :: SELF
+    CHARACTER(LEN=*), INTENT(IN) :: NAME
+    INTEGER(KIND=JPIM), OPTIONAL, INTENT(IN) :: SHAPE(2)
+
+    SELF%NAME = NAME
+    SELF%DATA => NULL()
+    IF (PRESENT(SHAPE)) THEN
+      ALLOCATE(SELF%VIEW(SHAPE(1),SHAPE(2)))
+    END IF
+    SELF%ACTIVE = .FALSE.
+    SELF%THREAD_BUFFER = .FALSE.
+    SELF%OWNED = .FALSE.
+    SELF%NBLOCKS = 0
+  END FUNCTION FIELD_INT3D_EMPTY
+
+  FUNCTION FIELD_INT4D_EMPTY(NAME, SHAPE) RESULT(SELF)
+    ! Create FIELD object by wrapping existing data
+    !
+    ! If a SHAPE is provided, a single empty buffer block-sized buffer
+    ! will be allocated under %VIEW and used by all threads in a
+    ! thread-parallel region to avoid segfault when dereferencing NULL
+    ! pointers. Otherwise %DATA and %VIEW will always be unassociated.
+    TYPE(FIELD_INT4D) :: SELF
+    CHARACTER(LEN=*), INTENT(IN) :: NAME
+    INTEGER(KIND=JPIM), OPTIONAL, INTENT(IN) :: SHAPE(3)
+
+    SELF%NAME = NAME
+    SELF%DATA => NULL()
+    IF (PRESENT(SHAPE)) THEN
+      ALLOCATE(SELF%VIEW(SHAPE(1),SHAPE(2),SHAPE(3)))
+    END IF
+    SELF%ACTIVE = .FALSE.
+    SELF%THREAD_BUFFER = .FALSE.
+    SELF%OWNED = .FALSE.
+    SELF%NBLOCKS = 0
+  END FUNCTION FIELD_INT4D_EMPTY
+
+  FUNCTION FIELD_LOG2D_EMPTY(NAME, SHAPE) RESULT(SELF)
+    ! Create FIELD object by wrapping existing data
+    !
+    ! If a SHAPE is provided, a single empty buffer block-sized buffer
+    ! will be allocated under %VIEW and used by all threads in a
+    ! thread-parallel region to avoid segfault when dereferencing NULL
+    ! pointers. Otherwise %DATA and %VIEW will always be unassociated.
+    TYPE(FIELD_LOG2D) :: SELF
+    CHARACTER(LEN=*), INTENT(IN) :: NAME
+    INTEGER(KIND=JPIM), OPTIONAL, INTENT(IN) :: SHAPE(1)
+
+    SELF%NAME = NAME
+    SELF%DATA => NULL()
+    IF (PRESENT(SHAPE)) THEN
+      ALLOCATE(SELF%VIEW(SHAPE(1)))
+    END IF
+    SELF%ACTIVE = .FALSE.
+    SELF%THREAD_BUFFER = .FALSE.
+    SELF%OWNED = .FALSE.
+    SELF%NBLOCKS = 0
+  END FUNCTION FIELD_LOG2D_EMPTY
+
+  FUNCTION FIELD_LOG3D_EMPTY(NAME, SHAPE) RESULT(SELF)
+    ! Create FIELD object by wrapping existing data
+    !
+    ! If a SHAPE is provided, a single empty buffer block-sized buffer
+    ! will be allocated under %VIEW and used by all threads in a
+    ! thread-parallel region to avoid segfault when dereferencing NULL
+    ! pointers. Otherwise %DATA and %VIEW will always be unassociated.
+    TYPE(FIELD_LOG3D) :: SELF
+    CHARACTER(LEN=*), INTENT(IN) :: NAME
+    INTEGER(KIND=JPIM), OPTIONAL, INTENT(IN) :: SHAPE(2)
+
+    SELF%NAME = NAME
+    SELF%DATA => NULL()
+    IF (PRESENT(SHAPE)) THEN
+      ALLOCATE(SELF%VIEW(SHAPE(1),SHAPE(2)))
+    END IF
+    SELF%ACTIVE = .FALSE.
+    SELF%THREAD_BUFFER = .FALSE.
+    SELF%OWNED = .FALSE.
+    SELF%NBLOCKS = 0
+  END FUNCTION FIELD_LOG3D_EMPTY
+
+  FUNCTION FIELD_LOG4D_EMPTY(NAME, SHAPE) RESULT(SELF)
+    ! Create FIELD object by wrapping existing data
+    !
+    ! If a SHAPE is provided, a single empty buffer block-sized buffer
+    ! will be allocated under %VIEW and used by all threads in a
+    ! thread-parallel region to avoid segfault when dereferencing NULL
+    ! pointers. Otherwise %DATA and %VIEW will always be unassociated.
+    TYPE(FIELD_LOG4D) :: SELF
+    CHARACTER(LEN=*), INTENT(IN) :: NAME
+    INTEGER(KIND=JPIM), OPTIONAL, INTENT(IN) :: SHAPE(3)
+
+    SELF%NAME = NAME
+    SELF%DATA => NULL()
+    IF (PRESENT(SHAPE)) THEN
+      ALLOCATE(SELF%VIEW(SHAPE(1),SHAPE(2),SHAPE(3)))
+    END IF
+    SELF%ACTIVE = .FALSE.
+    SELF%THREAD_BUFFER = .FALSE.
+    SELF%OWNED = .FALSE.
+    SELF%NBLOCKS = 0
+  END FUNCTION FIELD_LOG4D_EMPTY
+
+
+  FUNCTION FIELD_2D_WRAP(NAME, DATA) RESULT(SELF)
+    ! Create FIELD object by wrapping existing data
+    TYPE(FIELD_2D) :: SELF
+    CHARACTER(LEN=*), INTENT(IN) :: NAME
+    REAL(KIND=JPRB), TARGET, INTENT(IN) :: DATA(:,:)
+
+    SELF%NAME = NAME
+    SELF%DATA => DATA
+    SELF%ACTIVE = .TRUE.
+    SELF%THREAD_BUFFER = .FALSE.
+    SELF%OWNED = .FALSE.
+    SELF%NBLOCKS = SIZE(SELF%DATA, 2)
+  END FUNCTION FIELD_2D_WRAP
+
+  FUNCTION FIELD_3D_WRAP(NAME, DATA) RESULT(SELF)
+    ! Create FIELD object by wrapping existing data
+    TYPE(FIELD_3D) :: SELF
+    CHARACTER(LEN=*), INTENT(IN) :: NAME
+    REAL(KIND=JPRB), TARGET, INTENT(IN) :: DATA(:,:,:)
+
+    SELF%NAME = NAME
+    SELF%DATA => DATA
+    SELF%ACTIVE = .TRUE.
+    SELF%THREAD_BUFFER = .FALSE.
+    SELF%OWNED = .FALSE.
+    SELF%NBLOCKS = SIZE(SELF%DATA, 3)
+  END FUNCTION FIELD_3D_WRAP
+
+  FUNCTION FIELD_4D_WRAP(NAME, DATA) RESULT(SELF)
+    ! Create FIELD object by wrapping existing data
+    TYPE(FIELD_4D) :: SELF
+    CHARACTER(LEN=*), INTENT(IN) :: NAME
+    REAL(KIND=JPRB), TARGET, INTENT(IN) :: DATA(:,:,:,:)
+
+    SELF%NAME = NAME
+    SELF%DATA => DATA
+    SELF%ACTIVE = .TRUE.
+    SELF%THREAD_BUFFER = .FALSE.
+    SELF%OWNED = .FALSE.
+    SELF%NBLOCKS = SIZE(SELF%DATA, 4)
+  END FUNCTION FIELD_4D_WRAP
+
+  FUNCTION FIELD_INT2D_WRAP(NAME, DATA) RESULT(SELF)
+    ! Create FIELD object by wrapping existing data
+    TYPE(FIELD_INT2D) :: SELF
+    CHARACTER(LEN=*), INTENT(IN) :: NAME
+    INTEGER(KIND=JPIM), TARGET, INTENT(IN) :: DATA(:,:)
+
+    SELF%NAME = NAME
+    SELF%DATA => DATA
+    SELF%ACTIVE = .TRUE.
+    SELF%THREAD_BUFFER = .FALSE.
+    SELF%OWNED = .FALSE.
+    SELF%NBLOCKS = SIZE(SELF%DATA, 2)
+  END FUNCTION FIELD_INT2D_WRAP
+
+  FUNCTION FIELD_INT3D_WRAP(NAME, DATA) RESULT(SELF)
+    ! Create FIELD object by wrapping existing data
+    TYPE(FIELD_INT3D) :: SELF
+    CHARACTER(LEN=*), INTENT(IN) :: NAME
+    INTEGER(KIND=JPIM), TARGET, INTENT(IN) :: DATA(:,:,:)
+
+    SELF%NAME = NAME
+    SELF%DATA => DATA
+    SELF%ACTIVE = .TRUE.
+    SELF%THREAD_BUFFER = .FALSE.
+    SELF%OWNED = .FALSE.
+    SELF%NBLOCKS = SIZE(SELF%DATA, 3)
+  END FUNCTION FIELD_INT3D_WRAP
+
+  FUNCTION FIELD_INT4D_WRAP(NAME, DATA) RESULT(SELF)
+    ! Create FIELD object by wrapping existing data
+    TYPE(FIELD_INT4D) :: SELF
+    CHARACTER(LEN=*), INTENT(IN) :: NAME
+    INTEGER(KIND=JPIM), TARGET, INTENT(IN) :: DATA(:,:,:,:)
+
+    SELF%NAME = NAME
+    SELF%DATA => DATA
+    SELF%ACTIVE = .TRUE.
+    SELF%THREAD_BUFFER = .FALSE.
+    SELF%OWNED = .FALSE.
+    SELF%NBLOCKS = SIZE(SELF%DATA, 4)
+  END FUNCTION FIELD_INT4D_WRAP
+
+  FUNCTION FIELD_LOG2D_WRAP(NAME, DATA) RESULT(SELF)
+    ! Create FIELD object by wrapping existing data
+    TYPE(FIELD_LOG2D) :: SELF
+    CHARACTER(LEN=*), INTENT(IN) :: NAME
+    LOGICAL, TARGET, INTENT(IN) :: DATA(:,:)
+
+    SELF%NAME = NAME
+    SELF%DATA => DATA
+    SELF%ACTIVE = .TRUE.
+    SELF%THREAD_BUFFER = .FALSE.
+    SELF%OWNED = .FALSE.
+    SELF%NBLOCKS = SIZE(SELF%DATA, 2)
+  END FUNCTION FIELD_LOG2D_WRAP
+
+  FUNCTION FIELD_LOG3D_WRAP(NAME, DATA) RESULT(SELF)
+    ! Create FIELD object by wrapping existing data
+    TYPE(FIELD_LOG3D) :: SELF
+    CHARACTER(LEN=*), INTENT(IN) :: NAME
+    LOGICAL, TARGET, INTENT(IN) :: DATA(:,:,:)
+
+    SELF%NAME = NAME
+    SELF%DATA => DATA
+    SELF%ACTIVE = .TRUE.
+    SELF%THREAD_BUFFER = .FALSE.
+    SELF%OWNED = .FALSE.
+    SELF%NBLOCKS = SIZE(SELF%DATA, 3)
+  END FUNCTION FIELD_LOG3D_WRAP
+
+  FUNCTION FIELD_LOG4D_WRAP(NAME, DATA) RESULT(SELF)
+    ! Create FIELD object by wrapping existing data
+    TYPE(FIELD_LOG4D) :: SELF
+    CHARACTER(LEN=*), INTENT(IN) :: NAME
+    LOGICAL, TARGET, INTENT(IN) :: DATA(:,:,:,:)
+
+    SELF%NAME = NAME
+    SELF%DATA => DATA
+    SELF%ACTIVE = .TRUE.
+    SELF%THREAD_BUFFER = .FALSE.
+    SELF%OWNED = .FALSE.
+    SELF%NBLOCKS = SIZE(SELF%DATA, 4)
+  END FUNCTION FIELD_LOG4D_WRAP
+
+
+  FUNCTION FIELD_2D_ALLOCATE(NAME, SHAPE, NBLOCKS, PERSISTENT) RESULT(SELF)
+    ! Create FIELD object by explicitly allocating new data
+    !
+    ! Please note that SHAPE is the conceptual shape without the block dimension
+    TYPE(FIELD_2D) :: SELF
+    CHARACTER(LEN=*), INTENT(IN) :: NAME
+    INTEGER(KIND=JPIM), INTENT(IN) :: SHAPE(1)
+    INTEGER(KIND=JPIM), INTENT(IN), OPTIONAL :: NBLOCKS
+    LOGICAL, INTENT(IN), OPTIONAL :: PERSISTENT
+    INTEGER(KIND=JPIM) :: NBLK
+
+    ! By default we allocate thread-local temporaries
+    SELF%THREAD_BUFFER = .TRUE.
+    NBLK = OML_MAX_THREADS()
+
+    IF (PRESENT(PERSISTENT)) THEN
+      IF (PERSISTENT) THEN
+        ! Adjust outer dim for full-sized persistent blocked arrays
+        IF (.NOT. PRESENT(NBLOCKS)) CALL &
+         & ABOR1('FIELD_2D_ALLOCATE : NBLOCKS not given for persistent allocation!')
+        SELF%THREAD_BUFFER = .FALSE.
+        NBLK = NBLOCKS
+      END IF
+    END IF
+
+    ! Allocate storage array and store metadata
+    SELF%NAME = NAME
+    ALLOCATE(SELF%DATA(SHAPE(1),NBLK))
+    SELF%ACTIVE = .TRUE.
+    SELF%OWNED = .TRUE.
+    SELF%NBLOCKS = SIZE(SELF%DATA, 2)
+  END FUNCTION FIELD_2D_ALLOCATE
+
+  FUNCTION FIELD_3D_ALLOCATE(NAME, SHAPE, NBLOCKS, PERSISTENT) RESULT(SELF)
+    ! Create FIELD object by explicitly allocating new data
+    !
+    ! Please note that SHAPE is the conceptual shape without the block dimension
+    TYPE(FIELD_3D) :: SELF
+    CHARACTER(LEN=*), INTENT(IN) :: NAME
+    INTEGER(KIND=JPIM), INTENT(IN) :: SHAPE(2)
+    INTEGER(KIND=JPIM), INTENT(IN), OPTIONAL :: NBLOCKS
+    LOGICAL, INTENT(IN), OPTIONAL :: PERSISTENT
+    INTEGER(KIND=JPIM) :: NBLK
+
+    ! By default we allocate thread-local temporaries
+    SELF%THREAD_BUFFER = .TRUE.
+    NBLK = OML_MAX_THREADS()
+
+    IF (PRESENT(PERSISTENT)) THEN
+      IF (PERSISTENT) THEN
+        ! Adjust outer dim for full-sized persistent blocked arrays
+        IF (.NOT. PRESENT(NBLOCKS)) CALL &
+         & ABOR1('FIELD_3D_ALLOCATE : NBLOCKS not given for persistent allocation!')
+        SELF%THREAD_BUFFER = .FALSE.
+        NBLK = NBLOCKS
+      END IF
+    END IF
+
+    ! Allocate storage array and store metadata
+    SELF%NAME = NAME
+    ALLOCATE(SELF%DATA(SHAPE(1),SHAPE(2),NBLK))
+    SELF%ACTIVE = .TRUE.
+    SELF%OWNED = .TRUE.
+    SELF%NBLOCKS = SIZE(SELF%DATA, 3)
+  END FUNCTION FIELD_3D_ALLOCATE
+
+  FUNCTION FIELD_4D_ALLOCATE(NAME, SHAPE, NBLOCKS, PERSISTENT) RESULT(SELF)
+    ! Create FIELD object by explicitly allocating new data
+    !
+    ! Please note that SHAPE is the conceptual shape without the block dimension
+    TYPE(FIELD_4D) :: SELF
+    CHARACTER(LEN=*), INTENT(IN) :: NAME
+    INTEGER(KIND=JPIM), INTENT(IN) :: SHAPE(3)
+    INTEGER(KIND=JPIM), INTENT(IN), OPTIONAL :: NBLOCKS
+    LOGICAL, INTENT(IN), OPTIONAL :: PERSISTENT
+    INTEGER(KIND=JPIM) :: NBLK
+
+    ! By default we allocate thread-local temporaries
+    SELF%THREAD_BUFFER = .TRUE.
+    NBLK = OML_MAX_THREADS()
+
+    IF (PRESENT(PERSISTENT)) THEN
+      IF (PERSISTENT) THEN
+        ! Adjust outer dim for full-sized persistent blocked arrays
+        IF (.NOT. PRESENT(NBLOCKS)) CALL &
+         & ABOR1('FIELD_4D_ALLOCATE : NBLOCKS not given for persistent allocation!')
+        SELF%THREAD_BUFFER = .FALSE.
+        NBLK = NBLOCKS
+      END IF
+    END IF
+
+    ! Allocate storage array and store metadata
+    SELF%NAME = NAME
+    ALLOCATE(SELF%DATA(SHAPE(1),SHAPE(2),SHAPE(3),NBLK))
+    SELF%ACTIVE = .TRUE.
+    SELF%OWNED = .TRUE.
+    SELF%NBLOCKS = SIZE(SELF%DATA, 4)
+  END FUNCTION FIELD_4D_ALLOCATE
+
+  FUNCTION FIELD_INT2D_ALLOCATE(NAME, SHAPE, NBLOCKS, PERSISTENT) RESULT(SELF)
+    ! Create FIELD object by explicitly allocating new data
+    !
+    ! Please note that SHAPE is the conceptual shape without the block dimension
+    TYPE(FIELD_INT2D) :: SELF
+    CHARACTER(LEN=*), INTENT(IN) :: NAME
+    INTEGER(KIND=JPIM), INTENT(IN) :: SHAPE(1)
+    INTEGER(KIND=JPIM), INTENT(IN), OPTIONAL :: NBLOCKS
+    LOGICAL, INTENT(IN), OPTIONAL :: PERSISTENT
+    INTEGER(KIND=JPIM) :: NBLK
+
+    ! By default we allocate thread-local temporaries
+    SELF%THREAD_BUFFER = .TRUE.
+    NBLK = OML_MAX_THREADS()
+
+    IF (PRESENT(PERSISTENT)) THEN
+      IF (PERSISTENT) THEN
+        ! Adjust outer dim for full-sized persistent blocked arrays
+        IF (.NOT. PRESENT(NBLOCKS)) CALL &
+         & ABOR1('FIELD_INT2D_ALLOCATE : NBLOCKS not given for persistent allocation!')
+        SELF%THREAD_BUFFER = .FALSE.
+        NBLK = NBLOCKS
+      END IF
+    END IF
+
+    ! Allocate storage array and store metadata
+    SELF%NAME = NAME
+    ALLOCATE(SELF%DATA(SHAPE(1),NBLK))
+    SELF%ACTIVE = .TRUE.
+    SELF%OWNED = .TRUE.
+    SELF%NBLOCKS = SIZE(SELF%DATA, 2)
+  END FUNCTION FIELD_INT2D_ALLOCATE
+
+  FUNCTION FIELD_INT3D_ALLOCATE(NAME, SHAPE, NBLOCKS, PERSISTENT) RESULT(SELF)
+    ! Create FIELD object by explicitly allocating new data
+    !
+    ! Please note that SHAPE is the conceptual shape without the block dimension
+    TYPE(FIELD_INT3D) :: SELF
+    CHARACTER(LEN=*), INTENT(IN) :: NAME
+    INTEGER(KIND=JPIM), INTENT(IN) :: SHAPE(2)
+    INTEGER(KIND=JPIM), INTENT(IN), OPTIONAL :: NBLOCKS
+    LOGICAL, INTENT(IN), OPTIONAL :: PERSISTENT
+    INTEGER(KIND=JPIM) :: NBLK
+
+    ! By default we allocate thread-local temporaries
+    SELF%THREAD_BUFFER = .TRUE.
+    NBLK = OML_MAX_THREADS()
+
+    IF (PRESENT(PERSISTENT)) THEN
+      IF (PERSISTENT) THEN
+        ! Adjust outer dim for full-sized persistent blocked arrays
+        IF (.NOT. PRESENT(NBLOCKS)) CALL &
+         & ABOR1('FIELD_INT3D_ALLOCATE : NBLOCKS not given for persistent allocation!')
+        SELF%THREAD_BUFFER = .FALSE.
+        NBLK = NBLOCKS
+      END IF
+    END IF
+
+    ! Allocate storage array and store metadata
+    SELF%NAME = NAME
+    ALLOCATE(SELF%DATA(SHAPE(1),SHAPE(2),NBLK))
+    SELF%ACTIVE = .TRUE.
+    SELF%OWNED = .TRUE.
+    SELF%NBLOCKS = SIZE(SELF%DATA, 3)
+  END FUNCTION FIELD_INT3D_ALLOCATE
+
+  FUNCTION FIELD_INT4D_ALLOCATE(NAME, SHAPE, NBLOCKS, PERSISTENT) RESULT(SELF)
+    ! Create FIELD object by explicitly allocating new data
+    !
+    ! Please note that SHAPE is the conceptual shape without the block dimension
+    TYPE(FIELD_INT4D) :: SELF
+    CHARACTER(LEN=*), INTENT(IN) :: NAME
+    INTEGER(KIND=JPIM), INTENT(IN) :: SHAPE(3)
+    INTEGER(KIND=JPIM), INTENT(IN), OPTIONAL :: NBLOCKS
+    LOGICAL, INTENT(IN), OPTIONAL :: PERSISTENT
+    INTEGER(KIND=JPIM) :: NBLK
+
+    ! By default we allocate thread-local temporaries
+    SELF%THREAD_BUFFER = .TRUE.
+    NBLK = OML_MAX_THREADS()
+
+    IF (PRESENT(PERSISTENT)) THEN
+      IF (PERSISTENT) THEN
+        ! Adjust outer dim for full-sized persistent blocked arrays
+        IF (.NOT. PRESENT(NBLOCKS)) CALL &
+         & ABOR1('FIELD_INT4D_ALLOCATE : NBLOCKS not given for persistent allocation!')
+        SELF%THREAD_BUFFER = .FALSE.
+        NBLK = NBLOCKS
+      END IF
+    END IF
+
+    ! Allocate storage array and store metadata
+    SELF%NAME = NAME
+    ALLOCATE(SELF%DATA(SHAPE(1),SHAPE(2),SHAPE(3),NBLK))
+    SELF%ACTIVE = .TRUE.
+    SELF%OWNED = .TRUE.
+    SELF%NBLOCKS = SIZE(SELF%DATA, 4)
+  END FUNCTION FIELD_INT4D_ALLOCATE
+
+  FUNCTION FIELD_LOG2D_ALLOCATE(NAME, SHAPE, NBLOCKS, PERSISTENT) RESULT(SELF)
+    ! Create FIELD object by explicitly allocating new data
+    !
+    ! Please note that SHAPE is the conceptual shape without the block dimension
+    TYPE(FIELD_LOG2D) :: SELF
+    CHARACTER(LEN=*), INTENT(IN) :: NAME
+    INTEGER(KIND=JPIM), INTENT(IN) :: SHAPE(1)
+    INTEGER(KIND=JPIM), INTENT(IN), OPTIONAL :: NBLOCKS
+    LOGICAL, INTENT(IN), OPTIONAL :: PERSISTENT
+    INTEGER(KIND=JPIM) :: NBLK
+
+    ! By default we allocate thread-local temporaries
+    SELF%THREAD_BUFFER = .TRUE.
+    NBLK = OML_MAX_THREADS()
+
+    IF (PRESENT(PERSISTENT)) THEN
+      IF (PERSISTENT) THEN
+        ! Adjust outer dim for full-sized persistent blocked arrays
+        IF (.NOT. PRESENT(NBLOCKS)) CALL &
+         & ABOR1('FIELD_LOG2D_ALLOCATE : NBLOCKS not given for persistent allocation!')
+        SELF%THREAD_BUFFER = .FALSE.
+        NBLK = NBLOCKS
+      END IF
+    END IF
+
+    ! Allocate storage array and store metadata
+    SELF%NAME = NAME
+    ALLOCATE(SELF%DATA(SHAPE(1),NBLK))
+    SELF%ACTIVE = .TRUE.
+    SELF%OWNED = .TRUE.
+    SELF%NBLOCKS = SIZE(SELF%DATA, 2)
+  END FUNCTION FIELD_LOG2D_ALLOCATE
+
+  FUNCTION FIELD_LOG3D_ALLOCATE(NAME, SHAPE, NBLOCKS, PERSISTENT) RESULT(SELF)
+    ! Create FIELD object by explicitly allocating new data
+    !
+    ! Please note that SHAPE is the conceptual shape without the block dimension
+    TYPE(FIELD_LOG3D) :: SELF
+    CHARACTER(LEN=*), INTENT(IN) :: NAME
+    INTEGER(KIND=JPIM), INTENT(IN) :: SHAPE(2)
+    INTEGER(KIND=JPIM), INTENT(IN), OPTIONAL :: NBLOCKS
+    LOGICAL, INTENT(IN), OPTIONAL :: PERSISTENT
+    INTEGER(KIND=JPIM) :: NBLK
+
+    ! By default we allocate thread-local temporaries
+    SELF%THREAD_BUFFER = .TRUE.
+    NBLK = OML_MAX_THREADS()
+
+    IF (PRESENT(PERSISTENT)) THEN
+      IF (PERSISTENT) THEN
+        ! Adjust outer dim for full-sized persistent blocked arrays
+        IF (.NOT. PRESENT(NBLOCKS)) CALL &
+         & ABOR1('FIELD_LOG3D_ALLOCATE : NBLOCKS not given for persistent allocation!')
+        SELF%THREAD_BUFFER = .FALSE.
+        NBLK = NBLOCKS
+      END IF
+    END IF
+
+    ! Allocate storage array and store metadata
+    SELF%NAME = NAME
+    ALLOCATE(SELF%DATA(SHAPE(1),SHAPE(2),NBLK))
+    SELF%ACTIVE = .TRUE.
+    SELF%OWNED = .TRUE.
+    SELF%NBLOCKS = SIZE(SELF%DATA, 3)
+  END FUNCTION FIELD_LOG3D_ALLOCATE
+
+  FUNCTION FIELD_LOG4D_ALLOCATE(NAME, SHAPE, NBLOCKS, PERSISTENT) RESULT(SELF)
+    ! Create FIELD object by explicitly allocating new data
+    !
+    ! Please note that SHAPE is the conceptual shape without the block dimension
+    TYPE(FIELD_LOG4D) :: SELF
+    CHARACTER(LEN=*), INTENT(IN) :: NAME
+    INTEGER(KIND=JPIM), INTENT(IN) :: SHAPE(3)
+    INTEGER(KIND=JPIM), INTENT(IN), OPTIONAL :: NBLOCKS
+    LOGICAL, INTENT(IN), OPTIONAL :: PERSISTENT
+    INTEGER(KIND=JPIM) :: NBLK
+
+    ! By default we allocate thread-local temporaries
+    SELF%THREAD_BUFFER = .TRUE.
+    NBLK = OML_MAX_THREADS()
+
+    IF (PRESENT(PERSISTENT)) THEN
+      IF (PERSISTENT) THEN
+        ! Adjust outer dim for full-sized persistent blocked arrays
+        IF (.NOT. PRESENT(NBLOCKS)) CALL &
+         & ABOR1('FIELD_LOG4D_ALLOCATE : NBLOCKS not given for persistent allocation!')
+        SELF%THREAD_BUFFER = .FALSE.
+        NBLK = NBLOCKS
+      END IF
+    END IF
+
+    ! Allocate storage array and store metadata
+    SELF%NAME = NAME
+    ALLOCATE(SELF%DATA(SHAPE(1),SHAPE(2),SHAPE(3),NBLK))
+    SELF%ACTIVE = .TRUE.
+    SELF%OWNED = .TRUE.
+    SELF%NBLOCKS = SIZE(SELF%DATA, 4)
+  END FUNCTION FIELD_LOG4D_ALLOCATE
+
+
+  FUNCTION FIELD_2D_CLONE(SELF) RESULT(NEWOBJ)
+    ! Clone (deep-copy) this FIELD object, keeping the DATA pointer
+    ! intact, but replicating view pointers.
+    CLASS(FIELD_2D) :: SELF
+    TYPE(FIELD_2D), POINTER :: NEWOBJ
+
+    ALLOCATE(NEWOBJ)
+    NEWOBJ%NAME = SELF%NAME
+    NEWOBJ%DATA => SELF%DATA
+    NEWOBJ%VIEW => NULL()
+    NEWOBJ%NBLOCKS = SELF%NBLOCKS
+    NEWOBJ%THREAD_BUFFER = SELF%THREAD_BUFFER
+    NEWOBJ%OWNED = .FALSE.
+  END FUNCTION FIELD_2D_CLONE
+
+  FUNCTION FIELD_3D_CLONE(SELF) RESULT(NEWOBJ)
+    ! Clone (deep-copy) this FIELD object, keeping the DATA pointer
+    ! intact, but replicating view pointers.
+    CLASS(FIELD_3D) :: SELF
+    TYPE(FIELD_3D), POINTER :: NEWOBJ
+
+    ALLOCATE(NEWOBJ)
+    NEWOBJ%NAME = SELF%NAME
+    NEWOBJ%DATA => SELF%DATA
+    NEWOBJ%VIEW => NULL()
+    NEWOBJ%NBLOCKS = SELF%NBLOCKS
+    NEWOBJ%THREAD_BUFFER = SELF%THREAD_BUFFER
+    NEWOBJ%OWNED = .FALSE.
+  END FUNCTION FIELD_3D_CLONE
+
+  FUNCTION FIELD_4D_CLONE(SELF) RESULT(NEWOBJ)
+    ! Clone (deep-copy) this FIELD object, keeping the DATA pointer
+    ! intact, but replicating view pointers.
+    CLASS(FIELD_4D) :: SELF
+    TYPE(FIELD_4D), POINTER :: NEWOBJ
+
+    ALLOCATE(NEWOBJ)
+    NEWOBJ%NAME = SELF%NAME
+    NEWOBJ%DATA => SELF%DATA
+    NEWOBJ%VIEW => NULL()
+    NEWOBJ%NBLOCKS = SELF%NBLOCKS
+    NEWOBJ%THREAD_BUFFER = SELF%THREAD_BUFFER
+    NEWOBJ%OWNED = .FALSE.
+  END FUNCTION FIELD_4D_CLONE
+
+  FUNCTION FIELD_INT2D_CLONE(SELF) RESULT(NEWOBJ)
+    ! Clone (deep-copy) this FIELD object, keeping the DATA pointer
+    ! intact, but replicating view pointers.
+    CLASS(FIELD_INT2D) :: SELF
+    TYPE(FIELD_INT2D), POINTER :: NEWOBJ
+
+    ALLOCATE(NEWOBJ)
+    NEWOBJ%NAME = SELF%NAME
+    NEWOBJ%DATA => SELF%DATA
+    NEWOBJ%VIEW => NULL()
+    NEWOBJ%NBLOCKS = SELF%NBLOCKS
+    NEWOBJ%THREAD_BUFFER = SELF%THREAD_BUFFER
+    NEWOBJ%OWNED = .FALSE.
+  END FUNCTION FIELD_INT2D_CLONE
+
+  FUNCTION FIELD_INT3D_CLONE(SELF) RESULT(NEWOBJ)
+    ! Clone (deep-copy) this FIELD object, keeping the DATA pointer
+    ! intact, but replicating view pointers.
+    CLASS(FIELD_INT3D) :: SELF
+    TYPE(FIELD_INT3D), POINTER :: NEWOBJ
+
+    ALLOCATE(NEWOBJ)
+    NEWOBJ%NAME = SELF%NAME
+    NEWOBJ%DATA => SELF%DATA
+    NEWOBJ%VIEW => NULL()
+    NEWOBJ%NBLOCKS = SELF%NBLOCKS
+    NEWOBJ%THREAD_BUFFER = SELF%THREAD_BUFFER
+    NEWOBJ%OWNED = .FALSE.
+  END FUNCTION FIELD_INT3D_CLONE
+
+  FUNCTION FIELD_INT4D_CLONE(SELF) RESULT(NEWOBJ)
+    ! Clone (deep-copy) this FIELD object, keeping the DATA pointer
+    ! intact, but replicating view pointers.
+    CLASS(FIELD_INT4D) :: SELF
+    TYPE(FIELD_INT4D), POINTER :: NEWOBJ
+
+    ALLOCATE(NEWOBJ)
+    NEWOBJ%NAME = SELF%NAME
+    NEWOBJ%DATA => SELF%DATA
+    NEWOBJ%VIEW => NULL()
+    NEWOBJ%NBLOCKS = SELF%NBLOCKS
+    NEWOBJ%THREAD_BUFFER = SELF%THREAD_BUFFER
+    NEWOBJ%OWNED = .FALSE.
+  END FUNCTION FIELD_INT4D_CLONE
+
+  FUNCTION FIELD_LOG2D_CLONE(SELF) RESULT(NEWOBJ)
+    ! Clone (deep-copy) this FIELD object, keeping the DATA pointer
+    ! intact, but replicating view pointers.
+    CLASS(FIELD_LOG2D) :: SELF
+    TYPE(FIELD_LOG2D), POINTER :: NEWOBJ
+
+    ALLOCATE(NEWOBJ)
+    NEWOBJ%NAME = SELF%NAME
+    NEWOBJ%DATA => SELF%DATA
+    NEWOBJ%VIEW => NULL()
+    NEWOBJ%NBLOCKS = SELF%NBLOCKS
+    NEWOBJ%THREAD_BUFFER = SELF%THREAD_BUFFER
+    NEWOBJ%OWNED = .FALSE.
+  END FUNCTION FIELD_LOG2D_CLONE
+
+  FUNCTION FIELD_LOG3D_CLONE(SELF) RESULT(NEWOBJ)
+    ! Clone (deep-copy) this FIELD object, keeping the DATA pointer
+    ! intact, but replicating view pointers.
+    CLASS(FIELD_LOG3D) :: SELF
+    TYPE(FIELD_LOG3D), POINTER :: NEWOBJ
+
+    ALLOCATE(NEWOBJ)
+    NEWOBJ%NAME = SELF%NAME
+    NEWOBJ%DATA => SELF%DATA
+    NEWOBJ%VIEW => NULL()
+    NEWOBJ%NBLOCKS = SELF%NBLOCKS
+    NEWOBJ%THREAD_BUFFER = SELF%THREAD_BUFFER
+    NEWOBJ%OWNED = .FALSE.
+  END FUNCTION FIELD_LOG3D_CLONE
+
+  FUNCTION FIELD_LOG4D_CLONE(SELF) RESULT(NEWOBJ)
+    ! Clone (deep-copy) this FIELD object, keeping the DATA pointer
+    ! intact, but replicating view pointers.
+    CLASS(FIELD_LOG4D) :: SELF
+    TYPE(FIELD_LOG4D), POINTER :: NEWOBJ
+
+    ALLOCATE(NEWOBJ)
+    NEWOBJ%NAME = SELF%NAME
+    NEWOBJ%DATA => SELF%DATA
+    NEWOBJ%VIEW => NULL()
+    NEWOBJ%NBLOCKS = SELF%NBLOCKS
+    NEWOBJ%THREAD_BUFFER = SELF%THREAD_BUFFER
+    NEWOBJ%OWNED = .FALSE.
+  END FUNCTION FIELD_LOG4D_CLONE
+
+
+  SUBROUTINE FIELD_2D_UPDATE_VIEW(SELF, BLOCK_INDEX, BLOCK_SIZE, ZERO)
+    ! Sets the view pointer FIELD%MP to the block of the given index
+    CLASS(FIELD_2D) :: SELF
+    INTEGER(KIND=JPIM), INTENT(IN) :: BLOCK_INDEX
+    INTEGER(KIND=JPIM), INTENT(IN), OPTIONAL :: BLOCK_SIZE
+    LOGICAL, OPTIONAL, INTENT(IN) :: ZERO
+    INTEGER(KIND=JPIM) :: IDX
+
+    IDX = BLOCK_INDEX
+    IF (SELF%THREAD_BUFFER) IDX = OML_MY_THREAD()
+    IF (SELF%ACTIVE) THEN
+      SELF%VIEW => SELF%DATA(:,IDX)
+    END IF
+
+    IF (PRESENT(BLOCK_SIZE) .AND. BLOCK_INDEX == SELF%NBLOCKS) THEN
+      ! Fill the the buffer by replicating the last entry
+      CALL FILL_BUFFER(SELF%VIEW, INDEX=BLOCK_SIZE)
+    END IF
+
+    IF (PRESENT(ZERO)) THEN
+      IF (ZERO) SELF%VIEW(:) = 0.0_JPRB
+    END IF
+  END SUBROUTINE FIELD_2D_UPDATE_VIEW
+
+  SUBROUTINE FIELD_3D_UPDATE_VIEW(SELF, BLOCK_INDEX, BLOCK_SIZE, ZERO)
+    ! Sets the view pointer FIELD%MP to the block of the given index
+    CLASS(FIELD_3D) :: SELF
+    INTEGER(KIND=JPIM), INTENT(IN) :: BLOCK_INDEX
+    INTEGER(KIND=JPIM), INTENT(IN), OPTIONAL :: BLOCK_SIZE
+    LOGICAL, OPTIONAL, INTENT(IN) :: ZERO
+    INTEGER(KIND=JPIM) :: IDX
+
+    IDX = BLOCK_INDEX
+    IF (SELF%THREAD_BUFFER) IDX = OML_MY_THREAD()
+    IF (SELF%ACTIVE) THEN
+      SELF%VIEW => SELF%DATA(:,:,IDX)
+    END IF
+
+    IF (PRESENT(BLOCK_SIZE) .AND. BLOCK_INDEX == SELF%NBLOCKS) THEN
+      ! Fill the the buffer by replicating the last entry
+      CALL FILL_BUFFER(SELF%VIEW, INDEX=BLOCK_SIZE)
+    END IF
+
+    IF (PRESENT(ZERO)) THEN
+      IF (ZERO) SELF%VIEW(:,:) = 0.0_JPRB
+    END IF
+  END SUBROUTINE FIELD_3D_UPDATE_VIEW
+
+  SUBROUTINE FIELD_4D_UPDATE_VIEW(SELF, BLOCK_INDEX, BLOCK_SIZE, ZERO)
+    ! Sets the view pointer FIELD%MP to the block of the given index
+    CLASS(FIELD_4D) :: SELF
+    INTEGER(KIND=JPIM), INTENT(IN) :: BLOCK_INDEX
+    INTEGER(KIND=JPIM), INTENT(IN), OPTIONAL :: BLOCK_SIZE
+    LOGICAL, OPTIONAL, INTENT(IN) :: ZERO
+    INTEGER(KIND=JPIM) :: IDX
+
+    IDX = BLOCK_INDEX
+    IF (SELF%THREAD_BUFFER) IDX = OML_MY_THREAD()
+    IF (SELF%ACTIVE) THEN
+      SELF%VIEW => SELF%DATA(:,:,:,IDX)
+    END IF
+
+    IF (PRESENT(BLOCK_SIZE) .AND. BLOCK_INDEX == SELF%NBLOCKS) THEN
+      ! Fill the the buffer by replicating the last entry
+      CALL FILL_BUFFER(SELF%VIEW, INDEX=BLOCK_SIZE)
+    END IF
+
+    IF (PRESENT(ZERO)) THEN
+      IF (ZERO) SELF%VIEW(:,:,:) = 0.0_JPRB
+    END IF
+  END SUBROUTINE FIELD_4D_UPDATE_VIEW
+
+  SUBROUTINE FIELD_INT2D_UPDATE_VIEW(SELF, BLOCK_INDEX, BLOCK_SIZE, ZERO)
+    ! Sets the view pointer FIELD%MP to the block of the given index
+    CLASS(FIELD_INT2D) :: SELF
+    INTEGER(KIND=JPIM), INTENT(IN) :: BLOCK_INDEX
+    INTEGER(KIND=JPIM), INTENT(IN), OPTIONAL :: BLOCK_SIZE
+    LOGICAL, OPTIONAL, INTENT(IN) :: ZERO
+    INTEGER(KIND=JPIM) :: IDX
+
+    IDX = BLOCK_INDEX
+    IF (SELF%THREAD_BUFFER) IDX = OML_MY_THREAD()
+    IF (SELF%ACTIVE) THEN
+      SELF%VIEW => SELF%DATA(:,IDX)
+    END IF
+
+    IF (PRESENT(BLOCK_SIZE) .AND. BLOCK_INDEX == SELF%NBLOCKS) THEN
+      ! Fill the the buffer by replicating the last entry
+      CALL FILL_BUFFER(SELF%VIEW, INDEX=BLOCK_SIZE)
+    END IF
+
+    IF (PRESENT(ZERO)) THEN
+      IF (ZERO) SELF%VIEW(:) = 0.0_JPIM
+    END IF
+  END SUBROUTINE FIELD_INT2D_UPDATE_VIEW
+
+  SUBROUTINE FIELD_INT3D_UPDATE_VIEW(SELF, BLOCK_INDEX, BLOCK_SIZE, ZERO)
+    ! Sets the view pointer FIELD%MP to the block of the given index
+    CLASS(FIELD_INT3D) :: SELF
+    INTEGER(KIND=JPIM), INTENT(IN) :: BLOCK_INDEX
+    INTEGER(KIND=JPIM), INTENT(IN), OPTIONAL :: BLOCK_SIZE
+    LOGICAL, OPTIONAL, INTENT(IN) :: ZERO
+    INTEGER(KIND=JPIM) :: IDX
+
+    IDX = BLOCK_INDEX
+    IF (SELF%THREAD_BUFFER) IDX = OML_MY_THREAD()
+    IF (SELF%ACTIVE) THEN
+      SELF%VIEW => SELF%DATA(:,:,IDX)
+    END IF
+
+    IF (PRESENT(BLOCK_SIZE) .AND. BLOCK_INDEX == SELF%NBLOCKS) THEN
+      ! Fill the the buffer by replicating the last entry
+      CALL FILL_BUFFER(SELF%VIEW, INDEX=BLOCK_SIZE)
+    END IF
+
+    IF (PRESENT(ZERO)) THEN
+      IF (ZERO) SELF%VIEW(:,:) = 0.0_JPIM
+    END IF
+  END SUBROUTINE FIELD_INT3D_UPDATE_VIEW
+
+  SUBROUTINE FIELD_INT4D_UPDATE_VIEW(SELF, BLOCK_INDEX, BLOCK_SIZE, ZERO)
+    ! Sets the view pointer FIELD%MP to the block of the given index
+    CLASS(FIELD_INT4D) :: SELF
+    INTEGER(KIND=JPIM), INTENT(IN) :: BLOCK_INDEX
+    INTEGER(KIND=JPIM), INTENT(IN), OPTIONAL :: BLOCK_SIZE
+    LOGICAL, OPTIONAL, INTENT(IN) :: ZERO
+    INTEGER(KIND=JPIM) :: IDX
+
+    IDX = BLOCK_INDEX
+    IF (SELF%THREAD_BUFFER) IDX = OML_MY_THREAD()
+    IF (SELF%ACTIVE) THEN
+      SELF%VIEW => SELF%DATA(:,:,:,IDX)
+    END IF
+
+    IF (PRESENT(BLOCK_SIZE) .AND. BLOCK_INDEX == SELF%NBLOCKS) THEN
+      ! Fill the the buffer by replicating the last entry
+      CALL FILL_BUFFER(SELF%VIEW, INDEX=BLOCK_SIZE)
+    END IF
+
+    IF (PRESENT(ZERO)) THEN
+      IF (ZERO) SELF%VIEW(:,:,:) = 0.0_JPIM
+    END IF
+  END SUBROUTINE FIELD_INT4D_UPDATE_VIEW
+
+  SUBROUTINE FIELD_LOG2D_UPDATE_VIEW(SELF, BLOCK_INDEX, BLOCK_SIZE, ZERO)
+    ! Sets the view pointer FIELD%MP to the block of the given index
+    CLASS(FIELD_LOG2D) :: SELF
+    INTEGER(KIND=JPIM), INTENT(IN) :: BLOCK_INDEX
+    INTEGER(KIND=JPIM), INTENT(IN), OPTIONAL :: BLOCK_SIZE
+    LOGICAL, OPTIONAL, INTENT(IN) :: ZERO
+    INTEGER(KIND=JPIM) :: IDX
+
+    IDX = BLOCK_INDEX
+    IF (SELF%THREAD_BUFFER) IDX = OML_MY_THREAD()
+    IF (SELF%ACTIVE) THEN
+      SELF%VIEW => SELF%DATA(:,IDX)
+    END IF
+
+    IF (PRESENT(BLOCK_SIZE) .AND. BLOCK_INDEX == SELF%NBLOCKS) THEN
+      ! Fill the the buffer by replicating the last entry
+      CALL FILL_BUFFER(SELF%VIEW, INDEX=BLOCK_SIZE)
+    END IF
+
+    IF (PRESENT(ZERO)) THEN
+      IF (ZERO) SELF%VIEW(:) = .FALSE.
+    END IF
+  END SUBROUTINE FIELD_LOG2D_UPDATE_VIEW
+
+  SUBROUTINE FIELD_LOG3D_UPDATE_VIEW(SELF, BLOCK_INDEX, BLOCK_SIZE, ZERO)
+    ! Sets the view pointer FIELD%MP to the block of the given index
+    CLASS(FIELD_LOG3D) :: SELF
+    INTEGER(KIND=JPIM), INTENT(IN) :: BLOCK_INDEX
+    INTEGER(KIND=JPIM), INTENT(IN), OPTIONAL :: BLOCK_SIZE
+    LOGICAL, OPTIONAL, INTENT(IN) :: ZERO
+    INTEGER(KIND=JPIM) :: IDX
+
+    IDX = BLOCK_INDEX
+    IF (SELF%THREAD_BUFFER) IDX = OML_MY_THREAD()
+    IF (SELF%ACTIVE) THEN
+      SELF%VIEW => SELF%DATA(:,:,IDX)
+    END IF
+
+    IF (PRESENT(BLOCK_SIZE) .AND. BLOCK_INDEX == SELF%NBLOCKS) THEN
+      ! Fill the the buffer by replicating the last entry
+      CALL FILL_BUFFER(SELF%VIEW, INDEX=BLOCK_SIZE)
+    END IF
+
+    IF (PRESENT(ZERO)) THEN
+      IF (ZERO) SELF%VIEW(:,:) = .FALSE.
+    END IF
+  END SUBROUTINE FIELD_LOG3D_UPDATE_VIEW
+
+  SUBROUTINE FIELD_LOG4D_UPDATE_VIEW(SELF, BLOCK_INDEX, BLOCK_SIZE, ZERO)
+    ! Sets the view pointer FIELD%MP to the block of the given index
+    CLASS(FIELD_LOG4D) :: SELF
+    INTEGER(KIND=JPIM), INTENT(IN) :: BLOCK_INDEX
+    INTEGER(KIND=JPIM), INTENT(IN), OPTIONAL :: BLOCK_SIZE
+    LOGICAL, OPTIONAL, INTENT(IN) :: ZERO
+    INTEGER(KIND=JPIM) :: IDX
+
+    IDX = BLOCK_INDEX
+    IF (SELF%THREAD_BUFFER) IDX = OML_MY_THREAD()
+    IF (SELF%ACTIVE) THEN
+      SELF%VIEW => SELF%DATA(:,:,:,IDX)
+    END IF
+
+    IF (PRESENT(BLOCK_SIZE) .AND. BLOCK_INDEX == SELF%NBLOCKS) THEN
+      ! Fill the the buffer by replicating the last entry
+      CALL FILL_BUFFER(SELF%VIEW, INDEX=BLOCK_SIZE)
+    END IF
+
+    IF (PRESENT(ZERO)) THEN
+      IF (ZERO) SELF%VIEW(:,:,:) = .FALSE.
+    END IF
+  END SUBROUTINE FIELD_LOG4D_UPDATE_VIEW
+
+
+  SUBROUTINE FIELD_2D_EXTRACT_VIEW(SELF, VIEW_PTR, BLOCK_INDEX, BLOCK_SIZE, ZERO)
+    ! Updates internal view and exports it to an external pointer
+    CLASS(FIELD_2D) :: SELF
+    REAL(KIND=JPRB), POINTER, INTENT(INOUT) :: VIEW_PTR(:)
+    INTEGER(KIND=JPIM), INTENT(IN) :: BLOCK_INDEX
+    INTEGER(KIND=JPIM), INTENT(IN), OPTIONAL :: BLOCK_SIZE
+    LOGICAL, OPTIONAL, INTENT(IN) :: ZERO
+    INTEGER(KIND=JPIM) :: IDX
+
+    IDX = BLOCK_INDEX
+    IF (SELF%THREAD_BUFFER) IDX = OML_MY_THREAD()
+    IF (SELF%ACTIVE) THEN
+      VIEW_PTR => SELF%DATA(:,IDX)
+    ELSE
+      VIEW_PTR => SELF%VIEW  ! Set to NaN'd field buffer
+    END IF
+
+    IF (PRESENT(BLOCK_SIZE) .AND. BLOCK_INDEX == SELF%NBLOCKS) THEN
+      ! Fill the the buffer by replicating the last entry
+      CALL FILL_BUFFER(VIEW_PTR, INDEX=BLOCK_SIZE)
+    END IF
+
+    IF (PRESENT(ZERO)) THEN
+      IF (ZERO) VIEW_PTR(:) = 0.0_JPRB
+    END IF
+  END SUBROUTINE FIELD_2D_EXTRACT_VIEW
+
+  SUBROUTINE FIELD_3D_EXTRACT_VIEW(SELF, VIEW_PTR, BLOCK_INDEX, BLOCK_SIZE, ZERO)
+    ! Updates internal view and exports it to an external pointer
+    CLASS(FIELD_3D) :: SELF
+    REAL(KIND=JPRB), POINTER, INTENT(INOUT) :: VIEW_PTR(:,:)
+    INTEGER(KIND=JPIM), INTENT(IN) :: BLOCK_INDEX
+    INTEGER(KIND=JPIM), INTENT(IN), OPTIONAL :: BLOCK_SIZE
+    LOGICAL, OPTIONAL, INTENT(IN) :: ZERO
+    INTEGER(KIND=JPIM) :: IDX
+
+    IDX = BLOCK_INDEX
+    IF (SELF%THREAD_BUFFER) IDX = OML_MY_THREAD()
+    IF (SELF%ACTIVE) THEN
+      VIEW_PTR => SELF%DATA(:,:,IDX)
+    ELSE
+      VIEW_PTR => SELF%VIEW  ! Set to NaN'd field buffer
+    END IF
+
+    IF (PRESENT(BLOCK_SIZE) .AND. BLOCK_INDEX == SELF%NBLOCKS) THEN
+      ! Fill the the buffer by replicating the last entry
+      CALL FILL_BUFFER(VIEW_PTR, INDEX=BLOCK_SIZE)
+    END IF
+
+    IF (PRESENT(ZERO)) THEN
+      IF (ZERO) VIEW_PTR(:,:) = 0.0_JPRB
+    END IF
+  END SUBROUTINE FIELD_3D_EXTRACT_VIEW
+
+  SUBROUTINE FIELD_4D_EXTRACT_VIEW(SELF, VIEW_PTR, BLOCK_INDEX, BLOCK_SIZE, ZERO)
+    ! Updates internal view and exports it to an external pointer
+    CLASS(FIELD_4D) :: SELF
+    REAL(KIND=JPRB), POINTER, INTENT(INOUT) :: VIEW_PTR(:,:,:)
+    INTEGER(KIND=JPIM), INTENT(IN) :: BLOCK_INDEX
+    INTEGER(KIND=JPIM), INTENT(IN), OPTIONAL :: BLOCK_SIZE
+    LOGICAL, OPTIONAL, INTENT(IN) :: ZERO
+    INTEGER(KIND=JPIM) :: IDX
+
+    IDX = BLOCK_INDEX
+    IF (SELF%THREAD_BUFFER) IDX = OML_MY_THREAD()
+    IF (SELF%ACTIVE) THEN
+      VIEW_PTR => SELF%DATA(:,:,:,IDX)
+    ELSE
+      VIEW_PTR => SELF%VIEW  ! Set to NaN'd field buffer
+    END IF
+
+    IF (PRESENT(BLOCK_SIZE) .AND. BLOCK_INDEX == SELF%NBLOCKS) THEN
+      ! Fill the the buffer by replicating the last entry
+      CALL FILL_BUFFER(VIEW_PTR, INDEX=BLOCK_SIZE)
+    END IF
+
+    IF (PRESENT(ZERO)) THEN
+      IF (ZERO) VIEW_PTR(:,:,:) = 0.0_JPRB
+    END IF
+  END SUBROUTINE FIELD_4D_EXTRACT_VIEW
+
+  SUBROUTINE FIELD_INT2D_EXTRACT_VIEW(SELF, VIEW_PTR, BLOCK_INDEX, BLOCK_SIZE, ZERO)
+    ! Updates internal view and exports it to an external pointer
+    CLASS(FIELD_INT2D) :: SELF
+    INTEGER(KIND=JPIM), POINTER, INTENT(INOUT) :: VIEW_PTR(:)
+    INTEGER(KIND=JPIM), INTENT(IN) :: BLOCK_INDEX
+    INTEGER(KIND=JPIM), INTENT(IN), OPTIONAL :: BLOCK_SIZE
+    LOGICAL, OPTIONAL, INTENT(IN) :: ZERO
+    INTEGER(KIND=JPIM) :: IDX
+
+    IDX = BLOCK_INDEX
+    IF (SELF%THREAD_BUFFER) IDX = OML_MY_THREAD()
+    IF (SELF%ACTIVE) THEN
+      VIEW_PTR => SELF%DATA(:,IDX)
+    ELSE
+      VIEW_PTR => SELF%VIEW  ! Set to NaN'd field buffer
+    END IF
+
+    IF (PRESENT(BLOCK_SIZE) .AND. BLOCK_INDEX == SELF%NBLOCKS) THEN
+      ! Fill the the buffer by replicating the last entry
+      CALL FILL_BUFFER(VIEW_PTR, INDEX=BLOCK_SIZE)
+    END IF
+
+    IF (PRESENT(ZERO)) THEN
+      IF (ZERO) VIEW_PTR(:) = 0.0_JPIM
+    END IF
+  END SUBROUTINE FIELD_INT2D_EXTRACT_VIEW
+
+  SUBROUTINE FIELD_INT3D_EXTRACT_VIEW(SELF, VIEW_PTR, BLOCK_INDEX, BLOCK_SIZE, ZERO)
+    ! Updates internal view and exports it to an external pointer
+    CLASS(FIELD_INT3D) :: SELF
+    INTEGER(KIND=JPIM), POINTER, INTENT(INOUT) :: VIEW_PTR(:,:)
+    INTEGER(KIND=JPIM), INTENT(IN) :: BLOCK_INDEX
+    INTEGER(KIND=JPIM), INTENT(IN), OPTIONAL :: BLOCK_SIZE
+    LOGICAL, OPTIONAL, INTENT(IN) :: ZERO
+    INTEGER(KIND=JPIM) :: IDX
+
+    IDX = BLOCK_INDEX
+    IF (SELF%THREAD_BUFFER) IDX = OML_MY_THREAD()
+    IF (SELF%ACTIVE) THEN
+      VIEW_PTR => SELF%DATA(:,:,IDX)
+    ELSE
+      VIEW_PTR => SELF%VIEW  ! Set to NaN'd field buffer
+    END IF
+
+    IF (PRESENT(BLOCK_SIZE) .AND. BLOCK_INDEX == SELF%NBLOCKS) THEN
+      ! Fill the the buffer by replicating the last entry
+      CALL FILL_BUFFER(VIEW_PTR, INDEX=BLOCK_SIZE)
+    END IF
+
+    IF (PRESENT(ZERO)) THEN
+      IF (ZERO) VIEW_PTR(:,:) = 0.0_JPIM
+    END IF
+  END SUBROUTINE FIELD_INT3D_EXTRACT_VIEW
+
+  SUBROUTINE FIELD_INT4D_EXTRACT_VIEW(SELF, VIEW_PTR, BLOCK_INDEX, BLOCK_SIZE, ZERO)
+    ! Updates internal view and exports it to an external pointer
+    CLASS(FIELD_INT4D) :: SELF
+    INTEGER(KIND=JPIM), POINTER, INTENT(INOUT) :: VIEW_PTR(:,:,:)
+    INTEGER(KIND=JPIM), INTENT(IN) :: BLOCK_INDEX
+    INTEGER(KIND=JPIM), INTENT(IN), OPTIONAL :: BLOCK_SIZE
+    LOGICAL, OPTIONAL, INTENT(IN) :: ZERO
+    INTEGER(KIND=JPIM) :: IDX
+
+    IDX = BLOCK_INDEX
+    IF (SELF%THREAD_BUFFER) IDX = OML_MY_THREAD()
+    IF (SELF%ACTIVE) THEN
+      VIEW_PTR => SELF%DATA(:,:,:,IDX)
+    ELSE
+      VIEW_PTR => SELF%VIEW  ! Set to NaN'd field buffer
+    END IF
+
+    IF (PRESENT(BLOCK_SIZE) .AND. BLOCK_INDEX == SELF%NBLOCKS) THEN
+      ! Fill the the buffer by replicating the last entry
+      CALL FILL_BUFFER(VIEW_PTR, INDEX=BLOCK_SIZE)
+    END IF
+
+    IF (PRESENT(ZERO)) THEN
+      IF (ZERO) VIEW_PTR(:,:,:) = 0.0_JPIM
+    END IF
+  END SUBROUTINE FIELD_INT4D_EXTRACT_VIEW
+
+  SUBROUTINE FIELD_LOG2D_EXTRACT_VIEW(SELF, VIEW_PTR, BLOCK_INDEX, BLOCK_SIZE, ZERO)
+    ! Updates internal view and exports it to an external pointer
+    CLASS(FIELD_LOG2D) :: SELF
+    LOGICAL, POINTER, INTENT(INOUT) :: VIEW_PTR(:)
+    INTEGER(KIND=JPIM), INTENT(IN) :: BLOCK_INDEX
+    INTEGER(KIND=JPIM), INTENT(IN), OPTIONAL :: BLOCK_SIZE
+    LOGICAL, OPTIONAL, INTENT(IN) :: ZERO
+    INTEGER(KIND=JPIM) :: IDX
+
+    IDX = BLOCK_INDEX
+    IF (SELF%THREAD_BUFFER) IDX = OML_MY_THREAD()
+    IF (SELF%ACTIVE) THEN
+      VIEW_PTR => SELF%DATA(:,IDX)
+    ELSE
+      VIEW_PTR => SELF%VIEW  ! Set to NaN'd field buffer
+    END IF
+
+    IF (PRESENT(BLOCK_SIZE) .AND. BLOCK_INDEX == SELF%NBLOCKS) THEN
+      ! Fill the the buffer by replicating the last entry
+      CALL FILL_BUFFER(VIEW_PTR, INDEX=BLOCK_SIZE)
+    END IF
+
+    IF (PRESENT(ZERO)) THEN
+      IF (ZERO) VIEW_PTR(:) = .FALSE.
+    END IF
+  END SUBROUTINE FIELD_LOG2D_EXTRACT_VIEW
+
+  SUBROUTINE FIELD_LOG3D_EXTRACT_VIEW(SELF, VIEW_PTR, BLOCK_INDEX, BLOCK_SIZE, ZERO)
+    ! Updates internal view and exports it to an external pointer
+    CLASS(FIELD_LOG3D) :: SELF
+    LOGICAL, POINTER, INTENT(INOUT) :: VIEW_PTR(:,:)
+    INTEGER(KIND=JPIM), INTENT(IN) :: BLOCK_INDEX
+    INTEGER(KIND=JPIM), INTENT(IN), OPTIONAL :: BLOCK_SIZE
+    LOGICAL, OPTIONAL, INTENT(IN) :: ZERO
+    INTEGER(KIND=JPIM) :: IDX
+
+    IDX = BLOCK_INDEX
+    IF (SELF%THREAD_BUFFER) IDX = OML_MY_THREAD()
+    IF (SELF%ACTIVE) THEN
+      VIEW_PTR => SELF%DATA(:,:,IDX)
+    ELSE
+      VIEW_PTR => SELF%VIEW  ! Set to NaN'd field buffer
+    END IF
+
+    IF (PRESENT(BLOCK_SIZE) .AND. BLOCK_INDEX == SELF%NBLOCKS) THEN
+      ! Fill the the buffer by replicating the last entry
+      CALL FILL_BUFFER(VIEW_PTR, INDEX=BLOCK_SIZE)
+    END IF
+
+    IF (PRESENT(ZERO)) THEN
+      IF (ZERO) VIEW_PTR(:,:) = .FALSE.
+    END IF
+  END SUBROUTINE FIELD_LOG3D_EXTRACT_VIEW
+
+  SUBROUTINE FIELD_LOG4D_EXTRACT_VIEW(SELF, VIEW_PTR, BLOCK_INDEX, BLOCK_SIZE, ZERO)
+    ! Updates internal view and exports it to an external pointer
+    CLASS(FIELD_LOG4D) :: SELF
+    LOGICAL, POINTER, INTENT(INOUT) :: VIEW_PTR(:,:,:)
+    INTEGER(KIND=JPIM), INTENT(IN) :: BLOCK_INDEX
+    INTEGER(KIND=JPIM), INTENT(IN), OPTIONAL :: BLOCK_SIZE
+    LOGICAL, OPTIONAL, INTENT(IN) :: ZERO
+    INTEGER(KIND=JPIM) :: IDX
+
+    IDX = BLOCK_INDEX
+    IF (SELF%THREAD_BUFFER) IDX = OML_MY_THREAD()
+    IF (SELF%ACTIVE) THEN
+      VIEW_PTR => SELF%DATA(:,:,:,IDX)
+    ELSE
+      VIEW_PTR => SELF%VIEW  ! Set to NaN'd field buffer
+    END IF
+
+    IF (PRESENT(BLOCK_SIZE) .AND. BLOCK_INDEX == SELF%NBLOCKS) THEN
+      ! Fill the the buffer by replicating the last entry
+      CALL FILL_BUFFER(VIEW_PTR, INDEX=BLOCK_SIZE)
+    END IF
+
+    IF (PRESENT(ZERO)) THEN
+      IF (ZERO) VIEW_PTR(:,:,:) = .FALSE.
+    END IF
+  END SUBROUTINE FIELD_LOG4D_EXTRACT_VIEW
+
+
+  FUNCTION FIELD_2D_GET_VIEW(SELF, BLOCK_INDEX, BLOCK_SIZE, ZERO) RESULT(VIEW_PTR)
+    ! Updates internal view and exports it to an external pointer
+    CLASS(FIELD_2D) :: SELF
+    REAL(KIND=JPRB), POINTER :: VIEW_PTR(:)
+    INTEGER(KIND=JPIM), INTENT(IN) :: BLOCK_INDEX
+    INTEGER(KIND=JPIM), INTENT(IN), OPTIONAL :: BLOCK_SIZE
+    LOGICAL, OPTIONAL, INTENT(IN) :: ZERO
+    INTEGER(KIND=JPIM) :: IDX
+
+    IDX = BLOCK_INDEX
+    IF (SELF%THREAD_BUFFER) IDX = OML_MY_THREAD()
+    IF (SELF%ACTIVE) THEN
+      VIEW_PTR => SELF%DATA(:,IDX)
+    ELSE
+      VIEW_PTR => SELF%VIEW  ! Set to NaN'd field buffer
+    END IF
+
+    IF (PRESENT(BLOCK_SIZE) .AND. BLOCK_INDEX == SELF%NBLOCKS) THEN
+      ! Fill the the buffer by replicating the last entry
+      CALL FILL_BUFFER(VIEW_PTR, INDEX=BLOCK_SIZE)
+    END IF
+
+    IF (PRESENT(ZERO)) THEN
+      IF (ZERO) VIEW_PTR(:) = 0.0_JPRB
+    END IF
+  END FUNCTION FIELD_2D_GET_VIEW
+
+  FUNCTION FIELD_3D_GET_VIEW(SELF, BLOCK_INDEX, BLOCK_SIZE, ZERO) RESULT(VIEW_PTR)
+    ! Updates internal view and exports it to an external pointer
+    CLASS(FIELD_3D) :: SELF
+    REAL(KIND=JPRB), POINTER :: VIEW_PTR(:,:)
+    INTEGER(KIND=JPIM), INTENT(IN) :: BLOCK_INDEX
+    INTEGER(KIND=JPIM), INTENT(IN), OPTIONAL :: BLOCK_SIZE
+    LOGICAL, OPTIONAL, INTENT(IN) :: ZERO
+    INTEGER(KIND=JPIM) :: IDX
+
+    IDX = BLOCK_INDEX
+    IF (SELF%THREAD_BUFFER) IDX = OML_MY_THREAD()
+    IF (SELF%ACTIVE) THEN
+      VIEW_PTR => SELF%DATA(:,:,IDX)
+    ELSE
+      VIEW_PTR => SELF%VIEW  ! Set to NaN'd field buffer
+    END IF
+
+    IF (PRESENT(BLOCK_SIZE) .AND. BLOCK_INDEX == SELF%NBLOCKS) THEN
+      ! Fill the the buffer by replicating the last entry
+      CALL FILL_BUFFER(VIEW_PTR, INDEX=BLOCK_SIZE)
+    END IF
+
+    IF (PRESENT(ZERO)) THEN
+      IF (ZERO) VIEW_PTR(:,:) = 0.0_JPRB
+    END IF
+  END FUNCTION FIELD_3D_GET_VIEW
+
+  FUNCTION FIELD_4D_GET_VIEW(SELF, BLOCK_INDEX, BLOCK_SIZE, ZERO) RESULT(VIEW_PTR)
+    ! Updates internal view and exports it to an external pointer
+    CLASS(FIELD_4D) :: SELF
+    REAL(KIND=JPRB), POINTER :: VIEW_PTR(:,:,:)
+    INTEGER(KIND=JPIM), INTENT(IN) :: BLOCK_INDEX
+    INTEGER(KIND=JPIM), INTENT(IN), OPTIONAL :: BLOCK_SIZE
+    LOGICAL, OPTIONAL, INTENT(IN) :: ZERO
+    INTEGER(KIND=JPIM) :: IDX
+
+    IDX = BLOCK_INDEX
+    IF (SELF%THREAD_BUFFER) IDX = OML_MY_THREAD()
+    IF (SELF%ACTIVE) THEN
+      VIEW_PTR => SELF%DATA(:,:,:,IDX)
+    ELSE
+      VIEW_PTR => SELF%VIEW  ! Set to NaN'd field buffer
+    END IF
+
+    IF (PRESENT(BLOCK_SIZE) .AND. BLOCK_INDEX == SELF%NBLOCKS) THEN
+      ! Fill the the buffer by replicating the last entry
+      CALL FILL_BUFFER(VIEW_PTR, INDEX=BLOCK_SIZE)
+    END IF
+
+    IF (PRESENT(ZERO)) THEN
+      IF (ZERO) VIEW_PTR(:,:,:) = 0.0_JPRB
+    END IF
+  END FUNCTION FIELD_4D_GET_VIEW
+
+  FUNCTION FIELD_INT2D_GET_VIEW(SELF, BLOCK_INDEX, BLOCK_SIZE, ZERO) RESULT(VIEW_PTR)
+    ! Updates internal view and exports it to an external pointer
+    CLASS(FIELD_INT2D) :: SELF
+    INTEGER(KIND=JPIM), POINTER :: VIEW_PTR(:)
+    INTEGER(KIND=JPIM), INTENT(IN) :: BLOCK_INDEX
+    INTEGER(KIND=JPIM), INTENT(IN), OPTIONAL :: BLOCK_SIZE
+    LOGICAL, OPTIONAL, INTENT(IN) :: ZERO
+    INTEGER(KIND=JPIM) :: IDX
+
+    IDX = BLOCK_INDEX
+    IF (SELF%THREAD_BUFFER) IDX = OML_MY_THREAD()
+    IF (SELF%ACTIVE) THEN
+      VIEW_PTR => SELF%DATA(:,IDX)
+    ELSE
+      VIEW_PTR => SELF%VIEW  ! Set to NaN'd field buffer
+    END IF
+
+    IF (PRESENT(BLOCK_SIZE) .AND. BLOCK_INDEX == SELF%NBLOCKS) THEN
+      ! Fill the the buffer by replicating the last entry
+      CALL FILL_BUFFER(VIEW_PTR, INDEX=BLOCK_SIZE)
+    END IF
+
+    IF (PRESENT(ZERO)) THEN
+      IF (ZERO) VIEW_PTR(:) = 0.0_JPIM
+    END IF
+  END FUNCTION FIELD_INT2D_GET_VIEW
+
+  FUNCTION FIELD_INT3D_GET_VIEW(SELF, BLOCK_INDEX, BLOCK_SIZE, ZERO) RESULT(VIEW_PTR)
+    ! Updates internal view and exports it to an external pointer
+    CLASS(FIELD_INT3D) :: SELF
+    INTEGER(KIND=JPIM), POINTER :: VIEW_PTR(:,:)
+    INTEGER(KIND=JPIM), INTENT(IN) :: BLOCK_INDEX
+    INTEGER(KIND=JPIM), INTENT(IN), OPTIONAL :: BLOCK_SIZE
+    LOGICAL, OPTIONAL, INTENT(IN) :: ZERO
+    INTEGER(KIND=JPIM) :: IDX
+
+    IDX = BLOCK_INDEX
+    IF (SELF%THREAD_BUFFER) IDX = OML_MY_THREAD()
+    IF (SELF%ACTIVE) THEN
+      VIEW_PTR => SELF%DATA(:,:,IDX)
+    ELSE
+      VIEW_PTR => SELF%VIEW  ! Set to NaN'd field buffer
+    END IF
+
+    IF (PRESENT(BLOCK_SIZE) .AND. BLOCK_INDEX == SELF%NBLOCKS) THEN
+      ! Fill the the buffer by replicating the last entry
+      CALL FILL_BUFFER(VIEW_PTR, INDEX=BLOCK_SIZE)
+    END IF
+
+    IF (PRESENT(ZERO)) THEN
+      IF (ZERO) VIEW_PTR(:,:) = 0.0_JPIM
+    END IF
+  END FUNCTION FIELD_INT3D_GET_VIEW
+
+  FUNCTION FIELD_INT4D_GET_VIEW(SELF, BLOCK_INDEX, BLOCK_SIZE, ZERO) RESULT(VIEW_PTR)
+    ! Updates internal view and exports it to an external pointer
+    CLASS(FIELD_INT4D) :: SELF
+    INTEGER(KIND=JPIM), POINTER :: VIEW_PTR(:,:,:)
+    INTEGER(KIND=JPIM), INTENT(IN) :: BLOCK_INDEX
+    INTEGER(KIND=JPIM), INTENT(IN), OPTIONAL :: BLOCK_SIZE
+    LOGICAL, OPTIONAL, INTENT(IN) :: ZERO
+    INTEGER(KIND=JPIM) :: IDX
+
+    IDX = BLOCK_INDEX
+    IF (SELF%THREAD_BUFFER) IDX = OML_MY_THREAD()
+    IF (SELF%ACTIVE) THEN
+      VIEW_PTR => SELF%DATA(:,:,:,IDX)
+    ELSE
+      VIEW_PTR => SELF%VIEW  ! Set to NaN'd field buffer
+    END IF
+
+    IF (PRESENT(BLOCK_SIZE) .AND. BLOCK_INDEX == SELF%NBLOCKS) THEN
+      ! Fill the the buffer by replicating the last entry
+      CALL FILL_BUFFER(VIEW_PTR, INDEX=BLOCK_SIZE)
+    END IF
+
+    IF (PRESENT(ZERO)) THEN
+      IF (ZERO) VIEW_PTR(:,:,:) = 0.0_JPIM
+    END IF
+  END FUNCTION FIELD_INT4D_GET_VIEW
+
+  FUNCTION FIELD_LOG2D_GET_VIEW(SELF, BLOCK_INDEX, BLOCK_SIZE, ZERO) RESULT(VIEW_PTR)
+    ! Updates internal view and exports it to an external pointer
+    CLASS(FIELD_LOG2D) :: SELF
+    LOGICAL, POINTER :: VIEW_PTR(:)
+    INTEGER(KIND=JPIM), INTENT(IN) :: BLOCK_INDEX
+    INTEGER(KIND=JPIM), INTENT(IN), OPTIONAL :: BLOCK_SIZE
+    LOGICAL, OPTIONAL, INTENT(IN) :: ZERO
+    INTEGER(KIND=JPIM) :: IDX
+
+    IDX = BLOCK_INDEX
+    IF (SELF%THREAD_BUFFER) IDX = OML_MY_THREAD()
+    IF (SELF%ACTIVE) THEN
+      VIEW_PTR => SELF%DATA(:,IDX)
+    ELSE
+      VIEW_PTR => SELF%VIEW  ! Set to NaN'd field buffer
+    END IF
+
+    IF (PRESENT(BLOCK_SIZE) .AND. BLOCK_INDEX == SELF%NBLOCKS) THEN
+      ! Fill the the buffer by replicating the last entry
+      CALL FILL_BUFFER(VIEW_PTR, INDEX=BLOCK_SIZE)
+    END IF
+
+    IF (PRESENT(ZERO)) THEN
+      IF (ZERO) VIEW_PTR(:) = .FALSE.
+    END IF
+  END FUNCTION FIELD_LOG2D_GET_VIEW
+
+  FUNCTION FIELD_LOG3D_GET_VIEW(SELF, BLOCK_INDEX, BLOCK_SIZE, ZERO) RESULT(VIEW_PTR)
+    ! Updates internal view and exports it to an external pointer
+    CLASS(FIELD_LOG3D) :: SELF
+    LOGICAL, POINTER :: VIEW_PTR(:,:)
+    INTEGER(KIND=JPIM), INTENT(IN) :: BLOCK_INDEX
+    INTEGER(KIND=JPIM), INTENT(IN), OPTIONAL :: BLOCK_SIZE
+    LOGICAL, OPTIONAL, INTENT(IN) :: ZERO
+    INTEGER(KIND=JPIM) :: IDX
+
+    IDX = BLOCK_INDEX
+    IF (SELF%THREAD_BUFFER) IDX = OML_MY_THREAD()
+    IF (SELF%ACTIVE) THEN
+      VIEW_PTR => SELF%DATA(:,:,IDX)
+    ELSE
+      VIEW_PTR => SELF%VIEW  ! Set to NaN'd field buffer
+    END IF
+
+    IF (PRESENT(BLOCK_SIZE) .AND. BLOCK_INDEX == SELF%NBLOCKS) THEN
+      ! Fill the the buffer by replicating the last entry
+      CALL FILL_BUFFER(VIEW_PTR, INDEX=BLOCK_SIZE)
+    END IF
+
+    IF (PRESENT(ZERO)) THEN
+      IF (ZERO) VIEW_PTR(:,:) = .FALSE.
+    END IF
+  END FUNCTION FIELD_LOG3D_GET_VIEW
+
+  FUNCTION FIELD_LOG4D_GET_VIEW(SELF, BLOCK_INDEX, BLOCK_SIZE, ZERO) RESULT(VIEW_PTR)
+    ! Updates internal view and exports it to an external pointer
+    CLASS(FIELD_LOG4D) :: SELF
+    LOGICAL, POINTER :: VIEW_PTR(:,:,:)
+    INTEGER(KIND=JPIM), INTENT(IN) :: BLOCK_INDEX
+    INTEGER(KIND=JPIM), INTENT(IN), OPTIONAL :: BLOCK_SIZE
+    LOGICAL, OPTIONAL, INTENT(IN) :: ZERO
+    INTEGER(KIND=JPIM) :: IDX
+
+    IDX = BLOCK_INDEX
+    IF (SELF%THREAD_BUFFER) IDX = OML_MY_THREAD()
+    IF (SELF%ACTIVE) THEN
+      VIEW_PTR => SELF%DATA(:,:,:,IDX)
+    ELSE
+      VIEW_PTR => SELF%VIEW  ! Set to NaN'd field buffer
+    END IF
+
+    IF (PRESENT(BLOCK_SIZE) .AND. BLOCK_INDEX == SELF%NBLOCKS) THEN
+      ! Fill the the buffer by replicating the last entry
+      CALL FILL_BUFFER(VIEW_PTR, INDEX=BLOCK_SIZE)
+    END IF
+
+    IF (PRESENT(ZERO)) THEN
+      IF (ZERO) VIEW_PTR(:,:,:) = .FALSE.
+    END IF
+  END FUNCTION FIELD_LOG4D_GET_VIEW
+
+
+  SUBROUTINE FIELD_2D_FINAL(SELF)
+    ! Finalizes field and dealloactes owned data
+    CLASS(FIELD_2D) :: SELF
+    IF (SELF%OWNED) THEN
+      DEALLOCATE(SELF%DATA)
+    END IF
+    NULLIFY(SELF%DATA)
+    NULLIFY(SELF%VIEW)
+  END SUBROUTINE FIELD_2D_FINAL
+
+  SUBROUTINE FIELD_3D_FINAL(SELF)
+    ! Finalizes field and dealloactes owned data
+    CLASS(FIELD_3D) :: SELF
+    IF (SELF%OWNED) THEN
+      DEALLOCATE(SELF%DATA)
+    END IF
+    NULLIFY(SELF%DATA)
+    NULLIFY(SELF%VIEW)
+  END SUBROUTINE FIELD_3D_FINAL
+
+  SUBROUTINE FIELD_4D_FINAL(SELF)
+    ! Finalizes field and dealloactes owned data
+    CLASS(FIELD_4D) :: SELF
+    IF (SELF%OWNED) THEN
+      DEALLOCATE(SELF%DATA)
+    END IF
+    NULLIFY(SELF%DATA)
+    NULLIFY(SELF%VIEW)
+  END SUBROUTINE FIELD_4D_FINAL
+
+  SUBROUTINE FIELD_INT2D_FINAL(SELF)
+    ! Finalizes field and dealloactes owned data
+    CLASS(FIELD_INT2D) :: SELF
+    IF (SELF%OWNED) THEN
+      DEALLOCATE(SELF%DATA)
+    END IF
+    NULLIFY(SELF%DATA)
+    NULLIFY(SELF%VIEW)
+  END SUBROUTINE FIELD_INT2D_FINAL
+
+  SUBROUTINE FIELD_INT3D_FINAL(SELF)
+    ! Finalizes field and dealloactes owned data
+    CLASS(FIELD_INT3D) :: SELF
+    IF (SELF%OWNED) THEN
+      DEALLOCATE(SELF%DATA)
+    END IF
+    NULLIFY(SELF%DATA)
+    NULLIFY(SELF%VIEW)
+  END SUBROUTINE FIELD_INT3D_FINAL
+
+  SUBROUTINE FIELD_INT4D_FINAL(SELF)
+    ! Finalizes field and dealloactes owned data
+    CLASS(FIELD_INT4D) :: SELF
+    IF (SELF%OWNED) THEN
+      DEALLOCATE(SELF%DATA)
+    END IF
+    NULLIFY(SELF%DATA)
+    NULLIFY(SELF%VIEW)
+  END SUBROUTINE FIELD_INT4D_FINAL
+
+  SUBROUTINE FIELD_LOG2D_FINAL(SELF)
+    ! Finalizes field and dealloactes owned data
+    CLASS(FIELD_LOG2D) :: SELF
+    IF (SELF%OWNED) THEN
+      DEALLOCATE(SELF%DATA)
+    END IF
+    NULLIFY(SELF%DATA)
+    NULLIFY(SELF%VIEW)
+  END SUBROUTINE FIELD_LOG2D_FINAL
+
+  SUBROUTINE FIELD_LOG3D_FINAL(SELF)
+    ! Finalizes field and dealloactes owned data
+    CLASS(FIELD_LOG3D) :: SELF
+    IF (SELF%OWNED) THEN
+      DEALLOCATE(SELF%DATA)
+    END IF
+    NULLIFY(SELF%DATA)
+    NULLIFY(SELF%VIEW)
+  END SUBROUTINE FIELD_LOG3D_FINAL
+
+  SUBROUTINE FIELD_LOG4D_FINAL(SELF)
+    ! Finalizes field and dealloactes owned data
+    CLASS(FIELD_LOG4D) :: SELF
+    IF (SELF%OWNED) THEN
+      DEALLOCATE(SELF%DATA)
+    END IF
+    NULLIFY(SELF%DATA)
+    NULLIFY(SELF%VIEW)
+  END SUBROUTINE FIELD_LOG4D_FINAL
+
+
+END MODULE FIELD_MODULE

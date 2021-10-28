@@ -1,0 +1,851 @@
+
+MODULE FIELD_VARIABLES_MOD
+  ! The FIELD_VARIABLES type provides namespaced access to all core
+  ! VARIABLE objects used.
+  !
+  ! These VARIABLE objects are currently wrappers around GMV and GFL
+  ! fields and provide accessor methods to the individual FIELD
+  ! storage objects and NPROMA array views (sub-array blocks) in
+  ! OpenMP loops. The FIELD_VARIABLES%UPDATE_VIEW(BLOCK_INDEX) utility
+  ! ensures that all block pointers provided by the stored variable
+  ! objects are pointing to the correct sub-arrry block.
+
+USE PARKIND1, ONLY: JPIM, JPRB
+USE VARIABLE_MODULE, ONLY: VARIABLE_2D, VARIABLE_3D, VARIABLE_4D
+
+IMPLICIT NONE
+
+TYPE GEOMETRY_VARIABLES
+  ! Variables for arrays specific to the geometry
+  TYPE(VARIABLE_2D) :: RCORI
+  TYPE(VARIABLE_2D) :: RCORIC
+  TYPE(VARIABLE_2D) :: GEMU
+  TYPE(VARIABLE_2D) :: GSQM2
+  TYPE(VARIABLE_2D) :: GELAM
+  TYPE(VARIABLE_2D) :: GELAT
+  TYPE(VARIABLE_2D) :: GECLO
+  TYPE(VARIABLE_2D) :: GESLO
+  TYPE(VARIABLE_2D) :: GM
+  TYPE(VARIABLE_2D) :: GMAPPA
+  TYPE(VARIABLE_2D) :: GOMVRL
+  TYPE(VARIABLE_2D) :: GOMVRM
+  TYPE(VARIABLE_2D) :: GNORDL
+  TYPE(VARIABLE_2D) :: GNORDM
+  TYPE(VARIABLE_2D) :: GNORDLCL
+  TYPE(VARIABLE_2D) :: GNORDMCL
+  TYPE(VARIABLE_2D) :: GNORDMCM
+  TYPE(VARIABLE_2D) :: GAW
+  TYPE(VARIABLE_2D) :: OROG
+  TYPE(VARIABLE_2D) :: OROGL
+  TYPE(VARIABLE_2D) :: OROGM
+END TYPE GEOMETRY_VARIABLES
+
+TYPE ECPHYS_VARIABLES
+  ! Variables for arrays in EC_PHYS_FIELDS_MOD
+  TYPE(VARIABLE_3D) :: USTRTI  ! E-W  SURFACE STRESS
+  TYPE(VARIABLE_3D) :: VSTRTI  ! N-S  SURFACE STRESS
+  TYPE(VARIABLE_3D) :: AHFSTI  ! SURFACE SENSIBLE HEAT FLUX
+  TYPE(VARIABLE_3D) :: EVAPTI  ! EVAPORATION
+  TYPE(VARIABLE_3D) :: TSKTI   ! SKIN TEMPERATURE
+END TYPE ECPHYS_VARIABLES
+
+TYPE RADIATION_VARIABLES
+  ! Variables for arrays specific to radiation
+  TYPE(VARIABLE_3D) :: EMTD      ! longwave net flux
+  TYPE(VARIABLE_3D) :: TRSW      ! shortwave net transmissivity (multiply by incoming SW to get flux)
+  TYPE(VARIABLE_3D) :: EMTC      ! clear-sky net longwave flux
+  TYPE(VARIABLE_3D) :: TRSC      ! clear-sky net shortwave transmissivity
+  TYPE(VARIABLE_3D) :: EMTU
+  TYPE(VARIABLE_4D) :: TAUAER    ! prognostic aerosol variable for radiation and clouds
+  TYPE(VARIABLE_2D) :: SRSWD     ! downward SW radiation at the surface
+  TYPE(VARIABLE_3D) :: SRLWD     ! downward LW radiation at the surface
+  TYPE(VARIABLE_2D) :: SRLWDC    ! clear-sky downward LW radiation at the surface
+  TYPE(VARIABLE_2D) :: SRSWDC    ! clear-sky downward SW radiation at the surface
+  TYPE(VARIABLE_2D) :: SRSWDCS   ! clear-sky NET SW radiation at the surface
+  TYPE(VARIABLE_2D) :: SRLWDCS   ! clear-sky NET LW radiation at the surface
+  TYPE(VARIABLE_2D) :: SRSWDV    ! downward SW visible radiation at the surface
+  TYPE(VARIABLE_2D) :: SRSWDUV   ! downward SW ultraviolet/visible radiation at the surface
+  TYPE(VARIABLE_2D) :: EDRO
+  TYPE(VARIABLE_2D) :: SRSWPAR   ! downward SW PAR radiation at the surface
+  TYPE(VARIABLE_2D) :: SRSWUVB   ! downward UV-B radiation at the surface
+  TYPE(VARIABLE_2D) :: SRSWPARC  ! downward clear-sky SW PAR radiation at the surface
+  TYPE(VARIABLE_2D) :: SRSWTINC  ! TOA incident solar radiation
+  TYPE(VARIABLE_2D) :: RMOON     ! M-F military application
+  TYPE(VARIABLE_2D) :: SRFDIR    ! total sky direct downward SW radiation
+  TYPE(VARIABLE_2D) :: SRCDIR    ! clear-sky direct downward SW radiation
+  TYPE(VARIABLE_3D) :: DERIVATIVELW  ! derivative to update LW radiation between calls to full radiation scheme
+END TYPE RADIATION_VARIABLES
+
+TYPE FIELD_VARIABLES
+  TYPE(VARIABLE_3D) :: U  ! U-wind
+  TYPE(VARIABLE_3D) :: V  ! V-wind
+  TYPE(VARIABLE_3D) :: T  ! Temperature
+  TYPE(VARIABLE_3D) :: DIV  ! Divergence
+  TYPE(VARIABLE_3D) :: VOR  ! Vorticity
+  TYPE(VARIABLE_3D) :: SPD  ! Pressure departure variable
+  TYPE(VARIABLE_3D) :: SVD  ! Vertical div or velocity variable
+  TYPE(VARIABLE_3D) :: NHX  ! 
+  TYPE(VARIABLE_3D) :: EDOT  ! 
+  TYPE(VARIABLE_3D) :: SGRTL  ! 
+  TYPE(VARIABLE_3D) :: SGRTM  ! 
+  TYPE(VARIABLE_2D) :: SP  ! Surface pressure
+  TYPE(VARIABLE_3D) :: Q  ! Specific humidity
+  TYPE(VARIABLE_3D) :: I  ! Ice water
+  TYPE(VARIABLE_3D) :: L  ! Liquid water
+  TYPE(VARIABLE_3D) :: LCONV  ! Liquid water (CONV. PART)
+  TYPE(VARIABLE_3D) :: ICONV  ! Ice    water (CONV. PART)
+  TYPE(VARIABLE_3D) :: RCONV  ! Rain         (CONV. PART)
+  TYPE(VARIABLE_3D) :: SCONV  ! Snow         (CONV. PART)
+  TYPE(VARIABLE_3D) :: IRAD  ! Radiative cloud Ice water
+  TYPE(VARIABLE_3D) :: LRAD  ! Radiative cloud Liquid water
+  TYPE(VARIABLE_3D) :: S  ! Snow
+  TYPE(VARIABLE_3D) :: R  ! Rain
+  TYPE(VARIABLE_3D) :: G  ! Graupel
+  TYPE(VARIABLE_3D) :: H  ! Hail
+  TYPE(VARIABLE_3D) :: TKE  ! Turbulent Kinetic Energy
+  TYPE(VARIABLE_3D) :: TTE  ! Turbulent Total Energy
+  TYPE(VARIABLE_3D) :: EFB1  ! First variable EFB scheme
+  TYPE(VARIABLE_3D) :: EFB2  ! Second variable EFB scheme
+  TYPE(VARIABLE_3D) :: EFB3  ! Third variable EFB scheme
+  TYPE(VARIABLE_3D) :: A  ! Cloud fraction
+  TYPE(VARIABLE_3D) :: O3  ! Ozone
+  TYPE(VARIABLE_3D) :: SRC  ! Second-order flux for AROME s"rc"/2Sigma_s2 multiplied by Lambda_3
+  TYPE(VARIABLE_3D) :: MXL  ! Prognostic mixing length
+  TYPE(VARIABLE_3D) :: SHTUR  ! Shear source term for turbulence.
+  TYPE(VARIABLE_3D) :: FQTUR  ! Flux form source term for turbulence - moisture.
+  TYPE(VARIABLE_3D) :: FSTUR  ! Flux form source term for turbulence - enthalpy.
+  TYPE(VARIABLE_3D) :: CPF  ! Convective precipitation flux
+  TYPE(VARIABLE_3D) :: SPF  ! Stratiform precipitation flux
+  TYPE(VARIABLE_3D) :: CVGQ  ! Moisture Convergence for french physics
+  TYPE(VARIABLE_3D) :: QVA  ! Total humidity variation
+  TYPE(VARIABLE_3D), ALLOCATABLE :: GHG_G(:)  ! Greenhouse Gases
+  TYPE(VARIABLE_3D), POINTER :: GHG(:)  ! Greenhouse Gases
+  TYPE(VARIABLE_3D), ALLOCATABLE :: CHEM_G(:)  ! Chemistry
+  TYPE(VARIABLE_3D), POINTER :: CHEM(:)  ! Chemistry
+  TYPE(VARIABLE_3D), ALLOCATABLE :: AERO_G(:)  ! Aerosols
+  TYPE(VARIABLE_3D), POINTER :: AERO(:)  ! Aerosols
+  TYPE(VARIABLE_3D) :: LRCH4  ! CH4 loss rate (instantaneous field)
+  TYPE(VARIABLE_3D), ALLOCATABLE :: FORC_G(:)  ! Large scale forcing
+  TYPE(VARIABLE_3D), POINTER :: FORC(:)  ! Large scale forcing
+  TYPE(VARIABLE_3D), ALLOCATABLE :: EZDIAG_G(:)  ! Easy diagnostics
+  TYPE(VARIABLE_3D), POINTER :: EZDIAG(:)  ! Easy diagnostics
+  TYPE(VARIABLE_3D), ALLOCATABLE :: ERA40_G(:)  ! ERA40 diagnostic fields
+  TYPE(VARIABLE_3D), POINTER :: ERA40(:)  ! ERA40 diagnostic fields
+  TYPE(VARIABLE_3D), ALLOCATABLE :: NOGW_G(:)  ! NORO GWD SCHEME
+  TYPE(VARIABLE_3D), POINTER :: NOGW(:)  ! NORO GWD SCHEME
+  TYPE(VARIABLE_3D), ALLOCATABLE :: EDRP_G(:)  ! Turbulence diagnostics EDR Parameter
+  TYPE(VARIABLE_3D), POINTER :: EDRP(:)  ! Turbulence diagnostics EDR Parameter
+  TYPE(VARIABLE_3D), ALLOCATABLE :: SLDIA_G(:)  ! SL dynamics diagnostics
+  TYPE(VARIABLE_3D), POINTER :: SLDIA(:)  ! SL dynamics diagnostics
+  TYPE(VARIABLE_3D), ALLOCATABLE :: AERAOT_G(:)  ! Aerosol optical thicknesses
+  TYPE(VARIABLE_3D), POINTER :: AERAOT(:)  ! Aerosol optical thicknesses
+  TYPE(VARIABLE_3D), ALLOCATABLE :: AERLISI_G(:)  ! Aerosol lidar simulator
+  TYPE(VARIABLE_3D), POINTER :: AERLISI(:)  ! Aerosol lidar simulator
+  TYPE(VARIABLE_3D), ALLOCATABLE :: AEROUT_G(:)  ! Aerosol outputs
+  TYPE(VARIABLE_3D), POINTER :: AEROUT(:)  ! Aerosol outputs
+  TYPE(VARIABLE_3D), ALLOCATABLE :: AEROCLIM_G(:)  ! Aerosol climatology
+  TYPE(VARIABLE_3D), POINTER :: AEROCLIM(:)  ! Aerosol climatology
+  TYPE(VARIABLE_3D), ALLOCATABLE :: UVP_G(:)  ! UV-processor output
+  TYPE(VARIABLE_3D), POINTER :: UVP(:)  ! UV-processor output
+  TYPE(VARIABLE_3D), ALLOCATABLE :: PHYS_G(:)  ! PHYS output
+  TYPE(VARIABLE_3D), POINTER :: PHYS(:)  ! PHYS output
+  TYPE(VARIABLE_3D) :: PHYCTY  ! PHYS input for MassCTY
+  TYPE(VARIABLE_3D) :: RSPEC  ! Specific gas constant
+  TYPE(VARIABLE_3D) :: SDSAT  ! Standard Deviation of the saturation Depression (Sigma_s)
+  TYPE(VARIABLE_3D) :: CVV  ! Convective Vertical Velocity
+  TYPE(VARIABLE_3D) :: RKTH  ! Rasch-Kristjansson H tendency
+  TYPE(VARIABLE_3D) :: RKTQV  ! Rasch-Kristjansson Qv tendency
+  TYPE(VARIABLE_3D) :: RKTQC  ! Rasch-Kristjansson Qc tendency
+  TYPE(VARIABLE_3D) :: UOM  ! Updraught vert velocity
+  TYPE(VARIABLE_3D) :: UAL  ! Updraught mesh fraction
+  TYPE(VARIABLE_3D) :: DOM  ! Downdraught vert velocity
+  TYPE(VARIABLE_3D) :: DAL  ! Downdraught mesh fraction
+  TYPE(VARIABLE_3D) :: UEN  ! Updraught entrainment
+  TYPE(VARIABLE_3D) :: UNEBH  ! pseudo-historic convective
+  TYPE(VARIABLE_3D), ALLOCATABLE :: CRM_G(:)  ! CRM prognostic fields
+  TYPE(VARIABLE_3D), POINTER :: CRM(:)  ! CRM prognostic fields
+  TYPE(VARIABLE_3D), ALLOCATABLE :: LIMA_G(:)  ! LIMA prognostic fields
+  TYPE(VARIABLE_3D), POINTER :: LIMA(:)  ! LIMA prognostic fields
+  TYPE(VARIABLE_3D) :: FSD  ! PHYS output
+  TYPE(VARIABLE_3D), ALLOCATABLE :: EXT_G(:)  ! Extra fields
+  TYPE(VARIABLE_3D), POINTER :: EXT(:)  ! Extra fields
+
+  TYPE(GEOMETRY_VARIABLES) :: GEOMETRY
+  TYPE(ECPHYS_VARIABLES) :: ECPHYS
+  TYPE(RADIATION_VARIABLES) :: RADIATION
+
+CONTAINS
+  ! PROCEDURE :: CLONE => FIELD_VARIABLES_CLONE
+  PROCEDURE :: CLONE_ARRAYS => FIELD_VARIABLES_CLONE_ARRAYS
+  PROCEDURE :: UPDATE_VIEW => FIELD_VARIABLES_UPDATE_VIEW
+  PROCEDURE :: RESET_ARRAYS => FIELD_VARIABLES_RESET_ARRAYS
+  PROCEDURE :: FINAL => FIELD_VARIABLES_FINAL
+END TYPE FIELD_VARIABLES
+
+CONTAINS
+
+!   FUNCTION FIELD_VARIABLES_CLONE(SELF) RESULT(NEWOBJ)
+!     ! Replicate objects by deep-copying through associated object pointers
+!     !
+!     ! This is required create per-thread replication of the data view pointers
+!     ! under the fields associated with these variables.
+!     CLASS(FIELD_VARIABLES) :: SELF
+!     TYPE(FIELD_VARIABLES) :: NEWOBJ
+!     INTEGER(KIND=JPIM) :: I
+
+! #:for v in variables
+! #:if v.array == 1
+!     IF (ALLOCATED(SELF%EXT)) THEN
+!       ALLOCATE(NEWOBJ%EXT(SIZE(SELF%EXT)))
+!       DO I=1, SIZE(SELF%EXT)
+!         NEWOBJ%EXT(I) = SELF%EXT(I)%CLONE()
+!       END DO
+!     END IF
+! #:else
+!     NEWOBJ%EXT = SELF%EXT%CLONE()
+! #:endif
+! #:endfor
+!   END FUNCTION FIELD_VARIABLES_CLONE
+
+  SUBROUTINE FIELD_VARIABLES_CLONE_ARRAYS(SELF)
+    ! Replicate variable arrays by allocating a thread-local copy and
+    ! associating its variables with the underpinning storage fields.
+    !
+    ! This is required ensure that per-thread data view pointers under
+    ! variables don't alias.
+    CLASS(FIELD_VARIABLES) :: SELF
+    INTEGER(KIND=JPIM) :: I
+
+    ! Allocate a thread-local copy of the array
+    NULLIFY(SELF%GHG)
+    ALLOCATE(SELF%GHG(SIZE(SELF%GHG_G)))
+
+    DO I=1, SIZE(SELF%GHG_G)
+      ! Associate underpinning storage objects with thread-local variables
+      IF (ASSOCIATED(SELF%GHG_G(I)%FT0))  SELF%GHG(I)%FT0 => SELF%GHG_G(I)%FT0
+      IF (ASSOCIATED(SELF%GHG_G(I)%FT1))  SELF%GHG(I)%FT1 => SELF%GHG_G(I)%FT1
+      IF (ASSOCIATED(SELF%GHG_G(I)%FT9))  SELF%GHG(I)%FT9 => SELF%GHG_G(I)%FT9
+      IF (ASSOCIATED(SELF%GHG_G(I)%FPH9)) SELF%GHG(I)%FPH9=> SELF%GHG_G(I)%FPH9
+      IF (ASSOCIATED(SELF%GHG_G(I)%FDL))  SELF%GHG(I)%FDL => SELF%GHG_G(I)%FDL
+      IF (ASSOCIATED(SELF%GHG_G(I)%FDM))  SELF%GHG(I)%FDM => SELF%GHG_G(I)%FDM
+    END DO
+    ! Allocate a thread-local copy of the array
+    NULLIFY(SELF%CHEM)
+    ALLOCATE(SELF%CHEM(SIZE(SELF%CHEM_G)))
+
+    DO I=1, SIZE(SELF%CHEM_G)
+      ! Associate underpinning storage objects with thread-local variables
+      IF (ASSOCIATED(SELF%CHEM_G(I)%FT0))  SELF%CHEM(I)%FT0 => SELF%CHEM_G(I)%FT0
+      IF (ASSOCIATED(SELF%CHEM_G(I)%FT1))  SELF%CHEM(I)%FT1 => SELF%CHEM_G(I)%FT1
+      IF (ASSOCIATED(SELF%CHEM_G(I)%FT9))  SELF%CHEM(I)%FT9 => SELF%CHEM_G(I)%FT9
+      IF (ASSOCIATED(SELF%CHEM_G(I)%FPH9)) SELF%CHEM(I)%FPH9=> SELF%CHEM_G(I)%FPH9
+      IF (ASSOCIATED(SELF%CHEM_G(I)%FDL))  SELF%CHEM(I)%FDL => SELF%CHEM_G(I)%FDL
+      IF (ASSOCIATED(SELF%CHEM_G(I)%FDM))  SELF%CHEM(I)%FDM => SELF%CHEM_G(I)%FDM
+    END DO
+    ! Allocate a thread-local copy of the array
+    NULLIFY(SELF%AERO)
+    ALLOCATE(SELF%AERO(SIZE(SELF%AERO_G)))
+
+    DO I=1, SIZE(SELF%AERO_G)
+      ! Associate underpinning storage objects with thread-local variables
+      IF (ASSOCIATED(SELF%AERO_G(I)%FT0))  SELF%AERO(I)%FT0 => SELF%AERO_G(I)%FT0
+      IF (ASSOCIATED(SELF%AERO_G(I)%FT1))  SELF%AERO(I)%FT1 => SELF%AERO_G(I)%FT1
+      IF (ASSOCIATED(SELF%AERO_G(I)%FT9))  SELF%AERO(I)%FT9 => SELF%AERO_G(I)%FT9
+      IF (ASSOCIATED(SELF%AERO_G(I)%FPH9)) SELF%AERO(I)%FPH9=> SELF%AERO_G(I)%FPH9
+      IF (ASSOCIATED(SELF%AERO_G(I)%FDL))  SELF%AERO(I)%FDL => SELF%AERO_G(I)%FDL
+      IF (ASSOCIATED(SELF%AERO_G(I)%FDM))  SELF%AERO(I)%FDM => SELF%AERO_G(I)%FDM
+    END DO
+    ! Allocate a thread-local copy of the array
+    NULLIFY(SELF%FORC)
+    ALLOCATE(SELF%FORC(SIZE(SELF%FORC_G)))
+
+    DO I=1, SIZE(SELF%FORC_G)
+      ! Associate underpinning storage objects with thread-local variables
+      IF (ASSOCIATED(SELF%FORC_G(I)%FT0))  SELF%FORC(I)%FT0 => SELF%FORC_G(I)%FT0
+      IF (ASSOCIATED(SELF%FORC_G(I)%FT1))  SELF%FORC(I)%FT1 => SELF%FORC_G(I)%FT1
+      IF (ASSOCIATED(SELF%FORC_G(I)%FT9))  SELF%FORC(I)%FT9 => SELF%FORC_G(I)%FT9
+      IF (ASSOCIATED(SELF%FORC_G(I)%FPH9)) SELF%FORC(I)%FPH9=> SELF%FORC_G(I)%FPH9
+      IF (ASSOCIATED(SELF%FORC_G(I)%FDL))  SELF%FORC(I)%FDL => SELF%FORC_G(I)%FDL
+      IF (ASSOCIATED(SELF%FORC_G(I)%FDM))  SELF%FORC(I)%FDM => SELF%FORC_G(I)%FDM
+    END DO
+    ! Allocate a thread-local copy of the array
+    NULLIFY(SELF%EZDIAG)
+    ALLOCATE(SELF%EZDIAG(SIZE(SELF%EZDIAG_G)))
+
+    DO I=1, SIZE(SELF%EZDIAG_G)
+      ! Associate underpinning storage objects with thread-local variables
+      IF (ASSOCIATED(SELF%EZDIAG_G(I)%FT0))  SELF%EZDIAG(I)%FT0 => SELF%EZDIAG_G(I)%FT0
+      IF (ASSOCIATED(SELF%EZDIAG_G(I)%FT1))  SELF%EZDIAG(I)%FT1 => SELF%EZDIAG_G(I)%FT1
+      IF (ASSOCIATED(SELF%EZDIAG_G(I)%FT9))  SELF%EZDIAG(I)%FT9 => SELF%EZDIAG_G(I)%FT9
+      IF (ASSOCIATED(SELF%EZDIAG_G(I)%FPH9)) SELF%EZDIAG(I)%FPH9=> SELF%EZDIAG_G(I)%FPH9
+      IF (ASSOCIATED(SELF%EZDIAG_G(I)%FDL))  SELF%EZDIAG(I)%FDL => SELF%EZDIAG_G(I)%FDL
+      IF (ASSOCIATED(SELF%EZDIAG_G(I)%FDM))  SELF%EZDIAG(I)%FDM => SELF%EZDIAG_G(I)%FDM
+    END DO
+    ! Allocate a thread-local copy of the array
+    NULLIFY(SELF%ERA40)
+    ALLOCATE(SELF%ERA40(SIZE(SELF%ERA40_G)))
+
+    DO I=1, SIZE(SELF%ERA40_G)
+      ! Associate underpinning storage objects with thread-local variables
+      IF (ASSOCIATED(SELF%ERA40_G(I)%FT0))  SELF%ERA40(I)%FT0 => SELF%ERA40_G(I)%FT0
+      IF (ASSOCIATED(SELF%ERA40_G(I)%FT1))  SELF%ERA40(I)%FT1 => SELF%ERA40_G(I)%FT1
+      IF (ASSOCIATED(SELF%ERA40_G(I)%FT9))  SELF%ERA40(I)%FT9 => SELF%ERA40_G(I)%FT9
+      IF (ASSOCIATED(SELF%ERA40_G(I)%FPH9)) SELF%ERA40(I)%FPH9=> SELF%ERA40_G(I)%FPH9
+      IF (ASSOCIATED(SELF%ERA40_G(I)%FDL))  SELF%ERA40(I)%FDL => SELF%ERA40_G(I)%FDL
+      IF (ASSOCIATED(SELF%ERA40_G(I)%FDM))  SELF%ERA40(I)%FDM => SELF%ERA40_G(I)%FDM
+    END DO
+    ! Allocate a thread-local copy of the array
+    NULLIFY(SELF%NOGW)
+    ALLOCATE(SELF%NOGW(SIZE(SELF%NOGW_G)))
+
+    DO I=1, SIZE(SELF%NOGW_G)
+      ! Associate underpinning storage objects with thread-local variables
+      IF (ASSOCIATED(SELF%NOGW_G(I)%FT0))  SELF%NOGW(I)%FT0 => SELF%NOGW_G(I)%FT0
+      IF (ASSOCIATED(SELF%NOGW_G(I)%FT1))  SELF%NOGW(I)%FT1 => SELF%NOGW_G(I)%FT1
+      IF (ASSOCIATED(SELF%NOGW_G(I)%FT9))  SELF%NOGW(I)%FT9 => SELF%NOGW_G(I)%FT9
+      IF (ASSOCIATED(SELF%NOGW_G(I)%FPH9)) SELF%NOGW(I)%FPH9=> SELF%NOGW_G(I)%FPH9
+      IF (ASSOCIATED(SELF%NOGW_G(I)%FDL))  SELF%NOGW(I)%FDL => SELF%NOGW_G(I)%FDL
+      IF (ASSOCIATED(SELF%NOGW_G(I)%FDM))  SELF%NOGW(I)%FDM => SELF%NOGW_G(I)%FDM
+    END DO
+    ! Allocate a thread-local copy of the array
+    NULLIFY(SELF%EDRP)
+    ALLOCATE(SELF%EDRP(SIZE(SELF%EDRP_G)))
+
+    DO I=1, SIZE(SELF%EDRP_G)
+      ! Associate underpinning storage objects with thread-local variables
+      IF (ASSOCIATED(SELF%EDRP_G(I)%FT0))  SELF%EDRP(I)%FT0 => SELF%EDRP_G(I)%FT0
+      IF (ASSOCIATED(SELF%EDRP_G(I)%FT1))  SELF%EDRP(I)%FT1 => SELF%EDRP_G(I)%FT1
+      IF (ASSOCIATED(SELF%EDRP_G(I)%FT9))  SELF%EDRP(I)%FT9 => SELF%EDRP_G(I)%FT9
+      IF (ASSOCIATED(SELF%EDRP_G(I)%FPH9)) SELF%EDRP(I)%FPH9=> SELF%EDRP_G(I)%FPH9
+      IF (ASSOCIATED(SELF%EDRP_G(I)%FDL))  SELF%EDRP(I)%FDL => SELF%EDRP_G(I)%FDL
+      IF (ASSOCIATED(SELF%EDRP_G(I)%FDM))  SELF%EDRP(I)%FDM => SELF%EDRP_G(I)%FDM
+    END DO
+    ! Allocate a thread-local copy of the array
+    NULLIFY(SELF%SLDIA)
+    ALLOCATE(SELF%SLDIA(SIZE(SELF%SLDIA_G)))
+
+    DO I=1, SIZE(SELF%SLDIA_G)
+      ! Associate underpinning storage objects with thread-local variables
+      IF (ASSOCIATED(SELF%SLDIA_G(I)%FT0))  SELF%SLDIA(I)%FT0 => SELF%SLDIA_G(I)%FT0
+      IF (ASSOCIATED(SELF%SLDIA_G(I)%FT1))  SELF%SLDIA(I)%FT1 => SELF%SLDIA_G(I)%FT1
+      IF (ASSOCIATED(SELF%SLDIA_G(I)%FT9))  SELF%SLDIA(I)%FT9 => SELF%SLDIA_G(I)%FT9
+      IF (ASSOCIATED(SELF%SLDIA_G(I)%FPH9)) SELF%SLDIA(I)%FPH9=> SELF%SLDIA_G(I)%FPH9
+      IF (ASSOCIATED(SELF%SLDIA_G(I)%FDL))  SELF%SLDIA(I)%FDL => SELF%SLDIA_G(I)%FDL
+      IF (ASSOCIATED(SELF%SLDIA_G(I)%FDM))  SELF%SLDIA(I)%FDM => SELF%SLDIA_G(I)%FDM
+    END DO
+    ! Allocate a thread-local copy of the array
+    NULLIFY(SELF%AERAOT)
+    ALLOCATE(SELF%AERAOT(SIZE(SELF%AERAOT_G)))
+
+    DO I=1, SIZE(SELF%AERAOT_G)
+      ! Associate underpinning storage objects with thread-local variables
+      IF (ASSOCIATED(SELF%AERAOT_G(I)%FT0))  SELF%AERAOT(I)%FT0 => SELF%AERAOT_G(I)%FT0
+      IF (ASSOCIATED(SELF%AERAOT_G(I)%FT1))  SELF%AERAOT(I)%FT1 => SELF%AERAOT_G(I)%FT1
+      IF (ASSOCIATED(SELF%AERAOT_G(I)%FT9))  SELF%AERAOT(I)%FT9 => SELF%AERAOT_G(I)%FT9
+      IF (ASSOCIATED(SELF%AERAOT_G(I)%FPH9)) SELF%AERAOT(I)%FPH9=> SELF%AERAOT_G(I)%FPH9
+      IF (ASSOCIATED(SELF%AERAOT_G(I)%FDL))  SELF%AERAOT(I)%FDL => SELF%AERAOT_G(I)%FDL
+      IF (ASSOCIATED(SELF%AERAOT_G(I)%FDM))  SELF%AERAOT(I)%FDM => SELF%AERAOT_G(I)%FDM
+    END DO
+    ! Allocate a thread-local copy of the array
+    NULLIFY(SELF%AERLISI)
+    ALLOCATE(SELF%AERLISI(SIZE(SELF%AERLISI_G)))
+
+    DO I=1, SIZE(SELF%AERLISI_G)
+      ! Associate underpinning storage objects with thread-local variables
+      IF (ASSOCIATED(SELF%AERLISI_G(I)%FT0))  SELF%AERLISI(I)%FT0 => SELF%AERLISI_G(I)%FT0
+      IF (ASSOCIATED(SELF%AERLISI_G(I)%FT1))  SELF%AERLISI(I)%FT1 => SELF%AERLISI_G(I)%FT1
+      IF (ASSOCIATED(SELF%AERLISI_G(I)%FT9))  SELF%AERLISI(I)%FT9 => SELF%AERLISI_G(I)%FT9
+      IF (ASSOCIATED(SELF%AERLISI_G(I)%FPH9)) SELF%AERLISI(I)%FPH9=> SELF%AERLISI_G(I)%FPH9
+      IF (ASSOCIATED(SELF%AERLISI_G(I)%FDL))  SELF%AERLISI(I)%FDL => SELF%AERLISI_G(I)%FDL
+      IF (ASSOCIATED(SELF%AERLISI_G(I)%FDM))  SELF%AERLISI(I)%FDM => SELF%AERLISI_G(I)%FDM
+    END DO
+    ! Allocate a thread-local copy of the array
+    NULLIFY(SELF%AEROUT)
+    ALLOCATE(SELF%AEROUT(SIZE(SELF%AEROUT_G)))
+
+    DO I=1, SIZE(SELF%AEROUT_G)
+      ! Associate underpinning storage objects with thread-local variables
+      IF (ASSOCIATED(SELF%AEROUT_G(I)%FT0))  SELF%AEROUT(I)%FT0 => SELF%AEROUT_G(I)%FT0
+      IF (ASSOCIATED(SELF%AEROUT_G(I)%FT1))  SELF%AEROUT(I)%FT1 => SELF%AEROUT_G(I)%FT1
+      IF (ASSOCIATED(SELF%AEROUT_G(I)%FT9))  SELF%AEROUT(I)%FT9 => SELF%AEROUT_G(I)%FT9
+      IF (ASSOCIATED(SELF%AEROUT_G(I)%FPH9)) SELF%AEROUT(I)%FPH9=> SELF%AEROUT_G(I)%FPH9
+      IF (ASSOCIATED(SELF%AEROUT_G(I)%FDL))  SELF%AEROUT(I)%FDL => SELF%AEROUT_G(I)%FDL
+      IF (ASSOCIATED(SELF%AEROUT_G(I)%FDM))  SELF%AEROUT(I)%FDM => SELF%AEROUT_G(I)%FDM
+    END DO
+    ! Allocate a thread-local copy of the array
+    NULLIFY(SELF%AEROCLIM)
+    ALLOCATE(SELF%AEROCLIM(SIZE(SELF%AEROCLIM_G)))
+
+    DO I=1, SIZE(SELF%AEROCLIM_G)
+      ! Associate underpinning storage objects with thread-local variables
+      IF (ASSOCIATED(SELF%AEROCLIM_G(I)%FT0))  SELF%AEROCLIM(I)%FT0 => SELF%AEROCLIM_G(I)%FT0
+      IF (ASSOCIATED(SELF%AEROCLIM_G(I)%FT1))  SELF%AEROCLIM(I)%FT1 => SELF%AEROCLIM_G(I)%FT1
+      IF (ASSOCIATED(SELF%AEROCLIM_G(I)%FT9))  SELF%AEROCLIM(I)%FT9 => SELF%AEROCLIM_G(I)%FT9
+      IF (ASSOCIATED(SELF%AEROCLIM_G(I)%FPH9)) SELF%AEROCLIM(I)%FPH9=> SELF%AEROCLIM_G(I)%FPH9
+      IF (ASSOCIATED(SELF%AEROCLIM_G(I)%FDL))  SELF%AEROCLIM(I)%FDL => SELF%AEROCLIM_G(I)%FDL
+      IF (ASSOCIATED(SELF%AEROCLIM_G(I)%FDM))  SELF%AEROCLIM(I)%FDM => SELF%AEROCLIM_G(I)%FDM
+    END DO
+    ! Allocate a thread-local copy of the array
+    NULLIFY(SELF%UVP)
+    ALLOCATE(SELF%UVP(SIZE(SELF%UVP_G)))
+
+    DO I=1, SIZE(SELF%UVP_G)
+      ! Associate underpinning storage objects with thread-local variables
+      IF (ASSOCIATED(SELF%UVP_G(I)%FT0))  SELF%UVP(I)%FT0 => SELF%UVP_G(I)%FT0
+      IF (ASSOCIATED(SELF%UVP_G(I)%FT1))  SELF%UVP(I)%FT1 => SELF%UVP_G(I)%FT1
+      IF (ASSOCIATED(SELF%UVP_G(I)%FT9))  SELF%UVP(I)%FT9 => SELF%UVP_G(I)%FT9
+      IF (ASSOCIATED(SELF%UVP_G(I)%FPH9)) SELF%UVP(I)%FPH9=> SELF%UVP_G(I)%FPH9
+      IF (ASSOCIATED(SELF%UVP_G(I)%FDL))  SELF%UVP(I)%FDL => SELF%UVP_G(I)%FDL
+      IF (ASSOCIATED(SELF%UVP_G(I)%FDM))  SELF%UVP(I)%FDM => SELF%UVP_G(I)%FDM
+    END DO
+    ! Allocate a thread-local copy of the array
+    NULLIFY(SELF%PHYS)
+    ALLOCATE(SELF%PHYS(SIZE(SELF%PHYS_G)))
+
+    DO I=1, SIZE(SELF%PHYS_G)
+      ! Associate underpinning storage objects with thread-local variables
+      IF (ASSOCIATED(SELF%PHYS_G(I)%FT0))  SELF%PHYS(I)%FT0 => SELF%PHYS_G(I)%FT0
+      IF (ASSOCIATED(SELF%PHYS_G(I)%FT1))  SELF%PHYS(I)%FT1 => SELF%PHYS_G(I)%FT1
+      IF (ASSOCIATED(SELF%PHYS_G(I)%FT9))  SELF%PHYS(I)%FT9 => SELF%PHYS_G(I)%FT9
+      IF (ASSOCIATED(SELF%PHYS_G(I)%FPH9)) SELF%PHYS(I)%FPH9=> SELF%PHYS_G(I)%FPH9
+      IF (ASSOCIATED(SELF%PHYS_G(I)%FDL))  SELF%PHYS(I)%FDL => SELF%PHYS_G(I)%FDL
+      IF (ASSOCIATED(SELF%PHYS_G(I)%FDM))  SELF%PHYS(I)%FDM => SELF%PHYS_G(I)%FDM
+    END DO
+    ! Allocate a thread-local copy of the array
+    NULLIFY(SELF%CRM)
+    ALLOCATE(SELF%CRM(SIZE(SELF%CRM_G)))
+
+    DO I=1, SIZE(SELF%CRM_G)
+      ! Associate underpinning storage objects with thread-local variables
+      IF (ASSOCIATED(SELF%CRM_G(I)%FT0))  SELF%CRM(I)%FT0 => SELF%CRM_G(I)%FT0
+      IF (ASSOCIATED(SELF%CRM_G(I)%FT1))  SELF%CRM(I)%FT1 => SELF%CRM_G(I)%FT1
+      IF (ASSOCIATED(SELF%CRM_G(I)%FT9))  SELF%CRM(I)%FT9 => SELF%CRM_G(I)%FT9
+      IF (ASSOCIATED(SELF%CRM_G(I)%FPH9)) SELF%CRM(I)%FPH9=> SELF%CRM_G(I)%FPH9
+      IF (ASSOCIATED(SELF%CRM_G(I)%FDL))  SELF%CRM(I)%FDL => SELF%CRM_G(I)%FDL
+      IF (ASSOCIATED(SELF%CRM_G(I)%FDM))  SELF%CRM(I)%FDM => SELF%CRM_G(I)%FDM
+    END DO
+    ! Allocate a thread-local copy of the array
+    NULLIFY(SELF%LIMA)
+    ALLOCATE(SELF%LIMA(SIZE(SELF%LIMA_G)))
+
+    DO I=1, SIZE(SELF%LIMA_G)
+      ! Associate underpinning storage objects with thread-local variables
+      IF (ASSOCIATED(SELF%LIMA_G(I)%FT0))  SELF%LIMA(I)%FT0 => SELF%LIMA_G(I)%FT0
+      IF (ASSOCIATED(SELF%LIMA_G(I)%FT1))  SELF%LIMA(I)%FT1 => SELF%LIMA_G(I)%FT1
+      IF (ASSOCIATED(SELF%LIMA_G(I)%FT9))  SELF%LIMA(I)%FT9 => SELF%LIMA_G(I)%FT9
+      IF (ASSOCIATED(SELF%LIMA_G(I)%FPH9)) SELF%LIMA(I)%FPH9=> SELF%LIMA_G(I)%FPH9
+      IF (ASSOCIATED(SELF%LIMA_G(I)%FDL))  SELF%LIMA(I)%FDL => SELF%LIMA_G(I)%FDL
+      IF (ASSOCIATED(SELF%LIMA_G(I)%FDM))  SELF%LIMA(I)%FDM => SELF%LIMA_G(I)%FDM
+    END DO
+    ! Allocate a thread-local copy of the array
+    NULLIFY(SELF%EXT)
+    ALLOCATE(SELF%EXT(SIZE(SELF%EXT_G)))
+
+    DO I=1, SIZE(SELF%EXT_G)
+      ! Associate underpinning storage objects with thread-local variables
+      IF (ASSOCIATED(SELF%EXT_G(I)%FT0))  SELF%EXT(I)%FT0 => SELF%EXT_G(I)%FT0
+      IF (ASSOCIATED(SELF%EXT_G(I)%FT1))  SELF%EXT(I)%FT1 => SELF%EXT_G(I)%FT1
+      IF (ASSOCIATED(SELF%EXT_G(I)%FT9))  SELF%EXT(I)%FT9 => SELF%EXT_G(I)%FT9
+      IF (ASSOCIATED(SELF%EXT_G(I)%FPH9)) SELF%EXT(I)%FPH9=> SELF%EXT_G(I)%FPH9
+      IF (ASSOCIATED(SELF%EXT_G(I)%FDL))  SELF%EXT(I)%FDL => SELF%EXT_G(I)%FDL
+      IF (ASSOCIATED(SELF%EXT_G(I)%FDM))  SELF%EXT(I)%FDM => SELF%EXT_G(I)%FDM
+    END DO
+  END SUBROUTINE FIELD_VARIABLES_CLONE_ARRAYS
+
+  SUBROUTINE FIELD_VARIABLES_UPDATE_VIEW(SELF, BLOCK_INDEX)
+    ! Update the internal data view pointers of all associated variables
+    CLASS(FIELD_VARIABLES) :: SELF
+    INTEGER(KIND=JPIM), INTENT(IN) :: BLOCK_INDEX
+    INTEGER(KIND=JPIM) :: I
+
+    CALL SELF%U%UPDATE_VIEW(BLOCK_INDEX)
+    CALL SELF%V%UPDATE_VIEW(BLOCK_INDEX)
+    CALL SELF%T%UPDATE_VIEW(BLOCK_INDEX)
+    CALL SELF%DIV%UPDATE_VIEW(BLOCK_INDEX)
+    CALL SELF%VOR%UPDATE_VIEW(BLOCK_INDEX)
+    CALL SELF%SPD%UPDATE_VIEW(BLOCK_INDEX)
+    CALL SELF%SVD%UPDATE_VIEW(BLOCK_INDEX)
+    CALL SELF%NHX%UPDATE_VIEW(BLOCK_INDEX)
+    CALL SELF%EDOT%UPDATE_VIEW(BLOCK_INDEX)
+    CALL SELF%SGRTL%UPDATE_VIEW(BLOCK_INDEX)
+    CALL SELF%SGRTM%UPDATE_VIEW(BLOCK_INDEX)
+    CALL SELF%SP%UPDATE_VIEW(BLOCK_INDEX)
+    CALL SELF%Q%UPDATE_VIEW(BLOCK_INDEX)
+    CALL SELF%I%UPDATE_VIEW(BLOCK_INDEX)
+    CALL SELF%L%UPDATE_VIEW(BLOCK_INDEX)
+    CALL SELF%LCONV%UPDATE_VIEW(BLOCK_INDEX)
+    CALL SELF%ICONV%UPDATE_VIEW(BLOCK_INDEX)
+    CALL SELF%RCONV%UPDATE_VIEW(BLOCK_INDEX)
+    CALL SELF%SCONV%UPDATE_VIEW(BLOCK_INDEX)
+    CALL SELF%IRAD%UPDATE_VIEW(BLOCK_INDEX)
+    CALL SELF%LRAD%UPDATE_VIEW(BLOCK_INDEX)
+    CALL SELF%S%UPDATE_VIEW(BLOCK_INDEX)
+    CALL SELF%R%UPDATE_VIEW(BLOCK_INDEX)
+    CALL SELF%G%UPDATE_VIEW(BLOCK_INDEX)
+    CALL SELF%H%UPDATE_VIEW(BLOCK_INDEX)
+    CALL SELF%TKE%UPDATE_VIEW(BLOCK_INDEX)
+    CALL SELF%TTE%UPDATE_VIEW(BLOCK_INDEX)
+    CALL SELF%EFB1%UPDATE_VIEW(BLOCK_INDEX)
+    CALL SELF%EFB2%UPDATE_VIEW(BLOCK_INDEX)
+    CALL SELF%EFB3%UPDATE_VIEW(BLOCK_INDEX)
+    CALL SELF%A%UPDATE_VIEW(BLOCK_INDEX)
+    CALL SELF%O3%UPDATE_VIEW(BLOCK_INDEX)
+    CALL SELF%SRC%UPDATE_VIEW(BLOCK_INDEX)
+    CALL SELF%MXL%UPDATE_VIEW(BLOCK_INDEX)
+    CALL SELF%SHTUR%UPDATE_VIEW(BLOCK_INDEX)
+    CALL SELF%FQTUR%UPDATE_VIEW(BLOCK_INDEX)
+    CALL SELF%FSTUR%UPDATE_VIEW(BLOCK_INDEX)
+    CALL SELF%CPF%UPDATE_VIEW(BLOCK_INDEX)
+    CALL SELF%SPF%UPDATE_VIEW(BLOCK_INDEX)
+    CALL SELF%CVGQ%UPDATE_VIEW(BLOCK_INDEX)
+    CALL SELF%QVA%UPDATE_VIEW(BLOCK_INDEX)
+    ! Note, we assume allocation of size 0 for inactive variables!
+    DO I=1, SIZE(SELF%GHG)
+      CALL SELF%GHG(I)%UPDATE_VIEW(BLOCK_INDEX)
+    END DO
+    ! Note, we assume allocation of size 0 for inactive variables!
+    DO I=1, SIZE(SELF%CHEM)
+      CALL SELF%CHEM(I)%UPDATE_VIEW(BLOCK_INDEX)
+    END DO
+    ! Note, we assume allocation of size 0 for inactive variables!
+    DO I=1, SIZE(SELF%AERO)
+      CALL SELF%AERO(I)%UPDATE_VIEW(BLOCK_INDEX)
+    END DO
+    CALL SELF%LRCH4%UPDATE_VIEW(BLOCK_INDEX)
+    ! Note, we assume allocation of size 0 for inactive variables!
+    DO I=1, SIZE(SELF%FORC)
+      CALL SELF%FORC(I)%UPDATE_VIEW(BLOCK_INDEX)
+    END DO
+    ! Note, we assume allocation of size 0 for inactive variables!
+    DO I=1, SIZE(SELF%EZDIAG)
+      CALL SELF%EZDIAG(I)%UPDATE_VIEW(BLOCK_INDEX)
+    END DO
+    ! Note, we assume allocation of size 0 for inactive variables!
+    DO I=1, SIZE(SELF%ERA40)
+      CALL SELF%ERA40(I)%UPDATE_VIEW(BLOCK_INDEX)
+    END DO
+    ! Note, we assume allocation of size 0 for inactive variables!
+    DO I=1, SIZE(SELF%NOGW)
+      CALL SELF%NOGW(I)%UPDATE_VIEW(BLOCK_INDEX)
+    END DO
+    ! Note, we assume allocation of size 0 for inactive variables!
+    DO I=1, SIZE(SELF%EDRP)
+      CALL SELF%EDRP(I)%UPDATE_VIEW(BLOCK_INDEX)
+    END DO
+    ! Note, we assume allocation of size 0 for inactive variables!
+    DO I=1, SIZE(SELF%SLDIA)
+      CALL SELF%SLDIA(I)%UPDATE_VIEW(BLOCK_INDEX)
+    END DO
+    ! Note, we assume allocation of size 0 for inactive variables!
+    DO I=1, SIZE(SELF%AERAOT)
+      CALL SELF%AERAOT(I)%UPDATE_VIEW(BLOCK_INDEX)
+    END DO
+    ! Note, we assume allocation of size 0 for inactive variables!
+    DO I=1, SIZE(SELF%AERLISI)
+      CALL SELF%AERLISI(I)%UPDATE_VIEW(BLOCK_INDEX)
+    END DO
+    ! Note, we assume allocation of size 0 for inactive variables!
+    DO I=1, SIZE(SELF%AEROUT)
+      CALL SELF%AEROUT(I)%UPDATE_VIEW(BLOCK_INDEX)
+    END DO
+    ! Note, we assume allocation of size 0 for inactive variables!
+    DO I=1, SIZE(SELF%AEROCLIM)
+      CALL SELF%AEROCLIM(I)%UPDATE_VIEW(BLOCK_INDEX)
+    END DO
+    ! Note, we assume allocation of size 0 for inactive variables!
+    DO I=1, SIZE(SELF%UVP)
+      CALL SELF%UVP(I)%UPDATE_VIEW(BLOCK_INDEX)
+    END DO
+    ! Note, we assume allocation of size 0 for inactive variables!
+    DO I=1, SIZE(SELF%PHYS)
+      CALL SELF%PHYS(I)%UPDATE_VIEW(BLOCK_INDEX)
+    END DO
+    CALL SELF%PHYCTY%UPDATE_VIEW(BLOCK_INDEX)
+    CALL SELF%RSPEC%UPDATE_VIEW(BLOCK_INDEX)
+    CALL SELF%SDSAT%UPDATE_VIEW(BLOCK_INDEX)
+    CALL SELF%CVV%UPDATE_VIEW(BLOCK_INDEX)
+    CALL SELF%RKTH%UPDATE_VIEW(BLOCK_INDEX)
+    CALL SELF%RKTQV%UPDATE_VIEW(BLOCK_INDEX)
+    CALL SELF%RKTQC%UPDATE_VIEW(BLOCK_INDEX)
+    CALL SELF%UOM%UPDATE_VIEW(BLOCK_INDEX)
+    CALL SELF%UAL%UPDATE_VIEW(BLOCK_INDEX)
+    CALL SELF%DOM%UPDATE_VIEW(BLOCK_INDEX)
+    CALL SELF%DAL%UPDATE_VIEW(BLOCK_INDEX)
+    CALL SELF%UEN%UPDATE_VIEW(BLOCK_INDEX)
+    CALL SELF%UNEBH%UPDATE_VIEW(BLOCK_INDEX)
+    ! Note, we assume allocation of size 0 for inactive variables!
+    DO I=1, SIZE(SELF%CRM)
+      CALL SELF%CRM(I)%UPDATE_VIEW(BLOCK_INDEX)
+    END DO
+    ! Note, we assume allocation of size 0 for inactive variables!
+    DO I=1, SIZE(SELF%LIMA)
+      CALL SELF%LIMA(I)%UPDATE_VIEW(BLOCK_INDEX)
+    END DO
+    CALL SELF%FSD%UPDATE_VIEW(BLOCK_INDEX)
+    ! Note, we assume allocation of size 0 for inactive variables!
+    DO I=1, SIZE(SELF%EXT)
+      CALL SELF%EXT(I)%UPDATE_VIEW(BLOCK_INDEX)
+    END DO
+
+    ! Manually update variables in ECPHYS sub-type
+    CALL SELF%ECPHYS%USTRTI%UPDATE_VIEW(BLOCK_INDEX)
+    CALL SELF%ECPHYS%VSTRTI%UPDATE_VIEW(BLOCK_INDEX)
+    CALL SELF%ECPHYS%AHFSTI%UPDATE_VIEW(BLOCK_INDEX)
+    CALL SELF%ECPHYS%EVAPTI%UPDATE_VIEW(BLOCK_INDEX)
+    CALL SELF%ECPHYS%TSKTI%UPDATE_VIEW(BLOCK_INDEX)
+  END SUBROUTINE FIELD_VARIABLES_UPDATE_VIEW
+
+  SUBROUTINE FIELD_VARIABLES_FINAL(SELF)
+    ! Update the internal data view pointers of all associated variables
+    CLASS(FIELD_VARIABLES) :: SELF
+    INTEGER(KIND=JPIM) :: I
+
+    CALL SELF%U%FINAL()
+    CALL SELF%V%FINAL()
+    CALL SELF%T%FINAL()
+    CALL SELF%DIV%FINAL()
+    CALL SELF%VOR%FINAL()
+    CALL SELF%SPD%FINAL()
+    CALL SELF%SVD%FINAL()
+    CALL SELF%NHX%FINAL()
+    CALL SELF%EDOT%FINAL()
+    CALL SELF%SGRTL%FINAL()
+    CALL SELF%SGRTM%FINAL()
+    CALL SELF%SP%FINAL()
+    CALL SELF%Q%FINAL()
+    CALL SELF%I%FINAL()
+    CALL SELF%L%FINAL()
+    CALL SELF%LCONV%FINAL()
+    CALL SELF%ICONV%FINAL()
+    CALL SELF%RCONV%FINAL()
+    CALL SELF%SCONV%FINAL()
+    CALL SELF%IRAD%FINAL()
+    CALL SELF%LRAD%FINAL()
+    CALL SELF%S%FINAL()
+    CALL SELF%R%FINAL()
+    CALL SELF%G%FINAL()
+    CALL SELF%H%FINAL()
+    CALL SELF%TKE%FINAL()
+    CALL SELF%TTE%FINAL()
+    CALL SELF%EFB1%FINAL()
+    CALL SELF%EFB2%FINAL()
+    CALL SELF%EFB3%FINAL()
+    CALL SELF%A%FINAL()
+    CALL SELF%O3%FINAL()
+    CALL SELF%SRC%FINAL()
+    CALL SELF%MXL%FINAL()
+    CALL SELF%SHTUR%FINAL()
+    CALL SELF%FQTUR%FINAL()
+    CALL SELF%FSTUR%FINAL()
+    CALL SELF%CPF%FINAL()
+    CALL SELF%SPF%FINAL()
+    CALL SELF%CVGQ%FINAL()
+    CALL SELF%QVA%FINAL()
+    IF (ALLOCATED(SELF%GHG_G)) THEN
+      DO I=1, SIZE(SELF%GHG)
+        CALL SELF%GHG(I)%FINAL()
+      END DO
+      DEALLOCATE(SELF%GHG_G)
+      NULLIFY(SELF%GHG)
+    END IF
+    IF (ALLOCATED(SELF%CHEM_G)) THEN
+      DO I=1, SIZE(SELF%CHEM)
+        CALL SELF%CHEM(I)%FINAL()
+      END DO
+      DEALLOCATE(SELF%CHEM_G)
+      NULLIFY(SELF%CHEM)
+    END IF
+    IF (ALLOCATED(SELF%AERO_G)) THEN
+      DO I=1, SIZE(SELF%AERO)
+        CALL SELF%AERO(I)%FINAL()
+      END DO
+      DEALLOCATE(SELF%AERO_G)
+      NULLIFY(SELF%AERO)
+    END IF
+    CALL SELF%LRCH4%FINAL()
+    IF (ALLOCATED(SELF%FORC_G)) THEN
+      DO I=1, SIZE(SELF%FORC)
+        CALL SELF%FORC(I)%FINAL()
+      END DO
+      DEALLOCATE(SELF%FORC_G)
+      NULLIFY(SELF%FORC)
+    END IF
+    IF (ALLOCATED(SELF%EZDIAG_G)) THEN
+      DO I=1, SIZE(SELF%EZDIAG)
+        CALL SELF%EZDIAG(I)%FINAL()
+      END DO
+      DEALLOCATE(SELF%EZDIAG_G)
+      NULLIFY(SELF%EZDIAG)
+    END IF
+    IF (ALLOCATED(SELF%ERA40_G)) THEN
+      DO I=1, SIZE(SELF%ERA40)
+        CALL SELF%ERA40(I)%FINAL()
+      END DO
+      DEALLOCATE(SELF%ERA40_G)
+      NULLIFY(SELF%ERA40)
+    END IF
+    IF (ALLOCATED(SELF%NOGW_G)) THEN
+      DO I=1, SIZE(SELF%NOGW)
+        CALL SELF%NOGW(I)%FINAL()
+      END DO
+      DEALLOCATE(SELF%NOGW_G)
+      NULLIFY(SELF%NOGW)
+    END IF
+    IF (ALLOCATED(SELF%EDRP_G)) THEN
+      DO I=1, SIZE(SELF%EDRP)
+        CALL SELF%EDRP(I)%FINAL()
+      END DO
+      DEALLOCATE(SELF%EDRP_G)
+      NULLIFY(SELF%EDRP)
+    END IF
+    IF (ALLOCATED(SELF%SLDIA_G)) THEN
+      DO I=1, SIZE(SELF%SLDIA)
+        CALL SELF%SLDIA(I)%FINAL()
+      END DO
+      DEALLOCATE(SELF%SLDIA_G)
+      NULLIFY(SELF%SLDIA)
+    END IF
+    IF (ALLOCATED(SELF%AERAOT_G)) THEN
+      DO I=1, SIZE(SELF%AERAOT)
+        CALL SELF%AERAOT(I)%FINAL()
+      END DO
+      DEALLOCATE(SELF%AERAOT_G)
+      NULLIFY(SELF%AERAOT)
+    END IF
+    IF (ALLOCATED(SELF%AERLISI_G)) THEN
+      DO I=1, SIZE(SELF%AERLISI)
+        CALL SELF%AERLISI(I)%FINAL()
+      END DO
+      DEALLOCATE(SELF%AERLISI_G)
+      NULLIFY(SELF%AERLISI)
+    END IF
+    IF (ALLOCATED(SELF%AEROUT_G)) THEN
+      DO I=1, SIZE(SELF%AEROUT)
+        CALL SELF%AEROUT(I)%FINAL()
+      END DO
+      DEALLOCATE(SELF%AEROUT_G)
+      NULLIFY(SELF%AEROUT)
+    END IF
+    IF (ALLOCATED(SELF%AEROCLIM_G)) THEN
+      DO I=1, SIZE(SELF%AEROCLIM)
+        CALL SELF%AEROCLIM(I)%FINAL()
+      END DO
+      DEALLOCATE(SELF%AEROCLIM_G)
+      NULLIFY(SELF%AEROCLIM)
+    END IF
+    IF (ALLOCATED(SELF%UVP_G)) THEN
+      DO I=1, SIZE(SELF%UVP)
+        CALL SELF%UVP(I)%FINAL()
+      END DO
+      DEALLOCATE(SELF%UVP_G)
+      NULLIFY(SELF%UVP)
+    END IF
+    IF (ALLOCATED(SELF%PHYS_G)) THEN
+      DO I=1, SIZE(SELF%PHYS)
+        CALL SELF%PHYS(I)%FINAL()
+      END DO
+      DEALLOCATE(SELF%PHYS_G)
+      NULLIFY(SELF%PHYS)
+    END IF
+    CALL SELF%PHYCTY%FINAL()
+    CALL SELF%RSPEC%FINAL()
+    CALL SELF%SDSAT%FINAL()
+    CALL SELF%CVV%FINAL()
+    CALL SELF%RKTH%FINAL()
+    CALL SELF%RKTQV%FINAL()
+    CALL SELF%RKTQC%FINAL()
+    CALL SELF%UOM%FINAL()
+    CALL SELF%UAL%FINAL()
+    CALL SELF%DOM%FINAL()
+    CALL SELF%DAL%FINAL()
+    CALL SELF%UEN%FINAL()
+    CALL SELF%UNEBH%FINAL()
+    IF (ALLOCATED(SELF%CRM_G)) THEN
+      DO I=1, SIZE(SELF%CRM)
+        CALL SELF%CRM(I)%FINAL()
+      END DO
+      DEALLOCATE(SELF%CRM_G)
+      NULLIFY(SELF%CRM)
+    END IF
+    IF (ALLOCATED(SELF%LIMA_G)) THEN
+      DO I=1, SIZE(SELF%LIMA)
+        CALL SELF%LIMA(I)%FINAL()
+      END DO
+      DEALLOCATE(SELF%LIMA_G)
+      NULLIFY(SELF%LIMA)
+    END IF
+    CALL SELF%FSD%FINAL()
+    IF (ALLOCATED(SELF%EXT_G)) THEN
+      DO I=1, SIZE(SELF%EXT)
+        CALL SELF%EXT(I)%FINAL()
+      END DO
+      DEALLOCATE(SELF%EXT_G)
+      NULLIFY(SELF%EXT)
+    END IF
+  END SUBROUTINE FIELD_VARIABLES_FINAL
+
+  SUBROUTINE FIELD_VARIABLES_RESET_ARRAYS(SELF)
+    ! Deallocate and reset thread-local variables arrays.
+    !
+    ! This ensures we are not leaking thread-local objects and should
+    ! be done after parallel regions.
+    CLASS(FIELD_VARIABLES), TARGET :: SELF
+    INTEGER(KIND=JPIM) :: I
+
+    ! Deallocate and reset thread-local variables arrays
+    DEALLOCATE(SELF%GHG)
+    SELF%GHG => SELF%GHG_G
+    ! Deallocate and reset thread-local variables arrays
+    DEALLOCATE(SELF%CHEM)
+    SELF%CHEM => SELF%CHEM_G
+    ! Deallocate and reset thread-local variables arrays
+    DEALLOCATE(SELF%AERO)
+    SELF%AERO => SELF%AERO_G
+    ! Deallocate and reset thread-local variables arrays
+    DEALLOCATE(SELF%FORC)
+    SELF%FORC => SELF%FORC_G
+    ! Deallocate and reset thread-local variables arrays
+    DEALLOCATE(SELF%EZDIAG)
+    SELF%EZDIAG => SELF%EZDIAG_G
+    ! Deallocate and reset thread-local variables arrays
+    DEALLOCATE(SELF%ERA40)
+    SELF%ERA40 => SELF%ERA40_G
+    ! Deallocate and reset thread-local variables arrays
+    DEALLOCATE(SELF%NOGW)
+    SELF%NOGW => SELF%NOGW_G
+    ! Deallocate and reset thread-local variables arrays
+    DEALLOCATE(SELF%EDRP)
+    SELF%EDRP => SELF%EDRP_G
+    ! Deallocate and reset thread-local variables arrays
+    DEALLOCATE(SELF%SLDIA)
+    SELF%SLDIA => SELF%SLDIA_G
+    ! Deallocate and reset thread-local variables arrays
+    DEALLOCATE(SELF%AERAOT)
+    SELF%AERAOT => SELF%AERAOT_G
+    ! Deallocate and reset thread-local variables arrays
+    DEALLOCATE(SELF%AERLISI)
+    SELF%AERLISI => SELF%AERLISI_G
+    ! Deallocate and reset thread-local variables arrays
+    DEALLOCATE(SELF%AEROUT)
+    SELF%AEROUT => SELF%AEROUT_G
+    ! Deallocate and reset thread-local variables arrays
+    DEALLOCATE(SELF%AEROCLIM)
+    SELF%AEROCLIM => SELF%AEROCLIM_G
+    ! Deallocate and reset thread-local variables arrays
+    DEALLOCATE(SELF%UVP)
+    SELF%UVP => SELF%UVP_G
+    ! Deallocate and reset thread-local variables arrays
+    DEALLOCATE(SELF%PHYS)
+    SELF%PHYS => SELF%PHYS_G
+    ! Deallocate and reset thread-local variables arrays
+    DEALLOCATE(SELF%CRM)
+    SELF%CRM => SELF%CRM_G
+    ! Deallocate and reset thread-local variables arrays
+    DEALLOCATE(SELF%LIMA)
+    SELF%LIMA => SELF%LIMA_G
+    ! Deallocate and reset thread-local variables arrays
+    DEALLOCATE(SELF%EXT)
+    SELF%EXT => SELF%EXT_G
+  END SUBROUTINE FIELD_VARIABLES_RESET_ARRAYS
+
+END MODULE FIELD_VARIABLES_MOD

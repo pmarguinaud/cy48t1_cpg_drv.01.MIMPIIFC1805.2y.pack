@@ -1,0 +1,3505 @@
+
+MODULE SURFACE_VIEWS_MODULE
+  ! The SURFACE_VIEWS type contains namespaced access to groups of
+  ! array pointers according to individual surface variable groups.
+  !
+  !
+  ! Variable naming conventions
+  ! ---------------------------
+  ! The top-level type `SURFACE_VIEWS_TYPE` holds multiple group
+  ! types, each prefixed with `GSP_` for prognostic and `GSD_` for
+  ! diagnostic variable groups.
+  !
+  ! Each group type holds a list of array views (pointers to
+  ! sub-sections of the gobal array), each prefixed with `P` to
+  ! indicate a thread-local view pointer. Data views of prognostic
+  ! variables have an additional suffix that indicates the time index
+  ! (eg.  `_T0`, `_T1` or `_T9`). The backend storage for each of
+  ! these view pointers is provided by `FIELD_2D/FIELD_3D` objects, a
+  ! reference to which is also stored on the group types and prefixed
+  ! with `F_`.
+
+USE PARKIND1, ONLY: JPIM, JPRB
+USE FIELD_MODULE, ONLY: FIELD_2D, FIELD_3D, FIELD_4D, FIELD_2D_PTR, FIELD_3D_PTR, FIELD_2D_VIEW, FIELD_3D_VIEW
+! FIXME: CMake dependency analysis breaks down if we do this:
+! USE SURFACE_VARIABLES_MOD, ONLY: SURFACE_VARIABLES, &
+!  & SURFACE_VARIABLE_GROUP_SOILB, SURFACE_VARIABLE_GROUP_SNOWG, SURFACE_VARIABLE_GROUP_LAKEB, SURFACE_VARIABLE_GROUP_RESVR, SURFACE_VARIABLE_GROUP_CLS, SURFACE_VARIABLE_GROUP_OML, SURFACE_VARIABLE_GROUP_EXTRP, SURFACE_VARIABLE_GROUP_XTRP2, SURFACE_VARIABLE_GROUP_CANRI, SURFACE_VARIABLE_GROUP_VARSF, SURFACE_VARIABLE_GROUP_VCLIH, SURFACE_VARIABLE_GROUP_VCLIK, SURFACE_VARIABLE_GROUP_VCLIP, SURFACE_VARIABLE_GROUP_VCLIV, SURFACE_VARIABLE_GROUP_VCLIA, SURFACE_VARIABLE_GROUP_VCLIN, SURFACE_VARIABLE_GROUP_VDIAGO2, SURFACE_VARIABLE_GROUP_VDIAGO3, SURFACE_VARIABLE_GROUP_VDIAG, SURFACE_VARIABLE_GROUP_SATSIM, SURFACE_VARIABLE_GROUP_WAVES, SURFACE_VARIABLE_GROUP_WAM, SURFACE_VARIABLE_GROUP_VEXTRA, SURFACE_VARIABLE_GROUP_VEXTRDI, SURFACE_VARIABLE_GROUP_VPRECIP, SURFACE_VARIABLE_GROUP_VPRECIP2, SURFACE_VARIABLE_GROUP_VEXTR2, SURFACE_VARIABLE_GROUP_SFORC, SURFACE_VARIABLE_GROUP_SFLUX, SURFACE_VARIABLE_GROUP_VO3ABC
+USE SURFACE_VARIABLES_MOD
+USE YOMDYN, ONLY : TDYN
+
+IMPLICIT NONE
+
+TYPE SURFACE_VIEW_GROUP_SOILB
+  REAL(KIND=JPRB), POINTER :: PT_T0(:,:)   ! temperature
+  REAL(KIND=JPRB), POINTER :: PT_T1(:,:)   ! temperature
+  REAL(KIND=JPRB), POINTER :: PT_T9(:,:)   ! temperature
+  REAL(KIND=JPRB), POINTER :: PQ_T0(:,:)   ! liquid water content
+  REAL(KIND=JPRB), POINTER :: PQ_T1(:,:)   ! liquid water content
+  REAL(KIND=JPRB), POINTER :: PQ_T9(:,:)   ! liquid water content
+  REAL(KIND=JPRB), POINTER :: PTL_T0(:,:)   ! ice water content (for MF)
+  REAL(KIND=JPRB), POINTER :: PTL_T1(:,:)   ! ice water content (for MF)
+  REAL(KIND=JPRB), POINTER :: PTL_T9(:,:)   ! ice water content (for MF)
+  REAL(KIND=JPRB), POINTER :: PGROUP(:,:,:)
+
+  TYPE(SURFACE_VARIABLE_GROUP_SOILB), POINTER :: VARIABLE_GROUP
+  TYPE(FIELD_3D), POINTER :: F_T_T0=>NULL(), F_T_T1=>NULL(), F_T_T9=>NULL()
+  TYPE(FIELD_3D), POINTER :: F_Q_T0=>NULL(), F_Q_T1=>NULL(), F_Q_T9=>NULL()
+  TYPE(FIELD_3D), POINTER :: F_TL_T0=>NULL(), F_TL_T1=>NULL(), F_TL_T9=>NULL()
+  TYPE(FIELD_4D), POINTER :: F_GROUP
+
+CONTAINS
+  PROCEDURE :: INIT => SURFACE_VIEW_GROUP_SOILB_INIT
+  PROCEDURE :: UPDATE_VIEW => SURFACE_VIEW_GROUP_SOILB_UPDATE_VIEW
+  PROCEDURE :: SET9TO0 => SURFACE_VIEW_GROUP_SOILB_SET9TO0
+  PROCEDURE :: SET1TO9 => SURFACE_VIEW_GROUP_SOILB_SET1TO9
+  PROCEDURE :: SET1TO0 => SURFACE_VIEW_GROUP_SOILB_SET1TO0
+  PROCEDURE :: SET0TO1 => SURFACE_VIEW_GROUP_SOILB_SET0TO1
+  PROCEDURE :: PHTFILT => SURFACE_VIEW_GROUP_SOILB_PHTFILT
+END TYPE SURFACE_VIEW_GROUP_SOILB
+
+TYPE SURFACE_VIEW_GROUP_SNOWG
+  REAL(KIND=JPRB), POINTER :: PF_T0(:,:)   ! content of surface snow
+  REAL(KIND=JPRB), POINTER :: PF_T1(:,:)   ! content of surface snow
+  REAL(KIND=JPRB), POINTER :: PF_T9(:,:)   ! content of surface snow
+  REAL(KIND=JPRB), POINTER :: PA_T0(:,:)   ! snow albedo
+  REAL(KIND=JPRB), POINTER :: PA_T1(:,:)   ! snow albedo
+  REAL(KIND=JPRB), POINTER :: PA_T9(:,:)   ! snow albedo
+  REAL(KIND=JPRB), POINTER :: PR_T0(:,:)   ! snow density
+  REAL(KIND=JPRB), POINTER :: PR_T1(:,:)   ! snow density
+  REAL(KIND=JPRB), POINTER :: PR_T9(:,:)   ! snow density
+  REAL(KIND=JPRB), POINTER :: PT_T0(:,:)   ! total albedo (diagnostic for MF for LVGSN)
+  REAL(KIND=JPRB), POINTER :: PT_T1(:,:)   ! total albedo (diagnostic for MF for LVGSN)
+  REAL(KIND=JPRB), POINTER :: PT_T9(:,:)   ! total albedo (diagnostic for MF for LVGSN)
+  REAL(KIND=JPRB), POINTER :: PW_T0(:,:)   ! Liquid water content
+  REAL(KIND=JPRB), POINTER :: PW_T1(:,:)   ! Liquid water content
+  REAL(KIND=JPRB), POINTER :: PW_T9(:,:)   ! Liquid water content
+  REAL(KIND=JPRB), POINTER :: PGROUP(:,:,:)
+
+  TYPE(SURFACE_VARIABLE_GROUP_SNOWG), POINTER :: VARIABLE_GROUP
+  TYPE(FIELD_3D), POINTER :: F_F_T0=>NULL(), F_F_T1=>NULL(), F_F_T9=>NULL()
+  TYPE(FIELD_3D), POINTER :: F_A_T0=>NULL(), F_A_T1=>NULL(), F_A_T9=>NULL()
+  TYPE(FIELD_3D), POINTER :: F_R_T0=>NULL(), F_R_T1=>NULL(), F_R_T9=>NULL()
+  TYPE(FIELD_3D), POINTER :: F_T_T0=>NULL(), F_T_T1=>NULL(), F_T_T9=>NULL()
+  TYPE(FIELD_3D), POINTER :: F_W_T0=>NULL(), F_W_T1=>NULL(), F_W_T9=>NULL()
+  TYPE(FIELD_4D), POINTER :: F_GROUP
+
+CONTAINS
+  PROCEDURE :: INIT => SURFACE_VIEW_GROUP_SNOWG_INIT
+  PROCEDURE :: UPDATE_VIEW => SURFACE_VIEW_GROUP_SNOWG_UPDATE_VIEW
+  PROCEDURE :: SET9TO0 => SURFACE_VIEW_GROUP_SNOWG_SET9TO0
+  PROCEDURE :: SET1TO9 => SURFACE_VIEW_GROUP_SNOWG_SET1TO9
+  PROCEDURE :: SET1TO0 => SURFACE_VIEW_GROUP_SNOWG_SET1TO0
+  PROCEDURE :: SET0TO1 => SURFACE_VIEW_GROUP_SNOWG_SET0TO1
+  PROCEDURE :: PHTFILT => SURFACE_VIEW_GROUP_SNOWG_PHTFILT
+END TYPE SURFACE_VIEW_GROUP_SNOWG
+
+TYPE SURFACE_VIEW_GROUP_LAKEB
+  REAL(KIND=JPRB), POINTER :: PLICT_T0(:)   ! lake ice temperature
+  REAL(KIND=JPRB), POINTER :: PLICT_T1(:)   ! lake ice temperature
+  REAL(KIND=JPRB), POINTER :: PLICT_T9(:)   ! lake ice temperature
+  REAL(KIND=JPRB), POINTER :: PLMLT_T0(:)   ! lake mixed-layer temperature
+  REAL(KIND=JPRB), POINTER :: PLMLT_T1(:)   ! lake mixed-layer temperature
+  REAL(KIND=JPRB), POINTER :: PLMLT_T9(:)   ! lake mixed-layer temperature
+  REAL(KIND=JPRB), POINTER :: PLTLT_T0(:)   ! lake total layer temperature
+  REAL(KIND=JPRB), POINTER :: PLTLT_T1(:)   ! lake total layer temperature
+  REAL(KIND=JPRB), POINTER :: PLTLT_T9(:)   ! lake total layer temperature
+  REAL(KIND=JPRB), POINTER :: PLBLT_T0(:)   ! lake bottom layer temperature
+  REAL(KIND=JPRB), POINTER :: PLBLT_T1(:)   ! lake bottom layer temperature
+  REAL(KIND=JPRB), POINTER :: PLBLT_T9(:)   ! lake bottom layer temperature
+  REAL(KIND=JPRB), POINTER :: PLSHF_T0(:)   ! lake shape factor
+  REAL(KIND=JPRB), POINTER :: PLSHF_T1(:)   ! lake shape factor
+  REAL(KIND=JPRB), POINTER :: PLSHF_T9(:)   ! lake shape factor
+  REAL(KIND=JPRB), POINTER :: PLICD_T0(:)   ! lake ice depth
+  REAL(KIND=JPRB), POINTER :: PLICD_T1(:)   ! lake ice depth
+  REAL(KIND=JPRB), POINTER :: PLICD_T9(:)   ! lake ice depth
+  REAL(KIND=JPRB), POINTER :: PLMLD_T0(:)   ! lake mixed-layer depth
+  REAL(KIND=JPRB), POINTER :: PLMLD_T1(:)   ! lake mixed-layer depth
+  REAL(KIND=JPRB), POINTER :: PLMLD_T9(:)   ! lake mixed-layer depth
+  REAL(KIND=JPRB), POINTER :: PGROUP(:,:)
+
+  TYPE(SURFACE_VARIABLE_GROUP_LAKEB), POINTER :: VARIABLE_GROUP
+  TYPE(FIELD_2D), POINTER :: F_LICT_T0=>NULL(), F_LICT_T1=>NULL(), F_LICT_T9=>NULL()
+  TYPE(FIELD_2D), POINTER :: F_LMLT_T0=>NULL(), F_LMLT_T1=>NULL(), F_LMLT_T9=>NULL()
+  TYPE(FIELD_2D), POINTER :: F_LTLT_T0=>NULL(), F_LTLT_T1=>NULL(), F_LTLT_T9=>NULL()
+  TYPE(FIELD_2D), POINTER :: F_LBLT_T0=>NULL(), F_LBLT_T1=>NULL(), F_LBLT_T9=>NULL()
+  TYPE(FIELD_2D), POINTER :: F_LSHF_T0=>NULL(), F_LSHF_T1=>NULL(), F_LSHF_T9=>NULL()
+  TYPE(FIELD_2D), POINTER :: F_LICD_T0=>NULL(), F_LICD_T1=>NULL(), F_LICD_T9=>NULL()
+  TYPE(FIELD_2D), POINTER :: F_LMLD_T0=>NULL(), F_LMLD_T1=>NULL(), F_LMLD_T9=>NULL()
+  TYPE(FIELD_3D), POINTER :: F_GROUP
+
+CONTAINS
+  PROCEDURE :: INIT => SURFACE_VIEW_GROUP_LAKEB_INIT
+  PROCEDURE :: UPDATE_VIEW => SURFACE_VIEW_GROUP_LAKEB_UPDATE_VIEW
+  PROCEDURE :: SET9TO0 => SURFACE_VIEW_GROUP_LAKEB_SET9TO0
+  PROCEDURE :: SET1TO9 => SURFACE_VIEW_GROUP_LAKEB_SET1TO9
+  PROCEDURE :: SET1TO0 => SURFACE_VIEW_GROUP_LAKEB_SET1TO0
+  PROCEDURE :: SET0TO1 => SURFACE_VIEW_GROUP_LAKEB_SET0TO1
+  PROCEDURE :: PHTFILT => SURFACE_VIEW_GROUP_LAKEB_PHTFILT
+END TYPE SURFACE_VIEW_GROUP_LAKEB
+
+TYPE SURFACE_VIEW_GROUP_RESVR
+  REAL(KIND=JPRB), POINTER :: PT_T0(:)   ! skin temperature (Ts)
+  REAL(KIND=JPRB), POINTER :: PT_T1(:)   ! skin temperature (Ts)
+  REAL(KIND=JPRB), POINTER :: PT_T9(:)   ! skin temperature (Ts)
+  REAL(KIND=JPRB), POINTER :: PW_T0(:)   ! skin water content (Wskin) at ECMWF superficial reservoir water content (Ws) at MF
+  REAL(KIND=JPRB), POINTER :: PW_T1(:)   ! skin water content (Wskin) at ECMWF superficial reservoir water content (Ws) at MF
+  REAL(KIND=JPRB), POINTER :: PW_T9(:)   ! skin water content (Wskin) at ECMWF superficial reservoir water content (Ws) at MF
+  REAL(KIND=JPRB), POINTER :: PFC_T0(:)   ! skin water content (Wl) at MF
+  REAL(KIND=JPRB), POINTER :: PFC_T1(:)   ! skin water content (Wl) at MF
+  REAL(KIND=JPRB), POINTER :: PFC_T9(:)   ! skin water content (Wl) at MF
+  REAL(KIND=JPRB), POINTER :: PIC_T0(:)   ! superficial reservoir ice
+  REAL(KIND=JPRB), POINTER :: PIC_T1(:)   ! superficial reservoir ice
+  REAL(KIND=JPRB), POINTER :: PIC_T9(:)   ! superficial reservoir ice
+  REAL(KIND=JPRB), POINTER :: PFP1_T0(:)   ! interpolated Ts for 2nd part of 927-FULLPOS
+  REAL(KIND=JPRB), POINTER :: PFP1_T1(:)   ! interpolated Ts for 2nd part of 927-FULLPOS
+  REAL(KIND=JPRB), POINTER :: PFP1_T9(:)   ! interpolated Ts for 2nd part of 927-FULLPOS
+  REAL(KIND=JPRB), POINTER :: PGROUP(:,:)
+
+  TYPE(SURFACE_VARIABLE_GROUP_RESVR), POINTER :: VARIABLE_GROUP
+  TYPE(FIELD_2D), POINTER :: F_T_T0=>NULL(), F_T_T1=>NULL(), F_T_T9=>NULL()
+  TYPE(FIELD_2D), POINTER :: F_W_T0=>NULL(), F_W_T1=>NULL(), F_W_T9=>NULL()
+  TYPE(FIELD_2D), POINTER :: F_FC_T0=>NULL(), F_FC_T1=>NULL(), F_FC_T9=>NULL()
+  TYPE(FIELD_2D), POINTER :: F_IC_T0=>NULL(), F_IC_T1=>NULL(), F_IC_T9=>NULL()
+  TYPE(FIELD_2D), POINTER :: F_FP1_T0=>NULL(), F_FP1_T1=>NULL(), F_FP1_T9=>NULL()
+  TYPE(FIELD_3D), POINTER :: F_GROUP
+
+CONTAINS
+  PROCEDURE :: INIT => SURFACE_VIEW_GROUP_RESVR_INIT
+  PROCEDURE :: UPDATE_VIEW => SURFACE_VIEW_GROUP_RESVR_UPDATE_VIEW
+  PROCEDURE :: SET9TO0 => SURFACE_VIEW_GROUP_RESVR_SET9TO0
+  PROCEDURE :: SET1TO9 => SURFACE_VIEW_GROUP_RESVR_SET1TO9
+  PROCEDURE :: SET1TO0 => SURFACE_VIEW_GROUP_RESVR_SET1TO0
+  PROCEDURE :: SET0TO1 => SURFACE_VIEW_GROUP_RESVR_SET0TO1
+  PROCEDURE :: PHTFILT => SURFACE_VIEW_GROUP_RESVR_PHTFILT
+END TYPE SURFACE_VIEW_GROUP_RESVR
+
+TYPE SURFACE_VIEW_GROUP_CLS
+  REAL(KIND=JPRB), POINTER :: PTCLS_T0(:)   ! 2m temperature
+  REAL(KIND=JPRB), POINTER :: PTCLS_T1(:)   ! 2m temperature
+  REAL(KIND=JPRB), POINTER :: PTCLS_T9(:)   ! 2m temperature
+  REAL(KIND=JPRB), POINTER :: PHUCLS_T0(:)   ! 2m humidity
+  REAL(KIND=JPRB), POINTER :: PHUCLS_T1(:)   ! 2m humidity
+  REAL(KIND=JPRB), POINTER :: PHUCLS_T9(:)   ! 2m humidity
+  REAL(KIND=JPRB), POINTER :: PUCLS_T0(:)   ! 10m U-wind
+  REAL(KIND=JPRB), POINTER :: PUCLS_T1(:)   ! 10m U-wind
+  REAL(KIND=JPRB), POINTER :: PUCLS_T9(:)   ! 10m U-wind
+  REAL(KIND=JPRB), POINTER :: PVCLS_T0(:)   ! 10m V-wind
+  REAL(KIND=JPRB), POINTER :: PVCLS_T1(:)   ! 10m V-wind
+  REAL(KIND=JPRB), POINTER :: PVCLS_T9(:)   ! 10m V-wind
+  REAL(KIND=JPRB), POINTER :: PNUCLS_T0(:)   ! 10m neutral U-wind
+  REAL(KIND=JPRB), POINTER :: PNUCLS_T1(:)   ! 10m neutral U-wind
+  REAL(KIND=JPRB), POINTER :: PNUCLS_T9(:)   ! 10m neutral U-wind
+  REAL(KIND=JPRB), POINTER :: PNVCLS_T0(:)   ! 10m neutral V-wind
+  REAL(KIND=JPRB), POINTER :: PNVCLS_T1(:)   ! 10m neutral V-wind
+  REAL(KIND=JPRB), POINTER :: PNVCLS_T9(:)   ! 10m neutral V-wind
+  REAL(KIND=JPRB), POINTER :: PGROUP(:,:)
+
+  TYPE(SURFACE_VARIABLE_GROUP_CLS), POINTER :: VARIABLE_GROUP
+  TYPE(FIELD_2D), POINTER :: F_TCLS_T0=>NULL(), F_TCLS_T1=>NULL(), F_TCLS_T9=>NULL()
+  TYPE(FIELD_2D), POINTER :: F_HUCLS_T0=>NULL(), F_HUCLS_T1=>NULL(), F_HUCLS_T9=>NULL()
+  TYPE(FIELD_2D), POINTER :: F_UCLS_T0=>NULL(), F_UCLS_T1=>NULL(), F_UCLS_T9=>NULL()
+  TYPE(FIELD_2D), POINTER :: F_VCLS_T0=>NULL(), F_VCLS_T1=>NULL(), F_VCLS_T9=>NULL()
+  TYPE(FIELD_2D), POINTER :: F_NUCLS_T0=>NULL(), F_NUCLS_T1=>NULL(), F_NUCLS_T9=>NULL()
+  TYPE(FIELD_2D), POINTER :: F_NVCLS_T0=>NULL(), F_NVCLS_T1=>NULL(), F_NVCLS_T9=>NULL()
+  TYPE(FIELD_3D), POINTER :: F_GROUP
+
+CONTAINS
+  PROCEDURE :: INIT => SURFACE_VIEW_GROUP_CLS_INIT
+  PROCEDURE :: UPDATE_VIEW => SURFACE_VIEW_GROUP_CLS_UPDATE_VIEW
+  PROCEDURE :: SET9TO0 => SURFACE_VIEW_GROUP_CLS_SET9TO0
+  PROCEDURE :: SET1TO9 => SURFACE_VIEW_GROUP_CLS_SET1TO9
+  PROCEDURE :: SET1TO0 => SURFACE_VIEW_GROUP_CLS_SET1TO0
+  PROCEDURE :: SET0TO1 => SURFACE_VIEW_GROUP_CLS_SET0TO1
+  PROCEDURE :: PHTFILT => SURFACE_VIEW_GROUP_CLS_PHTFILT
+END TYPE SURFACE_VIEW_GROUP_CLS
+
+TYPE SURFACE_VIEW_GROUP_OML
+  REAL(KIND=JPRB), POINTER :: PTO_T0(:,:)   ! temperature
+  REAL(KIND=JPRB), POINTER :: PTO_T1(:,:)   ! temperature
+  REAL(KIND=JPRB), POINTER :: PTO_T9(:,:)   ! temperature
+  REAL(KIND=JPRB), POINTER :: PSO_T0(:,:)   ! salinity
+  REAL(KIND=JPRB), POINTER :: PSO_T1(:,:)   ! salinity
+  REAL(KIND=JPRB), POINTER :: PSO_T9(:,:)   ! salinity
+  REAL(KIND=JPRB), POINTER :: PUO_T0(:,:)   ! U velocity
+  REAL(KIND=JPRB), POINTER :: PUO_T1(:,:)   ! U velocity
+  REAL(KIND=JPRB), POINTER :: PUO_T9(:,:)   ! U velocity
+  REAL(KIND=JPRB), POINTER :: PVO_T0(:,:)   ! V velocity
+  REAL(KIND=JPRB), POINTER :: PVO_T1(:,:)   ! V velocity
+  REAL(KIND=JPRB), POINTER :: PVO_T9(:,:)   ! V velocity
+  REAL(KIND=JPRB), POINTER :: PGROUP(:,:,:)
+
+  TYPE(SURFACE_VARIABLE_GROUP_OML), POINTER :: VARIABLE_GROUP
+  TYPE(FIELD_3D), POINTER :: F_TO_T0=>NULL(), F_TO_T1=>NULL(), F_TO_T9=>NULL()
+  TYPE(FIELD_3D), POINTER :: F_SO_T0=>NULL(), F_SO_T1=>NULL(), F_SO_T9=>NULL()
+  TYPE(FIELD_3D), POINTER :: F_UO_T0=>NULL(), F_UO_T1=>NULL(), F_UO_T9=>NULL()
+  TYPE(FIELD_3D), POINTER :: F_VO_T0=>NULL(), F_VO_T1=>NULL(), F_VO_T9=>NULL()
+  TYPE(FIELD_4D), POINTER :: F_GROUP
+
+CONTAINS
+  PROCEDURE :: INIT => SURFACE_VIEW_GROUP_OML_INIT
+  PROCEDURE :: UPDATE_VIEW => SURFACE_VIEW_GROUP_OML_UPDATE_VIEW
+  PROCEDURE :: SET9TO0 => SURFACE_VIEW_GROUP_OML_SET9TO0
+  PROCEDURE :: SET1TO9 => SURFACE_VIEW_GROUP_OML_SET1TO9
+  PROCEDURE :: SET1TO0 => SURFACE_VIEW_GROUP_OML_SET1TO0
+  PROCEDURE :: SET0TO1 => SURFACE_VIEW_GROUP_OML_SET0TO1
+  PROCEDURE :: PHTFILT => SURFACE_VIEW_GROUP_OML_PHTFILT
+END TYPE SURFACE_VIEW_GROUP_OML
+
+TYPE SURFACE_VIEW_GROUP_EXTRP
+  REAL(KIND=JPRB), POINTER :: PGROUP(:,:,:)
+
+  TYPE(SURFACE_VARIABLE_GROUP_EXTRP), POINTER :: VARIABLE_GROUP
+  TYPE(FIELD_4D), POINTER :: F_GROUP
+
+CONTAINS
+  PROCEDURE :: INIT => SURFACE_VIEW_GROUP_EXTRP_INIT
+  PROCEDURE :: UPDATE_VIEW => SURFACE_VIEW_GROUP_EXTRP_UPDATE_VIEW
+  PROCEDURE :: SET9TO0 => SURFACE_VIEW_GROUP_EXTRP_SET9TO0
+  PROCEDURE :: SET1TO9 => SURFACE_VIEW_GROUP_EXTRP_SET1TO9
+  PROCEDURE :: SET1TO0 => SURFACE_VIEW_GROUP_EXTRP_SET1TO0
+  PROCEDURE :: SET0TO1 => SURFACE_VIEW_GROUP_EXTRP_SET0TO1
+  PROCEDURE :: PHTFILT => SURFACE_VIEW_GROUP_EXTRP_PHTFILT
+END TYPE SURFACE_VIEW_GROUP_EXTRP
+
+TYPE SURFACE_VIEW_GROUP_XTRP2
+  REAL(KIND=JPRB), POINTER :: PGROUP(:,:)
+
+  TYPE(SURFACE_VARIABLE_GROUP_XTRP2), POINTER :: VARIABLE_GROUP
+  TYPE(FIELD_3D), POINTER :: F_GROUP
+
+CONTAINS
+  PROCEDURE :: INIT => SURFACE_VIEW_GROUP_XTRP2_INIT
+  PROCEDURE :: UPDATE_VIEW => SURFACE_VIEW_GROUP_XTRP2_UPDATE_VIEW
+  PROCEDURE :: SET9TO0 => SURFACE_VIEW_GROUP_XTRP2_SET9TO0
+  PROCEDURE :: SET1TO9 => SURFACE_VIEW_GROUP_XTRP2_SET1TO9
+  PROCEDURE :: SET1TO0 => SURFACE_VIEW_GROUP_XTRP2_SET1TO0
+  PROCEDURE :: SET0TO1 => SURFACE_VIEW_GROUP_XTRP2_SET0TO1
+  PROCEDURE :: PHTFILT => SURFACE_VIEW_GROUP_XTRP2_PHTFILT
+END TYPE SURFACE_VIEW_GROUP_XTRP2
+
+TYPE SURFACE_VIEW_GROUP_CANRI
+  REAL(KIND=JPRB), POINTER :: PGROUP(:,:)
+
+  TYPE(SURFACE_VARIABLE_GROUP_CANRI), POINTER :: VARIABLE_GROUP
+  TYPE(FIELD_3D), POINTER :: F_GROUP
+
+CONTAINS
+  PROCEDURE :: INIT => SURFACE_VIEW_GROUP_CANRI_INIT
+  PROCEDURE :: UPDATE_VIEW => SURFACE_VIEW_GROUP_CANRI_UPDATE_VIEW
+  PROCEDURE :: SET9TO0 => SURFACE_VIEW_GROUP_CANRI_SET9TO0
+  PROCEDURE :: SET1TO9 => SURFACE_VIEW_GROUP_CANRI_SET1TO9
+  PROCEDURE :: SET1TO0 => SURFACE_VIEW_GROUP_CANRI_SET1TO0
+  PROCEDURE :: SET0TO1 => SURFACE_VIEW_GROUP_CANRI_SET0TO1
+  PROCEDURE :: PHTFILT => SURFACE_VIEW_GROUP_CANRI_PHTFILT
+END TYPE SURFACE_VIEW_GROUP_CANRI
+
+
+TYPE SURFACE_VIEW_GROUP_VARSF
+  REAL(KIND=JPRB), POINTER :: PZ0F(:)   ! gravity * surface roughness length
+  REAL(KIND=JPRB), POINTER :: PALBF(:)   ! surface shortwave albedo
+  REAL(KIND=JPRB), POINTER :: PEMISF(:)   ! surface longwave emissivity
+  REAL(KIND=JPRB), POINTER :: PGETRL(:)   ! standard deviation of orography
+  REAL(KIND=JPRB), POINTER :: PLSM(:)   ! land-sea mask
+  REAL(KIND=JPRB), POINTER :: PVEG(:)   ! vegetation cover
+  REAL(KIND=JPRB), POINTER :: PVRLAN(:)   ! anisotropy of the sub-grid scale orography
+  REAL(KIND=JPRB), POINTER :: PVRLDI(:)   ! angle of the direction of orography with the x axis
+  REAL(KIND=JPRB), POINTER :: PSIG(:)   ! characteristic orographic slope
+  REAL(KIND=JPRB), POINTER :: PALBSF(:)   ! soil shortwave albedo
+  REAL(KIND=JPRB), POINTER :: PLAN(:)   ! fraction of land
+  REAL(KIND=JPRB), POINTER :: PSST(:)   ! (open) sea surface temperature
+  REAL(KIND=JPRB), POINTER :: PSSS(:)   ! sea surface salinity
+  REAL(KIND=JPRB), POINTER :: PLZ0H(:)   ! logarithm of roughness length for heat
+  REAL(KIND=JPRB), POINTER :: PCVL(:)   ! low vegetation cover
+  REAL(KIND=JPRB), POINTER :: PCVH(:)   ! high vegetation cover
+  REAL(KIND=JPRB), POINTER :: PTVL(:)   ! low vegetation type
+  REAL(KIND=JPRB), POINTER :: PTVH(:)   ! high vegetation type
+  REAL(KIND=JPRB), POINTER :: PLAIL(:)   ! low vegetation LAI
+  REAL(KIND=JPRB), POINTER :: PLAIH(:)   ! high vegetation LAI
+  REAL(KIND=JPRB), POINTER :: PSOTY(:)   ! soil type
+  REAL(KIND=JPRB), POINTER :: PCLK(:)   ! lake cover
+  REAL(KIND=JPRB), POINTER :: PDL(:)   ! lake depth
+  REAL(KIND=JPRB), POINTER :: PCI(:)   ! sea ice fraction
+  REAL(KIND=JPRB), POINTER :: PUCUR(:)   ! U-component of the ocean current
+  REAL(KIND=JPRB), POINTER :: PVCUR(:)   ! V-component of the ocean current
+  REAL(KIND=JPRB), POINTER :: PZ0RLF(:)   ! gravity * vegetation roughness length
+  REAL(KIND=JPRB), POINTER :: PCO2O(:)   ! oceanic CO2 flux
+  REAL(KIND=JPRB), POINTER :: PCO2B(:)   ! biosphere CO2 flux
+  REAL(KIND=JPRB), POINTER :: PCO2A(:)   ! anthropogenic CO2 flux
+  REAL(KIND=JPRB), POINTER :: PCO2F(:)   ! CO2 fire emissions
+  REAL(KIND=JPRB), POINTER :: PCGPP(:)   ! GPP bias correction factor
+  REAL(KIND=JPRB), POINTER :: PCREC(:)   ! REC bias correction factor
+  REAL(KIND=JPRB), POINTER :: PCH4AG(:)   ! CH4 surface fluxes - aggregated field
+  REAL(KIND=JPRB), POINTER :: PCH4F(:)   ! CH4 fire emissions
+  REAL(KIND=JPRB), POINTER :: PSDFOR(:)   ! SD filtered orography
+  REAL(KIND=JPRB), POINTER :: PALUVP(:)   ! MODIS-derived parallel albedo for shortwave radiation
+  REAL(KIND=JPRB), POINTER :: PALUVD(:)   ! MODIS-derived diffuse albedo for shortwave radiation
+  REAL(KIND=JPRB), POINTER :: PALNIP(:)   ! MODIS-derived parallel albedo for longwave radiation
+  REAL(KIND=JPRB), POINTER :: PALNID(:)   ! MODIS-derived diffuse albedo for longwave radiation
+  REAL(KIND=JPRB), POINTER :: PFP1(:)   ! surface orography in the 2nd part of FULLPOS-927
+  REAL(KIND=JPRB), POINTER :: PBCBF(:)   ! black carbon biogenic
+  REAL(KIND=JPRB), POINTER :: PBCFF(:)   ! black carbon fossil fuel
+  REAL(KIND=JPRB), POINTER :: PBCGF(:)   ! black carbon GFED
+  REAL(KIND=JPRB), POINTER :: POMBF(:)   ! organic matter biogenic
+  REAL(KIND=JPRB), POINTER :: POMFF(:)   ! organic matter fossil fuel
+  REAL(KIND=JPRB), POINTER :: POMGF(:)   ! organic matter GFED
+  REAL(KIND=JPRB), POINTER :: PINJF(:)   ! height of maximum injection for biomass burning emissions
+  REAL(KIND=JPRB), POINTER :: PSO2L(:)   ! sulphate low-level
+  REAL(KIND=JPRB), POINTER :: PSO2H(:)   ! sulphate higher-level
+  REAL(KIND=JPRB), POINTER :: PSO2DD(:)   ! sulphate dry dep velocity
+  REAL(KIND=JPRB), POINTER :: PSOGF(:)   ! sulphate GFED
+  REAL(KIND=JPRB), POINTER :: PSOA(:)   ! secondary organic
+  REAL(KIND=JPRB), POINTER :: PVOLC(:)   ! volcanic continuous
+  REAL(KIND=JPRB), POINTER :: PVOLE(:)   ! volcanic explosive
+  REAL(KIND=JPRB), POINTER :: PDMSO(:)   ! oceanic DMS
+  REAL(KIND=JPRB), POINTER :: PSOACO(:)   ! SOA from CO
+  REAL(KIND=JPRB), POINTER :: PURBF(:)   ! Urban fraction
+  REAL(KIND=JPRB), POINTER :: PVOLCALTI(:)   ! Altitude of volcanoes
+  REAL(KIND=JPRB), POINTER :: PFCA1(:)   ! Fraction of calcite over dust 1st bin
+  REAL(KIND=JPRB), POINTER :: PFCA2(:)   ! Fraction of calcite over dust 2nd bin
+  REAL(KIND=JPRB), POINTER :: PAERDEP(:)   ! dust emission potential
+  REAL(KIND=JPRB), POINTER :: PAERLTS(:)   ! dust lifting threshold speed
+  REAL(KIND=JPRB), POINTER :: PAERSCC(:)   ! dust soil clay content
+  REAL(KIND=JPRB), POINTER :: PDSF(:)   ! dust source function
+  TYPE(FIELD_2D_VIEW), ALLOCATABLE, DIMENSION(:) :: PCHEMFLX   ! chemistry emissions input
+  TYPE(FIELD_2D_VIEW), ALLOCATABLE, DIMENSION(:) :: PCHEMFLXO   ! total chemistry flux (emissions + deposition)
+  TYPE(FIELD_2D_VIEW), ALLOCATABLE, DIMENSION(:) :: PCHEMDV   ! chemistry deposition velocity
+  REAL(KIND=JPRB), POINTER :: PNUDM(:)   ! nudging mask
+  REAL(KIND=JPRB), POINTER :: PGROUP(:,:)
+
+  TYPE(SURFACE_VARIABLE_GROUP_VARSF), POINTER :: VARIABLE_GROUP
+  TYPE(FIELD_2D), POINTER :: F_Z0F=>NULL()
+  TYPE(FIELD_2D), POINTER :: F_ALBF=>NULL()
+  TYPE(FIELD_2D), POINTER :: F_EMISF=>NULL()
+  TYPE(FIELD_2D), POINTER :: F_GETRL=>NULL()
+  TYPE(FIELD_2D), POINTER :: F_LSM=>NULL()
+  TYPE(FIELD_2D), POINTER :: F_VEG=>NULL()
+  TYPE(FIELD_2D), POINTER :: F_VRLAN=>NULL()
+  TYPE(FIELD_2D), POINTER :: F_VRLDI=>NULL()
+  TYPE(FIELD_2D), POINTER :: F_SIG=>NULL()
+  TYPE(FIELD_2D), POINTER :: F_ALBSF=>NULL()
+  TYPE(FIELD_2D), POINTER :: F_LAN=>NULL()
+  TYPE(FIELD_2D), POINTER :: F_SST=>NULL()
+  TYPE(FIELD_2D), POINTER :: F_SSS=>NULL()
+  TYPE(FIELD_2D), POINTER :: F_LZ0H=>NULL()
+  TYPE(FIELD_2D), POINTER :: F_CVL=>NULL()
+  TYPE(FIELD_2D), POINTER :: F_CVH=>NULL()
+  TYPE(FIELD_2D), POINTER :: F_TVL=>NULL()
+  TYPE(FIELD_2D), POINTER :: F_TVH=>NULL()
+  TYPE(FIELD_2D), POINTER :: F_LAIL=>NULL()
+  TYPE(FIELD_2D), POINTER :: F_LAIH=>NULL()
+  TYPE(FIELD_2D), POINTER :: F_SOTY=>NULL()
+  TYPE(FIELD_2D), POINTER :: F_CLK=>NULL()
+  TYPE(FIELD_2D), POINTER :: F_DL=>NULL()
+  TYPE(FIELD_2D), POINTER :: F_CI=>NULL()
+  TYPE(FIELD_2D), POINTER :: F_UCUR=>NULL()
+  TYPE(FIELD_2D), POINTER :: F_VCUR=>NULL()
+  TYPE(FIELD_2D), POINTER :: F_Z0RLF=>NULL()
+  TYPE(FIELD_2D), POINTER :: F_CO2O=>NULL()
+  TYPE(FIELD_2D), POINTER :: F_CO2B=>NULL()
+  TYPE(FIELD_2D), POINTER :: F_CO2A=>NULL()
+  TYPE(FIELD_2D), POINTER :: F_CO2F=>NULL()
+  TYPE(FIELD_2D), POINTER :: F_CGPP=>NULL()
+  TYPE(FIELD_2D), POINTER :: F_CREC=>NULL()
+  TYPE(FIELD_2D), POINTER :: F_CH4AG=>NULL()
+  TYPE(FIELD_2D), POINTER :: F_CH4F=>NULL()
+  TYPE(FIELD_2D), POINTER :: F_SDFOR=>NULL()
+  TYPE(FIELD_2D), POINTER :: F_ALUVP=>NULL()
+  TYPE(FIELD_2D), POINTER :: F_ALUVD=>NULL()
+  TYPE(FIELD_2D), POINTER :: F_ALNIP=>NULL()
+  TYPE(FIELD_2D), POINTER :: F_ALNID=>NULL()
+  TYPE(FIELD_2D), POINTER :: F_FP1=>NULL()
+  TYPE(FIELD_2D), POINTER :: F_BCBF=>NULL()
+  TYPE(FIELD_2D), POINTER :: F_BCFF=>NULL()
+  TYPE(FIELD_2D), POINTER :: F_BCGF=>NULL()
+  TYPE(FIELD_2D), POINTER :: F_OMBF=>NULL()
+  TYPE(FIELD_2D), POINTER :: F_OMFF=>NULL()
+  TYPE(FIELD_2D), POINTER :: F_OMGF=>NULL()
+  TYPE(FIELD_2D), POINTER :: F_INJF=>NULL()
+  TYPE(FIELD_2D), POINTER :: F_SO2L=>NULL()
+  TYPE(FIELD_2D), POINTER :: F_SO2H=>NULL()
+  TYPE(FIELD_2D), POINTER :: F_SO2DD=>NULL()
+  TYPE(FIELD_2D), POINTER :: F_SOGF=>NULL()
+  TYPE(FIELD_2D), POINTER :: F_SOA=>NULL()
+  TYPE(FIELD_2D), POINTER :: F_VOLC=>NULL()
+  TYPE(FIELD_2D), POINTER :: F_VOLE=>NULL()
+  TYPE(FIELD_2D), POINTER :: F_DMSO=>NULL()
+  TYPE(FIELD_2D), POINTER :: F_SOACO=>NULL()
+  TYPE(FIELD_2D), POINTER :: F_URBF=>NULL()
+  TYPE(FIELD_2D), POINTER :: F_VOLCALTI=>NULL()
+  TYPE(FIELD_2D), POINTER :: F_FCA1=>NULL()
+  TYPE(FIELD_2D), POINTER :: F_FCA2=>NULL()
+  TYPE(FIELD_2D), POINTER :: F_AERDEP=>NULL()
+  TYPE(FIELD_2D), POINTER :: F_AERLTS=>NULL()
+  TYPE(FIELD_2D), POINTER :: F_AERSCC=>NULL()
+  TYPE(FIELD_2D), POINTER :: F_DSF=>NULL()
+  TYPE(FIELD_2D_PTR), ALLOCATABLE, DIMENSION(:) :: F_CHEMFLX
+  TYPE(FIELD_2D_PTR), ALLOCATABLE, DIMENSION(:) :: F_CHEMFLXO
+  TYPE(FIELD_2D_PTR), ALLOCATABLE, DIMENSION(:) :: F_CHEMDV
+  TYPE(FIELD_2D), POINTER :: F_NUDM=>NULL()
+  TYPE(FIELD_3D), POINTER :: F_GROUP
+
+CONTAINS
+  PROCEDURE :: INIT => SURFACE_VIEW_GROUP_VARSF_INIT
+  PROCEDURE :: UPDATE_VIEW => SURFACE_VIEW_GROUP_VARSF_UPDATE_VIEW
+END TYPE SURFACE_VIEW_GROUP_VARSF
+
+TYPE SURFACE_VIEW_GROUP_VCLIH
+  REAL(KIND=JPRB), POINTER :: PTCCH(:)   ! total convective cloudiness
+  REAL(KIND=JPRB), POINTER :: PSCCH(:)   ! convective cloud summit
+  REAL(KIND=JPRB), POINTER :: PBCCH(:)   ! convective cloud base
+  REAL(KIND=JPRB), POINTER :: PPBLH(:)   ! PBL height
+  REAL(KIND=JPRB), POINTER :: PSPSH(:)   ! variable for prognostic convection scheme (ALARO)
+  REAL(KIND=JPRB), POINTER :: PQSH(:)   ! surface moisture historic variable (used by TOUCANS)
+  REAL(KIND=JPRB), POINTER :: PPCL(:)   ! 
+  REAL(KIND=JPRB), POINTER :: PPSL(:)   ! 
+  REAL(KIND=JPRB), POINTER :: PPCN(:)   ! 
+  REAL(KIND=JPRB), POINTER :: PPSN(:)   ! 
+  REAL(KIND=JPRB), POINTER :: PEVA(:)   ! 
+  REAL(KIND=JPRB), POINTER :: PGROUP(:,:)
+
+  TYPE(SURFACE_VARIABLE_GROUP_VCLIH), POINTER :: VARIABLE_GROUP
+  TYPE(FIELD_2D), POINTER :: F_TCCH=>NULL()
+  TYPE(FIELD_2D), POINTER :: F_SCCH=>NULL()
+  TYPE(FIELD_2D), POINTER :: F_BCCH=>NULL()
+  TYPE(FIELD_2D), POINTER :: F_PBLH=>NULL()
+  TYPE(FIELD_2D), POINTER :: F_SPSH=>NULL()
+  TYPE(FIELD_2D), POINTER :: F_QSH=>NULL()
+  TYPE(FIELD_2D), POINTER :: F_PCL=>NULL()
+  TYPE(FIELD_2D), POINTER :: F_PSL=>NULL()
+  TYPE(FIELD_2D), POINTER :: F_PCN=>NULL()
+  TYPE(FIELD_2D), POINTER :: F_PSN=>NULL()
+  TYPE(FIELD_2D), POINTER :: F_EVA=>NULL()
+  TYPE(FIELD_3D), POINTER :: F_GROUP
+
+CONTAINS
+  PROCEDURE :: INIT => SURFACE_VIEW_GROUP_VCLIH_INIT
+  PROCEDURE :: UPDATE_VIEW => SURFACE_VIEW_GROUP_VCLIH_UPDATE_VIEW
+END TYPE SURFACE_VIEW_GROUP_VCLIH
+
+TYPE SURFACE_VIEW_GROUP_VCLIK
+  REAL(KIND=JPRB), POINTER :: PUDGRO(:)   ! ud top position (accsu)
+  REAL(KIND=JPRB), POINTER :: PGROUP(:,:)
+
+  TYPE(SURFACE_VARIABLE_GROUP_VCLIK), POINTER :: VARIABLE_GROUP
+  TYPE(FIELD_2D), POINTER :: F_UDGRO=>NULL()
+  TYPE(FIELD_3D), POINTER :: F_GROUP
+
+CONTAINS
+  PROCEDURE :: INIT => SURFACE_VIEW_GROUP_VCLIK_INIT
+  PROCEDURE :: UPDATE_VIEW => SURFACE_VIEW_GROUP_VCLIK_UPDATE_VIEW
+END TYPE SURFACE_VIEW_GROUP_VCLIK
+
+TYPE SURFACE_VIEW_GROUP_VCLIP
+  REAL(KIND=JPRB), POINTER :: PTPC(:)   ! climatological deep layer temperature
+  REAL(KIND=JPRB), POINTER :: PWPC(:)   ! climatological deep layer moisture
+  REAL(KIND=JPRB), POINTER :: PGROUP(:,:)
+
+  TYPE(SURFACE_VARIABLE_GROUP_VCLIP), POINTER :: VARIABLE_GROUP
+  TYPE(FIELD_2D), POINTER :: F_TPC=>NULL()
+  TYPE(FIELD_2D), POINTER :: F_WPC=>NULL()
+  TYPE(FIELD_3D), POINTER :: F_GROUP
+
+CONTAINS
+  PROCEDURE :: INIT => SURFACE_VIEW_GROUP_VCLIP_INIT
+  PROCEDURE :: UPDATE_VIEW => SURFACE_VIEW_GROUP_VCLIP_UPDATE_VIEW
+END TYPE SURFACE_VIEW_GROUP_VCLIP
+
+TYPE SURFACE_VIEW_GROUP_VCLIV
+  REAL(KIND=JPRB), POINTER :: PARG(:)   ! silt percentage within soil
+  REAL(KIND=JPRB), POINTER :: PSAB(:)   ! percentage of sand within the soil
+  REAL(KIND=JPRB), POINTER :: PD2(:)   ! soil depth
+  REAL(KIND=JPRB), POINTER :: PIVEG(:)   ! type of vegetation
+  REAL(KIND=JPRB), POINTER :: PRSMIN(:)   ! stomatal minimum resistance
+  REAL(KIND=JPRB), POINTER :: PLAI(:)   ! leaf area index
+  REAL(KIND=JPRB), POINTER :: PHV(:)   ! resistance to evapotranspiration
+  REAL(KIND=JPRB), POINTER :: PZ0H(:)   ! gravity * roughness length for heat
+  REAL(KIND=JPRB), POINTER :: PALS(:)   ! albedo of bare ground
+  REAL(KIND=JPRB), POINTER :: PALV(:)   ! albedo of vegetation
+  REAL(KIND=JPRB), POINTER :: PGROUP(:,:)
+
+  TYPE(SURFACE_VARIABLE_GROUP_VCLIV), POINTER :: VARIABLE_GROUP
+  TYPE(FIELD_2D), POINTER :: F_ARG=>NULL()
+  TYPE(FIELD_2D), POINTER :: F_SAB=>NULL()
+  TYPE(FIELD_2D), POINTER :: F_D2=>NULL()
+  TYPE(FIELD_2D), POINTER :: F_IVEG=>NULL()
+  TYPE(FIELD_2D), POINTER :: F_RSMIN=>NULL()
+  TYPE(FIELD_2D), POINTER :: F_LAI=>NULL()
+  TYPE(FIELD_2D), POINTER :: F_HV=>NULL()
+  TYPE(FIELD_2D), POINTER :: F_Z0H=>NULL()
+  TYPE(FIELD_2D), POINTER :: F_ALS=>NULL()
+  TYPE(FIELD_2D), POINTER :: F_ALV=>NULL()
+  TYPE(FIELD_3D), POINTER :: F_GROUP
+
+CONTAINS
+  PROCEDURE :: INIT => SURFACE_VIEW_GROUP_VCLIV_INIT
+  PROCEDURE :: UPDATE_VIEW => SURFACE_VIEW_GROUP_VCLIV_UPDATE_VIEW
+END TYPE SURFACE_VIEW_GROUP_VCLIV
+
+TYPE SURFACE_VIEW_GROUP_VCLIA
+  REAL(KIND=JPRB), POINTER :: PSEA(:)   ! aerosol sea
+  REAL(KIND=JPRB), POINTER :: PLAN(:)   ! aerosol land
+  REAL(KIND=JPRB), POINTER :: PSOO(:)   ! aerosol soot
+  REAL(KIND=JPRB), POINTER :: PDES(:)   ! aerosol desert
+  REAL(KIND=JPRB), POINTER :: PSUL(:)   ! aerosol sulfate
+  REAL(KIND=JPRB), POINTER :: PVOL(:)   ! aerosol volcano
+  REAL(KIND=JPRB), POINTER :: PGROUP(:,:)
+
+  TYPE(SURFACE_VARIABLE_GROUP_VCLIA), POINTER :: VARIABLE_GROUP
+  TYPE(FIELD_2D), POINTER :: F_SEA=>NULL()
+  TYPE(FIELD_2D), POINTER :: F_LAN=>NULL()
+  TYPE(FIELD_2D), POINTER :: F_SOO=>NULL()
+  TYPE(FIELD_2D), POINTER :: F_DES=>NULL()
+  TYPE(FIELD_2D), POINTER :: F_SUL=>NULL()
+  TYPE(FIELD_2D), POINTER :: F_VOL=>NULL()
+  TYPE(FIELD_3D), POINTER :: F_GROUP
+
+CONTAINS
+  PROCEDURE :: INIT => SURFACE_VIEW_GROUP_VCLIA_INIT
+  PROCEDURE :: UPDATE_VIEW => SURFACE_VIEW_GROUP_VCLIA_UPDATE_VIEW
+END TYPE SURFACE_VIEW_GROUP_VCLIA
+
+TYPE SURFACE_VIEW_GROUP_VCLIN
+  REAL(KIND=JPRB), POINTER :: PTOP(:)   ! index of convective cloud top
+  REAL(KIND=JPRB), POINTER :: PBAS(:)   ! index of convective cloud base
+  REAL(KIND=JPRB), POINTER :: PACPR(:)   ! averaged convective precipitaion rate
+  REAL(KIND=JPRB), POINTER :: PACCPR(:)   ! accumulated total precipitaion for assimilation
+  REAL(KIND=JPRB), POINTER :: PACCPR5(:)   ! accumulated total precipitaion for assimilation (trajectory)
+  REAL(KIND=JPRB), POINTER :: PGROUP(:,:)
+
+  TYPE(SURFACE_VARIABLE_GROUP_VCLIN), POINTER :: VARIABLE_GROUP
+  TYPE(FIELD_2D), POINTER :: F_TOP=>NULL()
+  TYPE(FIELD_2D), POINTER :: F_BAS=>NULL()
+  TYPE(FIELD_2D), POINTER :: F_ACPR=>NULL()
+  TYPE(FIELD_2D), POINTER :: F_ACCPR=>NULL()
+  TYPE(FIELD_2D), POINTER :: F_ACCPR5=>NULL()
+  TYPE(FIELD_3D), POINTER :: F_GROUP
+
+CONTAINS
+  PROCEDURE :: INIT => SURFACE_VIEW_GROUP_VCLIN_INIT
+  PROCEDURE :: UPDATE_VIEW => SURFACE_VIEW_GROUP_VCLIN_UPDATE_VIEW
+END TYPE SURFACE_VIEW_GROUP_VCLIN
+
+TYPE SURFACE_VIEW_GROUP_VDIAGO2
+  REAL(KIND=JPRB), POINTER :: POCDEP(:)   ! bottom layer depth
+  REAL(KIND=JPRB), POINTER :: PUSTRC(:)   ! taux clim.
+  REAL(KIND=JPRB), POINTER :: PVSTRC(:)   ! tauy clim.
+  REAL(KIND=JPRB), POINTER :: PGROUP(:,:)
+
+  TYPE(SURFACE_VARIABLE_GROUP_VDIAGO2), POINTER :: VARIABLE_GROUP
+  TYPE(FIELD_2D), POINTER :: F_OCDEP=>NULL()
+  TYPE(FIELD_2D), POINTER :: F_USTRC=>NULL()
+  TYPE(FIELD_2D), POINTER :: F_VSTRC=>NULL()
+  TYPE(FIELD_3D), POINTER :: F_GROUP
+
+CONTAINS
+  PROCEDURE :: INIT => SURFACE_VIEW_GROUP_VDIAGO2_INIT
+  PROCEDURE :: UPDATE_VIEW => SURFACE_VIEW_GROUP_VDIAGO2_UPDATE_VIEW
+END TYPE SURFACE_VIEW_GROUP_VDIAGO2
+
+TYPE SURFACE_VIEW_GROUP_VDIAGO3
+  REAL(KIND=JPRB), POINTER :: PDIFM(:,:)   ! viscosity
+  REAL(KIND=JPRB), POINTER :: PDIFT(:,:)   ! diff. coef. of temp
+  REAL(KIND=JPRB), POINTER :: PDIFS(:,:)   ! diff. coef. of salinity
+  REAL(KIND=JPRB), POINTER :: PADVT(:,:)   ! correction term for temp.
+  REAL(KIND=JPRB), POINTER :: PADVS(:,:)   ! correction term for sal.
+  REAL(KIND=JPRB), POINTER :: PTRI0(:,:)   ! coef. for solving matrix.
+  REAL(KIND=JPRB), POINTER :: PTRI1(:,:)   ! coef. for solving matrix.
+  REAL(KIND=JPRB), POINTER :: PSWDK(:,:)   ! radiation term
+  REAL(KIND=JPRB), POINTER :: PZO(:,:)   ! depth of layer
+  REAL(KIND=JPRB), POINTER :: PHO(:,:)   ! depth of interface layer
+  REAL(KIND=JPRB), POINTER :: PDO(:,:)   ! layer thickness
+  REAL(KIND=JPRB), POINTER :: PHO_INV(:,:)   ! 1 / YHO
+  REAL(KIND=JPRB), POINTER :: PUOC(:,:)   ! U velocity clim.
+  REAL(KIND=JPRB), POINTER :: PVOC(:,:)   ! V velocity clim.
+  REAL(KIND=JPRB), POINTER :: PGROUP(:,:,:)
+
+  TYPE(SURFACE_VARIABLE_GROUP_VDIAGO3), POINTER :: VARIABLE_GROUP
+  TYPE(FIELD_3D), POINTER :: F_DIFM=>NULL()
+  TYPE(FIELD_3D), POINTER :: F_DIFT=>NULL()
+  TYPE(FIELD_3D), POINTER :: F_DIFS=>NULL()
+  TYPE(FIELD_3D), POINTER :: F_ADVT=>NULL()
+  TYPE(FIELD_3D), POINTER :: F_ADVS=>NULL()
+  TYPE(FIELD_3D), POINTER :: F_TRI0=>NULL()
+  TYPE(FIELD_3D), POINTER :: F_TRI1=>NULL()
+  TYPE(FIELD_3D), POINTER :: F_SWDK=>NULL()
+  TYPE(FIELD_3D), POINTER :: F_ZO=>NULL()
+  TYPE(FIELD_3D), POINTER :: F_HO=>NULL()
+  TYPE(FIELD_3D), POINTER :: F_DO=>NULL()
+  TYPE(FIELD_3D), POINTER :: F_HO_INV=>NULL()
+  TYPE(FIELD_3D), POINTER :: F_UOC=>NULL()
+  TYPE(FIELD_3D), POINTER :: F_VOC=>NULL()
+  TYPE(FIELD_4D), POINTER :: F_GROUP
+
+CONTAINS
+  PROCEDURE :: INIT => SURFACE_VIEW_GROUP_VDIAGO3_INIT
+  PROCEDURE :: UPDATE_VIEW => SURFACE_VIEW_GROUP_VDIAGO3_UPDATE_VIEW
+END TYPE SURFACE_VIEW_GROUP_VDIAGO3
+
+TYPE SURFACE_VIEW_GROUP_VDIAG
+  REAL(KIND=JPRB), POINTER :: PLSP(:)   ! Large scale precipitation
+  REAL(KIND=JPRB), POINTER :: PCP(:)   ! Convective precipitation
+  REAL(KIND=JPRB), POINTER :: PSF(:)   ! Snowfall
+  REAL(KIND=JPRB), POINTER :: PFZRA(:)   ! Freezing rain
+  REAL(KIND=JPRB), POINTER :: PBLD(:)   ! Boundary layer dissipation
+  REAL(KIND=JPRB), POINTER :: PSSHF(:)   ! Surface sensible heat flux
+  REAL(KIND=JPRB), POINTER :: PSLHF(:)   ! Surface latent heat flux
+  REAL(KIND=JPRB), POINTER :: PNEE(:)   ! Surface net ecosystem exchange of CO2
+  REAL(KIND=JPRB), POINTER :: PGPP(:)   ! Surface gross primary production of CO2
+  REAL(KIND=JPRB), POINTER :: PREC(:)   ! Surface ecosystem respiration of CO2
+  REAL(KIND=JPRB), POINTER :: PMSL(:)   ! Mean sea level pressure
+  REAL(KIND=JPRB), POINTER :: PSP(:)   ! Surface pressure
+  REAL(KIND=JPRB), POINTER :: PTCC(:)   ! Total cloud cover
+  REAL(KIND=JPRB), POINTER :: P10U(:)   ! U-wind at 10 m
+  REAL(KIND=JPRB), POINTER :: P10V(:)   ! V-wind at 10 m
+  REAL(KIND=JPRB), POINTER :: P2T(:)   ! Temperature at 2 m
+  REAL(KIND=JPRB), POINTER :: P2D(:)   ! Dewpoint temperature at 2 m
+  REAL(KIND=JPRB), POINTER :: P2Q(:)   ! Specific humidity at 2 m
+  REAL(KIND=JPRB), POINTER :: PSSR(:)   ! Surface solar radiation
+  REAL(KIND=JPRB), POINTER :: PSTR(:)   ! Surface thermal radiation
+  REAL(KIND=JPRB), POINTER :: PTSR(:)   ! Top solar radiation
+  REAL(KIND=JPRB), POINTER :: PTTR(:)   ! Top thermal radiation
+  REAL(KIND=JPRB), POINTER :: PEWSS(:)   ! Instantaneous surface U-wind stress
+  REAL(KIND=JPRB), POINTER :: PNSSS(:)   ! Instantaneous surface V-wind stress
+  REAL(KIND=JPRB), POINTER :: PE(:)   ! Water evaporation
+  REAL(KIND=JPRB), POINTER :: PPEV(:)   ! Potential evaporation
+  REAL(KIND=JPRB), POINTER :: PCCC(:)   ! Convective cloud cover
+  REAL(KIND=JPRB), POINTER :: PLCC(:)   ! Low cloud cover
+  REAL(KIND=JPRB), POINTER :: PMCC(:)   ! Medium cloud cover
+  REAL(KIND=JPRB), POINTER :: PHCC(:)   ! High cloud cover
+  REAL(KIND=JPRB), POINTER :: PLGWS(:)   ! Zonal gravity wave stress
+  REAL(KIND=JPRB), POINTER :: PMGWS(:)   ! Meridian gravity wave stress
+  REAL(KIND=JPRB), POINTER :: PGWD(:)   ! Gravity wave dissipation
+  REAL(KIND=JPRB), POINTER :: PMX2T(:)   ! Maximum temperature at 2 m
+  REAL(KIND=JPRB), POINTER :: PMN2T(:)   ! Minimum temperature at 2 m
+  TYPE(FIELD_2D_VIEW), ALLOCATABLE, DIMENSION(:) :: PMX2T6   ! Bins for maximum temperature at 2 m since last 6 hours
+  TYPE(FIELD_2D_VIEW), ALLOCATABLE, DIMENSION(:) :: PMN2T6   ! Bins for minimum temperature at 2 m since last 6 hours
+  REAL(KIND=JPRB), POINTER :: PRO(:)   ! Runoff (total)
+  REAL(KIND=JPRB), POINTER :: PSRO(:)   ! Runoff surface
+  REAL(KIND=JPRB), POINTER :: PSSRO(:)   ! Runoff sub-surface
+  REAL(KIND=JPRB), POINTER :: PALB(:)   ! (surface shortwave) albedo
+  REAL(KIND=JPRB), POINTER :: PIEWSS(:)   ! Instantaneous surface zonal component of stress
+  REAL(KIND=JPRB), POINTER :: PINSSS(:)   ! Instantaneous surface meridian component of stress
+  REAL(KIND=JPRB), POINTER :: PISSHF(:)   ! Instantaneous surface heat flux
+  REAL(KIND=JPRB), POINTER :: PIE(:)   ! Instantaneous surface moisture flux
+  REAL(KIND=JPRB), POINTER :: PINEE(:)   ! Instantaneous net ecosystem exchange of CO2
+  REAL(KIND=JPRB), POINTER :: PIGPP(:)   ! Instantaneous gross primary production of CO2
+  REAL(KIND=JPRB), POINTER :: PIREC(:)   ! Instantaneous ecosystem respiration of CO2
+  REAL(KIND=JPRB), POINTER :: PCSF(:)   ! Convective snow fall
+  REAL(KIND=JPRB), POINTER :: PLSSF(:)   ! Large scale snowfall
+  REAL(KIND=JPRB), POINTER :: PMXTPR(:)   ! Max precip rate since last post-processing
+  REAL(KIND=JPRB), POINTER :: PMNTPR(:)   ! Min precip rate since last post-processing
+  TYPE(FIELD_2D_VIEW), ALLOCATABLE, DIMENSION(:) :: PMXTPR6   ! Max precip rate in last 6 hours
+  TYPE(FIELD_2D_VIEW), ALLOCATABLE, DIMENSION(:) :: PMNTPR6   ! Min precip rate in last 6 hours
+  REAL(KIND=JPRB), POINTER :: PTPR(:)   ! Total precipitation rate
+  REAL(KIND=JPRB), POINTER :: PLSRR(:)   ! Large scale rain rate
+  REAL(KIND=JPRB), POINTER :: PCRR(:)   ! Convective rain rate
+  REAL(KIND=JPRB), POINTER :: PLSSFR(:)   ! Large scale snowfall rate
+  REAL(KIND=JPRB), POINTER :: PCSFR(:)   ! Convective snowfall rate
+  REAL(KIND=JPRB), POINTER :: PPTYPE(:)   ! Precipitation type
+  REAL(KIND=JPRB), POINTER :: PILSPF(:)   ! Large-scale precipitation fraction (inst.)
+  REAL(KIND=JPRB), POINTER :: PZ0F(:)   ! Gravity * surface roughness length
+  REAL(KIND=JPRB), POINTER :: PLZ0H(:)   ! Logarithm of z0 times heat flux
+  REAL(KIND=JPRB), POINTER :: PVIWVE(:)   ! Vertical integral of eastward water vapour flux
+  REAL(KIND=JPRB), POINTER :: PVIWVN(:)   ! Vertical integral of northward water vapour flux
+  REAL(KIND=JPRB), POINTER :: PTCW(:)   ! Total water content in a vertical column
+  REAL(KIND=JPRB), POINTER :: PTCWV(:)   ! Total water vapor content in a vertical column
+  REAL(KIND=JPRB), POINTER :: PTCLW(:)   ! Total liquid water content in a vertical column
+  REAL(KIND=JPRB), POINTER :: PTCIW(:)   ! Total ice water content in a vertical column
+  REAL(KIND=JPRB), POINTER :: PTCRW(:)   ! Total rain water content in a vertical column
+  REAL(KIND=JPRB), POINTER :: PTCSW(:)   ! Total snow water content in a vertical column
+  REAL(KIND=JPRB), POINTER :: PTCSLW(:)   ! Total supercooled liquid water content in a vertical column
+  REAL(KIND=JPRB), POINTER :: PSSRD(:)   ! Downward surface solar radiation
+  REAL(KIND=JPRB), POINTER :: PSTRD(:)   ! Downward surface thermic radiation
+  REAL(KIND=JPRB), POINTER :: PSSRDC(:)   ! Clear-sky downward surface solar radiation
+  REAL(KIND=JPRB), POINTER :: PSTRDC(:)   ! Claer-sky downward surface thermal radiation
+  REAL(KIND=JPRB), POINTER :: PBLH(:)   ! Height of boundary layer
+  REAL(KIND=JPRB), POINTER :: PSUND(:)   ! Sunshine duration
+  REAL(KIND=JPRB), POINTER :: PSPAR(:)   ! Surface downward PARadiation
+  REAL(KIND=JPRB), POINTER :: PSUVB(:)   ! Surface downward UV-B radiation
+  REAL(KIND=JPRB), POINTER :: PSFDIR(:)   ! Surface total sky direct downward SW radiation
+  REAL(KIND=JPRB), POINTER :: PSCDIR(:)   ! Surface clear-sky direct downward SW radiation
+  REAL(KIND=JPRB), POINTER :: PSDSRP(:)   ! Surface total-sky direct beam downward SW radiation
+  REAL(KIND=JPRB), POINTER :: PCAPE(:)   ! Conv.avail.potential energy (CAPE)
+  REAL(KIND=JPRB), POINTER :: PCAPES(:)   ! CAPE-Shear
+  TYPE(FIELD_2D_VIEW), ALLOCATABLE, DIMENSION(:) :: PMXCAP6   ! Bins for maximum CAPE in last 6 hours
+  TYPE(FIELD_2D_VIEW), ALLOCATABLE, DIMENSION(:) :: PMXCAPS6   ! Bins for maximum CAPE-Shear in last 6 hours
+  REAL(KIND=JPRB), POINTER :: PTSRC(:)   ! Top solar radiation clear sky
+  REAL(KIND=JPRB), POINTER :: PTTRC(:)   ! Top thermal radiation clear sky
+  REAL(KIND=JPRB), POINTER :: PSSRC(:)   ! Surface solar radiation clear sky
+  REAL(KIND=JPRB), POINTER :: PSTRC(:)   ! Surface thermal radiation clear sky
+  REAL(KIND=JPRB), POINTER :: PES(:)   ! Evaporation of snow
+  REAL(KIND=JPRB), POINTER :: PSMLT(:)   ! Snow melt
+  REAL(KIND=JPRB), POINTER :: P10FG(:)   ! Wind gust at 10 m (max since previous pp)
+  TYPE(FIELD_2D_VIEW), ALLOCATABLE, DIMENSION(:) :: P10FG6   ! Bins for wind gust at 10 m (max since last 6 hours)
+  REAL(KIND=JPRB), POINTER :: P10FGCV(:)   ! convective wind gust at 10m for current time level (m/s)
+  REAL(KIND=JPRB), POINTER :: PI10FG(:)   ! Wind gust at 10 m ("instantaneous")
+  REAL(KIND=JPRB), POINTER :: PLSPF(:)   ! Large scale precipitation fraction
+  REAL(KIND=JPRB), POINTER :: PTCO3(:)   ! Total ozone content in a vertical column
+  REAL(KIND=JPRB), POINTER :: PVIMD(:)   ! Vertically integrated mass divergence
+  REAL(KIND=JPRB), POINTER :: PSPARC(:)   ! Surface clear-sky parallel radiation
+  REAL(KIND=JPRB), POINTER :: PSTINC(:)   ! Top of atmosphere incident solar radiation
+  REAL(KIND=JPRB), POINTER :: PCBASE(:)   ! Cloud base level
+  REAL(KIND=JPRB), POINTER :: P0DEGL(:)   ! Zero deg. level
+  REAL(KIND=JPRB), POINTER :: PVISIH(:)   ! Horizontal visibility
+  REAL(KIND=JPRB), POINTER :: PCIN(:)   ! CIN
+  REAL(KIND=JPRB), POINTER :: PKINDEX(:)   ! Convective K-Index
+  REAL(KIND=JPRB), POINTER :: PTTINDEX(:)   ! Convective TT-Index
+  REAL(KIND=JPRB), POINTER :: PCBASEA(:)   ! Cloud base aviation
+  REAL(KIND=JPRB), POINTER :: PCTOPC(:)   ! Cloud top convective
+  REAL(KIND=JPRB), POINTER :: PZTWETB0(:)   ! Height of 0 deg wet bulb temperature
+  REAL(KIND=JPRB), POINTER :: PZTWETB1(:)   ! Height of 1 deg wet bulb temperature
+  TYPE(FIELD_2D_VIEW), ALLOCATABLE, DIMENSION(:) :: PTCGHG   ! Total column greenhouse gases
+  TYPE(FIELD_2D_VIEW), ALLOCATABLE, DIMENSION(:) :: PTCCHEM   ! Total column chemistry
+  TYPE(FIELD_2D_VIEW), ALLOCATABLE, DIMENSION(:,:) :: PAERODIAG   ! Per-aerosol-type diagnostics
+  TYPE(FIELD_2D_VIEW), ALLOCATABLE, DIMENSION(:,:) :: PAERO_WVL_DIAG   ! Per-wavelength aerosol optical diagnostics
+  REAL(KIND=JPRB), POINTER :: P100U(:)   ! 100m zonal wind
+  REAL(KIND=JPRB), POINTER :: P100V(:)   ! 100m meridional wind
+  REAL(KIND=JPRB), POINTER :: P200U(:)   ! 200m zonal wind
+  REAL(KIND=JPRB), POINTER :: P200V(:)   ! 200m meridional wind
+  REAL(KIND=JPRB), POINTER :: PZUST(:)   ! Friction velocity
+  REAL(KIND=JPRB), POINTER :: P10NU(:)   ! 10m zonal neutral wind
+  REAL(KIND=JPRB), POINTER :: P10NV(:)   ! 10m meridional neutral wind
+  REAL(KIND=JPRB), POINTER :: PDNDZN(:)   ! Minimum vertical refractivity gradient
+  REAL(KIND=JPRB), POINTER :: PDNDZA(:)   ! Mean vertical refractivity gradient
+  REAL(KIND=JPRB), POINTER :: PDCTB(:)   ! Duct base height
+  REAL(KIND=JPRB), POINTER :: PTPLB(:)   ! Trapping layer base height
+  REAL(KIND=JPRB), POINTER :: PTPLT(:)   ! Trapping layer top height
+  REAL(KIND=JPRB), POINTER :: PODSS(:)   ! optical depth sea salt aerosols
+  REAL(KIND=JPRB), POINTER :: PODDU(:)   ! optical depth dust aerosols
+  REAL(KIND=JPRB), POINTER :: PODOM(:)   ! optical depth organic m. aerosols
+  REAL(KIND=JPRB), POINTER :: PODBC(:)   ! optical depth black C aerosols
+  REAL(KIND=JPRB), POINTER :: PODSU(:)   ! optical depth sulphate aerosols
+  REAL(KIND=JPRB), POINTER :: PODNI(:)   ! optical depth nitrate aerosols
+  REAL(KIND=JPRB), POINTER :: PODAM(:)   ! optical depth ammonium aerosols
+  REAL(KIND=JPRB), POINTER :: PODSOA(:)   ! optical depth secondary organic aerosols
+  REAL(KIND=JPRB), POINTER :: PODVFA(:)   ! optical depth volcanic flying ash
+  REAL(KIND=JPRB), POINTER :: PODVSU(:)   ! optical depth volcanic sulphate aerosols
+  REAL(KIND=JPRB), POINTER :: PODTOACC(:)   ! optical depth total aerosol accumulated
+  REAL(KIND=JPRB), POINTER :: PAEPM1(:)   ! particulate matter le 1 um
+  REAL(KIND=JPRB), POINTER :: PAEPM25(:)   ! particulate matter le 2.5um
+  REAL(KIND=JPRB), POINTER :: PAEPM10(:)   ! particulate matter le 10 um
+  REAL(KIND=JPRB), POINTER :: PUVBED(:)   ! UV biologically effective dose
+  REAL(KIND=JPRB), POINTER :: PUVBEDCS(:)   ! UV biologically effective dose clear sky
+  REAL(KIND=JPRB), POINTER :: PLITOTI(:)   ! instantaneous total lightning flash density
+  REAL(KIND=JPRB), POINTER :: PLICGI(:)   ! instantaneous cloud-to-ground lightning flash density
+  TYPE(FIELD_2D_VIEW), ALLOCATABLE, DIMENSION(:) :: PLITOTA6   ! Bins for averaged total lightning over last 6 hours
+  TYPE(FIELD_2D_VIEW), ALLOCATABLE, DIMENSION(:) :: PLICGA6   ! Bins for averaged cloud-to-ground lightning over last 6 hours
+  REAL(KIND=JPRB), POINTER :: PGROUP(:,:)
+
+  TYPE(SURFACE_VARIABLE_GROUP_VDIAG), POINTER :: VARIABLE_GROUP
+  TYPE(FIELD_2D), POINTER :: F_LSP=>NULL()
+  TYPE(FIELD_2D), POINTER :: F_CP=>NULL()
+  TYPE(FIELD_2D), POINTER :: F_SF=>NULL()
+  TYPE(FIELD_2D), POINTER :: F_FZRA=>NULL()
+  TYPE(FIELD_2D), POINTER :: F_BLD=>NULL()
+  TYPE(FIELD_2D), POINTER :: F_SSHF=>NULL()
+  TYPE(FIELD_2D), POINTER :: F_SLHF=>NULL()
+  TYPE(FIELD_2D), POINTER :: F_NEE=>NULL()
+  TYPE(FIELD_2D), POINTER :: F_GPP=>NULL()
+  TYPE(FIELD_2D), POINTER :: F_REC=>NULL()
+  TYPE(FIELD_2D), POINTER :: F_MSL=>NULL()
+  TYPE(FIELD_2D), POINTER :: F_SP=>NULL()
+  TYPE(FIELD_2D), POINTER :: F_TCC=>NULL()
+  TYPE(FIELD_2D), POINTER :: F_10U=>NULL()
+  TYPE(FIELD_2D), POINTER :: F_10V=>NULL()
+  TYPE(FIELD_2D), POINTER :: F_2T=>NULL()
+  TYPE(FIELD_2D), POINTER :: F_2D=>NULL()
+  TYPE(FIELD_2D), POINTER :: F_2Q=>NULL()
+  TYPE(FIELD_2D), POINTER :: F_SSR=>NULL()
+  TYPE(FIELD_2D), POINTER :: F_STR=>NULL()
+  TYPE(FIELD_2D), POINTER :: F_TSR=>NULL()
+  TYPE(FIELD_2D), POINTER :: F_TTR=>NULL()
+  TYPE(FIELD_2D), POINTER :: F_EWSS=>NULL()
+  TYPE(FIELD_2D), POINTER :: F_NSSS=>NULL()
+  TYPE(FIELD_2D), POINTER :: F_E=>NULL()
+  TYPE(FIELD_2D), POINTER :: F_PEV=>NULL()
+  TYPE(FIELD_2D), POINTER :: F_CCC=>NULL()
+  TYPE(FIELD_2D), POINTER :: F_LCC=>NULL()
+  TYPE(FIELD_2D), POINTER :: F_MCC=>NULL()
+  TYPE(FIELD_2D), POINTER :: F_HCC=>NULL()
+  TYPE(FIELD_2D), POINTER :: F_LGWS=>NULL()
+  TYPE(FIELD_2D), POINTER :: F_MGWS=>NULL()
+  TYPE(FIELD_2D), POINTER :: F_GWD=>NULL()
+  TYPE(FIELD_2D), POINTER :: F_MX2T=>NULL()
+  TYPE(FIELD_2D), POINTER :: F_MN2T=>NULL()
+  TYPE(FIELD_2D_PTR), ALLOCATABLE, DIMENSION(:) :: F_MX2T6
+  TYPE(FIELD_2D_PTR), ALLOCATABLE, DIMENSION(:) :: F_MN2T6
+  TYPE(FIELD_2D), POINTER :: F_RO=>NULL()
+  TYPE(FIELD_2D), POINTER :: F_SRO=>NULL()
+  TYPE(FIELD_2D), POINTER :: F_SSRO=>NULL()
+  TYPE(FIELD_2D), POINTER :: F_ALB=>NULL()
+  TYPE(FIELD_2D), POINTER :: F_IEWSS=>NULL()
+  TYPE(FIELD_2D), POINTER :: F_INSSS=>NULL()
+  TYPE(FIELD_2D), POINTER :: F_ISSHF=>NULL()
+  TYPE(FIELD_2D), POINTER :: F_IE=>NULL()
+  TYPE(FIELD_2D), POINTER :: F_INEE=>NULL()
+  TYPE(FIELD_2D), POINTER :: F_IGPP=>NULL()
+  TYPE(FIELD_2D), POINTER :: F_IREC=>NULL()
+  TYPE(FIELD_2D), POINTER :: F_CSF=>NULL()
+  TYPE(FIELD_2D), POINTER :: F_LSSF=>NULL()
+  TYPE(FIELD_2D), POINTER :: F_MXTPR=>NULL()
+  TYPE(FIELD_2D), POINTER :: F_MNTPR=>NULL()
+  TYPE(FIELD_2D_PTR), ALLOCATABLE, DIMENSION(:) :: F_MXTPR6
+  TYPE(FIELD_2D_PTR), ALLOCATABLE, DIMENSION(:) :: F_MNTPR6
+  TYPE(FIELD_2D), POINTER :: F_TPR=>NULL()
+  TYPE(FIELD_2D), POINTER :: F_LSRR=>NULL()
+  TYPE(FIELD_2D), POINTER :: F_CRR=>NULL()
+  TYPE(FIELD_2D), POINTER :: F_LSSFR=>NULL()
+  TYPE(FIELD_2D), POINTER :: F_CSFR=>NULL()
+  TYPE(FIELD_2D), POINTER :: F_PTYPE=>NULL()
+  TYPE(FIELD_2D), POINTER :: F_ILSPF=>NULL()
+  TYPE(FIELD_2D), POINTER :: F_Z0F=>NULL()
+  TYPE(FIELD_2D), POINTER :: F_LZ0H=>NULL()
+  TYPE(FIELD_2D), POINTER :: F_VIWVE=>NULL()
+  TYPE(FIELD_2D), POINTER :: F_VIWVN=>NULL()
+  TYPE(FIELD_2D), POINTER :: F_TCW=>NULL()
+  TYPE(FIELD_2D), POINTER :: F_TCWV=>NULL()
+  TYPE(FIELD_2D), POINTER :: F_TCLW=>NULL()
+  TYPE(FIELD_2D), POINTER :: F_TCIW=>NULL()
+  TYPE(FIELD_2D), POINTER :: F_TCRW=>NULL()
+  TYPE(FIELD_2D), POINTER :: F_TCSW=>NULL()
+  TYPE(FIELD_2D), POINTER :: F_TCSLW=>NULL()
+  TYPE(FIELD_2D), POINTER :: F_SSRD=>NULL()
+  TYPE(FIELD_2D), POINTER :: F_STRD=>NULL()
+  TYPE(FIELD_2D), POINTER :: F_SSRDC=>NULL()
+  TYPE(FIELD_2D), POINTER :: F_STRDC=>NULL()
+  TYPE(FIELD_2D), POINTER :: F_BLH=>NULL()
+  TYPE(FIELD_2D), POINTER :: F_SUND=>NULL()
+  TYPE(FIELD_2D), POINTER :: F_SPAR=>NULL()
+  TYPE(FIELD_2D), POINTER :: F_SUVB=>NULL()
+  TYPE(FIELD_2D), POINTER :: F_SFDIR=>NULL()
+  TYPE(FIELD_2D), POINTER :: F_SCDIR=>NULL()
+  TYPE(FIELD_2D), POINTER :: F_SDSRP=>NULL()
+  TYPE(FIELD_2D), POINTER :: F_CAPE=>NULL()
+  TYPE(FIELD_2D), POINTER :: F_CAPES=>NULL()
+  TYPE(FIELD_2D_PTR), ALLOCATABLE, DIMENSION(:) :: F_MXCAP6
+  TYPE(FIELD_2D_PTR), ALLOCATABLE, DIMENSION(:) :: F_MXCAPS6
+  TYPE(FIELD_2D), POINTER :: F_TSRC=>NULL()
+  TYPE(FIELD_2D), POINTER :: F_TTRC=>NULL()
+  TYPE(FIELD_2D), POINTER :: F_SSRC=>NULL()
+  TYPE(FIELD_2D), POINTER :: F_STRC=>NULL()
+  TYPE(FIELD_2D), POINTER :: F_ES=>NULL()
+  TYPE(FIELD_2D), POINTER :: F_SMLT=>NULL()
+  TYPE(FIELD_2D), POINTER :: F_10FG=>NULL()
+  TYPE(FIELD_2D_PTR), ALLOCATABLE, DIMENSION(:) :: F_10FG6
+  TYPE(FIELD_2D), POINTER :: F_10FGCV=>NULL()
+  TYPE(FIELD_2D), POINTER :: F_I10FG=>NULL()
+  TYPE(FIELD_2D), POINTER :: F_LSPF=>NULL()
+  TYPE(FIELD_2D), POINTER :: F_TCO3=>NULL()
+  TYPE(FIELD_2D), POINTER :: F_VIMD=>NULL()
+  TYPE(FIELD_2D), POINTER :: F_SPARC=>NULL()
+  TYPE(FIELD_2D), POINTER :: F_STINC=>NULL()
+  TYPE(FIELD_2D), POINTER :: F_CBASE=>NULL()
+  TYPE(FIELD_2D), POINTER :: F_0DEGL=>NULL()
+  TYPE(FIELD_2D), POINTER :: F_VISIH=>NULL()
+  TYPE(FIELD_2D), POINTER :: F_CIN=>NULL()
+  TYPE(FIELD_2D), POINTER :: F_KINDEX=>NULL()
+  TYPE(FIELD_2D), POINTER :: F_TTINDEX=>NULL()
+  TYPE(FIELD_2D), POINTER :: F_CBASEA=>NULL()
+  TYPE(FIELD_2D), POINTER :: F_CTOPC=>NULL()
+  TYPE(FIELD_2D), POINTER :: F_ZTWETB0=>NULL()
+  TYPE(FIELD_2D), POINTER :: F_ZTWETB1=>NULL()
+  TYPE(FIELD_2D_PTR), ALLOCATABLE, DIMENSION(:) :: F_TCGHG
+  TYPE(FIELD_2D_PTR), ALLOCATABLE, DIMENSION(:) :: F_TCCHEM
+  TYPE(FIELD_2D_PTR), ALLOCATABLE, DIMENSION(:,:) :: F_AERODIAG
+  TYPE(FIELD_2D_PTR), ALLOCATABLE, DIMENSION(:,:) :: F_AERO_WVL_DIAG
+  TYPE(FIELD_2D), POINTER :: F_100U=>NULL()
+  TYPE(FIELD_2D), POINTER :: F_100V=>NULL()
+  TYPE(FIELD_2D), POINTER :: F_200U=>NULL()
+  TYPE(FIELD_2D), POINTER :: F_200V=>NULL()
+  TYPE(FIELD_2D), POINTER :: F_ZUST=>NULL()
+  TYPE(FIELD_2D), POINTER :: F_10NU=>NULL()
+  TYPE(FIELD_2D), POINTER :: F_10NV=>NULL()
+  TYPE(FIELD_2D), POINTER :: F_DNDZN=>NULL()
+  TYPE(FIELD_2D), POINTER :: F_DNDZA=>NULL()
+  TYPE(FIELD_2D), POINTER :: F_DCTB=>NULL()
+  TYPE(FIELD_2D), POINTER :: F_TPLB=>NULL()
+  TYPE(FIELD_2D), POINTER :: F_TPLT=>NULL()
+  TYPE(FIELD_2D), POINTER :: F_ODSS=>NULL()
+  TYPE(FIELD_2D), POINTER :: F_ODDU=>NULL()
+  TYPE(FIELD_2D), POINTER :: F_ODOM=>NULL()
+  TYPE(FIELD_2D), POINTER :: F_ODBC=>NULL()
+  TYPE(FIELD_2D), POINTER :: F_ODSU=>NULL()
+  TYPE(FIELD_2D), POINTER :: F_ODNI=>NULL()
+  TYPE(FIELD_2D), POINTER :: F_ODAM=>NULL()
+  TYPE(FIELD_2D), POINTER :: F_ODSOA=>NULL()
+  TYPE(FIELD_2D), POINTER :: F_ODVFA=>NULL()
+  TYPE(FIELD_2D), POINTER :: F_ODVSU=>NULL()
+  TYPE(FIELD_2D), POINTER :: F_ODTOACC=>NULL()
+  TYPE(FIELD_2D), POINTER :: F_AEPM1=>NULL()
+  TYPE(FIELD_2D), POINTER :: F_AEPM25=>NULL()
+  TYPE(FIELD_2D), POINTER :: F_AEPM10=>NULL()
+  TYPE(FIELD_2D), POINTER :: F_UVBED=>NULL()
+  TYPE(FIELD_2D), POINTER :: F_UVBEDCS=>NULL()
+  TYPE(FIELD_2D), POINTER :: F_LITOTI=>NULL()
+  TYPE(FIELD_2D), POINTER :: F_LICGI=>NULL()
+  TYPE(FIELD_2D_PTR), ALLOCATABLE, DIMENSION(:) :: F_LITOTA6
+  TYPE(FIELD_2D_PTR), ALLOCATABLE, DIMENSION(:) :: F_LICGA6
+  TYPE(FIELD_3D), POINTER :: F_GROUP
+
+CONTAINS
+  PROCEDURE :: INIT => SURFACE_VIEW_GROUP_VDIAG_INIT
+  PROCEDURE :: UPDATE_VIEW => SURFACE_VIEW_GROUP_VDIAG_UPDATE_VIEW
+END TYPE SURFACE_VIEW_GROUP_VDIAG
+
+TYPE SURFACE_VIEW_GROUP_SATSIM
+  REAL(KIND=JPRB), POINTER :: PCLBT(:,:)   ! Cloudy brightness temperature
+  REAL(KIND=JPRB), POINTER :: PCSBT(:,:)   ! Clear-sky brightness temperature
+  REAL(KIND=JPRB), POINTER :: PGROUP(:,:,:)
+
+  TYPE(SURFACE_VARIABLE_GROUP_SATSIM), POINTER :: VARIABLE_GROUP
+  TYPE(FIELD_3D), POINTER :: F_CLBT=>NULL()
+  TYPE(FIELD_3D), POINTER :: F_CSBT=>NULL()
+  TYPE(FIELD_4D), POINTER :: F_GROUP
+
+CONTAINS
+  PROCEDURE :: INIT => SURFACE_VIEW_GROUP_SATSIM_INIT
+  PROCEDURE :: UPDATE_VIEW => SURFACE_VIEW_GROUP_SATSIM_UPDATE_VIEW
+END TYPE SURFACE_VIEW_GROUP_SATSIM
+
+TYPE SURFACE_VIEW_GROUP_WAVES
+  REAL(KIND=JPRB), POINTER :: PCHAR(:)   ! Charnock parameter as modified by the wave model.
+  REAL(KIND=JPRB), POINTER :: PUSTOKES(:)   ! U-component of the surface Stokes drift.
+  REAL(KIND=JPRB), POINTER :: PVSTOKES(:)   ! V-component of the surface Stokes drift.
+  REAL(KIND=JPRB), POINTER :: PPHIOC(:)   ! Energy flux to ocean.
+  REAL(KIND=JPRB), POINTER :: PPHIAW(:)   ! Energy flux to ocean waves.
+  REAL(KIND=JPRB), POINTER :: PTAUOC(:)   ! Momentum flux to ocean.
+  REAL(KIND=JPRB), POINTER :: PEMEAN(:)   ! Wave variance.
+  REAL(KIND=JPRB), POINTER :: PFMEAN(:)   ! Wave mean frequency.
+  REAL(KIND=JPRB), POINTER :: PGROUP(:,:)
+
+  TYPE(SURFACE_VARIABLE_GROUP_WAVES), POINTER :: VARIABLE_GROUP
+  TYPE(FIELD_2D), POINTER :: F_CHAR=>NULL()
+  TYPE(FIELD_2D), POINTER :: F_USTOKES=>NULL()
+  TYPE(FIELD_2D), POINTER :: F_VSTOKES=>NULL()
+  TYPE(FIELD_2D), POINTER :: F_PHIOC=>NULL()
+  TYPE(FIELD_2D), POINTER :: F_PHIAW=>NULL()
+  TYPE(FIELD_2D), POINTER :: F_TAUOC=>NULL()
+  TYPE(FIELD_2D), POINTER :: F_EMEAN=>NULL()
+  TYPE(FIELD_2D), POINTER :: F_FMEAN=>NULL()
+  TYPE(FIELD_3D), POINTER :: F_GROUP
+
+CONTAINS
+  PROCEDURE :: INIT => SURFACE_VIEW_GROUP_WAVES_INIT
+  PROCEDURE :: UPDATE_VIEW => SURFACE_VIEW_GROUP_WAVES_UPDATE_VIEW
+END TYPE SURFACE_VIEW_GROUP_WAVES
+
+TYPE SURFACE_VIEW_GROUP_WAM
+  REAL(KIND=JPRB), POINTER :: PU10N(:)   ! 10m neutral wind U-component passed to the wave model (WAM).
+  REAL(KIND=JPRB), POINTER :: PV10N(:)   ! 10m neutral wind V-component passed to the wave model (WAM).
+  REAL(KIND=JPRB), POINTER :: PRHO(:)   ! surface density passed to the wave model (WAM).
+  REAL(KIND=JPRB), POINTER :: PZIL(:)   ! ZI/L passed to the wave model (used for gustiness in WAM).
+  REAL(KIND=JPRB), POINTER :: PCIF(:)   ! Sea ice fraction passed to the wave model (WAM).
+  REAL(KIND=JPRB), POINTER :: PCLK(:)   ! Lake cover passed to the wave model (WAM).
+  REAL(KIND=JPRB), POINTER :: PUCURW(:)   ! Ocean current    U-component passed to the wave model (WAM).
+  REAL(KIND=JPRB), POINTER :: PVCURW(:)   ! Ocean current    V-component passed to the wave model (WAM).
+  REAL(KIND=JPRB), POINTER :: PGROUP(:,:)
+
+  TYPE(SURFACE_VARIABLE_GROUP_WAM), POINTER :: VARIABLE_GROUP
+  TYPE(FIELD_2D), POINTER :: F_U10N=>NULL()
+  TYPE(FIELD_2D), POINTER :: F_V10N=>NULL()
+  TYPE(FIELD_2D), POINTER :: F_RHO=>NULL()
+  TYPE(FIELD_2D), POINTER :: F_ZIL=>NULL()
+  TYPE(FIELD_2D), POINTER :: F_CIF=>NULL()
+  TYPE(FIELD_2D), POINTER :: F_CLK=>NULL()
+  TYPE(FIELD_2D), POINTER :: F_UCURW=>NULL()
+  TYPE(FIELD_2D), POINTER :: F_VCURW=>NULL()
+  TYPE(FIELD_3D), POINTER :: F_GROUP
+
+CONTAINS
+  PROCEDURE :: INIT => SURFACE_VIEW_GROUP_WAM_INIT
+  PROCEDURE :: UPDATE_VIEW => SURFACE_VIEW_GROUP_WAM_UPDATE_VIEW
+END TYPE SURFACE_VIEW_GROUP_WAM
+
+TYPE SURFACE_VIEW_GROUP_VEXTRA
+  REAL(KIND=JPRB), POINTER :: PGROUP(:,:,:)
+
+  TYPE(SURFACE_VARIABLE_GROUP_VEXTRA), POINTER :: VARIABLE_GROUP
+  TYPE(FIELD_4D), POINTER :: F_GROUP
+
+CONTAINS
+  PROCEDURE :: INIT => SURFACE_VIEW_GROUP_VEXTRA_INIT
+  PROCEDURE :: UPDATE_VIEW => SURFACE_VIEW_GROUP_VEXTRA_UPDATE_VIEW
+END TYPE SURFACE_VIEW_GROUP_VEXTRA
+
+TYPE SURFACE_VIEW_GROUP_VEXTRDI
+  REAL(KIND=JPRB), POINTER :: PXEDR(:,:)   ! Eddy diffusivity rate
+  REAL(KIND=JPRB), POINTER :: PGROUP(:,:,:)
+
+  TYPE(SURFACE_VARIABLE_GROUP_VEXTRDI), POINTER :: VARIABLE_GROUP
+  TYPE(FIELD_3D), POINTER :: F_XEDR=>NULL()
+  TYPE(FIELD_4D), POINTER :: F_GROUP
+
+CONTAINS
+  PROCEDURE :: INIT => SURFACE_VIEW_GROUP_VEXTRDI_INIT
+  PROCEDURE :: UPDATE_VIEW => SURFACE_VIEW_GROUP_VEXTRDI_UPDATE_VIEW
+END TYPE SURFACE_VIEW_GROUP_VEXTRDI
+
+TYPE SURFACE_VIEW_GROUP_VPRECIP
+  REAL(KIND=JPRB), POINTER :: PPRECIP(:,:)   ! Diagnostic of precipitations type
+  REAL(KIND=JPRB), POINTER :: PGROUP(:,:,:)
+
+  TYPE(SURFACE_VARIABLE_GROUP_VPRECIP), POINTER :: VARIABLE_GROUP
+  TYPE(FIELD_3D), POINTER :: F_PRECIP=>NULL()
+  TYPE(FIELD_4D), POINTER :: F_GROUP
+
+CONTAINS
+  PROCEDURE :: INIT => SURFACE_VIEW_GROUP_VPRECIP_INIT
+  PROCEDURE :: UPDATE_VIEW => SURFACE_VIEW_GROUP_VPRECIP_UPDATE_VIEW
+END TYPE SURFACE_VIEW_GROUP_VPRECIP
+
+TYPE SURFACE_VIEW_GROUP_VPRECIP2
+  REAL(KIND=JPRB), POINTER :: PPRECIP2(:,:)   ! Diagnostic of precipitations type
+  REAL(KIND=JPRB), POINTER :: PGROUP(:,:,:)
+
+  TYPE(SURFACE_VARIABLE_GROUP_VPRECIP2), POINTER :: VARIABLE_GROUP
+  TYPE(FIELD_3D), POINTER :: F_PRECIP2=>NULL()
+  TYPE(FIELD_4D), POINTER :: F_GROUP
+
+CONTAINS
+  PROCEDURE :: INIT => SURFACE_VIEW_GROUP_VPRECIP2_INIT
+  PROCEDURE :: UPDATE_VIEW => SURFACE_VIEW_GROUP_VPRECIP2_UPDATE_VIEW
+END TYPE SURFACE_VIEW_GROUP_VPRECIP2
+
+TYPE SURFACE_VIEW_GROUP_VEXTR2
+  REAL(KIND=JPRB), POINTER :: PGROUP(:,:)
+
+  TYPE(SURFACE_VARIABLE_GROUP_VEXTR2), POINTER :: VARIABLE_GROUP
+  TYPE(FIELD_3D), POINTER :: F_GROUP
+
+CONTAINS
+  PROCEDURE :: INIT => SURFACE_VIEW_GROUP_VEXTR2_INIT
+  PROCEDURE :: UPDATE_VIEW => SURFACE_VIEW_GROUP_VEXTR2_UPDATE_VIEW
+END TYPE SURFACE_VIEW_GROUP_VEXTR2
+
+TYPE SURFACE_VIEW_GROUP_SFORC
+  REAL(KIND=JPRB), POINTER :: PGROUP(:,:)
+
+  TYPE(SURFACE_VARIABLE_GROUP_SFORC), POINTER :: VARIABLE_GROUP
+  TYPE(FIELD_3D), POINTER :: F_GROUP
+
+CONTAINS
+  PROCEDURE :: INIT => SURFACE_VIEW_GROUP_SFORC_INIT
+  PROCEDURE :: UPDATE_VIEW => SURFACE_VIEW_GROUP_SFORC_UPDATE_VIEW
+END TYPE SURFACE_VIEW_GROUP_SFORC
+
+TYPE SURFACE_VIEW_GROUP_SFLUX
+  REAL(KIND=JPRB), POINTER :: PGROUP(:,:)
+
+  TYPE(SURFACE_VARIABLE_GROUP_SFLUX), POINTER :: VARIABLE_GROUP
+  TYPE(FIELD_3D), POINTER :: F_GROUP
+
+CONTAINS
+  PROCEDURE :: INIT => SURFACE_VIEW_GROUP_SFLUX_INIT
+  PROCEDURE :: UPDATE_VIEW => SURFACE_VIEW_GROUP_SFLUX_UPDATE_VIEW
+END TYPE SURFACE_VIEW_GROUP_SFLUX
+
+TYPE SURFACE_VIEW_GROUP_VO3ABC
+  REAL(KIND=JPRB), POINTER :: PGROUP(:,:)
+
+  TYPE(SURFACE_VARIABLE_GROUP_VO3ABC), POINTER :: VARIABLE_GROUP
+  TYPE(FIELD_3D), POINTER :: F_GROUP
+
+CONTAINS
+  PROCEDURE :: INIT => SURFACE_VIEW_GROUP_VO3ABC_INIT
+  PROCEDURE :: UPDATE_VIEW => SURFACE_VIEW_GROUP_VO3ABC_UPDATE_VIEW
+END TYPE SURFACE_VIEW_GROUP_VO3ABC
+
+
+CONTAINS
+
+  SUBROUTINE SURFACE_VIEW_GROUP_SOILB_INIT(SELF, VARIABLE_GROUP)
+    ! Constructor of the array view type for a surface variable group
+    CLASS(SURFACE_VIEW_GROUP_SOILB) :: SELF
+    TYPE(SURFACE_VARIABLE_GROUP_SOILB), TARGET, INTENT(INOUT) :: VARIABLE_GROUP
+
+    ! Create a view per timestep field for each prognostic variable
+    SELF%F_T_T0 => VARIABLE_GROUP%VT%FT0
+    SELF%F_T_T1 => VARIABLE_GROUP%VT%FT1
+    SELF%F_T_T9 => VARIABLE_GROUP%VT%FT9
+    SELF%F_Q_T0 => VARIABLE_GROUP%VQ%FT0
+    SELF%F_Q_T1 => VARIABLE_GROUP%VQ%FT1
+    SELF%F_Q_T9 => VARIABLE_GROUP%VQ%FT9
+    SELF%F_TL_T0 => VARIABLE_GROUP%VTL%FT0
+    SELF%F_TL_T1 => VARIABLE_GROUP%VTL%FT1
+    SELF%F_TL_T9 => VARIABLE_GROUP%VTL%FT9
+    SELF%VARIABLE_GROUP => VARIABLE_GROUP
+    SELF%F_GROUP => VARIABLE_GROUP%F_GROUP
+  END SUBROUTINE SURFACE_VIEW_GROUP_SOILB_INIT
+
+  SUBROUTINE SURFACE_VIEW_GROUP_SOILB_UPDATE_VIEW(SELF, BLOCK_INDEX)
+    ! Extract local array views from field objects
+    CLASS(SURFACE_VIEW_GROUP_SOILB) :: SELF
+    INTEGER(KIND=JPIM), INTENT(IN) :: BLOCK_INDEX
+
+    ! Set up the view pointer for each timestep field
+    SELF%PT_T0 => SELF%F_T_T0%GET_VIEW(BLOCK_INDEX)
+    SELF%PT_T1 => SELF%F_T_T1%GET_VIEW(BLOCK_INDEX)
+    SELF%PT_T9 => SELF%F_T_T9%GET_VIEW(BLOCK_INDEX)
+    SELF%PQ_T0 => SELF%F_Q_T0%GET_VIEW(BLOCK_INDEX)
+    SELF%PQ_T1 => SELF%F_Q_T1%GET_VIEW(BLOCK_INDEX)
+    SELF%PQ_T9 => SELF%F_Q_T9%GET_VIEW(BLOCK_INDEX)
+    SELF%PTL_T0 => SELF%F_TL_T0%GET_VIEW(BLOCK_INDEX)
+    SELF%PTL_T1 => SELF%F_TL_T1%GET_VIEW(BLOCK_INDEX)
+    SELF%PTL_T9 => SELF%F_TL_T9%GET_VIEW(BLOCK_INDEX)
+
+    IF (ASSOCIATED(SELF%F_GROUP))  SELF%PGROUP => SELF%F_GROUP%GET_VIEW(BLOCK_INDEX)
+  END SUBROUTINE SURFACE_VIEW_GROUP_SOILB_UPDATE_VIEW
+
+  SUBROUTINE SURFACE_VIEW_GROUP_SNOWG_INIT(SELF, VARIABLE_GROUP)
+    ! Constructor of the array view type for a surface variable group
+    CLASS(SURFACE_VIEW_GROUP_SNOWG) :: SELF
+    TYPE(SURFACE_VARIABLE_GROUP_SNOWG), TARGET, INTENT(INOUT) :: VARIABLE_GROUP
+
+    ! Create a view per timestep field for each prognostic variable
+    SELF%F_F_T0 => VARIABLE_GROUP%VF%FT0
+    SELF%F_F_T1 => VARIABLE_GROUP%VF%FT1
+    SELF%F_F_T9 => VARIABLE_GROUP%VF%FT9
+    SELF%F_A_T0 => VARIABLE_GROUP%VA%FT0
+    SELF%F_A_T1 => VARIABLE_GROUP%VA%FT1
+    SELF%F_A_T9 => VARIABLE_GROUP%VA%FT9
+    SELF%F_R_T0 => VARIABLE_GROUP%VR%FT0
+    SELF%F_R_T1 => VARIABLE_GROUP%VR%FT1
+    SELF%F_R_T9 => VARIABLE_GROUP%VR%FT9
+    SELF%F_T_T0 => VARIABLE_GROUP%VT%FT0
+    SELF%F_T_T1 => VARIABLE_GROUP%VT%FT1
+    SELF%F_T_T9 => VARIABLE_GROUP%VT%FT9
+    SELF%F_W_T0 => VARIABLE_GROUP%VW%FT0
+    SELF%F_W_T1 => VARIABLE_GROUP%VW%FT1
+    SELF%F_W_T9 => VARIABLE_GROUP%VW%FT9
+    SELF%VARIABLE_GROUP => VARIABLE_GROUP
+    SELF%F_GROUP => VARIABLE_GROUP%F_GROUP
+  END SUBROUTINE SURFACE_VIEW_GROUP_SNOWG_INIT
+
+  SUBROUTINE SURFACE_VIEW_GROUP_SNOWG_UPDATE_VIEW(SELF, BLOCK_INDEX)
+    ! Extract local array views from field objects
+    CLASS(SURFACE_VIEW_GROUP_SNOWG) :: SELF
+    INTEGER(KIND=JPIM), INTENT(IN) :: BLOCK_INDEX
+
+    ! Set up the view pointer for each timestep field
+    SELF%PF_T0 => SELF%F_F_T0%GET_VIEW(BLOCK_INDEX)
+    SELF%PF_T1 => SELF%F_F_T1%GET_VIEW(BLOCK_INDEX)
+    SELF%PF_T9 => SELF%F_F_T9%GET_VIEW(BLOCK_INDEX)
+    SELF%PA_T0 => SELF%F_A_T0%GET_VIEW(BLOCK_INDEX)
+    SELF%PA_T1 => SELF%F_A_T1%GET_VIEW(BLOCK_INDEX)
+    SELF%PA_T9 => SELF%F_A_T9%GET_VIEW(BLOCK_INDEX)
+    SELF%PR_T0 => SELF%F_R_T0%GET_VIEW(BLOCK_INDEX)
+    SELF%PR_T1 => SELF%F_R_T1%GET_VIEW(BLOCK_INDEX)
+    SELF%PR_T9 => SELF%F_R_T9%GET_VIEW(BLOCK_INDEX)
+    SELF%PT_T0 => SELF%F_T_T0%GET_VIEW(BLOCK_INDEX)
+    SELF%PT_T1 => SELF%F_T_T1%GET_VIEW(BLOCK_INDEX)
+    SELF%PT_T9 => SELF%F_T_T9%GET_VIEW(BLOCK_INDEX)
+    SELF%PW_T0 => SELF%F_W_T0%GET_VIEW(BLOCK_INDEX)
+    SELF%PW_T1 => SELF%F_W_T1%GET_VIEW(BLOCK_INDEX)
+    SELF%PW_T9 => SELF%F_W_T9%GET_VIEW(BLOCK_INDEX)
+
+    IF (ASSOCIATED(SELF%F_GROUP))  SELF%PGROUP => SELF%F_GROUP%GET_VIEW(BLOCK_INDEX)
+  END SUBROUTINE SURFACE_VIEW_GROUP_SNOWG_UPDATE_VIEW
+
+  SUBROUTINE SURFACE_VIEW_GROUP_LAKEB_INIT(SELF, VARIABLE_GROUP)
+    ! Constructor of the array view type for a surface variable group
+    CLASS(SURFACE_VIEW_GROUP_LAKEB) :: SELF
+    TYPE(SURFACE_VARIABLE_GROUP_LAKEB), TARGET, INTENT(INOUT) :: VARIABLE_GROUP
+
+    ! Create a view per timestep field for each prognostic variable
+    SELF%F_LICT_T0 => VARIABLE_GROUP%VLICT%FT0
+    SELF%F_LICT_T1 => VARIABLE_GROUP%VLICT%FT1
+    SELF%F_LICT_T9 => VARIABLE_GROUP%VLICT%FT9
+    SELF%F_LMLT_T0 => VARIABLE_GROUP%VLMLT%FT0
+    SELF%F_LMLT_T1 => VARIABLE_GROUP%VLMLT%FT1
+    SELF%F_LMLT_T9 => VARIABLE_GROUP%VLMLT%FT9
+    SELF%F_LTLT_T0 => VARIABLE_GROUP%VLTLT%FT0
+    SELF%F_LTLT_T1 => VARIABLE_GROUP%VLTLT%FT1
+    SELF%F_LTLT_T9 => VARIABLE_GROUP%VLTLT%FT9
+    SELF%F_LBLT_T0 => VARIABLE_GROUP%VLBLT%FT0
+    SELF%F_LBLT_T1 => VARIABLE_GROUP%VLBLT%FT1
+    SELF%F_LBLT_T9 => VARIABLE_GROUP%VLBLT%FT9
+    SELF%F_LSHF_T0 => VARIABLE_GROUP%VLSHF%FT0
+    SELF%F_LSHF_T1 => VARIABLE_GROUP%VLSHF%FT1
+    SELF%F_LSHF_T9 => VARIABLE_GROUP%VLSHF%FT9
+    SELF%F_LICD_T0 => VARIABLE_GROUP%VLICD%FT0
+    SELF%F_LICD_T1 => VARIABLE_GROUP%VLICD%FT1
+    SELF%F_LICD_T9 => VARIABLE_GROUP%VLICD%FT9
+    SELF%F_LMLD_T0 => VARIABLE_GROUP%VLMLD%FT0
+    SELF%F_LMLD_T1 => VARIABLE_GROUP%VLMLD%FT1
+    SELF%F_LMLD_T9 => VARIABLE_GROUP%VLMLD%FT9
+    SELF%VARIABLE_GROUP => VARIABLE_GROUP
+    SELF%F_GROUP => VARIABLE_GROUP%F_GROUP
+  END SUBROUTINE SURFACE_VIEW_GROUP_LAKEB_INIT
+
+  SUBROUTINE SURFACE_VIEW_GROUP_LAKEB_UPDATE_VIEW(SELF, BLOCK_INDEX)
+    ! Extract local array views from field objects
+    CLASS(SURFACE_VIEW_GROUP_LAKEB) :: SELF
+    INTEGER(KIND=JPIM), INTENT(IN) :: BLOCK_INDEX
+
+    ! Set up the view pointer for each timestep field
+    SELF%PLICT_T0 => SELF%F_LICT_T0%GET_VIEW(BLOCK_INDEX)
+    SELF%PLICT_T1 => SELF%F_LICT_T1%GET_VIEW(BLOCK_INDEX)
+    SELF%PLICT_T9 => SELF%F_LICT_T9%GET_VIEW(BLOCK_INDEX)
+    SELF%PLMLT_T0 => SELF%F_LMLT_T0%GET_VIEW(BLOCK_INDEX)
+    SELF%PLMLT_T1 => SELF%F_LMLT_T1%GET_VIEW(BLOCK_INDEX)
+    SELF%PLMLT_T9 => SELF%F_LMLT_T9%GET_VIEW(BLOCK_INDEX)
+    SELF%PLTLT_T0 => SELF%F_LTLT_T0%GET_VIEW(BLOCK_INDEX)
+    SELF%PLTLT_T1 => SELF%F_LTLT_T1%GET_VIEW(BLOCK_INDEX)
+    SELF%PLTLT_T9 => SELF%F_LTLT_T9%GET_VIEW(BLOCK_INDEX)
+    SELF%PLBLT_T0 => SELF%F_LBLT_T0%GET_VIEW(BLOCK_INDEX)
+    SELF%PLBLT_T1 => SELF%F_LBLT_T1%GET_VIEW(BLOCK_INDEX)
+    SELF%PLBLT_T9 => SELF%F_LBLT_T9%GET_VIEW(BLOCK_INDEX)
+    SELF%PLSHF_T0 => SELF%F_LSHF_T0%GET_VIEW(BLOCK_INDEX)
+    SELF%PLSHF_T1 => SELF%F_LSHF_T1%GET_VIEW(BLOCK_INDEX)
+    SELF%PLSHF_T9 => SELF%F_LSHF_T9%GET_VIEW(BLOCK_INDEX)
+    SELF%PLICD_T0 => SELF%F_LICD_T0%GET_VIEW(BLOCK_INDEX)
+    SELF%PLICD_T1 => SELF%F_LICD_T1%GET_VIEW(BLOCK_INDEX)
+    SELF%PLICD_T9 => SELF%F_LICD_T9%GET_VIEW(BLOCK_INDEX)
+    SELF%PLMLD_T0 => SELF%F_LMLD_T0%GET_VIEW(BLOCK_INDEX)
+    SELF%PLMLD_T1 => SELF%F_LMLD_T1%GET_VIEW(BLOCK_INDEX)
+    SELF%PLMLD_T9 => SELF%F_LMLD_T9%GET_VIEW(BLOCK_INDEX)
+
+    IF (ASSOCIATED(SELF%F_GROUP))  SELF%PGROUP => SELF%F_GROUP%GET_VIEW(BLOCK_INDEX)
+  END SUBROUTINE SURFACE_VIEW_GROUP_LAKEB_UPDATE_VIEW
+
+  SUBROUTINE SURFACE_VIEW_GROUP_RESVR_INIT(SELF, VARIABLE_GROUP)
+    ! Constructor of the array view type for a surface variable group
+    CLASS(SURFACE_VIEW_GROUP_RESVR) :: SELF
+    TYPE(SURFACE_VARIABLE_GROUP_RESVR), TARGET, INTENT(INOUT) :: VARIABLE_GROUP
+
+    ! Create a view per timestep field for each prognostic variable
+    SELF%F_T_T0 => VARIABLE_GROUP%VT%FT0
+    SELF%F_T_T1 => VARIABLE_GROUP%VT%FT1
+    SELF%F_T_T9 => VARIABLE_GROUP%VT%FT9
+    SELF%F_W_T0 => VARIABLE_GROUP%VW%FT0
+    SELF%F_W_T1 => VARIABLE_GROUP%VW%FT1
+    SELF%F_W_T9 => VARIABLE_GROUP%VW%FT9
+    SELF%F_FC_T0 => VARIABLE_GROUP%VFC%FT0
+    SELF%F_FC_T1 => VARIABLE_GROUP%VFC%FT1
+    SELF%F_FC_T9 => VARIABLE_GROUP%VFC%FT9
+    SELF%F_IC_T0 => VARIABLE_GROUP%VIC%FT0
+    SELF%F_IC_T1 => VARIABLE_GROUP%VIC%FT1
+    SELF%F_IC_T9 => VARIABLE_GROUP%VIC%FT9
+    SELF%F_FP1_T0 => VARIABLE_GROUP%VFP1%FT0
+    SELF%F_FP1_T1 => VARIABLE_GROUP%VFP1%FT1
+    SELF%F_FP1_T9 => VARIABLE_GROUP%VFP1%FT9
+    SELF%VARIABLE_GROUP => VARIABLE_GROUP
+    SELF%F_GROUP => VARIABLE_GROUP%F_GROUP
+  END SUBROUTINE SURFACE_VIEW_GROUP_RESVR_INIT
+
+  SUBROUTINE SURFACE_VIEW_GROUP_RESVR_UPDATE_VIEW(SELF, BLOCK_INDEX)
+    ! Extract local array views from field objects
+    CLASS(SURFACE_VIEW_GROUP_RESVR) :: SELF
+    INTEGER(KIND=JPIM), INTENT(IN) :: BLOCK_INDEX
+
+    ! Set up the view pointer for each timestep field
+    SELF%PT_T0 => SELF%F_T_T0%GET_VIEW(BLOCK_INDEX)
+    SELF%PT_T1 => SELF%F_T_T1%GET_VIEW(BLOCK_INDEX)
+    SELF%PT_T9 => SELF%F_T_T9%GET_VIEW(BLOCK_INDEX)
+    SELF%PW_T0 => SELF%F_W_T0%GET_VIEW(BLOCK_INDEX)
+    SELF%PW_T1 => SELF%F_W_T1%GET_VIEW(BLOCK_INDEX)
+    SELF%PW_T9 => SELF%F_W_T9%GET_VIEW(BLOCK_INDEX)
+    SELF%PFC_T0 => SELF%F_FC_T0%GET_VIEW(BLOCK_INDEX)
+    SELF%PFC_T1 => SELF%F_FC_T1%GET_VIEW(BLOCK_INDEX)
+    SELF%PFC_T9 => SELF%F_FC_T9%GET_VIEW(BLOCK_INDEX)
+    SELF%PIC_T0 => SELF%F_IC_T0%GET_VIEW(BLOCK_INDEX)
+    SELF%PIC_T1 => SELF%F_IC_T1%GET_VIEW(BLOCK_INDEX)
+    SELF%PIC_T9 => SELF%F_IC_T9%GET_VIEW(BLOCK_INDEX)
+    SELF%PFP1_T0 => SELF%F_FP1_T0%GET_VIEW(BLOCK_INDEX)
+    SELF%PFP1_T1 => SELF%F_FP1_T1%GET_VIEW(BLOCK_INDEX)
+    SELF%PFP1_T9 => SELF%F_FP1_T9%GET_VIEW(BLOCK_INDEX)
+
+    IF (ASSOCIATED(SELF%F_GROUP))  SELF%PGROUP => SELF%F_GROUP%GET_VIEW(BLOCK_INDEX)
+  END SUBROUTINE SURFACE_VIEW_GROUP_RESVR_UPDATE_VIEW
+
+  SUBROUTINE SURFACE_VIEW_GROUP_CLS_INIT(SELF, VARIABLE_GROUP)
+    ! Constructor of the array view type for a surface variable group
+    CLASS(SURFACE_VIEW_GROUP_CLS) :: SELF
+    TYPE(SURFACE_VARIABLE_GROUP_CLS), TARGET, INTENT(INOUT) :: VARIABLE_GROUP
+
+    ! Create a view per timestep field for each prognostic variable
+    SELF%F_TCLS_T0 => VARIABLE_GROUP%VTCLS%FT0
+    SELF%F_TCLS_T1 => VARIABLE_GROUP%VTCLS%FT1
+    SELF%F_TCLS_T9 => VARIABLE_GROUP%VTCLS%FT9
+    SELF%F_HUCLS_T0 => VARIABLE_GROUP%VHUCLS%FT0
+    SELF%F_HUCLS_T1 => VARIABLE_GROUP%VHUCLS%FT1
+    SELF%F_HUCLS_T9 => VARIABLE_GROUP%VHUCLS%FT9
+    SELF%F_UCLS_T0 => VARIABLE_GROUP%VUCLS%FT0
+    SELF%F_UCLS_T1 => VARIABLE_GROUP%VUCLS%FT1
+    SELF%F_UCLS_T9 => VARIABLE_GROUP%VUCLS%FT9
+    SELF%F_VCLS_T0 => VARIABLE_GROUP%VVCLS%FT0
+    SELF%F_VCLS_T1 => VARIABLE_GROUP%VVCLS%FT1
+    SELF%F_VCLS_T9 => VARIABLE_GROUP%VVCLS%FT9
+    SELF%F_NUCLS_T0 => VARIABLE_GROUP%VNUCLS%FT0
+    SELF%F_NUCLS_T1 => VARIABLE_GROUP%VNUCLS%FT1
+    SELF%F_NUCLS_T9 => VARIABLE_GROUP%VNUCLS%FT9
+    SELF%F_NVCLS_T0 => VARIABLE_GROUP%VNVCLS%FT0
+    SELF%F_NVCLS_T1 => VARIABLE_GROUP%VNVCLS%FT1
+    SELF%F_NVCLS_T9 => VARIABLE_GROUP%VNVCLS%FT9
+    SELF%VARIABLE_GROUP => VARIABLE_GROUP
+    SELF%F_GROUP => VARIABLE_GROUP%F_GROUP
+  END SUBROUTINE SURFACE_VIEW_GROUP_CLS_INIT
+
+  SUBROUTINE SURFACE_VIEW_GROUP_CLS_UPDATE_VIEW(SELF, BLOCK_INDEX)
+    ! Extract local array views from field objects
+    CLASS(SURFACE_VIEW_GROUP_CLS) :: SELF
+    INTEGER(KIND=JPIM), INTENT(IN) :: BLOCK_INDEX
+
+    ! Set up the view pointer for each timestep field
+    SELF%PTCLS_T0 => SELF%F_TCLS_T0%GET_VIEW(BLOCK_INDEX)
+    SELF%PTCLS_T1 => SELF%F_TCLS_T1%GET_VIEW(BLOCK_INDEX)
+    SELF%PTCLS_T9 => SELF%F_TCLS_T9%GET_VIEW(BLOCK_INDEX)
+    SELF%PHUCLS_T0 => SELF%F_HUCLS_T0%GET_VIEW(BLOCK_INDEX)
+    SELF%PHUCLS_T1 => SELF%F_HUCLS_T1%GET_VIEW(BLOCK_INDEX)
+    SELF%PHUCLS_T9 => SELF%F_HUCLS_T9%GET_VIEW(BLOCK_INDEX)
+    SELF%PUCLS_T0 => SELF%F_UCLS_T0%GET_VIEW(BLOCK_INDEX)
+    SELF%PUCLS_T1 => SELF%F_UCLS_T1%GET_VIEW(BLOCK_INDEX)
+    SELF%PUCLS_T9 => SELF%F_UCLS_T9%GET_VIEW(BLOCK_INDEX)
+    SELF%PVCLS_T0 => SELF%F_VCLS_T0%GET_VIEW(BLOCK_INDEX)
+    SELF%PVCLS_T1 => SELF%F_VCLS_T1%GET_VIEW(BLOCK_INDEX)
+    SELF%PVCLS_T9 => SELF%F_VCLS_T9%GET_VIEW(BLOCK_INDEX)
+    SELF%PNUCLS_T0 => SELF%F_NUCLS_T0%GET_VIEW(BLOCK_INDEX)
+    SELF%PNUCLS_T1 => SELF%F_NUCLS_T1%GET_VIEW(BLOCK_INDEX)
+    SELF%PNUCLS_T9 => SELF%F_NUCLS_T9%GET_VIEW(BLOCK_INDEX)
+    SELF%PNVCLS_T0 => SELF%F_NVCLS_T0%GET_VIEW(BLOCK_INDEX)
+    SELF%PNVCLS_T1 => SELF%F_NVCLS_T1%GET_VIEW(BLOCK_INDEX)
+    SELF%PNVCLS_T9 => SELF%F_NVCLS_T9%GET_VIEW(BLOCK_INDEX)
+
+    IF (ASSOCIATED(SELF%F_GROUP))  SELF%PGROUP => SELF%F_GROUP%GET_VIEW(BLOCK_INDEX)
+  END SUBROUTINE SURFACE_VIEW_GROUP_CLS_UPDATE_VIEW
+
+  SUBROUTINE SURFACE_VIEW_GROUP_OML_INIT(SELF, VARIABLE_GROUP)
+    ! Constructor of the array view type for a surface variable group
+    CLASS(SURFACE_VIEW_GROUP_OML) :: SELF
+    TYPE(SURFACE_VARIABLE_GROUP_OML), TARGET, INTENT(INOUT) :: VARIABLE_GROUP
+
+    ! Create a view per timestep field for each prognostic variable
+    SELF%F_TO_T0 => VARIABLE_GROUP%VTO%FT0
+    SELF%F_TO_T1 => VARIABLE_GROUP%VTO%FT1
+    SELF%F_TO_T9 => VARIABLE_GROUP%VTO%FT9
+    SELF%F_SO_T0 => VARIABLE_GROUP%VSO%FT0
+    SELF%F_SO_T1 => VARIABLE_GROUP%VSO%FT1
+    SELF%F_SO_T9 => VARIABLE_GROUP%VSO%FT9
+    SELF%F_UO_T0 => VARIABLE_GROUP%VUO%FT0
+    SELF%F_UO_T1 => VARIABLE_GROUP%VUO%FT1
+    SELF%F_UO_T9 => VARIABLE_GROUP%VUO%FT9
+    SELF%F_VO_T0 => VARIABLE_GROUP%VVO%FT0
+    SELF%F_VO_T1 => VARIABLE_GROUP%VVO%FT1
+    SELF%F_VO_T9 => VARIABLE_GROUP%VVO%FT9
+    SELF%VARIABLE_GROUP => VARIABLE_GROUP
+    SELF%F_GROUP => VARIABLE_GROUP%F_GROUP
+  END SUBROUTINE SURFACE_VIEW_GROUP_OML_INIT
+
+  SUBROUTINE SURFACE_VIEW_GROUP_OML_UPDATE_VIEW(SELF, BLOCK_INDEX)
+    ! Extract local array views from field objects
+    CLASS(SURFACE_VIEW_GROUP_OML) :: SELF
+    INTEGER(KIND=JPIM), INTENT(IN) :: BLOCK_INDEX
+
+    ! Set up the view pointer for each timestep field
+    SELF%PTO_T0 => SELF%F_TO_T0%GET_VIEW(BLOCK_INDEX)
+    SELF%PTO_T1 => SELF%F_TO_T1%GET_VIEW(BLOCK_INDEX)
+    SELF%PTO_T9 => SELF%F_TO_T9%GET_VIEW(BLOCK_INDEX)
+    SELF%PSO_T0 => SELF%F_SO_T0%GET_VIEW(BLOCK_INDEX)
+    SELF%PSO_T1 => SELF%F_SO_T1%GET_VIEW(BLOCK_INDEX)
+    SELF%PSO_T9 => SELF%F_SO_T9%GET_VIEW(BLOCK_INDEX)
+    SELF%PUO_T0 => SELF%F_UO_T0%GET_VIEW(BLOCK_INDEX)
+    SELF%PUO_T1 => SELF%F_UO_T1%GET_VIEW(BLOCK_INDEX)
+    SELF%PUO_T9 => SELF%F_UO_T9%GET_VIEW(BLOCK_INDEX)
+    SELF%PVO_T0 => SELF%F_VO_T0%GET_VIEW(BLOCK_INDEX)
+    SELF%PVO_T1 => SELF%F_VO_T1%GET_VIEW(BLOCK_INDEX)
+    SELF%PVO_T9 => SELF%F_VO_T9%GET_VIEW(BLOCK_INDEX)
+
+    IF (ASSOCIATED(SELF%F_GROUP))  SELF%PGROUP => SELF%F_GROUP%GET_VIEW(BLOCK_INDEX)
+  END SUBROUTINE SURFACE_VIEW_GROUP_OML_UPDATE_VIEW
+
+  SUBROUTINE SURFACE_VIEW_GROUP_EXTRP_INIT(SELF, VARIABLE_GROUP)
+    ! Constructor of the array view type for a surface variable group
+    CLASS(SURFACE_VIEW_GROUP_EXTRP) :: SELF
+    TYPE(SURFACE_VARIABLE_GROUP_EXTRP), TARGET, INTENT(INOUT) :: VARIABLE_GROUP
+
+    ! Create a view per timestep field for each prognostic variable
+    SELF%VARIABLE_GROUP => VARIABLE_GROUP
+    SELF%F_GROUP => VARIABLE_GROUP%F_GROUP
+  END SUBROUTINE SURFACE_VIEW_GROUP_EXTRP_INIT
+
+  SUBROUTINE SURFACE_VIEW_GROUP_EXTRP_UPDATE_VIEW(SELF, BLOCK_INDEX)
+    ! Extract local array views from field objects
+    CLASS(SURFACE_VIEW_GROUP_EXTRP) :: SELF
+    INTEGER(KIND=JPIM), INTENT(IN) :: BLOCK_INDEX
+
+    ! Set up the view pointer for each timestep field
+
+    IF (ASSOCIATED(SELF%F_GROUP))  SELF%PGROUP => SELF%F_GROUP%GET_VIEW(BLOCK_INDEX)
+  END SUBROUTINE SURFACE_VIEW_GROUP_EXTRP_UPDATE_VIEW
+
+  SUBROUTINE SURFACE_VIEW_GROUP_XTRP2_INIT(SELF, VARIABLE_GROUP)
+    ! Constructor of the array view type for a surface variable group
+    CLASS(SURFACE_VIEW_GROUP_XTRP2) :: SELF
+    TYPE(SURFACE_VARIABLE_GROUP_XTRP2), TARGET, INTENT(INOUT) :: VARIABLE_GROUP
+
+    ! Create a view per timestep field for each prognostic variable
+    SELF%VARIABLE_GROUP => VARIABLE_GROUP
+    SELF%F_GROUP => VARIABLE_GROUP%F_GROUP
+  END SUBROUTINE SURFACE_VIEW_GROUP_XTRP2_INIT
+
+  SUBROUTINE SURFACE_VIEW_GROUP_XTRP2_UPDATE_VIEW(SELF, BLOCK_INDEX)
+    ! Extract local array views from field objects
+    CLASS(SURFACE_VIEW_GROUP_XTRP2) :: SELF
+    INTEGER(KIND=JPIM), INTENT(IN) :: BLOCK_INDEX
+
+    ! Set up the view pointer for each timestep field
+
+    IF (ASSOCIATED(SELF%F_GROUP))  SELF%PGROUP => SELF%F_GROUP%GET_VIEW(BLOCK_INDEX)
+  END SUBROUTINE SURFACE_VIEW_GROUP_XTRP2_UPDATE_VIEW
+
+  SUBROUTINE SURFACE_VIEW_GROUP_CANRI_INIT(SELF, VARIABLE_GROUP)
+    ! Constructor of the array view type for a surface variable group
+    CLASS(SURFACE_VIEW_GROUP_CANRI) :: SELF
+    TYPE(SURFACE_VARIABLE_GROUP_CANRI), TARGET, INTENT(INOUT) :: VARIABLE_GROUP
+
+    ! Create a view per timestep field for each prognostic variable
+    SELF%VARIABLE_GROUP => VARIABLE_GROUP
+    SELF%F_GROUP => VARIABLE_GROUP%F_GROUP
+  END SUBROUTINE SURFACE_VIEW_GROUP_CANRI_INIT
+
+  SUBROUTINE SURFACE_VIEW_GROUP_CANRI_UPDATE_VIEW(SELF, BLOCK_INDEX)
+    ! Extract local array views from field objects
+    CLASS(SURFACE_VIEW_GROUP_CANRI) :: SELF
+    INTEGER(KIND=JPIM), INTENT(IN) :: BLOCK_INDEX
+
+    ! Set up the view pointer for each timestep field
+
+    IF (ASSOCIATED(SELF%F_GROUP))  SELF%PGROUP => SELF%F_GROUP%GET_VIEW(BLOCK_INDEX)
+  END SUBROUTINE SURFACE_VIEW_GROUP_CANRI_UPDATE_VIEW
+
+
+
+  SUBROUTINE SURFACE_VIEW_GROUP_VARSF_INIT(SELF, VARIABLE_GROUP)
+    ! Constructor of the array view type for a surface variable group
+    CLASS(SURFACE_VIEW_GROUP_VARSF) :: SELF
+    TYPE(SURFACE_VARIABLE_GROUP_VARSF), TARGET, INTENT(INOUT) :: VARIABLE_GROUP
+    INTEGER(KIND=JPIM) :: I, J, MYSHAPE(2)
+
+    ! Create a view for the "T0" field only for diagnostic fields
+    SELF%F_Z0F => VARIABLE_GROUP%VZ0F%FT0
+    SELF%F_ALBF => VARIABLE_GROUP%VALBF%FT0
+    SELF%F_EMISF => VARIABLE_GROUP%VEMISF%FT0
+    SELF%F_GETRL => VARIABLE_GROUP%VGETRL%FT0
+    SELF%F_LSM => VARIABLE_GROUP%VLSM%FT0
+    SELF%F_VEG => VARIABLE_GROUP%VVEG%FT0
+    SELF%F_VRLAN => VARIABLE_GROUP%VVRLAN%FT0
+    SELF%F_VRLDI => VARIABLE_GROUP%VVRLDI%FT0
+    SELF%F_SIG => VARIABLE_GROUP%VSIG%FT0
+    SELF%F_ALBSF => VARIABLE_GROUP%VALBSF%FT0
+    SELF%F_LAN => VARIABLE_GROUP%VLAN%FT0
+    SELF%F_SST => VARIABLE_GROUP%VSST%FT0
+    SELF%F_SSS => VARIABLE_GROUP%VSSS%FT0
+    SELF%F_LZ0H => VARIABLE_GROUP%VLZ0H%FT0
+    SELF%F_CVL => VARIABLE_GROUP%VCVL%FT0
+    SELF%F_CVH => VARIABLE_GROUP%VCVH%FT0
+    SELF%F_TVL => VARIABLE_GROUP%VTVL%FT0
+    SELF%F_TVH => VARIABLE_GROUP%VTVH%FT0
+    SELF%F_LAIL => VARIABLE_GROUP%VLAIL%FT0
+    SELF%F_LAIH => VARIABLE_GROUP%VLAIH%FT0
+    SELF%F_SOTY => VARIABLE_GROUP%VSOTY%FT0
+    SELF%F_CLK => VARIABLE_GROUP%VCLK%FT0
+    SELF%F_DL => VARIABLE_GROUP%VDL%FT0
+    SELF%F_CI => VARIABLE_GROUP%VCI%FT0
+    SELF%F_UCUR => VARIABLE_GROUP%VUCUR%FT0
+    SELF%F_VCUR => VARIABLE_GROUP%VVCUR%FT0
+    SELF%F_Z0RLF => VARIABLE_GROUP%VZ0RLF%FT0
+    SELF%F_CO2O => VARIABLE_GROUP%VCO2O%FT0
+    SELF%F_CO2B => VARIABLE_GROUP%VCO2B%FT0
+    SELF%F_CO2A => VARIABLE_GROUP%VCO2A%FT0
+    SELF%F_CO2F => VARIABLE_GROUP%VCO2F%FT0
+    SELF%F_CGPP => VARIABLE_GROUP%VCGPP%FT0
+    SELF%F_CREC => VARIABLE_GROUP%VCREC%FT0
+    SELF%F_CH4AG => VARIABLE_GROUP%VCH4AG%FT0
+    SELF%F_CH4F => VARIABLE_GROUP%VCH4F%FT0
+    SELF%F_SDFOR => VARIABLE_GROUP%VSDFOR%FT0
+    SELF%F_ALUVP => VARIABLE_GROUP%VALUVP%FT0
+    SELF%F_ALUVD => VARIABLE_GROUP%VALUVD%FT0
+    SELF%F_ALNIP => VARIABLE_GROUP%VALNIP%FT0
+    SELF%F_ALNID => VARIABLE_GROUP%VALNID%FT0
+    SELF%F_FP1 => VARIABLE_GROUP%VFP1%FT0
+    SELF%F_BCBF => VARIABLE_GROUP%VBCBF%FT0
+    SELF%F_BCFF => VARIABLE_GROUP%VBCFF%FT0
+    SELF%F_BCGF => VARIABLE_GROUP%VBCGF%FT0
+    SELF%F_OMBF => VARIABLE_GROUP%VOMBF%FT0
+    SELF%F_OMFF => VARIABLE_GROUP%VOMFF%FT0
+    SELF%F_OMGF => VARIABLE_GROUP%VOMGF%FT0
+    SELF%F_INJF => VARIABLE_GROUP%VINJF%FT0
+    SELF%F_SO2L => VARIABLE_GROUP%VSO2L%FT0
+    SELF%F_SO2H => VARIABLE_GROUP%VSO2H%FT0
+    SELF%F_SO2DD => VARIABLE_GROUP%VSO2DD%FT0
+    SELF%F_SOGF => VARIABLE_GROUP%VSOGF%FT0
+    SELF%F_SOA => VARIABLE_GROUP%VSOA%FT0
+    SELF%F_VOLC => VARIABLE_GROUP%VVOLC%FT0
+    SELF%F_VOLE => VARIABLE_GROUP%VVOLE%FT0
+    SELF%F_DMSO => VARIABLE_GROUP%VDMSO%FT0
+    SELF%F_SOACO => VARIABLE_GROUP%VSOACO%FT0
+    SELF%F_URBF => VARIABLE_GROUP%VURBF%FT0
+    SELF%F_VOLCALTI => VARIABLE_GROUP%VVOLCALTI%FT0
+    SELF%F_FCA1 => VARIABLE_GROUP%VFCA1%FT0
+    SELF%F_FCA2 => VARIABLE_GROUP%VFCA2%FT0
+    SELF%F_AERDEP => VARIABLE_GROUP%VAERDEP%FT0
+    SELF%F_AERLTS => VARIABLE_GROUP%VAERLTS%FT0
+    SELF%F_AERSCC => VARIABLE_GROUP%VAERSCC%FT0
+    SELF%F_DSF => VARIABLE_GROUP%VDSF%FT0
+    IF (ALLOCATED(VARIABLE_GROUP%VCHEMFLX)) THEN
+      ALLOCATE(SELF%PCHEMFLX(SIZE(VARIABLE_GROUP%VCHEMFLX)))
+      ALLOCATE(SELF%F_CHEMFLX(SIZE(VARIABLE_GROUP%VCHEMFLX)))
+      DO I=1, SIZE(VARIABLE_GROUP%VCHEMFLX)
+        SELF%F_CHEMFLX(I)%PTR => VARIABLE_GROUP%VCHEMFLX(I)%FT0
+      END DO
+    END IF
+    IF (ALLOCATED(VARIABLE_GROUP%VCHEMFLXO)) THEN
+      ALLOCATE(SELF%PCHEMFLXO(SIZE(VARIABLE_GROUP%VCHEMFLXO)))
+      ALLOCATE(SELF%F_CHEMFLXO(SIZE(VARIABLE_GROUP%VCHEMFLXO)))
+      DO I=1, SIZE(VARIABLE_GROUP%VCHEMFLXO)
+        SELF%F_CHEMFLXO(I)%PTR => VARIABLE_GROUP%VCHEMFLXO(I)%FT0
+      END DO
+    END IF
+    IF (ALLOCATED(VARIABLE_GROUP%VCHEMDV)) THEN
+      ALLOCATE(SELF%PCHEMDV(SIZE(VARIABLE_GROUP%VCHEMDV)))
+      ALLOCATE(SELF%F_CHEMDV(SIZE(VARIABLE_GROUP%VCHEMDV)))
+      DO I=1, SIZE(VARIABLE_GROUP%VCHEMDV)
+        SELF%F_CHEMDV(I)%PTR => VARIABLE_GROUP%VCHEMDV(I)%FT0
+      END DO
+    END IF
+    SELF%F_NUDM => VARIABLE_GROUP%VNUDM%FT0
+    SELF%VARIABLE_GROUP => VARIABLE_GROUP
+    SELF%F_GROUP => VARIABLE_GROUP%F_GROUP
+  END SUBROUTINE SURFACE_VIEW_GROUP_VARSF_INIT
+
+  SUBROUTINE SURFACE_VIEW_GROUP_VARSF_UPDATE_VIEW(SELF, BLOCK_INDEX)
+    ! Extract local array views from field objects
+    CLASS(SURFACE_VIEW_GROUP_VARSF) :: SELF
+    INTEGER(KIND=JPIM), INTENT(IN) :: BLOCK_INDEX
+    INTEGER(KIND=JPIM) :: I, J
+
+    ! Set up the view pointer for the "T0" field
+    IF (ASSOCIATED(SELF%F_Z0F))  SELF%PZ0F => SELF%F_Z0F%GET_VIEW(BLOCK_INDEX)
+    IF (ASSOCIATED(SELF%F_ALBF))  SELF%PALBF => SELF%F_ALBF%GET_VIEW(BLOCK_INDEX)
+    IF (ASSOCIATED(SELF%F_EMISF))  SELF%PEMISF => SELF%F_EMISF%GET_VIEW(BLOCK_INDEX)
+    IF (ASSOCIATED(SELF%F_GETRL))  SELF%PGETRL => SELF%F_GETRL%GET_VIEW(BLOCK_INDEX)
+    IF (ASSOCIATED(SELF%F_LSM))  SELF%PLSM => SELF%F_LSM%GET_VIEW(BLOCK_INDEX)
+    IF (ASSOCIATED(SELF%F_VEG))  SELF%PVEG => SELF%F_VEG%GET_VIEW(BLOCK_INDEX)
+    IF (ASSOCIATED(SELF%F_VRLAN))  SELF%PVRLAN => SELF%F_VRLAN%GET_VIEW(BLOCK_INDEX)
+    IF (ASSOCIATED(SELF%F_VRLDI))  SELF%PVRLDI => SELF%F_VRLDI%GET_VIEW(BLOCK_INDEX)
+    IF (ASSOCIATED(SELF%F_SIG))  SELF%PSIG => SELF%F_SIG%GET_VIEW(BLOCK_INDEX)
+    IF (ASSOCIATED(SELF%F_ALBSF))  SELF%PALBSF => SELF%F_ALBSF%GET_VIEW(BLOCK_INDEX)
+    IF (ASSOCIATED(SELF%F_LAN))  SELF%PLAN => SELF%F_LAN%GET_VIEW(BLOCK_INDEX)
+    IF (ASSOCIATED(SELF%F_SST))  SELF%PSST => SELF%F_SST%GET_VIEW(BLOCK_INDEX)
+    IF (ASSOCIATED(SELF%F_SSS))  SELF%PSSS => SELF%F_SSS%GET_VIEW(BLOCK_INDEX)
+    IF (ASSOCIATED(SELF%F_LZ0H))  SELF%PLZ0H => SELF%F_LZ0H%GET_VIEW(BLOCK_INDEX)
+    IF (ASSOCIATED(SELF%F_CVL))  SELF%PCVL => SELF%F_CVL%GET_VIEW(BLOCK_INDEX)
+    IF (ASSOCIATED(SELF%F_CVH))  SELF%PCVH => SELF%F_CVH%GET_VIEW(BLOCK_INDEX)
+    IF (ASSOCIATED(SELF%F_TVL))  SELF%PTVL => SELF%F_TVL%GET_VIEW(BLOCK_INDEX)
+    IF (ASSOCIATED(SELF%F_TVH))  SELF%PTVH => SELF%F_TVH%GET_VIEW(BLOCK_INDEX)
+    IF (ASSOCIATED(SELF%F_LAIL))  SELF%PLAIL => SELF%F_LAIL%GET_VIEW(BLOCK_INDEX)
+    IF (ASSOCIATED(SELF%F_LAIH))  SELF%PLAIH => SELF%F_LAIH%GET_VIEW(BLOCK_INDEX)
+    IF (ASSOCIATED(SELF%F_SOTY))  SELF%PSOTY => SELF%F_SOTY%GET_VIEW(BLOCK_INDEX)
+    IF (ASSOCIATED(SELF%F_CLK))  SELF%PCLK => SELF%F_CLK%GET_VIEW(BLOCK_INDEX)
+    IF (ASSOCIATED(SELF%F_DL))  SELF%PDL => SELF%F_DL%GET_VIEW(BLOCK_INDEX)
+    IF (ASSOCIATED(SELF%F_CI))  SELF%PCI => SELF%F_CI%GET_VIEW(BLOCK_INDEX)
+    IF (ASSOCIATED(SELF%F_UCUR))  SELF%PUCUR => SELF%F_UCUR%GET_VIEW(BLOCK_INDEX)
+    IF (ASSOCIATED(SELF%F_VCUR))  SELF%PVCUR => SELF%F_VCUR%GET_VIEW(BLOCK_INDEX)
+    IF (ASSOCIATED(SELF%F_Z0RLF))  SELF%PZ0RLF => SELF%F_Z0RLF%GET_VIEW(BLOCK_INDEX)
+    IF (ASSOCIATED(SELF%F_CO2O))  SELF%PCO2O => SELF%F_CO2O%GET_VIEW(BLOCK_INDEX)
+    IF (ASSOCIATED(SELF%F_CO2B))  SELF%PCO2B => SELF%F_CO2B%GET_VIEW(BLOCK_INDEX)
+    IF (ASSOCIATED(SELF%F_CO2A))  SELF%PCO2A => SELF%F_CO2A%GET_VIEW(BLOCK_INDEX)
+    IF (ASSOCIATED(SELF%F_CO2F))  SELF%PCO2F => SELF%F_CO2F%GET_VIEW(BLOCK_INDEX)
+    IF (ASSOCIATED(SELF%F_CGPP))  SELF%PCGPP => SELF%F_CGPP%GET_VIEW(BLOCK_INDEX)
+    IF (ASSOCIATED(SELF%F_CREC))  SELF%PCREC => SELF%F_CREC%GET_VIEW(BLOCK_INDEX)
+    IF (ASSOCIATED(SELF%F_CH4AG))  SELF%PCH4AG => SELF%F_CH4AG%GET_VIEW(BLOCK_INDEX)
+    IF (ASSOCIATED(SELF%F_CH4F))  SELF%PCH4F => SELF%F_CH4F%GET_VIEW(BLOCK_INDEX)
+    IF (ASSOCIATED(SELF%F_SDFOR))  SELF%PSDFOR => SELF%F_SDFOR%GET_VIEW(BLOCK_INDEX)
+    IF (ASSOCIATED(SELF%F_ALUVP))  SELF%PALUVP => SELF%F_ALUVP%GET_VIEW(BLOCK_INDEX)
+    IF (ASSOCIATED(SELF%F_ALUVD))  SELF%PALUVD => SELF%F_ALUVD%GET_VIEW(BLOCK_INDEX)
+    IF (ASSOCIATED(SELF%F_ALNIP))  SELF%PALNIP => SELF%F_ALNIP%GET_VIEW(BLOCK_INDEX)
+    IF (ASSOCIATED(SELF%F_ALNID))  SELF%PALNID => SELF%F_ALNID%GET_VIEW(BLOCK_INDEX)
+    IF (ASSOCIATED(SELF%F_FP1))  SELF%PFP1 => SELF%F_FP1%GET_VIEW(BLOCK_INDEX)
+    IF (ASSOCIATED(SELF%F_BCBF))  SELF%PBCBF => SELF%F_BCBF%GET_VIEW(BLOCK_INDEX)
+    IF (ASSOCIATED(SELF%F_BCFF))  SELF%PBCFF => SELF%F_BCFF%GET_VIEW(BLOCK_INDEX)
+    IF (ASSOCIATED(SELF%F_BCGF))  SELF%PBCGF => SELF%F_BCGF%GET_VIEW(BLOCK_INDEX)
+    IF (ASSOCIATED(SELF%F_OMBF))  SELF%POMBF => SELF%F_OMBF%GET_VIEW(BLOCK_INDEX)
+    IF (ASSOCIATED(SELF%F_OMFF))  SELF%POMFF => SELF%F_OMFF%GET_VIEW(BLOCK_INDEX)
+    IF (ASSOCIATED(SELF%F_OMGF))  SELF%POMGF => SELF%F_OMGF%GET_VIEW(BLOCK_INDEX)
+    IF (ASSOCIATED(SELF%F_INJF))  SELF%PINJF => SELF%F_INJF%GET_VIEW(BLOCK_INDEX)
+    IF (ASSOCIATED(SELF%F_SO2L))  SELF%PSO2L => SELF%F_SO2L%GET_VIEW(BLOCK_INDEX)
+    IF (ASSOCIATED(SELF%F_SO2H))  SELF%PSO2H => SELF%F_SO2H%GET_VIEW(BLOCK_INDEX)
+    IF (ASSOCIATED(SELF%F_SO2DD))  SELF%PSO2DD => SELF%F_SO2DD%GET_VIEW(BLOCK_INDEX)
+    IF (ASSOCIATED(SELF%F_SOGF))  SELF%PSOGF => SELF%F_SOGF%GET_VIEW(BLOCK_INDEX)
+    IF (ASSOCIATED(SELF%F_SOA))  SELF%PSOA => SELF%F_SOA%GET_VIEW(BLOCK_INDEX)
+    IF (ASSOCIATED(SELF%F_VOLC))  SELF%PVOLC => SELF%F_VOLC%GET_VIEW(BLOCK_INDEX)
+    IF (ASSOCIATED(SELF%F_VOLE))  SELF%PVOLE => SELF%F_VOLE%GET_VIEW(BLOCK_INDEX)
+    IF (ASSOCIATED(SELF%F_DMSO))  SELF%PDMSO => SELF%F_DMSO%GET_VIEW(BLOCK_INDEX)
+    IF (ASSOCIATED(SELF%F_SOACO))  SELF%PSOACO => SELF%F_SOACO%GET_VIEW(BLOCK_INDEX)
+    IF (ASSOCIATED(SELF%F_URBF))  SELF%PURBF => SELF%F_URBF%GET_VIEW(BLOCK_INDEX)
+    IF (ASSOCIATED(SELF%F_VOLCALTI))  SELF%PVOLCALTI => SELF%F_VOLCALTI%GET_VIEW(BLOCK_INDEX)
+    IF (ASSOCIATED(SELF%F_FCA1))  SELF%PFCA1 => SELF%F_FCA1%GET_VIEW(BLOCK_INDEX)
+    IF (ASSOCIATED(SELF%F_FCA2))  SELF%PFCA2 => SELF%F_FCA2%GET_VIEW(BLOCK_INDEX)
+    IF (ASSOCIATED(SELF%F_AERDEP))  SELF%PAERDEP => SELF%F_AERDEP%GET_VIEW(BLOCK_INDEX)
+    IF (ASSOCIATED(SELF%F_AERLTS))  SELF%PAERLTS => SELF%F_AERLTS%GET_VIEW(BLOCK_INDEX)
+    IF (ASSOCIATED(SELF%F_AERSCC))  SELF%PAERSCC => SELF%F_AERSCC%GET_VIEW(BLOCK_INDEX)
+    IF (ASSOCIATED(SELF%F_DSF))  SELF%PDSF => SELF%F_DSF%GET_VIEW(BLOCK_INDEX)
+    IF (ALLOCATED(SELF%F_CHEMFLX)) THEN
+      DO I=1, SIZE(SELF%F_CHEMFLX)
+        SELF%PCHEMFLX(I)%P => SELF%F_CHEMFLX(I)%PTR%GET_VIEW(BLOCK_INDEX)
+      END DO
+    END IF
+    IF (ALLOCATED(SELF%F_CHEMFLXO)) THEN
+      DO I=1, SIZE(SELF%F_CHEMFLXO)
+        SELF%PCHEMFLXO(I)%P => SELF%F_CHEMFLXO(I)%PTR%GET_VIEW(BLOCK_INDEX)
+      END DO
+    END IF
+    IF (ALLOCATED(SELF%F_CHEMDV)) THEN
+      DO I=1, SIZE(SELF%F_CHEMDV)
+        SELF%PCHEMDV(I)%P => SELF%F_CHEMDV(I)%PTR%GET_VIEW(BLOCK_INDEX)
+      END DO
+    END IF
+    IF (ASSOCIATED(SELF%F_NUDM))  SELF%PNUDM => SELF%F_NUDM%GET_VIEW(BLOCK_INDEX)
+
+    IF (ASSOCIATED(SELF%F_GROUP))  SELF%PGROUP => SELF%F_GROUP%GET_VIEW(BLOCK_INDEX)
+  END SUBROUTINE SURFACE_VIEW_GROUP_VARSF_UPDATE_VIEW
+
+  SUBROUTINE SURFACE_VIEW_GROUP_VCLIH_INIT(SELF, VARIABLE_GROUP)
+    ! Constructor of the array view type for a surface variable group
+    CLASS(SURFACE_VIEW_GROUP_VCLIH) :: SELF
+    TYPE(SURFACE_VARIABLE_GROUP_VCLIH), TARGET, INTENT(INOUT) :: VARIABLE_GROUP
+    INTEGER(KIND=JPIM) :: I, J, MYSHAPE(2)
+
+    ! Create a view for the "T0" field only for diagnostic fields
+    SELF%F_TCCH => VARIABLE_GROUP%VTCCH%FT0
+    SELF%F_SCCH => VARIABLE_GROUP%VSCCH%FT0
+    SELF%F_BCCH => VARIABLE_GROUP%VBCCH%FT0
+    SELF%F_PBLH => VARIABLE_GROUP%VPBLH%FT0
+    SELF%F_SPSH => VARIABLE_GROUP%VSPSH%FT0
+    SELF%F_QSH => VARIABLE_GROUP%VQSH%FT0
+    SELF%F_PCL => VARIABLE_GROUP%VPCL%FT0
+    SELF%F_PSL => VARIABLE_GROUP%VPSL%FT0
+    SELF%F_PCN => VARIABLE_GROUP%VPCN%FT0
+    SELF%F_PSN => VARIABLE_GROUP%VPSN%FT0
+    SELF%F_EVA => VARIABLE_GROUP%VEVA%FT0
+    SELF%VARIABLE_GROUP => VARIABLE_GROUP
+    SELF%F_GROUP => VARIABLE_GROUP%F_GROUP
+  END SUBROUTINE SURFACE_VIEW_GROUP_VCLIH_INIT
+
+  SUBROUTINE SURFACE_VIEW_GROUP_VCLIH_UPDATE_VIEW(SELF, BLOCK_INDEX)
+    ! Extract local array views from field objects
+    CLASS(SURFACE_VIEW_GROUP_VCLIH) :: SELF
+    INTEGER(KIND=JPIM), INTENT(IN) :: BLOCK_INDEX
+    INTEGER(KIND=JPIM) :: I, J
+
+    ! Set up the view pointer for the "T0" field
+    IF (ASSOCIATED(SELF%F_TCCH))  SELF%PTCCH => SELF%F_TCCH%GET_VIEW(BLOCK_INDEX)
+    IF (ASSOCIATED(SELF%F_SCCH))  SELF%PSCCH => SELF%F_SCCH%GET_VIEW(BLOCK_INDEX)
+    IF (ASSOCIATED(SELF%F_BCCH))  SELF%PBCCH => SELF%F_BCCH%GET_VIEW(BLOCK_INDEX)
+    IF (ASSOCIATED(SELF%F_PBLH))  SELF%PPBLH => SELF%F_PBLH%GET_VIEW(BLOCK_INDEX)
+    IF (ASSOCIATED(SELF%F_SPSH))  SELF%PSPSH => SELF%F_SPSH%GET_VIEW(BLOCK_INDEX)
+    IF (ASSOCIATED(SELF%F_QSH))  SELF%PQSH => SELF%F_QSH%GET_VIEW(BLOCK_INDEX)
+    IF (ASSOCIATED(SELF%F_PCL))  SELF%PPCL => SELF%F_PCL%GET_VIEW(BLOCK_INDEX)
+    IF (ASSOCIATED(SELF%F_PSL))  SELF%PPSL => SELF%F_PSL%GET_VIEW(BLOCK_INDEX)
+    IF (ASSOCIATED(SELF%F_PCN))  SELF%PPCN => SELF%F_PCN%GET_VIEW(BLOCK_INDEX)
+    IF (ASSOCIATED(SELF%F_PSN))  SELF%PPSN => SELF%F_PSN%GET_VIEW(BLOCK_INDEX)
+    IF (ASSOCIATED(SELF%F_EVA))  SELF%PEVA => SELF%F_EVA%GET_VIEW(BLOCK_INDEX)
+
+    IF (ASSOCIATED(SELF%F_GROUP))  SELF%PGROUP => SELF%F_GROUP%GET_VIEW(BLOCK_INDEX)
+  END SUBROUTINE SURFACE_VIEW_GROUP_VCLIH_UPDATE_VIEW
+
+  SUBROUTINE SURFACE_VIEW_GROUP_VCLIK_INIT(SELF, VARIABLE_GROUP)
+    ! Constructor of the array view type for a surface variable group
+    CLASS(SURFACE_VIEW_GROUP_VCLIK) :: SELF
+    TYPE(SURFACE_VARIABLE_GROUP_VCLIK), TARGET, INTENT(INOUT) :: VARIABLE_GROUP
+    INTEGER(KIND=JPIM) :: I, J, MYSHAPE(2)
+
+    ! Create a view for the "T0" field only for diagnostic fields
+    SELF%F_UDGRO => VARIABLE_GROUP%VUDGRO%FT0
+    SELF%VARIABLE_GROUP => VARIABLE_GROUP
+    SELF%F_GROUP => VARIABLE_GROUP%F_GROUP
+  END SUBROUTINE SURFACE_VIEW_GROUP_VCLIK_INIT
+
+  SUBROUTINE SURFACE_VIEW_GROUP_VCLIK_UPDATE_VIEW(SELF, BLOCK_INDEX)
+    ! Extract local array views from field objects
+    CLASS(SURFACE_VIEW_GROUP_VCLIK) :: SELF
+    INTEGER(KIND=JPIM), INTENT(IN) :: BLOCK_INDEX
+    INTEGER(KIND=JPIM) :: I, J
+
+    ! Set up the view pointer for the "T0" field
+    IF (ASSOCIATED(SELF%F_UDGRO))  SELF%PUDGRO => SELF%F_UDGRO%GET_VIEW(BLOCK_INDEX)
+
+    IF (ASSOCIATED(SELF%F_GROUP))  SELF%PGROUP => SELF%F_GROUP%GET_VIEW(BLOCK_INDEX)
+  END SUBROUTINE SURFACE_VIEW_GROUP_VCLIK_UPDATE_VIEW
+
+  SUBROUTINE SURFACE_VIEW_GROUP_VCLIP_INIT(SELF, VARIABLE_GROUP)
+    ! Constructor of the array view type for a surface variable group
+    CLASS(SURFACE_VIEW_GROUP_VCLIP) :: SELF
+    TYPE(SURFACE_VARIABLE_GROUP_VCLIP), TARGET, INTENT(INOUT) :: VARIABLE_GROUP
+    INTEGER(KIND=JPIM) :: I, J, MYSHAPE(2)
+
+    ! Create a view for the "T0" field only for diagnostic fields
+    SELF%F_TPC => VARIABLE_GROUP%VTPC%FT0
+    SELF%F_WPC => VARIABLE_GROUP%VWPC%FT0
+    SELF%VARIABLE_GROUP => VARIABLE_GROUP
+    SELF%F_GROUP => VARIABLE_GROUP%F_GROUP
+  END SUBROUTINE SURFACE_VIEW_GROUP_VCLIP_INIT
+
+  SUBROUTINE SURFACE_VIEW_GROUP_VCLIP_UPDATE_VIEW(SELF, BLOCK_INDEX)
+    ! Extract local array views from field objects
+    CLASS(SURFACE_VIEW_GROUP_VCLIP) :: SELF
+    INTEGER(KIND=JPIM), INTENT(IN) :: BLOCK_INDEX
+    INTEGER(KIND=JPIM) :: I, J
+
+    ! Set up the view pointer for the "T0" field
+    IF (ASSOCIATED(SELF%F_TPC))  SELF%PTPC => SELF%F_TPC%GET_VIEW(BLOCK_INDEX)
+    IF (ASSOCIATED(SELF%F_WPC))  SELF%PWPC => SELF%F_WPC%GET_VIEW(BLOCK_INDEX)
+
+    IF (ASSOCIATED(SELF%F_GROUP))  SELF%PGROUP => SELF%F_GROUP%GET_VIEW(BLOCK_INDEX)
+  END SUBROUTINE SURFACE_VIEW_GROUP_VCLIP_UPDATE_VIEW
+
+  SUBROUTINE SURFACE_VIEW_GROUP_VCLIV_INIT(SELF, VARIABLE_GROUP)
+    ! Constructor of the array view type for a surface variable group
+    CLASS(SURFACE_VIEW_GROUP_VCLIV) :: SELF
+    TYPE(SURFACE_VARIABLE_GROUP_VCLIV), TARGET, INTENT(INOUT) :: VARIABLE_GROUP
+    INTEGER(KIND=JPIM) :: I, J, MYSHAPE(2)
+
+    ! Create a view for the "T0" field only for diagnostic fields
+    SELF%F_ARG => VARIABLE_GROUP%VARG%FT0
+    SELF%F_SAB => VARIABLE_GROUP%VSAB%FT0
+    SELF%F_D2 => VARIABLE_GROUP%VD2%FT0
+    SELF%F_IVEG => VARIABLE_GROUP%VIVEG%FT0
+    SELF%F_RSMIN => VARIABLE_GROUP%VRSMIN%FT0
+    SELF%F_LAI => VARIABLE_GROUP%VLAI%FT0
+    SELF%F_HV => VARIABLE_GROUP%VHV%FT0
+    SELF%F_Z0H => VARIABLE_GROUP%VZ0H%FT0
+    SELF%F_ALS => VARIABLE_GROUP%VALS%FT0
+    SELF%F_ALV => VARIABLE_GROUP%VALV%FT0
+    SELF%VARIABLE_GROUP => VARIABLE_GROUP
+    SELF%F_GROUP => VARIABLE_GROUP%F_GROUP
+  END SUBROUTINE SURFACE_VIEW_GROUP_VCLIV_INIT
+
+  SUBROUTINE SURFACE_VIEW_GROUP_VCLIV_UPDATE_VIEW(SELF, BLOCK_INDEX)
+    ! Extract local array views from field objects
+    CLASS(SURFACE_VIEW_GROUP_VCLIV) :: SELF
+    INTEGER(KIND=JPIM), INTENT(IN) :: BLOCK_INDEX
+    INTEGER(KIND=JPIM) :: I, J
+
+    ! Set up the view pointer for the "T0" field
+    IF (ASSOCIATED(SELF%F_ARG))  SELF%PARG => SELF%F_ARG%GET_VIEW(BLOCK_INDEX)
+    IF (ASSOCIATED(SELF%F_SAB))  SELF%PSAB => SELF%F_SAB%GET_VIEW(BLOCK_INDEX)
+    IF (ASSOCIATED(SELF%F_D2))  SELF%PD2 => SELF%F_D2%GET_VIEW(BLOCK_INDEX)
+    IF (ASSOCIATED(SELF%F_IVEG))  SELF%PIVEG => SELF%F_IVEG%GET_VIEW(BLOCK_INDEX)
+    IF (ASSOCIATED(SELF%F_RSMIN))  SELF%PRSMIN => SELF%F_RSMIN%GET_VIEW(BLOCK_INDEX)
+    IF (ASSOCIATED(SELF%F_LAI))  SELF%PLAI => SELF%F_LAI%GET_VIEW(BLOCK_INDEX)
+    IF (ASSOCIATED(SELF%F_HV))  SELF%PHV => SELF%F_HV%GET_VIEW(BLOCK_INDEX)
+    IF (ASSOCIATED(SELF%F_Z0H))  SELF%PZ0H => SELF%F_Z0H%GET_VIEW(BLOCK_INDEX)
+    IF (ASSOCIATED(SELF%F_ALS))  SELF%PALS => SELF%F_ALS%GET_VIEW(BLOCK_INDEX)
+    IF (ASSOCIATED(SELF%F_ALV))  SELF%PALV => SELF%F_ALV%GET_VIEW(BLOCK_INDEX)
+
+    IF (ASSOCIATED(SELF%F_GROUP))  SELF%PGROUP => SELF%F_GROUP%GET_VIEW(BLOCK_INDEX)
+  END SUBROUTINE SURFACE_VIEW_GROUP_VCLIV_UPDATE_VIEW
+
+  SUBROUTINE SURFACE_VIEW_GROUP_VCLIA_INIT(SELF, VARIABLE_GROUP)
+    ! Constructor of the array view type for a surface variable group
+    CLASS(SURFACE_VIEW_GROUP_VCLIA) :: SELF
+    TYPE(SURFACE_VARIABLE_GROUP_VCLIA), TARGET, INTENT(INOUT) :: VARIABLE_GROUP
+    INTEGER(KIND=JPIM) :: I, J, MYSHAPE(2)
+
+    ! Create a view for the "T0" field only for diagnostic fields
+    SELF%F_SEA => VARIABLE_GROUP%VSEA%FT0
+    SELF%F_LAN => VARIABLE_GROUP%VLAN%FT0
+    SELF%F_SOO => VARIABLE_GROUP%VSOO%FT0
+    SELF%F_DES => VARIABLE_GROUP%VDES%FT0
+    SELF%F_SUL => VARIABLE_GROUP%VSUL%FT0
+    SELF%F_VOL => VARIABLE_GROUP%VVOL%FT0
+    SELF%VARIABLE_GROUP => VARIABLE_GROUP
+    SELF%F_GROUP => VARIABLE_GROUP%F_GROUP
+  END SUBROUTINE SURFACE_VIEW_GROUP_VCLIA_INIT
+
+  SUBROUTINE SURFACE_VIEW_GROUP_VCLIA_UPDATE_VIEW(SELF, BLOCK_INDEX)
+    ! Extract local array views from field objects
+    CLASS(SURFACE_VIEW_GROUP_VCLIA) :: SELF
+    INTEGER(KIND=JPIM), INTENT(IN) :: BLOCK_INDEX
+    INTEGER(KIND=JPIM) :: I, J
+
+    ! Set up the view pointer for the "T0" field
+    IF (ASSOCIATED(SELF%F_SEA))  SELF%PSEA => SELF%F_SEA%GET_VIEW(BLOCK_INDEX)
+    IF (ASSOCIATED(SELF%F_LAN))  SELF%PLAN => SELF%F_LAN%GET_VIEW(BLOCK_INDEX)
+    IF (ASSOCIATED(SELF%F_SOO))  SELF%PSOO => SELF%F_SOO%GET_VIEW(BLOCK_INDEX)
+    IF (ASSOCIATED(SELF%F_DES))  SELF%PDES => SELF%F_DES%GET_VIEW(BLOCK_INDEX)
+    IF (ASSOCIATED(SELF%F_SUL))  SELF%PSUL => SELF%F_SUL%GET_VIEW(BLOCK_INDEX)
+    IF (ASSOCIATED(SELF%F_VOL))  SELF%PVOL => SELF%F_VOL%GET_VIEW(BLOCK_INDEX)
+
+    IF (ASSOCIATED(SELF%F_GROUP))  SELF%PGROUP => SELF%F_GROUP%GET_VIEW(BLOCK_INDEX)
+  END SUBROUTINE SURFACE_VIEW_GROUP_VCLIA_UPDATE_VIEW
+
+  SUBROUTINE SURFACE_VIEW_GROUP_VCLIN_INIT(SELF, VARIABLE_GROUP)
+    ! Constructor of the array view type for a surface variable group
+    CLASS(SURFACE_VIEW_GROUP_VCLIN) :: SELF
+    TYPE(SURFACE_VARIABLE_GROUP_VCLIN), TARGET, INTENT(INOUT) :: VARIABLE_GROUP
+    INTEGER(KIND=JPIM) :: I, J, MYSHAPE(2)
+
+    ! Create a view for the "T0" field only for diagnostic fields
+    SELF%F_TOP => VARIABLE_GROUP%VTOP%FT0
+    SELF%F_BAS => VARIABLE_GROUP%VBAS%FT0
+    SELF%F_ACPR => VARIABLE_GROUP%VACPR%FT0
+    SELF%F_ACCPR => VARIABLE_GROUP%VACCPR%FT0
+    SELF%F_ACCPR5 => VARIABLE_GROUP%VACCPR5%FT0
+    SELF%VARIABLE_GROUP => VARIABLE_GROUP
+    SELF%F_GROUP => VARIABLE_GROUP%F_GROUP
+  END SUBROUTINE SURFACE_VIEW_GROUP_VCLIN_INIT
+
+  SUBROUTINE SURFACE_VIEW_GROUP_VCLIN_UPDATE_VIEW(SELF, BLOCK_INDEX)
+    ! Extract local array views from field objects
+    CLASS(SURFACE_VIEW_GROUP_VCLIN) :: SELF
+    INTEGER(KIND=JPIM), INTENT(IN) :: BLOCK_INDEX
+    INTEGER(KIND=JPIM) :: I, J
+
+    ! Set up the view pointer for the "T0" field
+    IF (ASSOCIATED(SELF%F_TOP))  SELF%PTOP => SELF%F_TOP%GET_VIEW(BLOCK_INDEX)
+    IF (ASSOCIATED(SELF%F_BAS))  SELF%PBAS => SELF%F_BAS%GET_VIEW(BLOCK_INDEX)
+    IF (ASSOCIATED(SELF%F_ACPR))  SELF%PACPR => SELF%F_ACPR%GET_VIEW(BLOCK_INDEX)
+    IF (ASSOCIATED(SELF%F_ACCPR))  SELF%PACCPR => SELF%F_ACCPR%GET_VIEW(BLOCK_INDEX)
+    IF (ASSOCIATED(SELF%F_ACCPR5))  SELF%PACCPR5 => SELF%F_ACCPR5%GET_VIEW(BLOCK_INDEX)
+
+    IF (ASSOCIATED(SELF%F_GROUP))  SELF%PGROUP => SELF%F_GROUP%GET_VIEW(BLOCK_INDEX)
+  END SUBROUTINE SURFACE_VIEW_GROUP_VCLIN_UPDATE_VIEW
+
+  SUBROUTINE SURFACE_VIEW_GROUP_VDIAGO2_INIT(SELF, VARIABLE_GROUP)
+    ! Constructor of the array view type for a surface variable group
+    CLASS(SURFACE_VIEW_GROUP_VDIAGO2) :: SELF
+    TYPE(SURFACE_VARIABLE_GROUP_VDIAGO2), TARGET, INTENT(INOUT) :: VARIABLE_GROUP
+    INTEGER(KIND=JPIM) :: I, J, MYSHAPE(2)
+
+    ! Create a view for the "T0" field only for diagnostic fields
+    SELF%F_OCDEP => VARIABLE_GROUP%VOCDEP%FT0
+    SELF%F_USTRC => VARIABLE_GROUP%VUSTRC%FT0
+    SELF%F_VSTRC => VARIABLE_GROUP%VVSTRC%FT0
+    SELF%VARIABLE_GROUP => VARIABLE_GROUP
+    SELF%F_GROUP => VARIABLE_GROUP%F_GROUP
+  END SUBROUTINE SURFACE_VIEW_GROUP_VDIAGO2_INIT
+
+  SUBROUTINE SURFACE_VIEW_GROUP_VDIAGO2_UPDATE_VIEW(SELF, BLOCK_INDEX)
+    ! Extract local array views from field objects
+    CLASS(SURFACE_VIEW_GROUP_VDIAGO2) :: SELF
+    INTEGER(KIND=JPIM), INTENT(IN) :: BLOCK_INDEX
+    INTEGER(KIND=JPIM) :: I, J
+
+    ! Set up the view pointer for the "T0" field
+    IF (ASSOCIATED(SELF%F_OCDEP))  SELF%POCDEP => SELF%F_OCDEP%GET_VIEW(BLOCK_INDEX)
+    IF (ASSOCIATED(SELF%F_USTRC))  SELF%PUSTRC => SELF%F_USTRC%GET_VIEW(BLOCK_INDEX)
+    IF (ASSOCIATED(SELF%F_VSTRC))  SELF%PVSTRC => SELF%F_VSTRC%GET_VIEW(BLOCK_INDEX)
+
+    IF (ASSOCIATED(SELF%F_GROUP))  SELF%PGROUP => SELF%F_GROUP%GET_VIEW(BLOCK_INDEX)
+  END SUBROUTINE SURFACE_VIEW_GROUP_VDIAGO2_UPDATE_VIEW
+
+  SUBROUTINE SURFACE_VIEW_GROUP_VDIAGO3_INIT(SELF, VARIABLE_GROUP)
+    ! Constructor of the array view type for a surface variable group
+    CLASS(SURFACE_VIEW_GROUP_VDIAGO3) :: SELF
+    TYPE(SURFACE_VARIABLE_GROUP_VDIAGO3), TARGET, INTENT(INOUT) :: VARIABLE_GROUP
+    INTEGER(KIND=JPIM) :: I, J, MYSHAPE(2)
+
+    ! Create a view for the "T0" field only for diagnostic fields
+    SELF%F_DIFM => VARIABLE_GROUP%VDIFM%FT0
+    SELF%F_DIFT => VARIABLE_GROUP%VDIFT%FT0
+    SELF%F_DIFS => VARIABLE_GROUP%VDIFS%FT0
+    SELF%F_ADVT => VARIABLE_GROUP%VADVT%FT0
+    SELF%F_ADVS => VARIABLE_GROUP%VADVS%FT0
+    SELF%F_TRI0 => VARIABLE_GROUP%VTRI0%FT0
+    SELF%F_TRI1 => VARIABLE_GROUP%VTRI1%FT0
+    SELF%F_SWDK => VARIABLE_GROUP%VSWDK%FT0
+    SELF%F_ZO => VARIABLE_GROUP%VZO%FT0
+    SELF%F_HO => VARIABLE_GROUP%VHO%FT0
+    SELF%F_DO => VARIABLE_GROUP%VDO%FT0
+    SELF%F_HO_INV => VARIABLE_GROUP%VHO_INV%FT0
+    SELF%F_UOC => VARIABLE_GROUP%VUOC%FT0
+    SELF%F_VOC => VARIABLE_GROUP%VVOC%FT0
+    SELF%VARIABLE_GROUP => VARIABLE_GROUP
+    SELF%F_GROUP => VARIABLE_GROUP%F_GROUP
+  END SUBROUTINE SURFACE_VIEW_GROUP_VDIAGO3_INIT
+
+  SUBROUTINE SURFACE_VIEW_GROUP_VDIAGO3_UPDATE_VIEW(SELF, BLOCK_INDEX)
+    ! Extract local array views from field objects
+    CLASS(SURFACE_VIEW_GROUP_VDIAGO3) :: SELF
+    INTEGER(KIND=JPIM), INTENT(IN) :: BLOCK_INDEX
+    INTEGER(KIND=JPIM) :: I, J
+
+    ! Set up the view pointer for the "T0" field
+    IF (ASSOCIATED(SELF%F_DIFM))  SELF%PDIFM => SELF%F_DIFM%GET_VIEW(BLOCK_INDEX)
+    IF (ASSOCIATED(SELF%F_DIFT))  SELF%PDIFT => SELF%F_DIFT%GET_VIEW(BLOCK_INDEX)
+    IF (ASSOCIATED(SELF%F_DIFS))  SELF%PDIFS => SELF%F_DIFS%GET_VIEW(BLOCK_INDEX)
+    IF (ASSOCIATED(SELF%F_ADVT))  SELF%PADVT => SELF%F_ADVT%GET_VIEW(BLOCK_INDEX)
+    IF (ASSOCIATED(SELF%F_ADVS))  SELF%PADVS => SELF%F_ADVS%GET_VIEW(BLOCK_INDEX)
+    IF (ASSOCIATED(SELF%F_TRI0))  SELF%PTRI0 => SELF%F_TRI0%GET_VIEW(BLOCK_INDEX)
+    IF (ASSOCIATED(SELF%F_TRI1))  SELF%PTRI1 => SELF%F_TRI1%GET_VIEW(BLOCK_INDEX)
+    IF (ASSOCIATED(SELF%F_SWDK))  SELF%PSWDK => SELF%F_SWDK%GET_VIEW(BLOCK_INDEX)
+    IF (ASSOCIATED(SELF%F_ZO))  SELF%PZO => SELF%F_ZO%GET_VIEW(BLOCK_INDEX)
+    IF (ASSOCIATED(SELF%F_HO))  SELF%PHO => SELF%F_HO%GET_VIEW(BLOCK_INDEX)
+    IF (ASSOCIATED(SELF%F_DO))  SELF%PDO => SELF%F_DO%GET_VIEW(BLOCK_INDEX)
+    IF (ASSOCIATED(SELF%F_HO_INV))  SELF%PHO_INV => SELF%F_HO_INV%GET_VIEW(BLOCK_INDEX)
+    IF (ASSOCIATED(SELF%F_UOC))  SELF%PUOC => SELF%F_UOC%GET_VIEW(BLOCK_INDEX)
+    IF (ASSOCIATED(SELF%F_VOC))  SELF%PVOC => SELF%F_VOC%GET_VIEW(BLOCK_INDEX)
+
+    IF (ASSOCIATED(SELF%F_GROUP))  SELF%PGROUP => SELF%F_GROUP%GET_VIEW(BLOCK_INDEX)
+  END SUBROUTINE SURFACE_VIEW_GROUP_VDIAGO3_UPDATE_VIEW
+
+  SUBROUTINE SURFACE_VIEW_GROUP_VDIAG_INIT(SELF, VARIABLE_GROUP)
+    ! Constructor of the array view type for a surface variable group
+    CLASS(SURFACE_VIEW_GROUP_VDIAG) :: SELF
+    TYPE(SURFACE_VARIABLE_GROUP_VDIAG), TARGET, INTENT(INOUT) :: VARIABLE_GROUP
+    INTEGER(KIND=JPIM) :: I, J, MYSHAPE(2)
+
+    ! Create a view for the "T0" field only for diagnostic fields
+    SELF%F_LSP => VARIABLE_GROUP%VLSP%FT0
+    SELF%F_CP => VARIABLE_GROUP%VCP%FT0
+    SELF%F_SF => VARIABLE_GROUP%VSF%FT0
+    SELF%F_FZRA => VARIABLE_GROUP%VFZRA%FT0
+    SELF%F_BLD => VARIABLE_GROUP%VBLD%FT0
+    SELF%F_SSHF => VARIABLE_GROUP%VSSHF%FT0
+    SELF%F_SLHF => VARIABLE_GROUP%VSLHF%FT0
+    SELF%F_NEE => VARIABLE_GROUP%VNEE%FT0
+    SELF%F_GPP => VARIABLE_GROUP%VGPP%FT0
+    SELF%F_REC => VARIABLE_GROUP%VREC%FT0
+    SELF%F_MSL => VARIABLE_GROUP%VMSL%FT0
+    SELF%F_SP => VARIABLE_GROUP%VSP%FT0
+    SELF%F_TCC => VARIABLE_GROUP%VTCC%FT0
+    SELF%F_10U => VARIABLE_GROUP%V10U%FT0
+    SELF%F_10V => VARIABLE_GROUP%V10V%FT0
+    SELF%F_2T => VARIABLE_GROUP%V2T%FT0
+    SELF%F_2D => VARIABLE_GROUP%V2D%FT0
+    SELF%F_2Q => VARIABLE_GROUP%V2Q%FT0
+    SELF%F_SSR => VARIABLE_GROUP%VSSR%FT0
+    SELF%F_STR => VARIABLE_GROUP%VSTR%FT0
+    SELF%F_TSR => VARIABLE_GROUP%VTSR%FT0
+    SELF%F_TTR => VARIABLE_GROUP%VTTR%FT0
+    SELF%F_EWSS => VARIABLE_GROUP%VEWSS%FT0
+    SELF%F_NSSS => VARIABLE_GROUP%VNSSS%FT0
+    SELF%F_E => VARIABLE_GROUP%VE%FT0
+    SELF%F_PEV => VARIABLE_GROUP%VPEV%FT0
+    SELF%F_CCC => VARIABLE_GROUP%VCCC%FT0
+    SELF%F_LCC => VARIABLE_GROUP%VLCC%FT0
+    SELF%F_MCC => VARIABLE_GROUP%VMCC%FT0
+    SELF%F_HCC => VARIABLE_GROUP%VHCC%FT0
+    SELF%F_LGWS => VARIABLE_GROUP%VLGWS%FT0
+    SELF%F_MGWS => VARIABLE_GROUP%VMGWS%FT0
+    SELF%F_GWD => VARIABLE_GROUP%VGWD%FT0
+    SELF%F_MX2T => VARIABLE_GROUP%VMX2T%FT0
+    SELF%F_MN2T => VARIABLE_GROUP%VMN2T%FT0
+    IF (ALLOCATED(VARIABLE_GROUP%VMX2T6)) THEN
+      ALLOCATE(SELF%PMX2T6(SIZE(VARIABLE_GROUP%VMX2T6)))
+      ALLOCATE(SELF%F_MX2T6(SIZE(VARIABLE_GROUP%VMX2T6)))
+      DO I=1, SIZE(VARIABLE_GROUP%VMX2T6)
+        SELF%F_MX2T6(I)%PTR => VARIABLE_GROUP%VMX2T6(I)%FT0
+      END DO
+    END IF
+    IF (ALLOCATED(VARIABLE_GROUP%VMN2T6)) THEN
+      ALLOCATE(SELF%PMN2T6(SIZE(VARIABLE_GROUP%VMN2T6)))
+      ALLOCATE(SELF%F_MN2T6(SIZE(VARIABLE_GROUP%VMN2T6)))
+      DO I=1, SIZE(VARIABLE_GROUP%VMN2T6)
+        SELF%F_MN2T6(I)%PTR => VARIABLE_GROUP%VMN2T6(I)%FT0
+      END DO
+    END IF
+    SELF%F_RO => VARIABLE_GROUP%VRO%FT0
+    SELF%F_SRO => VARIABLE_GROUP%VSRO%FT0
+    SELF%F_SSRO => VARIABLE_GROUP%VSSRO%FT0
+    SELF%F_ALB => VARIABLE_GROUP%VALB%FT0
+    SELF%F_IEWSS => VARIABLE_GROUP%VIEWSS%FT0
+    SELF%F_INSSS => VARIABLE_GROUP%VINSSS%FT0
+    SELF%F_ISSHF => VARIABLE_GROUP%VISSHF%FT0
+    SELF%F_IE => VARIABLE_GROUP%VIE%FT0
+    SELF%F_INEE => VARIABLE_GROUP%VINEE%FT0
+    SELF%F_IGPP => VARIABLE_GROUP%VIGPP%FT0
+    SELF%F_IREC => VARIABLE_GROUP%VIREC%FT0
+    SELF%F_CSF => VARIABLE_GROUP%VCSF%FT0
+    SELF%F_LSSF => VARIABLE_GROUP%VLSSF%FT0
+    SELF%F_MXTPR => VARIABLE_GROUP%VMXTPR%FT0
+    SELF%F_MNTPR => VARIABLE_GROUP%VMNTPR%FT0
+    IF (ALLOCATED(VARIABLE_GROUP%VMXTPR6)) THEN
+      ALLOCATE(SELF%PMXTPR6(SIZE(VARIABLE_GROUP%VMXTPR6)))
+      ALLOCATE(SELF%F_MXTPR6(SIZE(VARIABLE_GROUP%VMXTPR6)))
+      DO I=1, SIZE(VARIABLE_GROUP%VMXTPR6)
+        SELF%F_MXTPR6(I)%PTR => VARIABLE_GROUP%VMXTPR6(I)%FT0
+      END DO
+    END IF
+    IF (ALLOCATED(VARIABLE_GROUP%VMNTPR6)) THEN
+      ALLOCATE(SELF%PMNTPR6(SIZE(VARIABLE_GROUP%VMNTPR6)))
+      ALLOCATE(SELF%F_MNTPR6(SIZE(VARIABLE_GROUP%VMNTPR6)))
+      DO I=1, SIZE(VARIABLE_GROUP%VMNTPR6)
+        SELF%F_MNTPR6(I)%PTR => VARIABLE_GROUP%VMNTPR6(I)%FT0
+      END DO
+    END IF
+    SELF%F_TPR => VARIABLE_GROUP%VTPR%FT0
+    SELF%F_LSRR => VARIABLE_GROUP%VLSRR%FT0
+    SELF%F_CRR => VARIABLE_GROUP%VCRR%FT0
+    SELF%F_LSSFR => VARIABLE_GROUP%VLSSFR%FT0
+    SELF%F_CSFR => VARIABLE_GROUP%VCSFR%FT0
+    SELF%F_PTYPE => VARIABLE_GROUP%VPTYPE%FT0
+    SELF%F_ILSPF => VARIABLE_GROUP%VILSPF%FT0
+    SELF%F_Z0F => VARIABLE_GROUP%VZ0F%FT0
+    SELF%F_LZ0H => VARIABLE_GROUP%VLZ0H%FT0
+    SELF%F_VIWVE => VARIABLE_GROUP%VVIWVE%FT0
+    SELF%F_VIWVN => VARIABLE_GROUP%VVIWVN%FT0
+    SELF%F_TCW => VARIABLE_GROUP%VTCW%FT0
+    SELF%F_TCWV => VARIABLE_GROUP%VTCWV%FT0
+    SELF%F_TCLW => VARIABLE_GROUP%VTCLW%FT0
+    SELF%F_TCIW => VARIABLE_GROUP%VTCIW%FT0
+    SELF%F_TCRW => VARIABLE_GROUP%VTCRW%FT0
+    SELF%F_TCSW => VARIABLE_GROUP%VTCSW%FT0
+    SELF%F_TCSLW => VARIABLE_GROUP%VTCSLW%FT0
+    SELF%F_SSRD => VARIABLE_GROUP%VSSRD%FT0
+    SELF%F_STRD => VARIABLE_GROUP%VSTRD%FT0
+    SELF%F_SSRDC => VARIABLE_GROUP%VSSRDC%FT0
+    SELF%F_STRDC => VARIABLE_GROUP%VSTRDC%FT0
+    SELF%F_BLH => VARIABLE_GROUP%VBLH%FT0
+    SELF%F_SUND => VARIABLE_GROUP%VSUND%FT0
+    SELF%F_SPAR => VARIABLE_GROUP%VSPAR%FT0
+    SELF%F_SUVB => VARIABLE_GROUP%VSUVB%FT0
+    SELF%F_SFDIR => VARIABLE_GROUP%VSFDIR%FT0
+    SELF%F_SCDIR => VARIABLE_GROUP%VSCDIR%FT0
+    SELF%F_SDSRP => VARIABLE_GROUP%VSDSRP%FT0
+    SELF%F_CAPE => VARIABLE_GROUP%VCAPE%FT0
+    SELF%F_CAPES => VARIABLE_GROUP%VCAPES%FT0
+    IF (ALLOCATED(VARIABLE_GROUP%VMXCAP6)) THEN
+      ALLOCATE(SELF%PMXCAP6(SIZE(VARIABLE_GROUP%VMXCAP6)))
+      ALLOCATE(SELF%F_MXCAP6(SIZE(VARIABLE_GROUP%VMXCAP6)))
+      DO I=1, SIZE(VARIABLE_GROUP%VMXCAP6)
+        SELF%F_MXCAP6(I)%PTR => VARIABLE_GROUP%VMXCAP6(I)%FT0
+      END DO
+    END IF
+    IF (ALLOCATED(VARIABLE_GROUP%VMXCAPS6)) THEN
+      ALLOCATE(SELF%PMXCAPS6(SIZE(VARIABLE_GROUP%VMXCAPS6)))
+      ALLOCATE(SELF%F_MXCAPS6(SIZE(VARIABLE_GROUP%VMXCAPS6)))
+      DO I=1, SIZE(VARIABLE_GROUP%VMXCAPS6)
+        SELF%F_MXCAPS6(I)%PTR => VARIABLE_GROUP%VMXCAPS6(I)%FT0
+      END DO
+    END IF
+    SELF%F_TSRC => VARIABLE_GROUP%VTSRC%FT0
+    SELF%F_TTRC => VARIABLE_GROUP%VTTRC%FT0
+    SELF%F_SSRC => VARIABLE_GROUP%VSSRC%FT0
+    SELF%F_STRC => VARIABLE_GROUP%VSTRC%FT0
+    SELF%F_ES => VARIABLE_GROUP%VES%FT0
+    SELF%F_SMLT => VARIABLE_GROUP%VSMLT%FT0
+    SELF%F_10FG => VARIABLE_GROUP%V10FG%FT0
+    IF (ALLOCATED(VARIABLE_GROUP%V10FG6)) THEN
+      ALLOCATE(SELF%P10FG6(SIZE(VARIABLE_GROUP%V10FG6)))
+      ALLOCATE(SELF%F_10FG6(SIZE(VARIABLE_GROUP%V10FG6)))
+      DO I=1, SIZE(VARIABLE_GROUP%V10FG6)
+        SELF%F_10FG6(I)%PTR => VARIABLE_GROUP%V10FG6(I)%FT0
+      END DO
+    END IF
+    SELF%F_10FGCV => VARIABLE_GROUP%V10FGCV%FT0
+    SELF%F_I10FG => VARIABLE_GROUP%VI10FG%FT0
+    SELF%F_LSPF => VARIABLE_GROUP%VLSPF%FT0
+    SELF%F_TCO3 => VARIABLE_GROUP%VTCO3%FT0
+    SELF%F_VIMD => VARIABLE_GROUP%VVIMD%FT0
+    SELF%F_SPARC => VARIABLE_GROUP%VSPARC%FT0
+    SELF%F_STINC => VARIABLE_GROUP%VSTINC%FT0
+    SELF%F_CBASE => VARIABLE_GROUP%VCBASE%FT0
+    SELF%F_0DEGL => VARIABLE_GROUP%V0DEGL%FT0
+    SELF%F_VISIH => VARIABLE_GROUP%VVISIH%FT0
+    SELF%F_CIN => VARIABLE_GROUP%VCIN%FT0
+    SELF%F_KINDEX => VARIABLE_GROUP%VKINDEX%FT0
+    SELF%F_TTINDEX => VARIABLE_GROUP%VTTINDEX%FT0
+    SELF%F_CBASEA => VARIABLE_GROUP%VCBASEA%FT0
+    SELF%F_CTOPC => VARIABLE_GROUP%VCTOPC%FT0
+    SELF%F_ZTWETB0 => VARIABLE_GROUP%VZTWETB0%FT0
+    SELF%F_ZTWETB1 => VARIABLE_GROUP%VZTWETB1%FT0
+    IF (ALLOCATED(VARIABLE_GROUP%VTCGHG)) THEN
+      ALLOCATE(SELF%PTCGHG(SIZE(VARIABLE_GROUP%VTCGHG)))
+      ALLOCATE(SELF%F_TCGHG(SIZE(VARIABLE_GROUP%VTCGHG)))
+      DO I=1, SIZE(VARIABLE_GROUP%VTCGHG)
+        SELF%F_TCGHG(I)%PTR => VARIABLE_GROUP%VTCGHG(I)%FT0
+      END DO
+    END IF
+    IF (ALLOCATED(VARIABLE_GROUP%VTCCHEM)) THEN
+      ALLOCATE(SELF%PTCCHEM(SIZE(VARIABLE_GROUP%VTCCHEM)))
+      ALLOCATE(SELF%F_TCCHEM(SIZE(VARIABLE_GROUP%VTCCHEM)))
+      DO I=1, SIZE(VARIABLE_GROUP%VTCCHEM)
+        SELF%F_TCCHEM(I)%PTR => VARIABLE_GROUP%VTCCHEM(I)%FT0
+      END DO
+    END IF
+    IF (ALLOCATED(VARIABLE_GROUP%VAERODIAG)) THEN
+      MYSHAPE = SHAPE(VARIABLE_GROUP%VAERODIAG)
+      ALLOCATE(SELF%PAERODIAG(MYSHAPE(1), MYSHAPE(2)))
+      ALLOCATE(SELF%F_AERODIAG(MYSHAPE(1), MYSHAPE(2)))
+      DO J=1, MYSHAPE(2)
+        DO I=1, MYSHAPE(1)
+          SELF%F_AERODIAG(I,J)%PTR => VARIABLE_GROUP%VAERODIAG(I,J)%FT0
+        END DO
+      END DO
+    END IF
+    IF (ALLOCATED(VARIABLE_GROUP%VAERO_WVL_DIAG)) THEN
+      MYSHAPE = SHAPE(VARIABLE_GROUP%VAERO_WVL_DIAG)
+      ALLOCATE(SELF%PAERO_WVL_DIAG(MYSHAPE(1), MYSHAPE(2)))
+      ALLOCATE(SELF%F_AERO_WVL_DIAG(MYSHAPE(1), MYSHAPE(2)))
+      DO J=1, MYSHAPE(2)
+        DO I=1, MYSHAPE(1)
+          SELF%F_AERO_WVL_DIAG(I,J)%PTR => VARIABLE_GROUP%VAERO_WVL_DIAG(I,J)%FT0
+        END DO
+      END DO
+    END IF
+    SELF%F_100U => VARIABLE_GROUP%V100U%FT0
+    SELF%F_100V => VARIABLE_GROUP%V100V%FT0
+    SELF%F_200U => VARIABLE_GROUP%V200U%FT0
+    SELF%F_200V => VARIABLE_GROUP%V200V%FT0
+    SELF%F_ZUST => VARIABLE_GROUP%VZUST%FT0
+    SELF%F_10NU => VARIABLE_GROUP%V10NU%FT0
+    SELF%F_10NV => VARIABLE_GROUP%V10NV%FT0
+    SELF%F_DNDZN => VARIABLE_GROUP%VDNDZN%FT0
+    SELF%F_DNDZA => VARIABLE_GROUP%VDNDZA%FT0
+    SELF%F_DCTB => VARIABLE_GROUP%VDCTB%FT0
+    SELF%F_TPLB => VARIABLE_GROUP%VTPLB%FT0
+    SELF%F_TPLT => VARIABLE_GROUP%VTPLT%FT0
+    SELF%F_ODSS => VARIABLE_GROUP%VODSS%FT0
+    SELF%F_ODDU => VARIABLE_GROUP%VODDU%FT0
+    SELF%F_ODOM => VARIABLE_GROUP%VODOM%FT0
+    SELF%F_ODBC => VARIABLE_GROUP%VODBC%FT0
+    SELF%F_ODSU => VARIABLE_GROUP%VODSU%FT0
+    SELF%F_ODNI => VARIABLE_GROUP%VODNI%FT0
+    SELF%F_ODAM => VARIABLE_GROUP%VODAM%FT0
+    SELF%F_ODSOA => VARIABLE_GROUP%VODSOA%FT0
+    SELF%F_ODVFA => VARIABLE_GROUP%VODVFA%FT0
+    SELF%F_ODVSU => VARIABLE_GROUP%VODVSU%FT0
+    SELF%F_ODTOACC => VARIABLE_GROUP%VODTOACC%FT0
+    SELF%F_AEPM1 => VARIABLE_GROUP%VAEPM1%FT0
+    SELF%F_AEPM25 => VARIABLE_GROUP%VAEPM25%FT0
+    SELF%F_AEPM10 => VARIABLE_GROUP%VAEPM10%FT0
+    SELF%F_UVBED => VARIABLE_GROUP%VUVBED%FT0
+    SELF%F_UVBEDCS => VARIABLE_GROUP%VUVBEDCS%FT0
+    SELF%F_LITOTI => VARIABLE_GROUP%VLITOTI%FT0
+    SELF%F_LICGI => VARIABLE_GROUP%VLICGI%FT0
+    IF (ALLOCATED(VARIABLE_GROUP%VLITOTA6)) THEN
+      ALLOCATE(SELF%PLITOTA6(SIZE(VARIABLE_GROUP%VLITOTA6)))
+      ALLOCATE(SELF%F_LITOTA6(SIZE(VARIABLE_GROUP%VLITOTA6)))
+      DO I=1, SIZE(VARIABLE_GROUP%VLITOTA6)
+        SELF%F_LITOTA6(I)%PTR => VARIABLE_GROUP%VLITOTA6(I)%FT0
+      END DO
+    END IF
+    IF (ALLOCATED(VARIABLE_GROUP%VLICGA6)) THEN
+      ALLOCATE(SELF%PLICGA6(SIZE(VARIABLE_GROUP%VLICGA6)))
+      ALLOCATE(SELF%F_LICGA6(SIZE(VARIABLE_GROUP%VLICGA6)))
+      DO I=1, SIZE(VARIABLE_GROUP%VLICGA6)
+        SELF%F_LICGA6(I)%PTR => VARIABLE_GROUP%VLICGA6(I)%FT0
+      END DO
+    END IF
+    SELF%VARIABLE_GROUP => VARIABLE_GROUP
+    SELF%F_GROUP => VARIABLE_GROUP%F_GROUP
+  END SUBROUTINE SURFACE_VIEW_GROUP_VDIAG_INIT
+
+  SUBROUTINE SURFACE_VIEW_GROUP_VDIAG_UPDATE_VIEW(SELF, BLOCK_INDEX)
+    ! Extract local array views from field objects
+    CLASS(SURFACE_VIEW_GROUP_VDIAG) :: SELF
+    INTEGER(KIND=JPIM), INTENT(IN) :: BLOCK_INDEX
+    INTEGER(KIND=JPIM) :: I, J
+
+    ! Set up the view pointer for the "T0" field
+    IF (ASSOCIATED(SELF%F_LSP))  SELF%PLSP => SELF%F_LSP%GET_VIEW(BLOCK_INDEX)
+    IF (ASSOCIATED(SELF%F_CP))  SELF%PCP => SELF%F_CP%GET_VIEW(BLOCK_INDEX)
+    IF (ASSOCIATED(SELF%F_SF))  SELF%PSF => SELF%F_SF%GET_VIEW(BLOCK_INDEX)
+    IF (ASSOCIATED(SELF%F_FZRA))  SELF%PFZRA => SELF%F_FZRA%GET_VIEW(BLOCK_INDEX)
+    IF (ASSOCIATED(SELF%F_BLD))  SELF%PBLD => SELF%F_BLD%GET_VIEW(BLOCK_INDEX)
+    IF (ASSOCIATED(SELF%F_SSHF))  SELF%PSSHF => SELF%F_SSHF%GET_VIEW(BLOCK_INDEX)
+    IF (ASSOCIATED(SELF%F_SLHF))  SELF%PSLHF => SELF%F_SLHF%GET_VIEW(BLOCK_INDEX)
+    IF (ASSOCIATED(SELF%F_NEE))  SELF%PNEE => SELF%F_NEE%GET_VIEW(BLOCK_INDEX)
+    IF (ASSOCIATED(SELF%F_GPP))  SELF%PGPP => SELF%F_GPP%GET_VIEW(BLOCK_INDEX)
+    IF (ASSOCIATED(SELF%F_REC))  SELF%PREC => SELF%F_REC%GET_VIEW(BLOCK_INDEX)
+    IF (ASSOCIATED(SELF%F_MSL))  SELF%PMSL => SELF%F_MSL%GET_VIEW(BLOCK_INDEX)
+    IF (ASSOCIATED(SELF%F_SP))  SELF%PSP => SELF%F_SP%GET_VIEW(BLOCK_INDEX)
+    IF (ASSOCIATED(SELF%F_TCC))  SELF%PTCC => SELF%F_TCC%GET_VIEW(BLOCK_INDEX)
+    IF (ASSOCIATED(SELF%F_10U))  SELF%P10U => SELF%F_10U%GET_VIEW(BLOCK_INDEX)
+    IF (ASSOCIATED(SELF%F_10V))  SELF%P10V => SELF%F_10V%GET_VIEW(BLOCK_INDEX)
+    IF (ASSOCIATED(SELF%F_2T))  SELF%P2T => SELF%F_2T%GET_VIEW(BLOCK_INDEX)
+    IF (ASSOCIATED(SELF%F_2D))  SELF%P2D => SELF%F_2D%GET_VIEW(BLOCK_INDEX)
+    IF (ASSOCIATED(SELF%F_2Q))  SELF%P2Q => SELF%F_2Q%GET_VIEW(BLOCK_INDEX)
+    IF (ASSOCIATED(SELF%F_SSR))  SELF%PSSR => SELF%F_SSR%GET_VIEW(BLOCK_INDEX)
+    IF (ASSOCIATED(SELF%F_STR))  SELF%PSTR => SELF%F_STR%GET_VIEW(BLOCK_INDEX)
+    IF (ASSOCIATED(SELF%F_TSR))  SELF%PTSR => SELF%F_TSR%GET_VIEW(BLOCK_INDEX)
+    IF (ASSOCIATED(SELF%F_TTR))  SELF%PTTR => SELF%F_TTR%GET_VIEW(BLOCK_INDEX)
+    IF (ASSOCIATED(SELF%F_EWSS))  SELF%PEWSS => SELF%F_EWSS%GET_VIEW(BLOCK_INDEX)
+    IF (ASSOCIATED(SELF%F_NSSS))  SELF%PNSSS => SELF%F_NSSS%GET_VIEW(BLOCK_INDEX)
+    IF (ASSOCIATED(SELF%F_E))  SELF%PE => SELF%F_E%GET_VIEW(BLOCK_INDEX)
+    IF (ASSOCIATED(SELF%F_PEV))  SELF%PPEV => SELF%F_PEV%GET_VIEW(BLOCK_INDEX)
+    IF (ASSOCIATED(SELF%F_CCC))  SELF%PCCC => SELF%F_CCC%GET_VIEW(BLOCK_INDEX)
+    IF (ASSOCIATED(SELF%F_LCC))  SELF%PLCC => SELF%F_LCC%GET_VIEW(BLOCK_INDEX)
+    IF (ASSOCIATED(SELF%F_MCC))  SELF%PMCC => SELF%F_MCC%GET_VIEW(BLOCK_INDEX)
+    IF (ASSOCIATED(SELF%F_HCC))  SELF%PHCC => SELF%F_HCC%GET_VIEW(BLOCK_INDEX)
+    IF (ASSOCIATED(SELF%F_LGWS))  SELF%PLGWS => SELF%F_LGWS%GET_VIEW(BLOCK_INDEX)
+    IF (ASSOCIATED(SELF%F_MGWS))  SELF%PMGWS => SELF%F_MGWS%GET_VIEW(BLOCK_INDEX)
+    IF (ASSOCIATED(SELF%F_GWD))  SELF%PGWD => SELF%F_GWD%GET_VIEW(BLOCK_INDEX)
+    IF (ASSOCIATED(SELF%F_MX2T))  SELF%PMX2T => SELF%F_MX2T%GET_VIEW(BLOCK_INDEX)
+    IF (ASSOCIATED(SELF%F_MN2T))  SELF%PMN2T => SELF%F_MN2T%GET_VIEW(BLOCK_INDEX)
+    IF (ALLOCATED(SELF%F_MX2T6)) THEN
+      DO I=1, SIZE(SELF%F_MX2T6)
+        SELF%PMX2T6(I)%P => SELF%F_MX2T6(I)%PTR%GET_VIEW(BLOCK_INDEX)
+      END DO
+    END IF
+    IF (ALLOCATED(SELF%F_MN2T6)) THEN
+      DO I=1, SIZE(SELF%F_MN2T6)
+        SELF%PMN2T6(I)%P => SELF%F_MN2T6(I)%PTR%GET_VIEW(BLOCK_INDEX)
+      END DO
+    END IF
+    IF (ASSOCIATED(SELF%F_RO))  SELF%PRO => SELF%F_RO%GET_VIEW(BLOCK_INDEX)
+    IF (ASSOCIATED(SELF%F_SRO))  SELF%PSRO => SELF%F_SRO%GET_VIEW(BLOCK_INDEX)
+    IF (ASSOCIATED(SELF%F_SSRO))  SELF%PSSRO => SELF%F_SSRO%GET_VIEW(BLOCK_INDEX)
+    IF (ASSOCIATED(SELF%F_ALB))  SELF%PALB => SELF%F_ALB%GET_VIEW(BLOCK_INDEX)
+    IF (ASSOCIATED(SELF%F_IEWSS))  SELF%PIEWSS => SELF%F_IEWSS%GET_VIEW(BLOCK_INDEX)
+    IF (ASSOCIATED(SELF%F_INSSS))  SELF%PINSSS => SELF%F_INSSS%GET_VIEW(BLOCK_INDEX)
+    IF (ASSOCIATED(SELF%F_ISSHF))  SELF%PISSHF => SELF%F_ISSHF%GET_VIEW(BLOCK_INDEX)
+    IF (ASSOCIATED(SELF%F_IE))  SELF%PIE => SELF%F_IE%GET_VIEW(BLOCK_INDEX)
+    IF (ASSOCIATED(SELF%F_INEE))  SELF%PINEE => SELF%F_INEE%GET_VIEW(BLOCK_INDEX)
+    IF (ASSOCIATED(SELF%F_IGPP))  SELF%PIGPP => SELF%F_IGPP%GET_VIEW(BLOCK_INDEX)
+    IF (ASSOCIATED(SELF%F_IREC))  SELF%PIREC => SELF%F_IREC%GET_VIEW(BLOCK_INDEX)
+    IF (ASSOCIATED(SELF%F_CSF))  SELF%PCSF => SELF%F_CSF%GET_VIEW(BLOCK_INDEX)
+    IF (ASSOCIATED(SELF%F_LSSF))  SELF%PLSSF => SELF%F_LSSF%GET_VIEW(BLOCK_INDEX)
+    IF (ASSOCIATED(SELF%F_MXTPR))  SELF%PMXTPR => SELF%F_MXTPR%GET_VIEW(BLOCK_INDEX)
+    IF (ASSOCIATED(SELF%F_MNTPR))  SELF%PMNTPR => SELF%F_MNTPR%GET_VIEW(BLOCK_INDEX)
+    IF (ALLOCATED(SELF%F_MXTPR6)) THEN
+      DO I=1, SIZE(SELF%F_MXTPR6)
+        SELF%PMXTPR6(I)%P => SELF%F_MXTPR6(I)%PTR%GET_VIEW(BLOCK_INDEX)
+      END DO
+    END IF
+    IF (ALLOCATED(SELF%F_MNTPR6)) THEN
+      DO I=1, SIZE(SELF%F_MNTPR6)
+        SELF%PMNTPR6(I)%P => SELF%F_MNTPR6(I)%PTR%GET_VIEW(BLOCK_INDEX)
+      END DO
+    END IF
+    IF (ASSOCIATED(SELF%F_TPR))  SELF%PTPR => SELF%F_TPR%GET_VIEW(BLOCK_INDEX)
+    IF (ASSOCIATED(SELF%F_LSRR))  SELF%PLSRR => SELF%F_LSRR%GET_VIEW(BLOCK_INDEX)
+    IF (ASSOCIATED(SELF%F_CRR))  SELF%PCRR => SELF%F_CRR%GET_VIEW(BLOCK_INDEX)
+    IF (ASSOCIATED(SELF%F_LSSFR))  SELF%PLSSFR => SELF%F_LSSFR%GET_VIEW(BLOCK_INDEX)
+    IF (ASSOCIATED(SELF%F_CSFR))  SELF%PCSFR => SELF%F_CSFR%GET_VIEW(BLOCK_INDEX)
+    IF (ASSOCIATED(SELF%F_PTYPE))  SELF%PPTYPE => SELF%F_PTYPE%GET_VIEW(BLOCK_INDEX)
+    IF (ASSOCIATED(SELF%F_ILSPF))  SELF%PILSPF => SELF%F_ILSPF%GET_VIEW(BLOCK_INDEX)
+    IF (ASSOCIATED(SELF%F_Z0F))  SELF%PZ0F => SELF%F_Z0F%GET_VIEW(BLOCK_INDEX)
+    IF (ASSOCIATED(SELF%F_LZ0H))  SELF%PLZ0H => SELF%F_LZ0H%GET_VIEW(BLOCK_INDEX)
+    IF (ASSOCIATED(SELF%F_VIWVE))  SELF%PVIWVE => SELF%F_VIWVE%GET_VIEW(BLOCK_INDEX)
+    IF (ASSOCIATED(SELF%F_VIWVN))  SELF%PVIWVN => SELF%F_VIWVN%GET_VIEW(BLOCK_INDEX)
+    IF (ASSOCIATED(SELF%F_TCW))  SELF%PTCW => SELF%F_TCW%GET_VIEW(BLOCK_INDEX)
+    IF (ASSOCIATED(SELF%F_TCWV))  SELF%PTCWV => SELF%F_TCWV%GET_VIEW(BLOCK_INDEX)
+    IF (ASSOCIATED(SELF%F_TCLW))  SELF%PTCLW => SELF%F_TCLW%GET_VIEW(BLOCK_INDEX)
+    IF (ASSOCIATED(SELF%F_TCIW))  SELF%PTCIW => SELF%F_TCIW%GET_VIEW(BLOCK_INDEX)
+    IF (ASSOCIATED(SELF%F_TCRW))  SELF%PTCRW => SELF%F_TCRW%GET_VIEW(BLOCK_INDEX)
+    IF (ASSOCIATED(SELF%F_TCSW))  SELF%PTCSW => SELF%F_TCSW%GET_VIEW(BLOCK_INDEX)
+    IF (ASSOCIATED(SELF%F_TCSLW))  SELF%PTCSLW => SELF%F_TCSLW%GET_VIEW(BLOCK_INDEX)
+    IF (ASSOCIATED(SELF%F_SSRD))  SELF%PSSRD => SELF%F_SSRD%GET_VIEW(BLOCK_INDEX)
+    IF (ASSOCIATED(SELF%F_STRD))  SELF%PSTRD => SELF%F_STRD%GET_VIEW(BLOCK_INDEX)
+    IF (ASSOCIATED(SELF%F_SSRDC))  SELF%PSSRDC => SELF%F_SSRDC%GET_VIEW(BLOCK_INDEX)
+    IF (ASSOCIATED(SELF%F_STRDC))  SELF%PSTRDC => SELF%F_STRDC%GET_VIEW(BLOCK_INDEX)
+    IF (ASSOCIATED(SELF%F_BLH))  SELF%PBLH => SELF%F_BLH%GET_VIEW(BLOCK_INDEX)
+    IF (ASSOCIATED(SELF%F_SUND))  SELF%PSUND => SELF%F_SUND%GET_VIEW(BLOCK_INDEX)
+    IF (ASSOCIATED(SELF%F_SPAR))  SELF%PSPAR => SELF%F_SPAR%GET_VIEW(BLOCK_INDEX)
+    IF (ASSOCIATED(SELF%F_SUVB))  SELF%PSUVB => SELF%F_SUVB%GET_VIEW(BLOCK_INDEX)
+    IF (ASSOCIATED(SELF%F_SFDIR))  SELF%PSFDIR => SELF%F_SFDIR%GET_VIEW(BLOCK_INDEX)
+    IF (ASSOCIATED(SELF%F_SCDIR))  SELF%PSCDIR => SELF%F_SCDIR%GET_VIEW(BLOCK_INDEX)
+    IF (ASSOCIATED(SELF%F_SDSRP))  SELF%PSDSRP => SELF%F_SDSRP%GET_VIEW(BLOCK_INDEX)
+    IF (ASSOCIATED(SELF%F_CAPE))  SELF%PCAPE => SELF%F_CAPE%GET_VIEW(BLOCK_INDEX)
+    IF (ASSOCIATED(SELF%F_CAPES))  SELF%PCAPES => SELF%F_CAPES%GET_VIEW(BLOCK_INDEX)
+    IF (ALLOCATED(SELF%F_MXCAP6)) THEN
+      DO I=1, SIZE(SELF%F_MXCAP6)
+        SELF%PMXCAP6(I)%P => SELF%F_MXCAP6(I)%PTR%GET_VIEW(BLOCK_INDEX)
+      END DO
+    END IF
+    IF (ALLOCATED(SELF%F_MXCAPS6)) THEN
+      DO I=1, SIZE(SELF%F_MXCAPS6)
+        SELF%PMXCAPS6(I)%P => SELF%F_MXCAPS6(I)%PTR%GET_VIEW(BLOCK_INDEX)
+      END DO
+    END IF
+    IF (ASSOCIATED(SELF%F_TSRC))  SELF%PTSRC => SELF%F_TSRC%GET_VIEW(BLOCK_INDEX)
+    IF (ASSOCIATED(SELF%F_TTRC))  SELF%PTTRC => SELF%F_TTRC%GET_VIEW(BLOCK_INDEX)
+    IF (ASSOCIATED(SELF%F_SSRC))  SELF%PSSRC => SELF%F_SSRC%GET_VIEW(BLOCK_INDEX)
+    IF (ASSOCIATED(SELF%F_STRC))  SELF%PSTRC => SELF%F_STRC%GET_VIEW(BLOCK_INDEX)
+    IF (ASSOCIATED(SELF%F_ES))  SELF%PES => SELF%F_ES%GET_VIEW(BLOCK_INDEX)
+    IF (ASSOCIATED(SELF%F_SMLT))  SELF%PSMLT => SELF%F_SMLT%GET_VIEW(BLOCK_INDEX)
+    IF (ASSOCIATED(SELF%F_10FG))  SELF%P10FG => SELF%F_10FG%GET_VIEW(BLOCK_INDEX)
+    IF (ALLOCATED(SELF%F_10FG6)) THEN
+      DO I=1, SIZE(SELF%F_10FG6)
+        SELF%P10FG6(I)%P => SELF%F_10FG6(I)%PTR%GET_VIEW(BLOCK_INDEX)
+      END DO
+    END IF
+    IF (ASSOCIATED(SELF%F_10FGCV))  SELF%P10FGCV => SELF%F_10FGCV%GET_VIEW(BLOCK_INDEX)
+    IF (ASSOCIATED(SELF%F_I10FG))  SELF%PI10FG => SELF%F_I10FG%GET_VIEW(BLOCK_INDEX)
+    IF (ASSOCIATED(SELF%F_LSPF))  SELF%PLSPF => SELF%F_LSPF%GET_VIEW(BLOCK_INDEX)
+    IF (ASSOCIATED(SELF%F_TCO3))  SELF%PTCO3 => SELF%F_TCO3%GET_VIEW(BLOCK_INDEX)
+    IF (ASSOCIATED(SELF%F_VIMD))  SELF%PVIMD => SELF%F_VIMD%GET_VIEW(BLOCK_INDEX)
+    IF (ASSOCIATED(SELF%F_SPARC))  SELF%PSPARC => SELF%F_SPARC%GET_VIEW(BLOCK_INDEX)
+    IF (ASSOCIATED(SELF%F_STINC))  SELF%PSTINC => SELF%F_STINC%GET_VIEW(BLOCK_INDEX)
+    IF (ASSOCIATED(SELF%F_CBASE))  SELF%PCBASE => SELF%F_CBASE%GET_VIEW(BLOCK_INDEX)
+    IF (ASSOCIATED(SELF%F_0DEGL))  SELF%P0DEGL => SELF%F_0DEGL%GET_VIEW(BLOCK_INDEX)
+    IF (ASSOCIATED(SELF%F_VISIH))  SELF%PVISIH => SELF%F_VISIH%GET_VIEW(BLOCK_INDEX)
+    IF (ASSOCIATED(SELF%F_CIN))  SELF%PCIN => SELF%F_CIN%GET_VIEW(BLOCK_INDEX)
+    IF (ASSOCIATED(SELF%F_KINDEX))  SELF%PKINDEX => SELF%F_KINDEX%GET_VIEW(BLOCK_INDEX)
+    IF (ASSOCIATED(SELF%F_TTINDEX))  SELF%PTTINDEX => SELF%F_TTINDEX%GET_VIEW(BLOCK_INDEX)
+    IF (ASSOCIATED(SELF%F_CBASEA))  SELF%PCBASEA => SELF%F_CBASEA%GET_VIEW(BLOCK_INDEX)
+    IF (ASSOCIATED(SELF%F_CTOPC))  SELF%PCTOPC => SELF%F_CTOPC%GET_VIEW(BLOCK_INDEX)
+    IF (ASSOCIATED(SELF%F_ZTWETB0))  SELF%PZTWETB0 => SELF%F_ZTWETB0%GET_VIEW(BLOCK_INDEX)
+    IF (ASSOCIATED(SELF%F_ZTWETB1))  SELF%PZTWETB1 => SELF%F_ZTWETB1%GET_VIEW(BLOCK_INDEX)
+    IF (ALLOCATED(SELF%F_TCGHG)) THEN
+      DO I=1, SIZE(SELF%F_TCGHG)
+        SELF%PTCGHG(I)%P => SELF%F_TCGHG(I)%PTR%GET_VIEW(BLOCK_INDEX)
+      END DO
+    END IF
+    IF (ALLOCATED(SELF%F_TCCHEM)) THEN
+      DO I=1, SIZE(SELF%F_TCCHEM)
+        SELF%PTCCHEM(I)%P => SELF%F_TCCHEM(I)%PTR%GET_VIEW(BLOCK_INDEX)
+      END DO
+    END IF
+    IF (ALLOCATED(SELF%F_AERODIAG)) THEN
+      DO J=1, SIZE(SELF%F_AERODIAG, DIM=2)
+        DO I=1, SIZE(SELF%F_AERODIAG, DIM=1)
+          SELF%PAERODIAG(I,J)%P => SELF%F_AERODIAG(I,J)%PTR%GET_VIEW(BLOCK_INDEX)
+        END DO
+      END DO
+    END IF
+    IF (ALLOCATED(SELF%F_AERO_WVL_DIAG)) THEN
+      DO J=1, SIZE(SELF%F_AERO_WVL_DIAG, DIM=2)
+        DO I=1, SIZE(SELF%F_AERO_WVL_DIAG, DIM=1)
+          SELF%PAERO_WVL_DIAG(I,J)%P => SELF%F_AERO_WVL_DIAG(I,J)%PTR%GET_VIEW(BLOCK_INDEX)
+        END DO
+      END DO
+    END IF
+    IF (ASSOCIATED(SELF%F_100U))  SELF%P100U => SELF%F_100U%GET_VIEW(BLOCK_INDEX)
+    IF (ASSOCIATED(SELF%F_100V))  SELF%P100V => SELF%F_100V%GET_VIEW(BLOCK_INDEX)
+    IF (ASSOCIATED(SELF%F_200U))  SELF%P200U => SELF%F_200U%GET_VIEW(BLOCK_INDEX)
+    IF (ASSOCIATED(SELF%F_200V))  SELF%P200V => SELF%F_200V%GET_VIEW(BLOCK_INDEX)
+    IF (ASSOCIATED(SELF%F_ZUST))  SELF%PZUST => SELF%F_ZUST%GET_VIEW(BLOCK_INDEX)
+    IF (ASSOCIATED(SELF%F_10NU))  SELF%P10NU => SELF%F_10NU%GET_VIEW(BLOCK_INDEX)
+    IF (ASSOCIATED(SELF%F_10NV))  SELF%P10NV => SELF%F_10NV%GET_VIEW(BLOCK_INDEX)
+    IF (ASSOCIATED(SELF%F_DNDZN))  SELF%PDNDZN => SELF%F_DNDZN%GET_VIEW(BLOCK_INDEX)
+    IF (ASSOCIATED(SELF%F_DNDZA))  SELF%PDNDZA => SELF%F_DNDZA%GET_VIEW(BLOCK_INDEX)
+    IF (ASSOCIATED(SELF%F_DCTB))  SELF%PDCTB => SELF%F_DCTB%GET_VIEW(BLOCK_INDEX)
+    IF (ASSOCIATED(SELF%F_TPLB))  SELF%PTPLB => SELF%F_TPLB%GET_VIEW(BLOCK_INDEX)
+    IF (ASSOCIATED(SELF%F_TPLT))  SELF%PTPLT => SELF%F_TPLT%GET_VIEW(BLOCK_INDEX)
+    IF (ASSOCIATED(SELF%F_ODSS))  SELF%PODSS => SELF%F_ODSS%GET_VIEW(BLOCK_INDEX)
+    IF (ASSOCIATED(SELF%F_ODDU))  SELF%PODDU => SELF%F_ODDU%GET_VIEW(BLOCK_INDEX)
+    IF (ASSOCIATED(SELF%F_ODOM))  SELF%PODOM => SELF%F_ODOM%GET_VIEW(BLOCK_INDEX)
+    IF (ASSOCIATED(SELF%F_ODBC))  SELF%PODBC => SELF%F_ODBC%GET_VIEW(BLOCK_INDEX)
+    IF (ASSOCIATED(SELF%F_ODSU))  SELF%PODSU => SELF%F_ODSU%GET_VIEW(BLOCK_INDEX)
+    IF (ASSOCIATED(SELF%F_ODNI))  SELF%PODNI => SELF%F_ODNI%GET_VIEW(BLOCK_INDEX)
+    IF (ASSOCIATED(SELF%F_ODAM))  SELF%PODAM => SELF%F_ODAM%GET_VIEW(BLOCK_INDEX)
+    IF (ASSOCIATED(SELF%F_ODSOA))  SELF%PODSOA => SELF%F_ODSOA%GET_VIEW(BLOCK_INDEX)
+    IF (ASSOCIATED(SELF%F_ODVFA))  SELF%PODVFA => SELF%F_ODVFA%GET_VIEW(BLOCK_INDEX)
+    IF (ASSOCIATED(SELF%F_ODVSU))  SELF%PODVSU => SELF%F_ODVSU%GET_VIEW(BLOCK_INDEX)
+    IF (ASSOCIATED(SELF%F_ODTOACC))  SELF%PODTOACC => SELF%F_ODTOACC%GET_VIEW(BLOCK_INDEX)
+    IF (ASSOCIATED(SELF%F_AEPM1))  SELF%PAEPM1 => SELF%F_AEPM1%GET_VIEW(BLOCK_INDEX)
+    IF (ASSOCIATED(SELF%F_AEPM25))  SELF%PAEPM25 => SELF%F_AEPM25%GET_VIEW(BLOCK_INDEX)
+    IF (ASSOCIATED(SELF%F_AEPM10))  SELF%PAEPM10 => SELF%F_AEPM10%GET_VIEW(BLOCK_INDEX)
+    IF (ASSOCIATED(SELF%F_UVBED))  SELF%PUVBED => SELF%F_UVBED%GET_VIEW(BLOCK_INDEX)
+    IF (ASSOCIATED(SELF%F_UVBEDCS))  SELF%PUVBEDCS => SELF%F_UVBEDCS%GET_VIEW(BLOCK_INDEX)
+    IF (ASSOCIATED(SELF%F_LITOTI))  SELF%PLITOTI => SELF%F_LITOTI%GET_VIEW(BLOCK_INDEX)
+    IF (ASSOCIATED(SELF%F_LICGI))  SELF%PLICGI => SELF%F_LICGI%GET_VIEW(BLOCK_INDEX)
+    IF (ALLOCATED(SELF%F_LITOTA6)) THEN
+      DO I=1, SIZE(SELF%F_LITOTA6)
+        SELF%PLITOTA6(I)%P => SELF%F_LITOTA6(I)%PTR%GET_VIEW(BLOCK_INDEX)
+      END DO
+    END IF
+    IF (ALLOCATED(SELF%F_LICGA6)) THEN
+      DO I=1, SIZE(SELF%F_LICGA6)
+        SELF%PLICGA6(I)%P => SELF%F_LICGA6(I)%PTR%GET_VIEW(BLOCK_INDEX)
+      END DO
+    END IF
+
+    IF (ASSOCIATED(SELF%F_GROUP))  SELF%PGROUP => SELF%F_GROUP%GET_VIEW(BLOCK_INDEX)
+  END SUBROUTINE SURFACE_VIEW_GROUP_VDIAG_UPDATE_VIEW
+
+  SUBROUTINE SURFACE_VIEW_GROUP_SATSIM_INIT(SELF, VARIABLE_GROUP)
+    ! Constructor of the array view type for a surface variable group
+    CLASS(SURFACE_VIEW_GROUP_SATSIM) :: SELF
+    TYPE(SURFACE_VARIABLE_GROUP_SATSIM), TARGET, INTENT(INOUT) :: VARIABLE_GROUP
+    INTEGER(KIND=JPIM) :: I, J, MYSHAPE(2)
+
+    ! Create a view for the "T0" field only for diagnostic fields
+    SELF%F_CLBT => VARIABLE_GROUP%VCLBT%FT0
+    SELF%F_CSBT => VARIABLE_GROUP%VCSBT%FT0
+    SELF%VARIABLE_GROUP => VARIABLE_GROUP
+    SELF%F_GROUP => VARIABLE_GROUP%F_GROUP
+  END SUBROUTINE SURFACE_VIEW_GROUP_SATSIM_INIT
+
+  SUBROUTINE SURFACE_VIEW_GROUP_SATSIM_UPDATE_VIEW(SELF, BLOCK_INDEX)
+    ! Extract local array views from field objects
+    CLASS(SURFACE_VIEW_GROUP_SATSIM) :: SELF
+    INTEGER(KIND=JPIM), INTENT(IN) :: BLOCK_INDEX
+    INTEGER(KIND=JPIM) :: I, J
+
+    ! Set up the view pointer for the "T0" field
+    IF (ASSOCIATED(SELF%F_CLBT))  SELF%PCLBT => SELF%F_CLBT%GET_VIEW(BLOCK_INDEX)
+    IF (ASSOCIATED(SELF%F_CSBT))  SELF%PCSBT => SELF%F_CSBT%GET_VIEW(BLOCK_INDEX)
+
+    IF (ASSOCIATED(SELF%F_GROUP))  SELF%PGROUP => SELF%F_GROUP%GET_VIEW(BLOCK_INDEX)
+  END SUBROUTINE SURFACE_VIEW_GROUP_SATSIM_UPDATE_VIEW
+
+  SUBROUTINE SURFACE_VIEW_GROUP_WAVES_INIT(SELF, VARIABLE_GROUP)
+    ! Constructor of the array view type for a surface variable group
+    CLASS(SURFACE_VIEW_GROUP_WAVES) :: SELF
+    TYPE(SURFACE_VARIABLE_GROUP_WAVES), TARGET, INTENT(INOUT) :: VARIABLE_GROUP
+    INTEGER(KIND=JPIM) :: I, J, MYSHAPE(2)
+
+    ! Create a view for the "T0" field only for diagnostic fields
+    SELF%F_CHAR => VARIABLE_GROUP%VCHAR%FT0
+    SELF%F_USTOKES => VARIABLE_GROUP%VUSTOKES%FT0
+    SELF%F_VSTOKES => VARIABLE_GROUP%VVSTOKES%FT0
+    SELF%F_PHIOC => VARIABLE_GROUP%VPHIOC%FT0
+    SELF%F_PHIAW => VARIABLE_GROUP%VPHIAW%FT0
+    SELF%F_TAUOC => VARIABLE_GROUP%VTAUOC%FT0
+    SELF%F_EMEAN => VARIABLE_GROUP%VEMEAN%FT0
+    SELF%F_FMEAN => VARIABLE_GROUP%VFMEAN%FT0
+    SELF%VARIABLE_GROUP => VARIABLE_GROUP
+    SELF%F_GROUP => VARIABLE_GROUP%F_GROUP
+  END SUBROUTINE SURFACE_VIEW_GROUP_WAVES_INIT
+
+  SUBROUTINE SURFACE_VIEW_GROUP_WAVES_UPDATE_VIEW(SELF, BLOCK_INDEX)
+    ! Extract local array views from field objects
+    CLASS(SURFACE_VIEW_GROUP_WAVES) :: SELF
+    INTEGER(KIND=JPIM), INTENT(IN) :: BLOCK_INDEX
+    INTEGER(KIND=JPIM) :: I, J
+
+    ! Set up the view pointer for the "T0" field
+    IF (ASSOCIATED(SELF%F_CHAR))  SELF%PCHAR => SELF%F_CHAR%GET_VIEW(BLOCK_INDEX)
+    IF (ASSOCIATED(SELF%F_USTOKES))  SELF%PUSTOKES => SELF%F_USTOKES%GET_VIEW(BLOCK_INDEX)
+    IF (ASSOCIATED(SELF%F_VSTOKES))  SELF%PVSTOKES => SELF%F_VSTOKES%GET_VIEW(BLOCK_INDEX)
+    IF (ASSOCIATED(SELF%F_PHIOC))  SELF%PPHIOC => SELF%F_PHIOC%GET_VIEW(BLOCK_INDEX)
+    IF (ASSOCIATED(SELF%F_PHIAW))  SELF%PPHIAW => SELF%F_PHIAW%GET_VIEW(BLOCK_INDEX)
+    IF (ASSOCIATED(SELF%F_TAUOC))  SELF%PTAUOC => SELF%F_TAUOC%GET_VIEW(BLOCK_INDEX)
+    IF (ASSOCIATED(SELF%F_EMEAN))  SELF%PEMEAN => SELF%F_EMEAN%GET_VIEW(BLOCK_INDEX)
+    IF (ASSOCIATED(SELF%F_FMEAN))  SELF%PFMEAN => SELF%F_FMEAN%GET_VIEW(BLOCK_INDEX)
+
+    IF (ASSOCIATED(SELF%F_GROUP))  SELF%PGROUP => SELF%F_GROUP%GET_VIEW(BLOCK_INDEX)
+  END SUBROUTINE SURFACE_VIEW_GROUP_WAVES_UPDATE_VIEW
+
+  SUBROUTINE SURFACE_VIEW_GROUP_WAM_INIT(SELF, VARIABLE_GROUP)
+    ! Constructor of the array view type for a surface variable group
+    CLASS(SURFACE_VIEW_GROUP_WAM) :: SELF
+    TYPE(SURFACE_VARIABLE_GROUP_WAM), TARGET, INTENT(INOUT) :: VARIABLE_GROUP
+    INTEGER(KIND=JPIM) :: I, J, MYSHAPE(2)
+
+    ! Create a view for the "T0" field only for diagnostic fields
+    SELF%F_U10N => VARIABLE_GROUP%VU10N%FT0
+    SELF%F_V10N => VARIABLE_GROUP%VV10N%FT0
+    SELF%F_RHO => VARIABLE_GROUP%VRHO%FT0
+    SELF%F_ZIL => VARIABLE_GROUP%VZIL%FT0
+    SELF%F_CIF => VARIABLE_GROUP%VCIF%FT0
+    SELF%F_CLK => VARIABLE_GROUP%VCLK%FT0
+    SELF%F_UCURW => VARIABLE_GROUP%VUCURW%FT0
+    SELF%F_VCURW => VARIABLE_GROUP%VVCURW%FT0
+    SELF%VARIABLE_GROUP => VARIABLE_GROUP
+    SELF%F_GROUP => VARIABLE_GROUP%F_GROUP
+  END SUBROUTINE SURFACE_VIEW_GROUP_WAM_INIT
+
+  SUBROUTINE SURFACE_VIEW_GROUP_WAM_UPDATE_VIEW(SELF, BLOCK_INDEX)
+    ! Extract local array views from field objects
+    CLASS(SURFACE_VIEW_GROUP_WAM) :: SELF
+    INTEGER(KIND=JPIM), INTENT(IN) :: BLOCK_INDEX
+    INTEGER(KIND=JPIM) :: I, J
+
+    ! Set up the view pointer for the "T0" field
+    IF (ASSOCIATED(SELF%F_U10N))  SELF%PU10N => SELF%F_U10N%GET_VIEW(BLOCK_INDEX)
+    IF (ASSOCIATED(SELF%F_V10N))  SELF%PV10N => SELF%F_V10N%GET_VIEW(BLOCK_INDEX)
+    IF (ASSOCIATED(SELF%F_RHO))  SELF%PRHO => SELF%F_RHO%GET_VIEW(BLOCK_INDEX)
+    IF (ASSOCIATED(SELF%F_ZIL))  SELF%PZIL => SELF%F_ZIL%GET_VIEW(BLOCK_INDEX)
+    IF (ASSOCIATED(SELF%F_CIF))  SELF%PCIF => SELF%F_CIF%GET_VIEW(BLOCK_INDEX)
+    IF (ASSOCIATED(SELF%F_CLK))  SELF%PCLK => SELF%F_CLK%GET_VIEW(BLOCK_INDEX)
+    IF (ASSOCIATED(SELF%F_UCURW))  SELF%PUCURW => SELF%F_UCURW%GET_VIEW(BLOCK_INDEX)
+    IF (ASSOCIATED(SELF%F_VCURW))  SELF%PVCURW => SELF%F_VCURW%GET_VIEW(BLOCK_INDEX)
+
+    IF (ASSOCIATED(SELF%F_GROUP))  SELF%PGROUP => SELF%F_GROUP%GET_VIEW(BLOCK_INDEX)
+  END SUBROUTINE SURFACE_VIEW_GROUP_WAM_UPDATE_VIEW
+
+  SUBROUTINE SURFACE_VIEW_GROUP_VEXTRA_INIT(SELF, VARIABLE_GROUP)
+    ! Constructor of the array view type for a surface variable group
+    CLASS(SURFACE_VIEW_GROUP_VEXTRA) :: SELF
+    TYPE(SURFACE_VARIABLE_GROUP_VEXTRA), TARGET, INTENT(INOUT) :: VARIABLE_GROUP
+    INTEGER(KIND=JPIM) :: I, J, MYSHAPE(2)
+
+    ! Create a view for the "T0" field only for diagnostic fields
+    SELF%VARIABLE_GROUP => VARIABLE_GROUP
+    SELF%F_GROUP => VARIABLE_GROUP%F_GROUP
+  END SUBROUTINE SURFACE_VIEW_GROUP_VEXTRA_INIT
+
+  SUBROUTINE SURFACE_VIEW_GROUP_VEXTRA_UPDATE_VIEW(SELF, BLOCK_INDEX)
+    ! Extract local array views from field objects
+    CLASS(SURFACE_VIEW_GROUP_VEXTRA) :: SELF
+    INTEGER(KIND=JPIM), INTENT(IN) :: BLOCK_INDEX
+    INTEGER(KIND=JPIM) :: I, J
+
+    ! Set up the view pointer for the "T0" field
+
+    IF (ASSOCIATED(SELF%F_GROUP))  SELF%PGROUP => SELF%F_GROUP%GET_VIEW(BLOCK_INDEX)
+  END SUBROUTINE SURFACE_VIEW_GROUP_VEXTRA_UPDATE_VIEW
+
+  SUBROUTINE SURFACE_VIEW_GROUP_VEXTRDI_INIT(SELF, VARIABLE_GROUP)
+    ! Constructor of the array view type for a surface variable group
+    CLASS(SURFACE_VIEW_GROUP_VEXTRDI) :: SELF
+    TYPE(SURFACE_VARIABLE_GROUP_VEXTRDI), TARGET, INTENT(INOUT) :: VARIABLE_GROUP
+    INTEGER(KIND=JPIM) :: I, J, MYSHAPE(2)
+
+    ! Create a view for the "T0" field only for diagnostic fields
+    SELF%F_XEDR => VARIABLE_GROUP%VXEDR%FT0
+    SELF%VARIABLE_GROUP => VARIABLE_GROUP
+    SELF%F_GROUP => VARIABLE_GROUP%F_GROUP
+  END SUBROUTINE SURFACE_VIEW_GROUP_VEXTRDI_INIT
+
+  SUBROUTINE SURFACE_VIEW_GROUP_VEXTRDI_UPDATE_VIEW(SELF, BLOCK_INDEX)
+    ! Extract local array views from field objects
+    CLASS(SURFACE_VIEW_GROUP_VEXTRDI) :: SELF
+    INTEGER(KIND=JPIM), INTENT(IN) :: BLOCK_INDEX
+    INTEGER(KIND=JPIM) :: I, J
+
+    ! Set up the view pointer for the "T0" field
+    IF (ASSOCIATED(SELF%F_XEDR))  SELF%PXEDR => SELF%F_XEDR%GET_VIEW(BLOCK_INDEX)
+
+    IF (ASSOCIATED(SELF%F_GROUP))  SELF%PGROUP => SELF%F_GROUP%GET_VIEW(BLOCK_INDEX)
+  END SUBROUTINE SURFACE_VIEW_GROUP_VEXTRDI_UPDATE_VIEW
+
+  SUBROUTINE SURFACE_VIEW_GROUP_VPRECIP_INIT(SELF, VARIABLE_GROUP)
+    ! Constructor of the array view type for a surface variable group
+    CLASS(SURFACE_VIEW_GROUP_VPRECIP) :: SELF
+    TYPE(SURFACE_VARIABLE_GROUP_VPRECIP), TARGET, INTENT(INOUT) :: VARIABLE_GROUP
+    INTEGER(KIND=JPIM) :: I, J, MYSHAPE(2)
+
+    ! Create a view for the "T0" field only for diagnostic fields
+    SELF%F_PRECIP => VARIABLE_GROUP%VPRECIP%FT0
+    SELF%VARIABLE_GROUP => VARIABLE_GROUP
+    SELF%F_GROUP => VARIABLE_GROUP%F_GROUP
+  END SUBROUTINE SURFACE_VIEW_GROUP_VPRECIP_INIT
+
+  SUBROUTINE SURFACE_VIEW_GROUP_VPRECIP_UPDATE_VIEW(SELF, BLOCK_INDEX)
+    ! Extract local array views from field objects
+    CLASS(SURFACE_VIEW_GROUP_VPRECIP) :: SELF
+    INTEGER(KIND=JPIM), INTENT(IN) :: BLOCK_INDEX
+    INTEGER(KIND=JPIM) :: I, J
+
+    ! Set up the view pointer for the "T0" field
+    IF (ASSOCIATED(SELF%F_PRECIP))  SELF%PPRECIP => SELF%F_PRECIP%GET_VIEW(BLOCK_INDEX)
+
+    IF (ASSOCIATED(SELF%F_GROUP))  SELF%PGROUP => SELF%F_GROUP%GET_VIEW(BLOCK_INDEX)
+  END SUBROUTINE SURFACE_VIEW_GROUP_VPRECIP_UPDATE_VIEW
+
+  SUBROUTINE SURFACE_VIEW_GROUP_VPRECIP2_INIT(SELF, VARIABLE_GROUP)
+    ! Constructor of the array view type for a surface variable group
+    CLASS(SURFACE_VIEW_GROUP_VPRECIP2) :: SELF
+    TYPE(SURFACE_VARIABLE_GROUP_VPRECIP2), TARGET, INTENT(INOUT) :: VARIABLE_GROUP
+    INTEGER(KIND=JPIM) :: I, J, MYSHAPE(2)
+
+    ! Create a view for the "T0" field only for diagnostic fields
+    SELF%F_PRECIP2 => VARIABLE_GROUP%VPRECIP2%FT0
+    SELF%VARIABLE_GROUP => VARIABLE_GROUP
+    SELF%F_GROUP => VARIABLE_GROUP%F_GROUP
+  END SUBROUTINE SURFACE_VIEW_GROUP_VPRECIP2_INIT
+
+  SUBROUTINE SURFACE_VIEW_GROUP_VPRECIP2_UPDATE_VIEW(SELF, BLOCK_INDEX)
+    ! Extract local array views from field objects
+    CLASS(SURFACE_VIEW_GROUP_VPRECIP2) :: SELF
+    INTEGER(KIND=JPIM), INTENT(IN) :: BLOCK_INDEX
+    INTEGER(KIND=JPIM) :: I, J
+
+    ! Set up the view pointer for the "T0" field
+    IF (ASSOCIATED(SELF%F_PRECIP2))  SELF%PPRECIP2 => SELF%F_PRECIP2%GET_VIEW(BLOCK_INDEX)
+
+    IF (ASSOCIATED(SELF%F_GROUP))  SELF%PGROUP => SELF%F_GROUP%GET_VIEW(BLOCK_INDEX)
+  END SUBROUTINE SURFACE_VIEW_GROUP_VPRECIP2_UPDATE_VIEW
+
+  SUBROUTINE SURFACE_VIEW_GROUP_VEXTR2_INIT(SELF, VARIABLE_GROUP)
+    ! Constructor of the array view type for a surface variable group
+    CLASS(SURFACE_VIEW_GROUP_VEXTR2) :: SELF
+    TYPE(SURFACE_VARIABLE_GROUP_VEXTR2), TARGET, INTENT(INOUT) :: VARIABLE_GROUP
+    INTEGER(KIND=JPIM) :: I, J, MYSHAPE(2)
+
+    ! Create a view for the "T0" field only for diagnostic fields
+    SELF%VARIABLE_GROUP => VARIABLE_GROUP
+    SELF%F_GROUP => VARIABLE_GROUP%F_GROUP
+  END SUBROUTINE SURFACE_VIEW_GROUP_VEXTR2_INIT
+
+  SUBROUTINE SURFACE_VIEW_GROUP_VEXTR2_UPDATE_VIEW(SELF, BLOCK_INDEX)
+    ! Extract local array views from field objects
+    CLASS(SURFACE_VIEW_GROUP_VEXTR2) :: SELF
+    INTEGER(KIND=JPIM), INTENT(IN) :: BLOCK_INDEX
+    INTEGER(KIND=JPIM) :: I, J
+
+    ! Set up the view pointer for the "T0" field
+
+    IF (ASSOCIATED(SELF%F_GROUP))  SELF%PGROUP => SELF%F_GROUP%GET_VIEW(BLOCK_INDEX)
+  END SUBROUTINE SURFACE_VIEW_GROUP_VEXTR2_UPDATE_VIEW
+
+  SUBROUTINE SURFACE_VIEW_GROUP_SFORC_INIT(SELF, VARIABLE_GROUP)
+    ! Constructor of the array view type for a surface variable group
+    CLASS(SURFACE_VIEW_GROUP_SFORC) :: SELF
+    TYPE(SURFACE_VARIABLE_GROUP_SFORC), TARGET, INTENT(INOUT) :: VARIABLE_GROUP
+    INTEGER(KIND=JPIM) :: I, J, MYSHAPE(2)
+
+    ! Create a view for the "T0" field only for diagnostic fields
+    SELF%VARIABLE_GROUP => VARIABLE_GROUP
+    SELF%F_GROUP => VARIABLE_GROUP%F_GROUP
+  END SUBROUTINE SURFACE_VIEW_GROUP_SFORC_INIT
+
+  SUBROUTINE SURFACE_VIEW_GROUP_SFORC_UPDATE_VIEW(SELF, BLOCK_INDEX)
+    ! Extract local array views from field objects
+    CLASS(SURFACE_VIEW_GROUP_SFORC) :: SELF
+    INTEGER(KIND=JPIM), INTENT(IN) :: BLOCK_INDEX
+    INTEGER(KIND=JPIM) :: I, J
+
+    ! Set up the view pointer for the "T0" field
+
+    IF (ASSOCIATED(SELF%F_GROUP))  SELF%PGROUP => SELF%F_GROUP%GET_VIEW(BLOCK_INDEX)
+  END SUBROUTINE SURFACE_VIEW_GROUP_SFORC_UPDATE_VIEW
+
+  SUBROUTINE SURFACE_VIEW_GROUP_SFLUX_INIT(SELF, VARIABLE_GROUP)
+    ! Constructor of the array view type for a surface variable group
+    CLASS(SURFACE_VIEW_GROUP_SFLUX) :: SELF
+    TYPE(SURFACE_VARIABLE_GROUP_SFLUX), TARGET, INTENT(INOUT) :: VARIABLE_GROUP
+    INTEGER(KIND=JPIM) :: I, J, MYSHAPE(2)
+
+    ! Create a view for the "T0" field only for diagnostic fields
+    SELF%VARIABLE_GROUP => VARIABLE_GROUP
+    SELF%F_GROUP => VARIABLE_GROUP%F_GROUP
+  END SUBROUTINE SURFACE_VIEW_GROUP_SFLUX_INIT
+
+  SUBROUTINE SURFACE_VIEW_GROUP_SFLUX_UPDATE_VIEW(SELF, BLOCK_INDEX)
+    ! Extract local array views from field objects
+    CLASS(SURFACE_VIEW_GROUP_SFLUX) :: SELF
+    INTEGER(KIND=JPIM), INTENT(IN) :: BLOCK_INDEX
+    INTEGER(KIND=JPIM) :: I, J
+
+    ! Set up the view pointer for the "T0" field
+
+    IF (ASSOCIATED(SELF%F_GROUP))  SELF%PGROUP => SELF%F_GROUP%GET_VIEW(BLOCK_INDEX)
+  END SUBROUTINE SURFACE_VIEW_GROUP_SFLUX_UPDATE_VIEW
+
+  SUBROUTINE SURFACE_VIEW_GROUP_VO3ABC_INIT(SELF, VARIABLE_GROUP)
+    ! Constructor of the array view type for a surface variable group
+    CLASS(SURFACE_VIEW_GROUP_VO3ABC) :: SELF
+    TYPE(SURFACE_VARIABLE_GROUP_VO3ABC), TARGET, INTENT(INOUT) :: VARIABLE_GROUP
+    INTEGER(KIND=JPIM) :: I, J, MYSHAPE(2)
+
+    ! Create a view for the "T0" field only for diagnostic fields
+    SELF%VARIABLE_GROUP => VARIABLE_GROUP
+    SELF%F_GROUP => VARIABLE_GROUP%F_GROUP
+  END SUBROUTINE SURFACE_VIEW_GROUP_VO3ABC_INIT
+
+  SUBROUTINE SURFACE_VIEW_GROUP_VO3ABC_UPDATE_VIEW(SELF, BLOCK_INDEX)
+    ! Extract local array views from field objects
+    CLASS(SURFACE_VIEW_GROUP_VO3ABC) :: SELF
+    INTEGER(KIND=JPIM), INTENT(IN) :: BLOCK_INDEX
+    INTEGER(KIND=JPIM) :: I, J
+
+    ! Set up the view pointer for the "T0" field
+
+    IF (ASSOCIATED(SELF%F_GROUP))  SELF%PGROUP => SELF%F_GROUP%GET_VIEW(BLOCK_INDEX)
+  END SUBROUTINE SURFACE_VIEW_GROUP_VO3ABC_UPDATE_VIEW
+
+
+  ! Timestepping utility subroutines for prognostics variables
+  SUBROUTINE SURFACE_VIEW_GROUP_SOILB_SET9TO0(SELF)
+    ! Field update operation for timestepping schemes
+    CLASS(SURFACE_VIEW_GROUP_SOILB) :: SELF
+
+    IF (SELF%VARIABLE_GROUP%VT%LACTIVE) THEN
+      SELF%PT_T9(:,:) = SELF%PT_T0(:,:)
+    END IF
+    IF (SELF%VARIABLE_GROUP%VQ%LACTIVE) THEN
+      SELF%PQ_T9(:,:) = SELF%PQ_T0(:,:)
+    END IF
+    IF (SELF%VARIABLE_GROUP%VTL%LACTIVE) THEN
+      SELF%PTL_T9(:,:) = SELF%PTL_T0(:,:)
+    END IF
+  END SUBROUTINE SURFACE_VIEW_GROUP_SOILB_SET9TO0
+
+  SUBROUTINE SURFACE_VIEW_GROUP_SOILB_SET1TO9(SELF)
+    ! Field update operation for timestepping schemes
+    CLASS(SURFACE_VIEW_GROUP_SOILB) :: SELF
+
+    IF (SELF%VARIABLE_GROUP%VT%LACTIVE) THEN
+      SELF%PT_T1(:,:) = SELF%PT_T9(:,:)
+    END IF
+    IF (SELF%VARIABLE_GROUP%VQ%LACTIVE) THEN
+      SELF%PQ_T1(:,:) = SELF%PQ_T9(:,:)
+    END IF
+    IF (SELF%VARIABLE_GROUP%VTL%LACTIVE) THEN
+      SELF%PTL_T1(:,:) = SELF%PTL_T9(:,:)
+    END IF
+  END SUBROUTINE SURFACE_VIEW_GROUP_SOILB_SET1TO9
+
+  SUBROUTINE SURFACE_VIEW_GROUP_SOILB_SET1TO0(SELF)
+    ! Field update operation for timestepping schemes
+    CLASS(SURFACE_VIEW_GROUP_SOILB) :: SELF
+
+    IF (SELF%VARIABLE_GROUP%VT%LACTIVE) THEN
+      SELF%PT_T1(:,:) = SELF%PT_T0(:,:)
+    END IF
+    IF (SELF%VARIABLE_GROUP%VQ%LACTIVE) THEN
+      SELF%PQ_T1(:,:) = SELF%PQ_T0(:,:)
+    END IF
+    IF (SELF%VARIABLE_GROUP%VTL%LACTIVE) THEN
+      SELF%PTL_T1(:,:) = SELF%PTL_T0(:,:)
+    END IF
+  END SUBROUTINE SURFACE_VIEW_GROUP_SOILB_SET1TO0
+
+  SUBROUTINE SURFACE_VIEW_GROUP_SOILB_SET0TO1(SELF)
+    ! Field update operation for timestepping schemes
+    CLASS(SURFACE_VIEW_GROUP_SOILB) :: SELF
+
+    IF (SELF%VARIABLE_GROUP%VT%LACTIVE) THEN
+      SELF%PT_T0(:,:) = SELF%PT_T1(:,:)
+    END IF
+    IF (SELF%VARIABLE_GROUP%VQ%LACTIVE) THEN
+      SELF%PQ_T0(:,:) = SELF%PQ_T1(:,:)
+    END IF
+    IF (SELF%VARIABLE_GROUP%VTL%LACTIVE) THEN
+      SELF%PTL_T0(:,:) = SELF%PTL_T1(:,:)
+    END IF
+  END SUBROUTINE SURFACE_VIEW_GROUP_SOILB_SET0TO1
+
+  SUBROUTINE SURFACE_VIEW_GROUP_SOILB_PHTFILT(SELF, YDDYN)
+    CLASS(SURFACE_VIEW_GROUP_SOILB) :: SELF
+    TYPE(TDYN), INTENT(IN) :: YDDYN
+    REAL(KIND=JPRB) :: REPSP1, ZZPHY
+
+    REPSP1 = YDDYN%REPSP1
+    ZZPHY = 1.0_JPRB - REPSP1
+
+    IF (SELF%VARIABLE_GROUP%VT%LACTIVE) THEN
+      SELF%PT_T9(:,:) = REPSP1*SELF%PT_T1(:,:) &
+       &                                      + ZZPHY*SELF%PT_T0(:,:)
+      SELF%PT_T0(:,:) = SELF%PT_T1(:,:)
+    END IF
+    IF (SELF%VARIABLE_GROUP%VQ%LACTIVE) THEN
+      SELF%PQ_T9(:,:) = REPSP1*SELF%PQ_T1(:,:) &
+       &                                      + ZZPHY*SELF%PQ_T0(:,:)
+      SELF%PQ_T0(:,:) = SELF%PQ_T1(:,:)
+    END IF
+    IF (SELF%VARIABLE_GROUP%VTL%LACTIVE) THEN
+      SELF%PTL_T9(:,:) = REPSP1*SELF%PTL_T1(:,:) &
+       &                                      + ZZPHY*SELF%PTL_T0(:,:)
+      SELF%PTL_T0(:,:) = SELF%PTL_T1(:,:)
+    END IF
+  END SUBROUTINE SURFACE_VIEW_GROUP_SOILB_PHTFILT
+
+  SUBROUTINE SURFACE_VIEW_GROUP_SNOWG_SET9TO0(SELF)
+    ! Field update operation for timestepping schemes
+    CLASS(SURFACE_VIEW_GROUP_SNOWG) :: SELF
+
+    IF (SELF%VARIABLE_GROUP%VF%LACTIVE) THEN
+      SELF%PF_T9(:,:) = SELF%PF_T0(:,:)
+    END IF
+    IF (SELF%VARIABLE_GROUP%VA%LACTIVE) THEN
+      SELF%PA_T9(:,:) = SELF%PA_T0(:,:)
+    END IF
+    IF (SELF%VARIABLE_GROUP%VR%LACTIVE) THEN
+      SELF%PR_T9(:,:) = SELF%PR_T0(:,:)
+    END IF
+    IF (SELF%VARIABLE_GROUP%VT%LACTIVE) THEN
+      SELF%PT_T9(:,:) = SELF%PT_T0(:,:)
+    END IF
+    IF (SELF%VARIABLE_GROUP%VW%LACTIVE) THEN
+      SELF%PW_T9(:,:) = SELF%PW_T0(:,:)
+    END IF
+  END SUBROUTINE SURFACE_VIEW_GROUP_SNOWG_SET9TO0
+
+  SUBROUTINE SURFACE_VIEW_GROUP_SNOWG_SET1TO9(SELF)
+    ! Field update operation for timestepping schemes
+    CLASS(SURFACE_VIEW_GROUP_SNOWG) :: SELF
+
+    IF (SELF%VARIABLE_GROUP%VF%LACTIVE) THEN
+      SELF%PF_T1(:,:) = SELF%PF_T9(:,:)
+    END IF
+    IF (SELF%VARIABLE_GROUP%VA%LACTIVE) THEN
+      SELF%PA_T1(:,:) = SELF%PA_T9(:,:)
+    END IF
+    IF (SELF%VARIABLE_GROUP%VR%LACTIVE) THEN
+      SELF%PR_T1(:,:) = SELF%PR_T9(:,:)
+    END IF
+    IF (SELF%VARIABLE_GROUP%VT%LACTIVE) THEN
+      SELF%PT_T1(:,:) = SELF%PT_T9(:,:)
+    END IF
+    IF (SELF%VARIABLE_GROUP%VW%LACTIVE) THEN
+      SELF%PW_T1(:,:) = SELF%PW_T9(:,:)
+    END IF
+  END SUBROUTINE SURFACE_VIEW_GROUP_SNOWG_SET1TO9
+
+  SUBROUTINE SURFACE_VIEW_GROUP_SNOWG_SET1TO0(SELF)
+    ! Field update operation for timestepping schemes
+    CLASS(SURFACE_VIEW_GROUP_SNOWG) :: SELF
+
+    IF (SELF%VARIABLE_GROUP%VF%LACTIVE) THEN
+      SELF%PF_T1(:,:) = SELF%PF_T0(:,:)
+    END IF
+    IF (SELF%VARIABLE_GROUP%VA%LACTIVE) THEN
+      SELF%PA_T1(:,:) = SELF%PA_T0(:,:)
+    END IF
+    IF (SELF%VARIABLE_GROUP%VR%LACTIVE) THEN
+      SELF%PR_T1(:,:) = SELF%PR_T0(:,:)
+    END IF
+    IF (SELF%VARIABLE_GROUP%VT%LACTIVE) THEN
+      SELF%PT_T1(:,:) = SELF%PT_T0(:,:)
+    END IF
+    IF (SELF%VARIABLE_GROUP%VW%LACTIVE) THEN
+      SELF%PW_T1(:,:) = SELF%PW_T0(:,:)
+    END IF
+  END SUBROUTINE SURFACE_VIEW_GROUP_SNOWG_SET1TO0
+
+  SUBROUTINE SURFACE_VIEW_GROUP_SNOWG_SET0TO1(SELF)
+    ! Field update operation for timestepping schemes
+    CLASS(SURFACE_VIEW_GROUP_SNOWG) :: SELF
+
+    IF (SELF%VARIABLE_GROUP%VF%LACTIVE) THEN
+      SELF%PF_T0(:,:) = SELF%PF_T1(:,:)
+    END IF
+    IF (SELF%VARIABLE_GROUP%VA%LACTIVE) THEN
+      SELF%PA_T0(:,:) = SELF%PA_T1(:,:)
+    END IF
+    IF (SELF%VARIABLE_GROUP%VR%LACTIVE) THEN
+      SELF%PR_T0(:,:) = SELF%PR_T1(:,:)
+    END IF
+    IF (SELF%VARIABLE_GROUP%VT%LACTIVE) THEN
+      SELF%PT_T0(:,:) = SELF%PT_T1(:,:)
+    END IF
+    IF (SELF%VARIABLE_GROUP%VW%LACTIVE) THEN
+      SELF%PW_T0(:,:) = SELF%PW_T1(:,:)
+    END IF
+  END SUBROUTINE SURFACE_VIEW_GROUP_SNOWG_SET0TO1
+
+  SUBROUTINE SURFACE_VIEW_GROUP_SNOWG_PHTFILT(SELF, YDDYN)
+    CLASS(SURFACE_VIEW_GROUP_SNOWG) :: SELF
+    TYPE(TDYN), INTENT(IN) :: YDDYN
+    REAL(KIND=JPRB) :: REPSP1, ZZPHY
+
+    REPSP1 = YDDYN%REPSP1
+    ZZPHY = 1.0_JPRB - REPSP1
+
+    IF (SELF%VARIABLE_GROUP%VF%LACTIVE) THEN
+      SELF%PF_T9(:,:) = REPSP1*SELF%PF_T1(:,:) &
+       &                                      + ZZPHY*SELF%PF_T0(:,:)
+      SELF%PF_T0(:,:) = SELF%PF_T1(:,:)
+    END IF
+    IF (SELF%VARIABLE_GROUP%VA%LACTIVE) THEN
+      SELF%PA_T9(:,:) = REPSP1*SELF%PA_T1(:,:) &
+       &                                      + ZZPHY*SELF%PA_T0(:,:)
+      SELF%PA_T0(:,:) = SELF%PA_T1(:,:)
+    END IF
+    IF (SELF%VARIABLE_GROUP%VR%LACTIVE) THEN
+      SELF%PR_T9(:,:) = REPSP1*SELF%PR_T1(:,:) &
+       &                                      + ZZPHY*SELF%PR_T0(:,:)
+      SELF%PR_T0(:,:) = SELF%PR_T1(:,:)
+    END IF
+    IF (SELF%VARIABLE_GROUP%VT%LACTIVE) THEN
+      SELF%PT_T9(:,:) = REPSP1*SELF%PT_T1(:,:) &
+       &                                      + ZZPHY*SELF%PT_T0(:,:)
+      SELF%PT_T0(:,:) = SELF%PT_T1(:,:)
+    END IF
+    IF (SELF%VARIABLE_GROUP%VW%LACTIVE) THEN
+      SELF%PW_T9(:,:) = REPSP1*SELF%PW_T1(:,:) &
+       &                                      + ZZPHY*SELF%PW_T0(:,:)
+      SELF%PW_T0(:,:) = SELF%PW_T1(:,:)
+    END IF
+  END SUBROUTINE SURFACE_VIEW_GROUP_SNOWG_PHTFILT
+
+  SUBROUTINE SURFACE_VIEW_GROUP_LAKEB_SET9TO0(SELF)
+    ! Field update operation for timestepping schemes
+    CLASS(SURFACE_VIEW_GROUP_LAKEB) :: SELF
+
+    IF (SELF%VARIABLE_GROUP%VLICT%LACTIVE) THEN
+      SELF%PLICT_T9(:) = SELF%PLICT_T0(:)
+    END IF
+    IF (SELF%VARIABLE_GROUP%VLMLT%LACTIVE) THEN
+      SELF%PLMLT_T9(:) = SELF%PLMLT_T0(:)
+    END IF
+    IF (SELF%VARIABLE_GROUP%VLTLT%LACTIVE) THEN
+      SELF%PLTLT_T9(:) = SELF%PLTLT_T0(:)
+    END IF
+    IF (SELF%VARIABLE_GROUP%VLBLT%LACTIVE) THEN
+      SELF%PLBLT_T9(:) = SELF%PLBLT_T0(:)
+    END IF
+    IF (SELF%VARIABLE_GROUP%VLSHF%LACTIVE) THEN
+      SELF%PLSHF_T9(:) = SELF%PLSHF_T0(:)
+    END IF
+    IF (SELF%VARIABLE_GROUP%VLICD%LACTIVE) THEN
+      SELF%PLICD_T9(:) = SELF%PLICD_T0(:)
+    END IF
+    IF (SELF%VARIABLE_GROUP%VLMLD%LACTIVE) THEN
+      SELF%PLMLD_T9(:) = SELF%PLMLD_T0(:)
+    END IF
+  END SUBROUTINE SURFACE_VIEW_GROUP_LAKEB_SET9TO0
+
+  SUBROUTINE SURFACE_VIEW_GROUP_LAKEB_SET1TO9(SELF)
+    ! Field update operation for timestepping schemes
+    CLASS(SURFACE_VIEW_GROUP_LAKEB) :: SELF
+
+    IF (SELF%VARIABLE_GROUP%VLICT%LACTIVE) THEN
+      SELF%PLICT_T1(:) = SELF%PLICT_T9(:)
+    END IF
+    IF (SELF%VARIABLE_GROUP%VLMLT%LACTIVE) THEN
+      SELF%PLMLT_T1(:) = SELF%PLMLT_T9(:)
+    END IF
+    IF (SELF%VARIABLE_GROUP%VLTLT%LACTIVE) THEN
+      SELF%PLTLT_T1(:) = SELF%PLTLT_T9(:)
+    END IF
+    IF (SELF%VARIABLE_GROUP%VLBLT%LACTIVE) THEN
+      SELF%PLBLT_T1(:) = SELF%PLBLT_T9(:)
+    END IF
+    IF (SELF%VARIABLE_GROUP%VLSHF%LACTIVE) THEN
+      SELF%PLSHF_T1(:) = SELF%PLSHF_T9(:)
+    END IF
+    IF (SELF%VARIABLE_GROUP%VLICD%LACTIVE) THEN
+      SELF%PLICD_T1(:) = SELF%PLICD_T9(:)
+    END IF
+    IF (SELF%VARIABLE_GROUP%VLMLD%LACTIVE) THEN
+      SELF%PLMLD_T1(:) = SELF%PLMLD_T9(:)
+    END IF
+  END SUBROUTINE SURFACE_VIEW_GROUP_LAKEB_SET1TO9
+
+  SUBROUTINE SURFACE_VIEW_GROUP_LAKEB_SET1TO0(SELF)
+    ! Field update operation for timestepping schemes
+    CLASS(SURFACE_VIEW_GROUP_LAKEB) :: SELF
+
+    IF (SELF%VARIABLE_GROUP%VLICT%LACTIVE) THEN
+      SELF%PLICT_T1(:) = SELF%PLICT_T0(:)
+    END IF
+    IF (SELF%VARIABLE_GROUP%VLMLT%LACTIVE) THEN
+      SELF%PLMLT_T1(:) = SELF%PLMLT_T0(:)
+    END IF
+    IF (SELF%VARIABLE_GROUP%VLTLT%LACTIVE) THEN
+      SELF%PLTLT_T1(:) = SELF%PLTLT_T0(:)
+    END IF
+    IF (SELF%VARIABLE_GROUP%VLBLT%LACTIVE) THEN
+      SELF%PLBLT_T1(:) = SELF%PLBLT_T0(:)
+    END IF
+    IF (SELF%VARIABLE_GROUP%VLSHF%LACTIVE) THEN
+      SELF%PLSHF_T1(:) = SELF%PLSHF_T0(:)
+    END IF
+    IF (SELF%VARIABLE_GROUP%VLICD%LACTIVE) THEN
+      SELF%PLICD_T1(:) = SELF%PLICD_T0(:)
+    END IF
+    IF (SELF%VARIABLE_GROUP%VLMLD%LACTIVE) THEN
+      SELF%PLMLD_T1(:) = SELF%PLMLD_T0(:)
+    END IF
+  END SUBROUTINE SURFACE_VIEW_GROUP_LAKEB_SET1TO0
+
+  SUBROUTINE SURFACE_VIEW_GROUP_LAKEB_SET0TO1(SELF)
+    ! Field update operation for timestepping schemes
+    CLASS(SURFACE_VIEW_GROUP_LAKEB) :: SELF
+
+    IF (SELF%VARIABLE_GROUP%VLICT%LACTIVE) THEN
+      SELF%PLICT_T0(:) = SELF%PLICT_T1(:)
+    END IF
+    IF (SELF%VARIABLE_GROUP%VLMLT%LACTIVE) THEN
+      SELF%PLMLT_T0(:) = SELF%PLMLT_T1(:)
+    END IF
+    IF (SELF%VARIABLE_GROUP%VLTLT%LACTIVE) THEN
+      SELF%PLTLT_T0(:) = SELF%PLTLT_T1(:)
+    END IF
+    IF (SELF%VARIABLE_GROUP%VLBLT%LACTIVE) THEN
+      SELF%PLBLT_T0(:) = SELF%PLBLT_T1(:)
+    END IF
+    IF (SELF%VARIABLE_GROUP%VLSHF%LACTIVE) THEN
+      SELF%PLSHF_T0(:) = SELF%PLSHF_T1(:)
+    END IF
+    IF (SELF%VARIABLE_GROUP%VLICD%LACTIVE) THEN
+      SELF%PLICD_T0(:) = SELF%PLICD_T1(:)
+    END IF
+    IF (SELF%VARIABLE_GROUP%VLMLD%LACTIVE) THEN
+      SELF%PLMLD_T0(:) = SELF%PLMLD_T1(:)
+    END IF
+  END SUBROUTINE SURFACE_VIEW_GROUP_LAKEB_SET0TO1
+
+  SUBROUTINE SURFACE_VIEW_GROUP_LAKEB_PHTFILT(SELF, YDDYN)
+    CLASS(SURFACE_VIEW_GROUP_LAKEB) :: SELF
+    TYPE(TDYN), INTENT(IN) :: YDDYN
+    REAL(KIND=JPRB) :: REPSP1, ZZPHY
+
+    REPSP1 = YDDYN%REPSP1
+    ZZPHY = 1.0_JPRB - REPSP1
+
+    IF (SELF%VARIABLE_GROUP%VLICT%LACTIVE) THEN
+      SELF%PLICT_T9(:) = REPSP1*SELF%PLICT_T1(:) &
+       &                                      + ZZPHY*SELF%PLICT_T0(:)
+      SELF%PLICT_T0(:) = SELF%PLICT_T1(:)
+    END IF
+    IF (SELF%VARIABLE_GROUP%VLMLT%LACTIVE) THEN
+      SELF%PLMLT_T9(:) = REPSP1*SELF%PLMLT_T1(:) &
+       &                                      + ZZPHY*SELF%PLMLT_T0(:)
+      SELF%PLMLT_T0(:) = SELF%PLMLT_T1(:)
+    END IF
+    IF (SELF%VARIABLE_GROUP%VLTLT%LACTIVE) THEN
+      SELF%PLTLT_T9(:) = REPSP1*SELF%PLTLT_T1(:) &
+       &                                      + ZZPHY*SELF%PLTLT_T0(:)
+      SELF%PLTLT_T0(:) = SELF%PLTLT_T1(:)
+    END IF
+    IF (SELF%VARIABLE_GROUP%VLBLT%LACTIVE) THEN
+      SELF%PLBLT_T9(:) = REPSP1*SELF%PLBLT_T1(:) &
+       &                                      + ZZPHY*SELF%PLBLT_T0(:)
+      SELF%PLBLT_T0(:) = SELF%PLBLT_T1(:)
+    END IF
+    IF (SELF%VARIABLE_GROUP%VLSHF%LACTIVE) THEN
+      SELF%PLSHF_T9(:) = REPSP1*SELF%PLSHF_T1(:) &
+       &                                      + ZZPHY*SELF%PLSHF_T0(:)
+      SELF%PLSHF_T0(:) = SELF%PLSHF_T1(:)
+    END IF
+    IF (SELF%VARIABLE_GROUP%VLICD%LACTIVE) THEN
+      SELF%PLICD_T9(:) = REPSP1*SELF%PLICD_T1(:) &
+       &                                      + ZZPHY*SELF%PLICD_T0(:)
+      SELF%PLICD_T0(:) = SELF%PLICD_T1(:)
+    END IF
+    IF (SELF%VARIABLE_GROUP%VLMLD%LACTIVE) THEN
+      SELF%PLMLD_T9(:) = REPSP1*SELF%PLMLD_T1(:) &
+       &                                      + ZZPHY*SELF%PLMLD_T0(:)
+      SELF%PLMLD_T0(:) = SELF%PLMLD_T1(:)
+    END IF
+  END SUBROUTINE SURFACE_VIEW_GROUP_LAKEB_PHTFILT
+
+  SUBROUTINE SURFACE_VIEW_GROUP_RESVR_SET9TO0(SELF)
+    ! Field update operation for timestepping schemes
+    CLASS(SURFACE_VIEW_GROUP_RESVR) :: SELF
+
+    IF (SELF%VARIABLE_GROUP%VT%LACTIVE) THEN
+      SELF%PT_T9(:) = SELF%PT_T0(:)
+    END IF
+    IF (SELF%VARIABLE_GROUP%VW%LACTIVE) THEN
+      SELF%PW_T9(:) = SELF%PW_T0(:)
+    END IF
+    IF (SELF%VARIABLE_GROUP%VFC%LACTIVE) THEN
+      SELF%PFC_T9(:) = SELF%PFC_T0(:)
+    END IF
+    IF (SELF%VARIABLE_GROUP%VIC%LACTIVE) THEN
+      SELF%PIC_T9(:) = SELF%PIC_T0(:)
+    END IF
+    IF (SELF%VARIABLE_GROUP%VFP1%LACTIVE) THEN
+      SELF%PFP1_T9(:) = SELF%PFP1_T0(:)
+    END IF
+  END SUBROUTINE SURFACE_VIEW_GROUP_RESVR_SET9TO0
+
+  SUBROUTINE SURFACE_VIEW_GROUP_RESVR_SET1TO9(SELF)
+    ! Field update operation for timestepping schemes
+    CLASS(SURFACE_VIEW_GROUP_RESVR) :: SELF
+
+    IF (SELF%VARIABLE_GROUP%VT%LACTIVE) THEN
+      SELF%PT_T1(:) = SELF%PT_T9(:)
+    END IF
+    IF (SELF%VARIABLE_GROUP%VW%LACTIVE) THEN
+      SELF%PW_T1(:) = SELF%PW_T9(:)
+    END IF
+    IF (SELF%VARIABLE_GROUP%VFC%LACTIVE) THEN
+      SELF%PFC_T1(:) = SELF%PFC_T9(:)
+    END IF
+    IF (SELF%VARIABLE_GROUP%VIC%LACTIVE) THEN
+      SELF%PIC_T1(:) = SELF%PIC_T9(:)
+    END IF
+    IF (SELF%VARIABLE_GROUP%VFP1%LACTIVE) THEN
+      SELF%PFP1_T1(:) = SELF%PFP1_T9(:)
+    END IF
+  END SUBROUTINE SURFACE_VIEW_GROUP_RESVR_SET1TO9
+
+  SUBROUTINE SURFACE_VIEW_GROUP_RESVR_SET1TO0(SELF)
+    ! Field update operation for timestepping schemes
+    CLASS(SURFACE_VIEW_GROUP_RESVR) :: SELF
+
+    IF (SELF%VARIABLE_GROUP%VT%LACTIVE) THEN
+      SELF%PT_T1(:) = SELF%PT_T0(:)
+    END IF
+    IF (SELF%VARIABLE_GROUP%VW%LACTIVE) THEN
+      SELF%PW_T1(:) = SELF%PW_T0(:)
+    END IF
+    IF (SELF%VARIABLE_GROUP%VFC%LACTIVE) THEN
+      SELF%PFC_T1(:) = SELF%PFC_T0(:)
+    END IF
+    IF (SELF%VARIABLE_GROUP%VIC%LACTIVE) THEN
+      SELF%PIC_T1(:) = SELF%PIC_T0(:)
+    END IF
+    IF (SELF%VARIABLE_GROUP%VFP1%LACTIVE) THEN
+      SELF%PFP1_T1(:) = SELF%PFP1_T0(:)
+    END IF
+  END SUBROUTINE SURFACE_VIEW_GROUP_RESVR_SET1TO0
+
+  SUBROUTINE SURFACE_VIEW_GROUP_RESVR_SET0TO1(SELF)
+    ! Field update operation for timestepping schemes
+    CLASS(SURFACE_VIEW_GROUP_RESVR) :: SELF
+
+    IF (SELF%VARIABLE_GROUP%VT%LACTIVE) THEN
+      SELF%PT_T0(:) = SELF%PT_T1(:)
+    END IF
+    IF (SELF%VARIABLE_GROUP%VW%LACTIVE) THEN
+      SELF%PW_T0(:) = SELF%PW_T1(:)
+    END IF
+    IF (SELF%VARIABLE_GROUP%VFC%LACTIVE) THEN
+      SELF%PFC_T0(:) = SELF%PFC_T1(:)
+    END IF
+    IF (SELF%VARIABLE_GROUP%VIC%LACTIVE) THEN
+      SELF%PIC_T0(:) = SELF%PIC_T1(:)
+    END IF
+    IF (SELF%VARIABLE_GROUP%VFP1%LACTIVE) THEN
+      SELF%PFP1_T0(:) = SELF%PFP1_T1(:)
+    END IF
+  END SUBROUTINE SURFACE_VIEW_GROUP_RESVR_SET0TO1
+
+  SUBROUTINE SURFACE_VIEW_GROUP_RESVR_PHTFILT(SELF, YDDYN)
+    CLASS(SURFACE_VIEW_GROUP_RESVR) :: SELF
+    TYPE(TDYN), INTENT(IN) :: YDDYN
+    REAL(KIND=JPRB) :: REPSP1, ZZPHY
+
+    REPSP1 = YDDYN%REPSP1
+    ZZPHY = 1.0_JPRB - REPSP1
+
+    IF (SELF%VARIABLE_GROUP%VT%LACTIVE) THEN
+      SELF%PT_T9(:) = REPSP1*SELF%PT_T1(:) &
+       &                                      + ZZPHY*SELF%PT_T0(:)
+      SELF%PT_T0(:) = SELF%PT_T1(:)
+    END IF
+    IF (SELF%VARIABLE_GROUP%VW%LACTIVE) THEN
+      SELF%PW_T9(:) = REPSP1*SELF%PW_T1(:) &
+       &                                      + ZZPHY*SELF%PW_T0(:)
+      SELF%PW_T0(:) = SELF%PW_T1(:)
+    END IF
+    IF (SELF%VARIABLE_GROUP%VFC%LACTIVE) THEN
+      SELF%PFC_T9(:) = REPSP1*SELF%PFC_T1(:) &
+       &                                      + ZZPHY*SELF%PFC_T0(:)
+      SELF%PFC_T0(:) = SELF%PFC_T1(:)
+    END IF
+    IF (SELF%VARIABLE_GROUP%VIC%LACTIVE) THEN
+      SELF%PIC_T9(:) = REPSP1*SELF%PIC_T1(:) &
+       &                                      + ZZPHY*SELF%PIC_T0(:)
+      SELF%PIC_T0(:) = SELF%PIC_T1(:)
+    END IF
+    IF (SELF%VARIABLE_GROUP%VFP1%LACTIVE) THEN
+      SELF%PFP1_T9(:) = REPSP1*SELF%PFP1_T1(:) &
+       &                                      + ZZPHY*SELF%PFP1_T0(:)
+      SELF%PFP1_T0(:) = SELF%PFP1_T1(:)
+    END IF
+  END SUBROUTINE SURFACE_VIEW_GROUP_RESVR_PHTFILT
+
+  SUBROUTINE SURFACE_VIEW_GROUP_CLS_SET9TO0(SELF)
+    ! Field update operation for timestepping schemes
+    CLASS(SURFACE_VIEW_GROUP_CLS) :: SELF
+
+    IF (SELF%VARIABLE_GROUP%VTCLS%LACTIVE) THEN
+      SELF%PTCLS_T9(:) = SELF%PTCLS_T0(:)
+    END IF
+    IF (SELF%VARIABLE_GROUP%VHUCLS%LACTIVE) THEN
+      SELF%PHUCLS_T9(:) = SELF%PHUCLS_T0(:)
+    END IF
+    IF (SELF%VARIABLE_GROUP%VUCLS%LACTIVE) THEN
+      SELF%PUCLS_T9(:) = SELF%PUCLS_T0(:)
+    END IF
+    IF (SELF%VARIABLE_GROUP%VVCLS%LACTIVE) THEN
+      SELF%PVCLS_T9(:) = SELF%PVCLS_T0(:)
+    END IF
+    IF (SELF%VARIABLE_GROUP%VNUCLS%LACTIVE) THEN
+      SELF%PNUCLS_T9(:) = SELF%PNUCLS_T0(:)
+    END IF
+    IF (SELF%VARIABLE_GROUP%VNVCLS%LACTIVE) THEN
+      SELF%PNVCLS_T9(:) = SELF%PNVCLS_T0(:)
+    END IF
+  END SUBROUTINE SURFACE_VIEW_GROUP_CLS_SET9TO0
+
+  SUBROUTINE SURFACE_VIEW_GROUP_CLS_SET1TO9(SELF)
+    ! Field update operation for timestepping schemes
+    CLASS(SURFACE_VIEW_GROUP_CLS) :: SELF
+
+    IF (SELF%VARIABLE_GROUP%VTCLS%LACTIVE) THEN
+      SELF%PTCLS_T1(:) = SELF%PTCLS_T9(:)
+    END IF
+    IF (SELF%VARIABLE_GROUP%VHUCLS%LACTIVE) THEN
+      SELF%PHUCLS_T1(:) = SELF%PHUCLS_T9(:)
+    END IF
+    IF (SELF%VARIABLE_GROUP%VUCLS%LACTIVE) THEN
+      SELF%PUCLS_T1(:) = SELF%PUCLS_T9(:)
+    END IF
+    IF (SELF%VARIABLE_GROUP%VVCLS%LACTIVE) THEN
+      SELF%PVCLS_T1(:) = SELF%PVCLS_T9(:)
+    END IF
+    IF (SELF%VARIABLE_GROUP%VNUCLS%LACTIVE) THEN
+      SELF%PNUCLS_T1(:) = SELF%PNUCLS_T9(:)
+    END IF
+    IF (SELF%VARIABLE_GROUP%VNVCLS%LACTIVE) THEN
+      SELF%PNVCLS_T1(:) = SELF%PNVCLS_T9(:)
+    END IF
+  END SUBROUTINE SURFACE_VIEW_GROUP_CLS_SET1TO9
+
+  SUBROUTINE SURFACE_VIEW_GROUP_CLS_SET1TO0(SELF)
+    ! Field update operation for timestepping schemes
+    CLASS(SURFACE_VIEW_GROUP_CLS) :: SELF
+
+    IF (SELF%VARIABLE_GROUP%VTCLS%LACTIVE) THEN
+      SELF%PTCLS_T1(:) = SELF%PTCLS_T0(:)
+    END IF
+    IF (SELF%VARIABLE_GROUP%VHUCLS%LACTIVE) THEN
+      SELF%PHUCLS_T1(:) = SELF%PHUCLS_T0(:)
+    END IF
+    IF (SELF%VARIABLE_GROUP%VUCLS%LACTIVE) THEN
+      SELF%PUCLS_T1(:) = SELF%PUCLS_T0(:)
+    END IF
+    IF (SELF%VARIABLE_GROUP%VVCLS%LACTIVE) THEN
+      SELF%PVCLS_T1(:) = SELF%PVCLS_T0(:)
+    END IF
+    IF (SELF%VARIABLE_GROUP%VNUCLS%LACTIVE) THEN
+      SELF%PNUCLS_T1(:) = SELF%PNUCLS_T0(:)
+    END IF
+    IF (SELF%VARIABLE_GROUP%VNVCLS%LACTIVE) THEN
+      SELF%PNVCLS_T1(:) = SELF%PNVCLS_T0(:)
+    END IF
+  END SUBROUTINE SURFACE_VIEW_GROUP_CLS_SET1TO0
+
+  SUBROUTINE SURFACE_VIEW_GROUP_CLS_SET0TO1(SELF)
+    ! Field update operation for timestepping schemes
+    CLASS(SURFACE_VIEW_GROUP_CLS) :: SELF
+
+    IF (SELF%VARIABLE_GROUP%VTCLS%LACTIVE) THEN
+      SELF%PTCLS_T0(:) = SELF%PTCLS_T1(:)
+    END IF
+    IF (SELF%VARIABLE_GROUP%VHUCLS%LACTIVE) THEN
+      SELF%PHUCLS_T0(:) = SELF%PHUCLS_T1(:)
+    END IF
+    IF (SELF%VARIABLE_GROUP%VUCLS%LACTIVE) THEN
+      SELF%PUCLS_T0(:) = SELF%PUCLS_T1(:)
+    END IF
+    IF (SELF%VARIABLE_GROUP%VVCLS%LACTIVE) THEN
+      SELF%PVCLS_T0(:) = SELF%PVCLS_T1(:)
+    END IF
+    IF (SELF%VARIABLE_GROUP%VNUCLS%LACTIVE) THEN
+      SELF%PNUCLS_T0(:) = SELF%PNUCLS_T1(:)
+    END IF
+    IF (SELF%VARIABLE_GROUP%VNVCLS%LACTIVE) THEN
+      SELF%PNVCLS_T0(:) = SELF%PNVCLS_T1(:)
+    END IF
+  END SUBROUTINE SURFACE_VIEW_GROUP_CLS_SET0TO1
+
+  SUBROUTINE SURFACE_VIEW_GROUP_CLS_PHTFILT(SELF, YDDYN)
+    CLASS(SURFACE_VIEW_GROUP_CLS) :: SELF
+    TYPE(TDYN), INTENT(IN) :: YDDYN
+    REAL(KIND=JPRB) :: REPSP1, ZZPHY
+
+    REPSP1 = YDDYN%REPSP1
+    ZZPHY = 1.0_JPRB - REPSP1
+
+    IF (SELF%VARIABLE_GROUP%VTCLS%LACTIVE) THEN
+      SELF%PTCLS_T9(:) = REPSP1*SELF%PTCLS_T1(:) &
+       &                                      + ZZPHY*SELF%PTCLS_T0(:)
+      SELF%PTCLS_T0(:) = SELF%PTCLS_T1(:)
+    END IF
+    IF (SELF%VARIABLE_GROUP%VHUCLS%LACTIVE) THEN
+      SELF%PHUCLS_T9(:) = REPSP1*SELF%PHUCLS_T1(:) &
+       &                                      + ZZPHY*SELF%PHUCLS_T0(:)
+      SELF%PHUCLS_T0(:) = SELF%PHUCLS_T1(:)
+    END IF
+    IF (SELF%VARIABLE_GROUP%VUCLS%LACTIVE) THEN
+      SELF%PUCLS_T9(:) = REPSP1*SELF%PUCLS_T1(:) &
+       &                                      + ZZPHY*SELF%PUCLS_T0(:)
+      SELF%PUCLS_T0(:) = SELF%PUCLS_T1(:)
+    END IF
+    IF (SELF%VARIABLE_GROUP%VVCLS%LACTIVE) THEN
+      SELF%PVCLS_T9(:) = REPSP1*SELF%PVCLS_T1(:) &
+       &                                      + ZZPHY*SELF%PVCLS_T0(:)
+      SELF%PVCLS_T0(:) = SELF%PVCLS_T1(:)
+    END IF
+    IF (SELF%VARIABLE_GROUP%VNUCLS%LACTIVE) THEN
+      SELF%PNUCLS_T9(:) = REPSP1*SELF%PNUCLS_T1(:) &
+       &                                      + ZZPHY*SELF%PNUCLS_T0(:)
+      SELF%PNUCLS_T0(:) = SELF%PNUCLS_T1(:)
+    END IF
+    IF (SELF%VARIABLE_GROUP%VNVCLS%LACTIVE) THEN
+      SELF%PNVCLS_T9(:) = REPSP1*SELF%PNVCLS_T1(:) &
+       &                                      + ZZPHY*SELF%PNVCLS_T0(:)
+      SELF%PNVCLS_T0(:) = SELF%PNVCLS_T1(:)
+    END IF
+  END SUBROUTINE SURFACE_VIEW_GROUP_CLS_PHTFILT
+
+  SUBROUTINE SURFACE_VIEW_GROUP_OML_SET9TO0(SELF)
+    ! Field update operation for timestepping schemes
+    CLASS(SURFACE_VIEW_GROUP_OML) :: SELF
+
+    IF (SELF%VARIABLE_GROUP%VTO%LACTIVE) THEN
+      SELF%PTO_T9(:,:) = SELF%PTO_T0(:,:)
+    END IF
+    IF (SELF%VARIABLE_GROUP%VSO%LACTIVE) THEN
+      SELF%PSO_T9(:,:) = SELF%PSO_T0(:,:)
+    END IF
+    IF (SELF%VARIABLE_GROUP%VUO%LACTIVE) THEN
+      SELF%PUO_T9(:,:) = SELF%PUO_T0(:,:)
+    END IF
+    IF (SELF%VARIABLE_GROUP%VVO%LACTIVE) THEN
+      SELF%PVO_T9(:,:) = SELF%PVO_T0(:,:)
+    END IF
+  END SUBROUTINE SURFACE_VIEW_GROUP_OML_SET9TO0
+
+  SUBROUTINE SURFACE_VIEW_GROUP_OML_SET1TO9(SELF)
+    ! Field update operation for timestepping schemes
+    CLASS(SURFACE_VIEW_GROUP_OML) :: SELF
+
+    IF (SELF%VARIABLE_GROUP%VTO%LACTIVE) THEN
+      SELF%PTO_T1(:,:) = SELF%PTO_T9(:,:)
+    END IF
+    IF (SELF%VARIABLE_GROUP%VSO%LACTIVE) THEN
+      SELF%PSO_T1(:,:) = SELF%PSO_T9(:,:)
+    END IF
+    IF (SELF%VARIABLE_GROUP%VUO%LACTIVE) THEN
+      SELF%PUO_T1(:,:) = SELF%PUO_T9(:,:)
+    END IF
+    IF (SELF%VARIABLE_GROUP%VVO%LACTIVE) THEN
+      SELF%PVO_T1(:,:) = SELF%PVO_T9(:,:)
+    END IF
+  END SUBROUTINE SURFACE_VIEW_GROUP_OML_SET1TO9
+
+  SUBROUTINE SURFACE_VIEW_GROUP_OML_SET1TO0(SELF)
+    ! Field update operation for timestepping schemes
+    CLASS(SURFACE_VIEW_GROUP_OML) :: SELF
+
+    IF (SELF%VARIABLE_GROUP%VTO%LACTIVE) THEN
+      SELF%PTO_T1(:,:) = SELF%PTO_T0(:,:)
+    END IF
+    IF (SELF%VARIABLE_GROUP%VSO%LACTIVE) THEN
+      SELF%PSO_T1(:,:) = SELF%PSO_T0(:,:)
+    END IF
+    IF (SELF%VARIABLE_GROUP%VUO%LACTIVE) THEN
+      SELF%PUO_T1(:,:) = SELF%PUO_T0(:,:)
+    END IF
+    IF (SELF%VARIABLE_GROUP%VVO%LACTIVE) THEN
+      SELF%PVO_T1(:,:) = SELF%PVO_T0(:,:)
+    END IF
+  END SUBROUTINE SURFACE_VIEW_GROUP_OML_SET1TO0
+
+  SUBROUTINE SURFACE_VIEW_GROUP_OML_SET0TO1(SELF)
+    ! Field update operation for timestepping schemes
+    CLASS(SURFACE_VIEW_GROUP_OML) :: SELF
+
+    IF (SELF%VARIABLE_GROUP%VTO%LACTIVE) THEN
+      SELF%PTO_T0(:,:) = SELF%PTO_T1(:,:)
+    END IF
+    IF (SELF%VARIABLE_GROUP%VSO%LACTIVE) THEN
+      SELF%PSO_T0(:,:) = SELF%PSO_T1(:,:)
+    END IF
+    IF (SELF%VARIABLE_GROUP%VUO%LACTIVE) THEN
+      SELF%PUO_T0(:,:) = SELF%PUO_T1(:,:)
+    END IF
+    IF (SELF%VARIABLE_GROUP%VVO%LACTIVE) THEN
+      SELF%PVO_T0(:,:) = SELF%PVO_T1(:,:)
+    END IF
+  END SUBROUTINE SURFACE_VIEW_GROUP_OML_SET0TO1
+
+  SUBROUTINE SURFACE_VIEW_GROUP_OML_PHTFILT(SELF, YDDYN)
+    CLASS(SURFACE_VIEW_GROUP_OML) :: SELF
+    TYPE(TDYN), INTENT(IN) :: YDDYN
+    REAL(KIND=JPRB) :: REPSP1, ZZPHY
+
+    REPSP1 = YDDYN%REPSP1
+    ZZPHY = 1.0_JPRB - REPSP1
+
+    IF (SELF%VARIABLE_GROUP%VTO%LACTIVE) THEN
+      SELF%PTO_T9(:,:) = REPSP1*SELF%PTO_T1(:,:) &
+       &                                      + ZZPHY*SELF%PTO_T0(:,:)
+      SELF%PTO_T0(:,:) = SELF%PTO_T1(:,:)
+    END IF
+    IF (SELF%VARIABLE_GROUP%VSO%LACTIVE) THEN
+      SELF%PSO_T9(:,:) = REPSP1*SELF%PSO_T1(:,:) &
+       &                                      + ZZPHY*SELF%PSO_T0(:,:)
+      SELF%PSO_T0(:,:) = SELF%PSO_T1(:,:)
+    END IF
+    IF (SELF%VARIABLE_GROUP%VUO%LACTIVE) THEN
+      SELF%PUO_T9(:,:) = REPSP1*SELF%PUO_T1(:,:) &
+       &                                      + ZZPHY*SELF%PUO_T0(:,:)
+      SELF%PUO_T0(:,:) = SELF%PUO_T1(:,:)
+    END IF
+    IF (SELF%VARIABLE_GROUP%VVO%LACTIVE) THEN
+      SELF%PVO_T9(:,:) = REPSP1*SELF%PVO_T1(:,:) &
+       &                                      + ZZPHY*SELF%PVO_T0(:,:)
+      SELF%PVO_T0(:,:) = SELF%PVO_T1(:,:)
+    END IF
+  END SUBROUTINE SURFACE_VIEW_GROUP_OML_PHTFILT
+
+  SUBROUTINE SURFACE_VIEW_GROUP_EXTRP_SET9TO0(SELF)
+    ! Field update operation for timestepping schemes
+    CLASS(SURFACE_VIEW_GROUP_EXTRP) :: SELF
+
+  END SUBROUTINE SURFACE_VIEW_GROUP_EXTRP_SET9TO0
+
+  SUBROUTINE SURFACE_VIEW_GROUP_EXTRP_SET1TO9(SELF)
+    ! Field update operation for timestepping schemes
+    CLASS(SURFACE_VIEW_GROUP_EXTRP) :: SELF
+
+  END SUBROUTINE SURFACE_VIEW_GROUP_EXTRP_SET1TO9
+
+  SUBROUTINE SURFACE_VIEW_GROUP_EXTRP_SET1TO0(SELF)
+    ! Field update operation for timestepping schemes
+    CLASS(SURFACE_VIEW_GROUP_EXTRP) :: SELF
+
+  END SUBROUTINE SURFACE_VIEW_GROUP_EXTRP_SET1TO0
+
+  SUBROUTINE SURFACE_VIEW_GROUP_EXTRP_SET0TO1(SELF)
+    ! Field update operation for timestepping schemes
+    CLASS(SURFACE_VIEW_GROUP_EXTRP) :: SELF
+
+  END SUBROUTINE SURFACE_VIEW_GROUP_EXTRP_SET0TO1
+
+  SUBROUTINE SURFACE_VIEW_GROUP_EXTRP_PHTFILT(SELF, YDDYN)
+    CLASS(SURFACE_VIEW_GROUP_EXTRP) :: SELF
+    TYPE(TDYN), INTENT(IN) :: YDDYN
+    REAL(KIND=JPRB) :: REPSP1, ZZPHY
+
+    REPSP1 = YDDYN%REPSP1
+    ZZPHY = 1.0_JPRB - REPSP1
+
+  END SUBROUTINE SURFACE_VIEW_GROUP_EXTRP_PHTFILT
+
+  SUBROUTINE SURFACE_VIEW_GROUP_XTRP2_SET9TO0(SELF)
+    ! Field update operation for timestepping schemes
+    CLASS(SURFACE_VIEW_GROUP_XTRP2) :: SELF
+
+  END SUBROUTINE SURFACE_VIEW_GROUP_XTRP2_SET9TO0
+
+  SUBROUTINE SURFACE_VIEW_GROUP_XTRP2_SET1TO9(SELF)
+    ! Field update operation for timestepping schemes
+    CLASS(SURFACE_VIEW_GROUP_XTRP2) :: SELF
+
+  END SUBROUTINE SURFACE_VIEW_GROUP_XTRP2_SET1TO9
+
+  SUBROUTINE SURFACE_VIEW_GROUP_XTRP2_SET1TO0(SELF)
+    ! Field update operation for timestepping schemes
+    CLASS(SURFACE_VIEW_GROUP_XTRP2) :: SELF
+
+  END SUBROUTINE SURFACE_VIEW_GROUP_XTRP2_SET1TO0
+
+  SUBROUTINE SURFACE_VIEW_GROUP_XTRP2_SET0TO1(SELF)
+    ! Field update operation for timestepping schemes
+    CLASS(SURFACE_VIEW_GROUP_XTRP2) :: SELF
+
+  END SUBROUTINE SURFACE_VIEW_GROUP_XTRP2_SET0TO1
+
+  SUBROUTINE SURFACE_VIEW_GROUP_XTRP2_PHTFILT(SELF, YDDYN)
+    CLASS(SURFACE_VIEW_GROUP_XTRP2) :: SELF
+    TYPE(TDYN), INTENT(IN) :: YDDYN
+    REAL(KIND=JPRB) :: REPSP1, ZZPHY
+
+    REPSP1 = YDDYN%REPSP1
+    ZZPHY = 1.0_JPRB - REPSP1
+
+  END SUBROUTINE SURFACE_VIEW_GROUP_XTRP2_PHTFILT
+
+  SUBROUTINE SURFACE_VIEW_GROUP_CANRI_SET9TO0(SELF)
+    ! Field update operation for timestepping schemes
+    CLASS(SURFACE_VIEW_GROUP_CANRI) :: SELF
+
+  END SUBROUTINE SURFACE_VIEW_GROUP_CANRI_SET9TO0
+
+  SUBROUTINE SURFACE_VIEW_GROUP_CANRI_SET1TO9(SELF)
+    ! Field update operation for timestepping schemes
+    CLASS(SURFACE_VIEW_GROUP_CANRI) :: SELF
+
+  END SUBROUTINE SURFACE_VIEW_GROUP_CANRI_SET1TO9
+
+  SUBROUTINE SURFACE_VIEW_GROUP_CANRI_SET1TO0(SELF)
+    ! Field update operation for timestepping schemes
+    CLASS(SURFACE_VIEW_GROUP_CANRI) :: SELF
+
+  END SUBROUTINE SURFACE_VIEW_GROUP_CANRI_SET1TO0
+
+  SUBROUTINE SURFACE_VIEW_GROUP_CANRI_SET0TO1(SELF)
+    ! Field update operation for timestepping schemes
+    CLASS(SURFACE_VIEW_GROUP_CANRI) :: SELF
+
+  END SUBROUTINE SURFACE_VIEW_GROUP_CANRI_SET0TO1
+
+  SUBROUTINE SURFACE_VIEW_GROUP_CANRI_PHTFILT(SELF, YDDYN)
+    CLASS(SURFACE_VIEW_GROUP_CANRI) :: SELF
+    TYPE(TDYN), INTENT(IN) :: YDDYN
+    REAL(KIND=JPRB) :: REPSP1, ZZPHY
+
+    REPSP1 = YDDYN%REPSP1
+    ZZPHY = 1.0_JPRB - REPSP1
+
+  END SUBROUTINE SURFACE_VIEW_GROUP_CANRI_PHTFILT
+
+
+
+END MODULE SURFACE_VIEWS_MODULE

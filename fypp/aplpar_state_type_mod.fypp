@@ -1,0 +1,110 @@
+#:set vars_ydvars = ['CVV', 'DIV', 'EFB1', 'EFB2', 'EFB3', 'G', 'I', 'L', 'O3', 'Q', 'R', 'S', 'T', 'TKE', 'U', 'V', 'VOR']
+#:set grp_surf    = { &
+& "GSP_SG" : [ 2, ['F', 'A', 'R'],        ], &
+& "GSP_RR" : [ 1, ['T', 'FC', 'W', 'IC'], ], &
+& "GSP_SB" : [ 2, ['Q', 'TL', 'T'],       ], &
+& }
+
+MODULE APLPAR_STATE_TYPE_MOD
+
+USE PARKIND1, ONLY : JPIM, JPRB
+USE CPG_TYPE_MOD, ONLY : CPG_DYN_TYPE, CPG_PHY_TYPE
+USE FIELD_MODULE
+IMPLICIT NONE
+
+#:def gsp_type (name, defs)
+TYPE APLPAR_STATE_${name}$_TYPE
+#:set ndim = defs[0]
+#:set vars = defs[1]
+#:for var in vars
+  REAL (KIND=JPRB), POINTER :: ${var}$ (${','.join ([':'] * ndim)}$) => NULL ()
+  TYPE (FIELD_${ndim+1}$D), POINTER :: F${var}$ => NULL ()
+#:endfor
+END TYPE APLPAR_STATE_${name}$_TYPE
+#:enddef
+
+#:for grp in grp_surf
+$:gsp_type (grp, grp_surf[grp])
+
+#:endfor
+
+TYPE APLPAR_STATE_TYPE
+  TYPE (CPG_DYN_TYPE), POINTER :: YCPG_DYN   => NULL ()
+  TYPE (CPG_PHY_TYPE), POINTER :: YCPG_PHY   => NULL ()
+  REAL (KIND=JPRB), POINTER :: P1EXT  (:,:)  => NULL ()
+  REAL (KIND=JPRB), POINTER :: P1CHEM (:,:)  => NULL ()
+  REAL (KIND=JPRB), POINTER :: P1NOGW (:,:)  => NULL ()
+  REAL (KIND=JPRB), POINTER :: P2NOGW (:,:)  => NULL ()
+  
+#:for var in vars_ydvars
+  REAL (KIND=JPRB), POINTER :: ${var}$ (:,:) => NULL ()
+  TYPE (FIELD_3D), POINTER :: F${var}$ => NULL ()
+#:endfor
+
+#:for grp in grp_surf
+  TYPE (APLPAR_STATE_${grp}$_TYPE) :: Y${grp}$
+#:endfor
+
+CONTAINS
+
+  PROCEDURE :: INIT => APLPAR_STATE_TYPE_INIT
+
+END TYPE APLPAR_STATE_TYPE
+
+CONTAINS
+
+#:def associate_t (t)
+  SELF%YCPG_DYN => YDCPG_DYN${t}$
+  SELF%YCPG_PHY => YDCPG_PHY${t}$
+  SELF%P1EXT  => P1EXT${t}$
+  SELF%P1CHEM => P1CHEM${t}$
+  SELF%P1NOGW => P1NOGW${t}$
+  SELF%P2NOGW => P2NOGW${t}$
+
+#:for var in vars_ydvars
+  SELF%${var}$ (LBOUND (YDVARS%${var}$%T${t}$,1):, LBOUND (YDVARS%${var}$%T${t}$,2):) => YDVARS%${var}$%T${t}$
+  SELF%F${var}$ => YDVARS%${var}$%FT${t}$
+#:endfor
+
+#:for grp in grp_surf
+  #:set ndim = grp_surf[grp][0]
+  #:for var in grp_surf[grp][1]
+  SELF%Y${grp}$%${var}$ ( &
+                     &  LBOUND (YDMF_PHYS_SURF%${grp}$%P${var}$_T${t}$, 1):  &
+     #:for d in range (2, ndim+1)
+                     & ,LBOUND (YDMF_PHYS_SURF%${grp}$%P${var}$_T${t}$, ${d}$):  &
+     #:endfor
+                     &  ) => YDMF_PHYS_SURF%${grp}$%P${var}$_T${t}$
+  SELF%Y${grp}$%F${var}$ => YDMF_PHYS_SURF%${grp}$%F_${var}$_T${t}$
+
+  #:endfor
+#:endfor
+
+#:enddef
+
+SUBROUTINE APLPAR_STATE_TYPE_INIT (SELF, LDT0, YDCPG_DYN0, YDCPG_DYN9, YDCPG_PHY0, YDCPG_PHY9, YDVARS, YDMF_PHYS_SURF, &
+                                 & P1EXT0, P1EXT9, P1CHEM0, P1CHEM9, P1NOGW0, P1NOGW9, P2NOGW0, P2NOGW9)
+
+USE MFPHYS_SURFACE_TYPE_MOD,ONLY : MFPHYS_SURF_TYPE
+USE FIELD_VARIABLES_MOD, ONLY: FIELD_VARIABLES
+
+CLASS (APLPAR_STATE_TYPE)              :: SELF
+TYPE (MFPHYS_SURF_TYPE),INTENT(INOUT)  :: YDMF_PHYS_SURF
+LOGICAL,                INTENT (IN)    :: LDT0
+TYPE (CPG_DYN_TYPE),    INTENT (INOUT), TARGET :: YDCPG_DYN0, YDCPG_DYN9
+TYPE (CPG_PHY_TYPE),    INTENT (INOUT), TARGET :: YDCPG_PHY0, YDCPG_PHY9
+TYPE (FIELD_VARIABLES), INTENT (INOUT) :: YDVARS
+REAL (KIND=JPRB), POINTER :: P1EXT0  (:,:), P1EXT9  (:,:)
+REAL (KIND=JPRB), POINTER :: P1CHEM0 (:,:), P1CHEM9 (:,:)
+REAL (KIND=JPRB), POINTER :: P1NOGW0 (:,:), P1NOGW9 (:,:)
+REAL (KIND=JPRB), POINTER :: P2NOGW0 (:,:), P2NOGW9 (:,:)
+
+IF (LDT0) THEN
+$:associate_t ('0')
+ELSE
+$:associate_t ('9')
+ENDIF
+
+END SUBROUTINE APLPAR_STATE_TYPE_INIT
+
+END MODULE APLPAR_STATE_TYPE_MOD

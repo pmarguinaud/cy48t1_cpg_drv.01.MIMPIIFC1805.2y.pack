@@ -5,7 +5,7 @@
 #:set NCOND = 4
 #:set NDEFS = 5
 
-#:def pcpg_intdyn_definition (name, vars)
+#:def pcpg_struct_definition (name, vars)
 TYPE ${name}$
   LOGICAL :: LOWNED = .FALSE.
   REAL (KIND=JPRB), POINTER :: ZDATA (:,:,:,:) => NULL ()
@@ -22,6 +22,10 @@ CONTAINS
   PROCEDURE :: UPDATE_VIEW => ${name}$_UPDATE_VIEW
   PROCEDURE :: FINAL => ${name}$_FINAL
 END TYPE ${name}$
+#:enddef
+
+#:def pcpg_intdyn_definition (name, vars)
+$:pcpg_struct_definition (name, vars)
 #:enddef
 
 #:def pcpg_type_definition (name, vars)
@@ -87,15 +91,15 @@ $:a
 $:s
 #:enddef pdim
 
-#:def pcpg_intdyn_methods (name, vars, type)
-SUBROUTINE ${name}$_INIT (SELF, REGISTRY, NLEV, YDT${type}$, PERSISTENT, P${type}$)
+#:def pcpg_struct_methods (name, vars, type, modn, memb)
+SUBROUTINE ${name}$_INIT (SELF, REGISTRY, NLEV, YD${type}$, PERSISTENT, P${type}$)
 
-USE INTDYN_MOD, ONLY : T${type}$
+USE ${modn}$, ONLY : ${type}$
 
 CLASS (${name}$)                          :: SELF
 TYPE (FIELD_REGISTRY),              INTENT (INOUT) :: REGISTRY
 INTEGER (KIND=JPIM),                INTENT (IN)    :: NLEV
-TYPE (T${type}$),                   INTENT (IN)    :: YDT${type}$
+TYPE (${type}$),                    INTENT (IN)    :: YD${type}$
 LOGICAL, OPTIONAL,                  INTENT (IN)    :: PERSISTENT
 REAL (KIND=JPRB), OPTIONAL, TARGET, INTENT (IN)    :: P${type}$ (:, :, :, :)
 
@@ -105,28 +109,28 @@ IF (PRESENT (P${type}$)) THEN
 ELSE
 #:set var = list (vars.keys ())[0]
 #:set s2 = gdim (vars[var][NDIMS][0])
-  ALLOCATE (SELF%ZDATA (REGISTRY%NPROMA, ${s2}$, YDT${type}$%NDIM, REGISTRY%NBLOCKS))
+  ALLOCATE (SELF%ZDATA (REGISTRY%NPROMA, ${s2}$, YD${type}$%NDIM, REGISTRY%NBLOCKS))
   SELF%LOWNED = .TRUE.
 ENDIF
 
 #:for var in vars
- IF (YDT${type}$%M_${var}$ > 0) THEN
-   SELF%F_${var}$ => CREATE_FIELD_WRAP ('${var}$', SELF%ZDATA (:, :, YDT${type}$%M_${var}$, :))
+ IF (YD${type}$%${memb}$${var}$ > 0) THEN
+   SELF%F_${var}$ => CREATE_FIELD_WRAP ('${var}$', SELF%ZDATA (:, :, YD${type}$%${memb}$${var}$, :))
  ENDIF
 #:endfor
 
 #! IF (PRESENT (P${type}$)) THEN
 #! 
 #! #:for var in vars
-#!  IF (YDT${type}$%M_${var}$ > 0) THEN
-#!    SELF%F_${var}$ => CREATE_FIELD_WRAP ('${var}$', P${type}$ (:, :, YDT${type}$%M_${var}$, :))
+#!  IF (YD${type}$%${memb}$${var}$ > 0) THEN
+#!    SELF%F_${var}$ => CREATE_FIELD_WRAP ('${var}$', P${type}$ (:, :, YD${type}$%${memb}$${var}$, :))
 #!  ENDIF
 #! #:endfor
 #! 
 #! ELSE
 #! 
 #! #:for var in vars
-#!  IF (YDT${type}$%M_${var}$ > 0) THEN
+#!  IF (YD${type}$%${memb}$${var}$ > 0) THEN
 #! $:temporary (var, vars[var][NDIMS], "    ")
 #!  ENDIF
 #! #:endfor
@@ -165,6 +169,10 @@ IF (ASSOCIATED (SELF%F_${var}$)) CALL DELETE_TEMPORARY (SELF%F_${var}$)
 #:endfor
 
 END SUBROUTINE ${name}$_FINAL
+#:enddef
+
+#:def pcpg_intdyn_methods (name, vars, type)
+$:pcpg_struct_methods (name, vars, "T" + type, "INTDYN_MOD", "M_")
 #:enddef
 
 #:def pcpg_type_methods (name, vars, use_intdyn=False)

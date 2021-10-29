@@ -939,7 +939,6 @@ IF (LLDIAB.AND.(.NOT.LMPA)) THEN
   ENDDO
   
     IF (LTWOTL) THEN
-
       IF (LAJUCV) THEN
         DO JLEV=1,NFLEVG
           DO JROF=KST,KEND
@@ -955,53 +954,60 @@ IF (LLDIAB.AND.(.NOT.LMPA)) THEN
           ENDDO
         ENDDO
       ENDIF
+   ELSE
+      ! IF (LAJUCV) THEN
+      !   missing code under LAJUCV for leap-frog schemes.
+      ! ENDIF
+   ENDIF
 
-      ITDIA=1_JPIM
-      CALL APLPAR(YDGEOMETRY,YLAPLPAR,YDCPG_MISC,YDMF_PHYS,YDMF_PHYS_SURF,YDVARS,YDSURF, YDXFU, YDCFU, YDMODEL, KST    , KEND   , NPROMA ,&
-       & ITDIA  , NFLEVG  , KSTGLO,&
-       & NVCLIS , YSD_VVD%NUMFLDS ,&
-       & NSTEP  ,&
-       & NTSSG  , YSP_SBD%NLEVS   ,&
-       & KBL    , KGPCOMP, YDCFU%NFRRC, PDTPHY,YDCSGEOM%RINDX,YDCSGEOM%RINDY, LLXFUMSE,&
-       & YDGSGEOM%RCORI, &
-       & PGFL, &
-       & ZCVGQ  ,PKOZO  , ZFPLCH , ZFPLSH ,&
-       & YDCPG_DYN0%CTY%EVEL,&
-       & PGPAR , &
-       & YDCPG_DYN0%CTY%VVEL(:,1:),&
-       & ZMU0   , ZMU0LU , ZMU0M  ,ZMU0N,YDGSGEOM%GELAM,YDGSGEOM%GEMU,YDGSGEOM%GM,&
-       & ZAC    , ZAC_HC , ZMCOR , ZMMU0  , &
-       & ZMRAB3C,ZMRAB3N,&
-       & ZMRAB4C,ZMRAB4N,&
-       & ZMRAB6C,ZMRAB6N,&
-       & ZMRAT1C,ZMRAT1N,&
-       & ZMRAT2C,ZMRAT2N,&
-       & ZMRAT3C,ZMRAT3N,&
-       & ZMRAT4C,ZMRAT4N,&
-       & ZMRAT5C,ZMRAT5N,&
-       & YDOROG%OROG,&
-       & YDVARS%U%DL,YDVARS%V%DL,&
-       & ZDIFEXT, &
-       & ZFRMQ  ,&
-       & ZCPS   , ZLHS   ,&
-       & ZRS    , ZLH    , ZLSCPE , &
-       & ZQRCONV, ZQSCONV,&
-       & ZQSAT  ,&
-       & ZQW    , ZTW    , ZCD    , ZCDN   ,&
-       & ZCH    ,&
-       & ZC1    , ZC2    , ZEMIS  , &
-       & ZFEVI  , &
-       & ZFTKE  , ZFTKEI,  ZFEFB1 , ZFEFB2 , ZFEFB3  ,&
-       & ZNEIJ  , ZVEG   , &
-       & ZQSATS , &
-       & ICLPH  , &
-       & ZDPRECIPS,ZDPRECIPS2,&
-       & ZP1EZDIAG,ZTENDPTKE, ZKUROV_H, ZKTROV_H,&
-       & ZTENDEXT_DEP, PTRAJ_PHYS,&
-       & ZEDR, YDDDH, &
-       & PFTCNS,&
-       & ZGP2DSPP)
 
+   ITDIA=1_JPIM
+   CALL APLPAR(YDGEOMETRY,YLAPLPAR,YDCPG_MISC,YDMF_PHYS,YDMF_PHYS_SURF,YDVARS,YDSURF, YDXFU, YDCFU, YDMODEL, KST    , KEND   , NPROMA ,&
+    & ITDIA  , NFLEVG  , KSTGLO,&
+    & NVCLIS , YSD_VVD%NUMFLDS ,&
+    & NSTEP  ,&
+    & NTSSG  , YSP_SBD%NLEVS   ,&
+    & KBL    , KGPCOMP, YDCFU%NFRRC, PDTPHY,YDCSGEOM%RINDX,YDCSGEOM%RINDY, LLXFUMSE,&
+    & YDGSGEOM%RCORI, &
+    & PGFL, &
+    & ZCVGQ  ,PKOZO  , ZFPLCH , ZFPLSH ,&
+    & YDCPG_DYN0%CTY%EVEL,&
+    & PGPAR , &
+    & YDCPG_DYN0%CTY%VVEL(:,1:),&
+    & ZMU0   , ZMU0LU , ZMU0M  ,ZMU0N,YDGSGEOM%GELAM,YDGSGEOM%GEMU,YDGSGEOM%GM,&
+    & ZAC    , ZAC_HC , ZMCOR , ZMMU0  , &
+    & ZMRAB3C,ZMRAB3N,&
+    & ZMRAB4C,ZMRAB4N,&
+    & ZMRAB6C,ZMRAB6N,&
+    & ZMRAT1C,ZMRAT1N,&
+    & ZMRAT2C,ZMRAT2N,&
+    & ZMRAT3C,ZMRAT3N,&
+    & ZMRAT4C,ZMRAT4N,&
+    & ZMRAT5C,ZMRAT5N,&
+    & YDOROG%OROG,&
+    & YDVARS%U%DL,YDVARS%V%DL,&
+    & ZDIFEXT, &
+    & ZFRMQ  ,&
+    & ZCPS   , ZLHS   ,&
+    & ZRS    , ZLH    , ZLSCPE , &
+    & ZQRCONV, ZQSCONV,&
+    & ZQSAT  ,&
+    & ZQW    , ZTW    , ZCD    , ZCDN   ,&
+    & ZCH    ,&
+    & ZC1    , ZC2    , ZEMIS  , &
+    & ZFEVI  , &
+    & ZFTKE  , ZFTKEI,  ZFEFB1 , ZFEFB2 , ZFEFB3  ,&
+    & ZNEIJ  , ZVEG   , &
+    & ZQSATS , &
+    & ICLPH  , &
+    & ZDPRECIPS,ZDPRECIPS2,&
+    & ZP1EZDIAG,ZTENDPTKE, ZKUROV_H, ZKTROV_H,&
+    & ZTENDEXT_DEP, PTRAJ_PHYS,&
+    & ZEDR, YDDDH, &
+    & PFTCNS,&
+    & ZGP2DSPP)
+
+    IF (LTWOTL) THEN
       IF (LAJUCV) THEN
         DO JLEV=1,NFLEVG
           DO JROF=KST,KEND
@@ -1014,63 +1020,10 @@ IF (LLDIAB.AND.(.NOT.LMPA)) THEN
           ENDDO
         ENDDO
       ENDIF
-
     ELSE
-
       ! IF (LAJUCV) THEN
       !   missing code under LAJUCV for leap-frog schemes.
       ! ENDIF
-
-      ITDIA=1_JPIM
-      CALL APLPAR(YDGEOMETRY,YLAPLPAR,YDCPG_MISC,YDMF_PHYS,YDMF_PHYS_SURF,YDVARS,YDSURF,  YDXFU, YDCFU,YDMODEL,  KST,    KEND   , NPROMA ,&
-       & ITDIA  , NFLEVG  , KSTGLO ,&
-       & NVCLIS , YSD_VVD%NUMFLDS ,&
-       & NSTEP  ,&
-       & NTSSG  , YSP_SBD%NLEVS   ,&
-       & KBL    , KGPCOMP, YDCFU%NFRRC, PDTPHY,YDCSGEOM%RINDX,YDCSGEOM%RINDY, LLXFUMSE,&
-       & YDGSGEOM%RCORI, &
-       & PGFL, &
-       & ZCVGQ  ,PKOZO  , ZFPLCH, ZFPLSH  ,&
-       & YDCPG_DYN0%CTY%EVEL,&
-       & PGPAR , &
-       & YDCPG_DYN0%CTY%VVEL(:,1:),&
-       & ZMU0   , ZMU0LU , ZMU0M  , ZMU0N,YDGSGEOM%GELAM,YDGSGEOM%GEMU,YDGSGEOM%GM,&
-       & ZAC    , ZAC_HC , ZMCOR , ZMMU0  , &
-       & ZMRAB3C,ZMRAB3N,&
-       & ZMRAB4C,ZMRAB4N,&
-       & ZMRAB6C,ZMRAB6N,&
-       & ZMRAT1C,ZMRAT1N,&
-       & ZMRAT2C,ZMRAT2N,&
-       & ZMRAT3C,ZMRAT3N,&
-       & ZMRAT4C,ZMRAT4N,&
-       & ZMRAT5C,ZMRAT5N,&
-       & YDOROG%OROG,&
-       & YDVARS%U%DL,YDVARS%V%DL,&
-       & ZDIFEXT, &
-       & ZFRMQ  ,&
-       & ZCPS   , ZLHS   ,&
-       & ZRS    , ZLH    , ZLSCPE , &
-       & ZQRCONV, ZQSCONV,&
-       & ZQSAT  ,&
-       & ZQW    , ZTW    , ZCD    , ZCDN   ,&
-       & ZCH    ,&
-       & ZC1    , ZC2    , ZEMIS  , &
-       & ZFEVI  , &
-       & ZFTKE  , ZFTKEI,  ZFEFB1 , ZFEFB2 , ZFEFB3  ,&
-       & ZNEIJ  , ZVEG   , &
-       & ZQSATS , &
-       & ICLPH  , &
-       & ZDPRECIPS,ZDPRECIPS2,&
-       & ZP1EZDIAG,ZTENDPTKE, ZKUROV_H, ZKTROV_H ,&
-       & ZTENDEXT_DEP, PTRAJ_PHYS,&
-       & ZEDR,YDDDH, &
-       & PFTCNS,&
-       & ZGP2DSPP)
-
-      ! IF (LAJUCV) THEN
-      !   missing code under LAJUCV for leap-frog schemes.
-      ! ENDIF
-
     ENDIF
 
   !    convert to flexible interface structure

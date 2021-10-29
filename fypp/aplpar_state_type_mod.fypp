@@ -1,4 +1,4 @@
-#:set vars_ydvars = ['CVV', 'DIV', 'EFB1', 'EFB2', 'EFB3', 'G', 'I', 'L', 'O3', 'Q', 'R', 'S', 'T', 'TKE', 'U', 'V', 'VOR']
+#:set vars_ydvars = ['CVV', 'DIV', 'EFB1', 'EFB2', 'EFB3', 'G', 'H', 'I', 'L', 'O3', 'Q', 'R', 'S', 'SRC', 'T', 'TKE', 'U', 'V', 'VOR']
 #:set grp_surf    = { &
 & "GSP_SG" : [ 2, ['F', 'A', 'R'],        ], &
 & "GSP_RR" : [ 1, ['T', 'FC', 'W', 'IC'], ], &
@@ -35,6 +35,7 @@ TYPE APLPAR_STATE_TYPE
   REAL (KIND=JPRB), POINTER :: P1CHEM (:,:,:) => NULL ()
   REAL (KIND=JPRB), POINTER :: P1NOGW (:,:)   => NULL ()
   REAL (KIND=JPRB), POINTER :: P2NOGW (:,:)   => NULL ()
+  REAL (KIND=JPRB), POINTER :: P1LIMA (:,:,:) => NULL ()
   
 #:for var in vars_ydvars
   REAL (KIND=JPRB), POINTER :: ${var}$ (:,:) => NULL ()
@@ -61,11 +62,13 @@ CONTAINS
   SELF%P1CHEM => ZDUM3
   SELF%P1NOGW => ZDUM2
   SELF%P2NOGW => ZDUM2
+  SELF%P1LIMA => ZDUM3
 
   IF (ASSOCIATED (P1EXT${t}$ )) SELF%P1EXT  => P1EXT${t}$
   IF (ASSOCIATED (P1CHEM${t}$)) SELF%P1CHEM => P1CHEM${t}$
   IF (ASSOCIATED (P1NOGW${t}$)) SELF%P1NOGW => P1NOGW${t}$
   IF (ASSOCIATED (P2NOGW${t}$)) SELF%P2NOGW => P2NOGW${t}$
+  IF (ASSOCIATED (P1LIMA${t}$)) SELF%P1LIMA => P1LIMA${t}$
 
 #:for var in vars_ydvars
   SELF%${var}$ (LBOUND (YDVARS%${var}$%T${t}$,1):, LBOUND (YDVARS%${var}$%T${t}$,2):) => YDVARS%${var}$%T${t}$
@@ -89,7 +92,8 @@ CONTAINS
 #:enddef
 
 SUBROUTINE APLPAR_STATE_TYPE_INIT (SELF, LDT0, YDCPG_DYN0, YDCPG_DYN9, YDCPG_PHY0, YDCPG_PHY9, YDVARS, YDMF_PHYS_SURF, &
-                                 & P1EXT0, P1EXT9, P1CHEM0, P1CHEM9, P1NOGW0, P1NOGW9, P2NOGW0, P2NOGW9)
+                                 & P1EXT0, P1EXT9, P1CHEM0, P1CHEM9, P1NOGW0, P1NOGW9, P2NOGW0, P2NOGW9, &
+                                 & P1LIMA0, P1LIMA9)
 
 USE MF_PHYS_SURFACE_TYPE_MOD,ONLY : MF_PHYS_SURF_TYPE
 USE FIELD_VARIABLES_MOD, ONLY: FIELD_VARIABLES
@@ -102,8 +106,9 @@ TYPE (CPG_PHY_TYPE),    INTENT (INOUT), TARGET :: YDCPG_PHY0, YDCPG_PHY9
 TYPE (FIELD_VARIABLES), INTENT (INOUT) :: YDVARS
 REAL (KIND=JPRB), POINTER :: P1EXT0  (:,:,:), P1EXT9  (:,:,:)
 REAL (KIND=JPRB), POINTER :: P1CHEM0 (:,:,:), P1CHEM9 (:,:,:)
-REAL (KIND=JPRB), POINTER :: P1NOGW0 (:,:), P1NOGW9 (:,:)
-REAL (KIND=JPRB), POINTER :: P2NOGW0 (:,:), P2NOGW9 (:,:)
+REAL (KIND=JPRB), POINTER :: P1NOGW0 (:,:),   P1NOGW9 (:,:)
+REAL (KIND=JPRB), POINTER :: P2NOGW0 (:,:),   P2NOGW9 (:,:)
+REAL (KIND=JPRB), POINTER :: P1LIMA0 (:,:,:), P1LIMA9 (:,:,:)
 REAL (KIND=JPRB), TARGET, SAVE :: ZDUM2 (1, 1), ZDUM3 (1, 1, 1)
 
 IF (LDT0) THEN

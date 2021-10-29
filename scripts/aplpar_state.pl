@@ -13,7 +13,7 @@ my $F90 = "src/local/arpifs/phys_dmn/mf_phys.F90";
 my $d = &Fxtran::fxtran (location => $F90, fopts => [qw (-line-length 300)]);
 
 
-my ($call1, $call2) = &F ('//call-stmt[string (procedure-designator)="?"]/arg-spec', 'APLPAR', $d);
+my ($call1, $call2) = &F ('//call-stmt[string (procedure-designator)="?"]/arg-spec', 'APL_AROME', $d);
 
 my @arg1 = &F ('./arg', $call1);
 my @arg2 = &F ('./arg', $call2);

@@ -30,11 +30,19 @@ for my $call (&F ('.//call-stmt[string(procedure-designator)="?"]', $name, $d1))
         my $actual = $actual[$i]->textContent;
         next if ($actual =~ m/\(/o);
 #       next unless ($actual =~ m/^(?:YDCPG_DYN0|YDCPG_DYN9|YDCPG_PHY0|YDCPG_PHY9|YDCPG_TND|YDCPG_MISC)%/o);
-        next unless ($actual =~ m/^(?:YLAPLPAR%)/o);
+#       next unless ($actual =~ m/^(?:YLAPLPAR%)/o);
 #       next unless ($actual =~ m/^(?:YDMF_PHYS%TMP%RDT%)/o);
+        next unless ($actual =~ m/^(?:YDCPG_DYN|YDCPG_PHY|YDMF_PHYS_SURF|YDVARS|YDMF_PHYS|YDCPG_MISC)/o);
         $actual =~ s/^YL/YD/o;
         $d2a{$dummy[$i]->textContent} = $actual;
-        $actual[$i]->parentNode->nextSibling->unbindNode;
+        if ($actual[$i]->parentNode->nextSibling)
+          {
+            $actual[$i]->parentNode->nextSibling->unbindNode;
+          }
+        elsif ($actual[$i]->parentNode->previousSibling)
+          {
+            $actual[$i]->parentNode->previousSibling->unbindNode;
+          }
         $actual[$i]->parentNode->unbindNode;
         $remove[$i] = 1;
       }
@@ -88,16 +96,63 @@ for my $call (&F ('.//call-stmt[string(procedure-designator)="?"]', $name, $d1))
 
   }
 
+sub removeListElement
+{
+  my $x = shift;
+
+  my $nn = $x->nodeName;
+
+  my ($p) = $x->parentNode;
+  
+  my @cf = &F ('following-sibling::text()[contains(.,",")]', $x);   
+  my @cp = &F ('preceding-sibling::text()[contains(.,",")]', $x);   
+  
+  if (@cf)
+    {
+      $cf[+0]->unbindNode ();
+    }
+  elsif (@cp)
+    {
+      $cp[-1]->unbindNode ();
+    }
+  
+  $x->parentNode->appendChild (&t (' '));
+  my $l = $x->parentNode->lastChild;
+  
+  $x->unbindNode ();
+  
+  while ($l)
+    {
+      last if (($l->nodeName ne '#text') && ($l->nodeName ne 'cnt'));
+      $l = $l->previousSibling;
+      last unless ($l);
+      $l->nextSibling->unbindNode;
+    }
+
+  return &F ("./$nn", $p) ? 0 : 1;
+}
+
 
 for my $i (0 .. $#dummy)
   {
     next unless ($remove[$i]);
-    $dummy[$i]->nextSibling->unbindNode;
-    $dummy[$i]->unbindNode;
+
+    &removeListElement ($dummy[$i]);
+
     my $N = $dummy[$i]->textContent;
     my ($en_decl) = &F ('.//EN-decl[string(EN-N)="?"]', $N, $d2);
+    unless ($en_decl)
+      {
+#       'FileHandle'->new (">$F90_2.new")->print ($d2->textContent);
+        die "N=$N\n";
+      }
+
     my $stmt = &Fxtran::stmt ($en_decl);
-    $stmt->unbindNode;
+
+    if (&removeListElement ($en_decl))
+      {
+        $stmt->unbindNode;
+      }
   }
 
 

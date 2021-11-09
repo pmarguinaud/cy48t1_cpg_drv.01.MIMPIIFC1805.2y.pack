@@ -27,6 +27,7 @@ for my $call (&F ('.//call-stmt[string(procedure-designator)="?"]', $name, $d1))
     my %d2a;
     for my $i (0 .. $#actual)
       {
+        next if ($dummy[$i]->textContent =~ m/^Y/o);
         my $actual = $actual[$i]->textContent;
         next if ($actual =~ m/\(/o);
 #       next unless ($actual =~ m/^(?:YDCPG_DYN0|YDCPG_DYN9|YDCPG_PHY0|YDCPG_PHY9|YDCPG_TND|YDCPG_MISC)%/o);
@@ -136,6 +137,7 @@ sub removeListElement
 for my $i (0 .. $#dummy)
   {
     next unless ($remove[$i]);
+    next if ($dummy[$i]->textContent =~ m/^Y/o);
 
     &removeListElement ($dummy[$i]);
 

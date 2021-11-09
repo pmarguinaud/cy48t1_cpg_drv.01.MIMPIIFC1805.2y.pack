@@ -5,6 +5,7 @@
 #SBATCH --time=00:05:00
 #SBATCH --exclusive
 #SBATCH --verbose
+#SBATCH -p normal256,huge512
 #SBATCH --no-requeue
 
 set -x
@@ -92,7 +93,7 @@ xpnam --delta="
   NCOMBFLEN=1800000,
 /
 &NAMCT0
-  LTWOTL=.TRUE.,
+  LTWOTL=.FALSE.,
 /
 &NAMARG
   CNMEXP='FCST',
@@ -209,13 +210,14 @@ cat fort.4
 
 # Run the model; use your mpirun
 
-
+pack=$PACK
 
 /opt/softs/mpiauto/mpiauto --verbose --wrap --wrap-stdeo --nouse-slurm-mpi --prefix-mpirun '/usr/bin/time -f "time=%e"' \
-    --nnp $NTASK_FC --nn $NNODE_FC --openmp $NOPMP_FC -- $PACK/bin/MASTERODB \
- -- --nnp $NTASK_IO --nn $NNODE_IO --openmp $NOPMP_IO -- $PACK/bin/MASTERODB 
+    --nnp $NTASK_FC --nn $NNODE_FC --openmp $NOPMP_FC -- $pack/bin/MASTERODB \
+ -- --nnp $NTASK_IO --nn $NNODE_IO --openmp $NOPMP_IO -- $pack/bin/MASTERODB 
 
 #diffNODE.001_01 NODE.001_01 $PACK/ref/NODE.001_01.$NAM
+cp NODE.001_01 $PACK/ref/NODE.001_01.$NAM
 
 ls -lrt
 

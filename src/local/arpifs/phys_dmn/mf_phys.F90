@@ -1125,26 +1125,9 @@ IF (LLDIAB.AND.(.NOT.LSIMPH).AND.(.NOT.LMPA)) THEN
      & YDMF_PHYS, YLMF_PHYS_STATE, YDVARS, &
      & YDMODEL, NPROMA, KST, KEND, NFLEVG,YDGSGEOM%GNORDL,YDGSGEOM%GNORDM,&
      & ZDIFEXT,&
-     & &
-     & &
-     & &
-     & &
-     & &
-     & &
      & ZFRMQ  , &
-     & &
-     & &
-     & &
-     & &
      & ZFTKE  , ZFTKEI,  ZFEFB1 , ZFEFB2 , ZFEFB3 ,&
-     & &
-     & &
-     & &
-     & &
-     & &
      & ZCPS   , &
-     & &
-     & &
      & ZFHP   ,ZFP   ,  &
      & ZTENDU, ZTENDV, ZTENDH ,&
      & ZPTENDQ1,ZPTENDI1,ZPTENDL1,&

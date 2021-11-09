@@ -3,28 +3,11 @@ SUBROUTINE CPTEND_NEW ( &
  & YDMODEL,KPROMA, KSTART, KPROF, KFLEV,PGNORDL,PGNORDM,&
  !  Variables 2D Input
  & PDIFEXT,&
- & &
- & &
- & &
- & &
- & &
- & &
  & PFRMQ  , &
- & &
- & &
- & &
- & &
  & PFTKE  , PFTKEI,  PFEFB1,  PFEFB2,  PFEFB3, &
- & &
- & &
- & &
- & &
- & &
  !  Variables 1D Input
  & PCPS   , &
  !  Variables 2D Output
- & &
- & &
  & PFHP   , PFP    , &
  & PTENDU_ZDEC, PTENDV_ZDEC, PTENDH ,&
  & PTENDQ , PTENDQI, PTENDQL, &
@@ -232,109 +215,16 @@ INTEGER(KIND=JPIM),INTENT(IN)    :: KSTART
 INTEGER(KIND=JPIM),INTENT(IN)    :: KPROF
 REAL(KIND=JPRB)   ,INTENT(IN)    :: PGNORDL(KPROMA)
 REAL(KIND=JPRB)   ,INTENT(IN)    :: PGNORDM(KPROMA)
-
-
-
-
 REAL(KIND=JPRB)   ,INTENT(IN)    :: PDIFEXT (KPROMA,0:KFLEV,1:YDMODEL%YRML_GCONF%YGFL%NGFL_EXT)
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 REAL(KIND=JPRB)   ,INTENT(IN)    :: PFRMQ   (KPROMA,0:KFLEV)
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 REAL(KIND=JPRB)   ,INTENT(IN)    :: PFTKE   (KPROMA,0:KFLEV)
 REAL(KIND=JPRB)   ,INTENT(IN)    :: PFTKEI  (KPROMA,0:KFLEV)
 REAL(KIND=JPRB)   ,INTENT(IN)    :: PFEFB1  (KPROMA,0:KFLEV)
 REAL(KIND=JPRB)   ,INTENT(IN)    :: PFEFB2  (KPROMA,0:KFLEV)
 REAL(KIND=JPRB)   ,INTENT(IN)    :: PFEFB3  (KPROMA,0:KFLEV)
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 REAL(KIND=JPRB)   ,INTENT(IN)    :: PCPS    (KPROMA)
-
-
-
-
-
-
-
-
-
-
-
-
 REAL(KIND=JPRB)   ,INTENT(OUT)   :: PFHP    (KPROMA,0:KFLEV)
 REAL(KIND=JPRB)   ,INTENT(OUT)   :: PFP     (KPROMA,0:KFLEV)
-
-
-
 REAL(KIND=JPRB)   ,INTENT(OUT)   :: PTENDU_ZDEC  (KPROMA,KFLEV)
 REAL(KIND=JPRB)   ,INTENT(OUT)   :: PTENDV_ZDEC  (KPROMA,KFLEV)
 REAL(KIND=JPRB)   ,INTENT(OUT)   :: PTENDH  (KPROMA,KFLEV)

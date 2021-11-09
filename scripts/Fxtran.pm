@@ -322,6 +322,7 @@ sub expand
         }
     }
 
+  $stmt->normalize ();
 }
 
 # Fold a statement

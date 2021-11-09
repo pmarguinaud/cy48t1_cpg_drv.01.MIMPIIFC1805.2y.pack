@@ -13,7 +13,7 @@ my $F90 = "src/local/arpifs/phys_dmn/mf_phys.F90";
 my $d = &Fxtran::fxtran (location => $F90, fopts => [qw (-line-length 300)]);
 
 
-my ($call1, $call2) = &F ('//call-stmt[string (procedure-designator)="?"]/arg-spec', 'CPTEND_FLEX', $d);
+my ($call1, $call2) = &F ('//call-stmt[string (procedure-designator)="?"]/arg-spec', 'CPCHET', $d);
 
 my @arg1 = &F ('./arg', $call1);
 my @arg2 = &F ('./arg', $call2);
@@ -65,8 +65,8 @@ for my $i (0 .. $#arg1)
             print "$a1 $a2\n";
             next;
           }
-        $arg1->replaceNode (&t ("YLAPLPAR%$f"));
-        $arg2->replaceNode (&t ("YLAPLPAR%$f"));
+        $arg1->replaceNode (&t ("YLMF_PHYS_STATE%$f"));
+        $arg2->replaceNode (&t ("YLMF_PHYS_STATE%$f"));
 #       last if ($count++ > 7);
       }
   }

@@ -1,0 +1,7 @@
+&NAMSIMPHL
+  LSIMPH=.TRUE.,
+/
+&NAMPHY
+  LMPHYS=.FALSE.,
+/
+

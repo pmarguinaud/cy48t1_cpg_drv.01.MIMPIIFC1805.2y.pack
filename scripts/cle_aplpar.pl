@@ -18,23 +18,72 @@ while (<DATA>)
         s/^\s*//o;
         s/\s*$//o;
       }
-    next unless ($v =~ m/^(?:TRUE|FALSE)$/o);
-    $c{$k} = $v;
+    if (($v =~ m/^(?:TRUE|FALSE)$/o) || ($v =~ m/^\'/o))
+      {
+        $c{$k} = $v;
+        next;
+      }
+    print "$k = $v\n";
   }
 
 #my $F90 = "src/local/arpifs/phys_dmn/aplpar.F90";
 my $F90 = shift;
 
+
 my $d = &Fxtran::fxtran (location => $F90, fopts => [qw (-line-length 300)]);
+
+for my $n (&F ('//subroutine-N/N/n/text()', $d))
+  {
+    $n->setData ($n->getData . '_NEW');
+  }
 
 while (my ($k, $v) = each (%c))
   {
     my @expr = &F ('//named-E[string(N)="?"]', $k, $d);
     for my $expr (@expr)
       {
-        $expr->replaceNode (&n ("<literal-E>.$v.</literal-E>"));
+        if ($v =~ m/^\'/o)
+          {
+            next if ($expr->parentNode->nodeName eq 'E-1');
+            $expr->replaceNode (&n ("<string-E><S>$v</S></string-E>"));
+          }
+        else
+          {
+            $expr->replaceNode (&n ("<literal-E>.$v.</literal-E>"));
+          }
       } 
   }
+
+
+
+my @tr = &F ('.//named-E[string(N)="TRIM"][./R-LT/parens-R/element-LT/element/string-E]', $d);
+
+for my $tr (@tr)
+  {
+    my ($s) = &F ('./R-LT/parens-R/element-LT/element/string-E', $tr);
+    $tr->replaceNode ($s);
+  }
+
+my @sc = &F ('.//op-E[string(op)="=="][count(./string-E)=2]', $d);
+
+for my $sc (@sc)
+  {
+    my ($e1, $e2) = &F ('./string-E/S', $sc, 2);
+    for ($e1, $e2)
+      {
+        s/^["']//o;
+        s/["']$//o;
+      }
+    if ($e1 eq $e2)
+      {
+        $sc->replaceNode (&n ("<literal-E>.TRUE.</literal-E>"));
+      }
+    else
+      {
+        $sc->replaceNode (&n ("<literal-E>.FALSE.</literal-E>"));
+      }
+  }
+
 
 sub simplify
 {
@@ -157,7 +206,7 @@ for my $i (0 .. $#if_construct)
           {
             if (my $prev = $if_block->previousSibling)
               {
-                if ($if_block->nextSibling)
+                unless ($if_block->nextSibling)
                   {
                     $prev->appendChild (&n ('<end-if-stmt>ENDIF</end-if-stmt>'));
                   }
@@ -215,6 +264,7 @@ my @include = &F ('//include', $d);
 for my $include (@include)
   {
     my ($sub) = &F ('./filename', $include, 2);
+    next if ($sub eq 'chem_main.intfb.h');
     for ($sub)
       {
        s/\.intfb\.h$// ; s/\.h$//o; $_ = uc ($_) 
@@ -224,11 +274,56 @@ for my $include (@include)
     $include->unbindNode ();
   }
 
+for my $en_decl (&F ('.//EN-decl', $d))
+  {
+    my ($n) = &F ('./EN-N', $en_decl, 1);
+    my @expr = &F ('.//named-E[string(N)="?"]', $n, $d);
+    next if (@expr);
+    my $stmt = &Fxtran::stmt ($en_decl);
+    if (&F ('.//attribute-N[string(.)="INTENT"]', $stmt))
+      {
+        next;
+      }
+
+    my @cf = &F ('following-sibling::text()[contains(.,",")]', $en_decl);   
+    my @cp = &F ('preceding-sibling::text()[contains(.,",")]', $en_decl);   
+
+    if (@cf)
+      {
+        $cf[+0]->unbindNode ();
+      }
+    elsif (@cp)
+      {
+        $cp[-1]->unbindNode ();
+      }
+
+    $en_decl->parentNode->appendChild (&t (' '));
+    my $l = $en_decl->parentNode->lastChild;
+
+    $en_decl->unbindNode ();
+    
+    while ($l)
+      {
+        last if (($l->nodeName ne '#text') && ($l->nodeName ne 'cnt'));
+        $l = $l->previousSibling;
+        last unless ($l);
+        $l->nextSibling->unbindNode;
+      }
+
+  }
+
+for my $stmt (&F ('.//ANY-stmt[.//EN-decl-LT[not(EN-decl)]]', $d))
+  {
+    $stmt->unbindNode ();
+  }
 
 
 
 
-'FileHandle'->new (">$F90.2.new")->print ($d->textContent);
+
+$F90 =~ s/\.F90$/_new.F90/o;
+
+'FileHandle'->new (">$F90")->print ($d->textContent);
 
 __END__
 RDECRD = 20000.

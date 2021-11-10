@@ -16,6 +16,7 @@ my $fh = 'FileHandle'->new ("<$cle");
 while (my $line = <$fh>)
   { 
     next if ($line =~ m/^\s*$/o);
+    next if ($line =~ m/^\s*#/o);
     my ($k, $v) = split (m/\s*=\s*/o, $line);
     for ($k, $v)
       {
@@ -242,12 +243,13 @@ for my $i (0 .. $#if_construct)
     if (scalar (@if_block) == 1)
       {
         my $if_block = $if_block[0];
-        if (&F ('.//ANY-stmt/condition-E[string(.)=".TRUE."]', $if_block))
+
+        if (&F ('./ANY-stmt/condition-E[string(.)=".TRUE."]', $if_block))
           {
             $if_block->firstChild->unbindNode ();
             $if_block->lastChild->unbindNode ();
           }
-        elsif (&F ('.//ANY-stmt/condition-E[string(.)=".FALSE."]', $if_block))
+        elsif (&F ('./ANY-stmt/condition-E[string(.)=".FALSE."]', $if_block))
           {
             $if_construct->replaceNode (&t (''));
           }

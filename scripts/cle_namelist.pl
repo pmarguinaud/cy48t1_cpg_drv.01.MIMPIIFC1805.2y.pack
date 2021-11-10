@@ -43,6 +43,7 @@ my $fh = 'FileHandle'->new ("<$cle");
 while (my $line = <$fh>)
   { 
     next if ($line =~ m/^\s*$/o);
+    next if ($line =~ m/^\s*#/o);
     my ($k, $v) = split (m/\s*=\s*/o, $line);
     for ($k, $v)
       {
@@ -54,7 +55,7 @@ while (my $line = <$fh>)
         $c{$k} = ".$v.";
         next;
       }
-    print "$k = $v\n";
+    print STDERR "$k = $v\n";
   }
 
 $fh->close ();
@@ -65,7 +66,7 @@ for my $c (keys (%c))
   {
     unless ($k2n{$c})
       {
-        print "$c not found\n";
+        print STDERR "$c not found\n";
         next;
       }
     $n2k{$k2n{$c}}{$c} = 1;

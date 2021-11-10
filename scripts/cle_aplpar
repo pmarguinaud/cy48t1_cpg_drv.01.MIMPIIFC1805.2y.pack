@@ -18,7 +18,7 @@
    LCVPRO = FALSE
    LTHERMO = TRUE
    LSFORCS = FALSE
-   LMSE = TRUE
+#  LMSE = TRUE
    LSOLV = FALSE
    NSWB_MNH = 6  
    NSW = 6  

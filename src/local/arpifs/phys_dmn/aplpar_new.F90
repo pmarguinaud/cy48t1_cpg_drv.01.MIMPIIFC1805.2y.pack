@@ -998,7 +998,7 @@ REAL(KIND=JPRB) :: ZFMGST(KLON,0:KLEV)
 
 
 !     ------------------------------------------------------------------
-REAL(KIND=JPRB) :: ZATSLC(KLON,0:KLEV)
+
 REAL(KIND=JPRB) :: ZNEBS(KLON,KLEV),ZQLIS(KLON,KLEV)
 REAL(KIND=JPRB) :: ZNEBS0(KLON,KLEV),ZQLIS0(KLON,KLEV)
 REAL(KIND=JPRB) :: ZNEBC0(KLON,KLEV)   !Nebulosite convective radiative
@@ -1014,41 +1014,41 @@ REAL(KIND=JPRB) :: ZLMU(KLON,0:KLEV)
 REAL(KIND=JPRB) :: ZLMU2(KLON,0:KLEV),ZLMT2(KLON,0:KLEV) ! temporary storage of lm,lh
 REAL(KIND=JPRB) :: ZLML(KLON,0:KLEV) ! TKE type mixing length
 REAL(KIND=JPRB) :: ZLMLTILD(KLON,0:KLEV) ! 'STATIC' TKE type mixing length
-REAL(KIND=JPRB) :: ZOME(KLON,KLEV)   ! updraught envt vert vel*dt
-REAL(KIND=JPRB) :: ZFALLR(KLON,KLEV) ! fall velocity of rain
-REAL(KIND=JPRB) :: ZFALLS(KLON,KLEV) ! fall velocity of snow
-REAL(KIND=JPRB) :: ZFALLG(KLON,KLEV) ! fall velocity of graupel
+   ! updraught envt vert vel*dt
+ ! fall velocity of rain
+ ! fall velocity of snow
+ ! fall velocity of graupel
 REAL(KIND=JPRB) :: ZICEFR1(KLON,KLEV)! Resolved Condensate ice fraction
 REAL(KIND=JPRB) :: ZRHCRI(KLON,KLEV) ! Smith scheme critical RH
 REAL(KIND=JPRB) :: ZRHDFDA(KLON,KLEV)! RK scheme change in RH over cloud
 REAL(KIND=JPRB) :: ZLHS(KLON,KLEV)   ! Sublimation latent heat
 REAL(KIND=JPRB) :: ZLHV(KLON,KLEV)   ! Evaporation latent heat
-REAL(KIND=JPRB) :: ZLH(KLON,KLEV)    ! Temporar storage for updated PLH
-REAL(KIND=JPRB) :: ZLSCPE(KLON,KLEV) ! Temporar storage for updated PLSCPE
-REAL(KIND=JPRB) :: ZQSAT(KLON,KLEV)  ! Temporar storage for updated PQSAT
+    ! Temporar storage for updated PLH
+ ! Temporar storage for updated PLSCPE
+  ! Temporar storage for updated PQSAT
 REAL(KIND=JPRB) :: ZQSATS(KLON,KLEV) ! QSAT of resolved cond./evap. scheme
-REAL(KIND=JPRB) :: ZQW(KLON,KLEV)    ! Temporar storage for updated PQW
+    ! Temporar storage for updated PQW
 REAL(KIND=JPRB) :: ZRH(KLON,KLEV)    ! Temporar storage for updated PRH
 REAL(KIND=JPRB) :: ZTW(KLON,KLEV)    ! Temporar storage for updated PTW)
-REAL(KIND=JPRB) :: ZDQ(KLON,KLEV)    ! Saturation departure for a given thermodynamic state
-REAL(KIND=JPRB) :: ZDQM(KLON,KLEV)   ! maximum saturation departure
+    ! Saturation departure for a given thermodynamic state
+   ! maximum saturation departure
 REAL(KIND=JPRB) :: ZPOID(KLON,KLEV)  ! DP/(RG*DT) FOR A GIVEN LEVEL AND A GIVEN TIME STEP.
 REAL(KIND=JPRB) :: ZIPOI(KLON,KLEV)  ! INVERSE OF ZPOID.
 
-REAL(KIND=JPRB) :: ZQU(KLON,KLEV) ! Updraught Specific moisture
-REAL(KIND=JPRB) :: ZTU(KLON,KLEV) ! Updraught Temperature
-REAL(KIND=JPRB) :: ZUU(KLON,KLEV) ! Updraught zonal wind
-REAL(KIND=JPRB) :: ZVU(KLON,KLEV) ! Updraught merid. wind
+ ! Updraught Specific moisture
+ ! Updraught Temperature
+ ! Updraught zonal wind
+ ! Updraught merid. wind
 
 REAL(KIND=JPRB) :: ZTMIC(KLON,KLEV) ! Temperature for microphysics
 REAL(KIND=JPRB) :: ZQMIC(KLON,KLEV) ! Specific moisture for microphysics
 
-REAL(KIND=JPRB) :: ZT(KLON,KLEV)     ! updated temperature T for cascading parameterization
-REAL(KIND=JPRB) :: ZTCORR(KLON,KLEV) ! temperature corr. for convective cloud
-REAL(KIND=JPRB) :: ZMELNET(KLON,KLEV) ! net melting (-freezing) rate of ice
-REAL(KIND=JPRB) :: ZMELGET(KLON,KLEV)! net melting (-freezing) rate of graupel
-REAL(KIND=JPRB) :: ZU(KLON,KLEV)     ! updated zonal velocity
-REAL(KIND=JPRB) :: ZV(KLON,KLEV)     ! updated meridional velocity
+     ! updated temperature T for cascading parameterization
+ ! temperature corr. for convective cloud
+ ! net melting (-freezing) rate of ice
+! net melting (-freezing) rate of graupel
+     ! updated zonal velocity
+     ! updated meridional velocity
 
 REAL(KIND=JPRB) :: ZQV(KLON,KLEV)    ! corrected (for negative values) vapour
                                      ! updated value for cascading parameterization
@@ -1079,10 +1079,10 @@ REAL(KIND=JPRB) :: ZSEDIQI(KLON,0:KLEV) ! sedimentation flux of cloud ice water
  ! downdraft entalphy flux
  ! change in horizontal mom.
  ! change in horizontal mom.
-REAL(KIND=JPRB) :: ZRCVOTT(KLON,0:KLEV) ! degree of inhomogeneity in precips.
-REAL(KIND=JPRB) :: ZSIGPC(KLON)         ! Convective precipit mesh fraction
-REAL(KIND=JPRB) :: ZSIGP(KLON)         ! Precipitation mesh fraction
-REAL(KIND=JPRB) :: ZAUXPRC(KLON)        ! Precipitation auxilary
+ ! degree of inhomogeneity in precips.
+         ! Convective precipit mesh fraction
+         ! Precipitation mesh fraction
+        ! Precipitation auxilary
 REAL(KIND=JPRB) :: ZDIFCVPPQ(KLON,0:KLEV) ! Flux de CVPP (KFB or EDKF) sur Qv
 REAL(KIND=JPRB) :: ZDIFCVPPS(KLON,0:KLEV) ! Flux de CVPP (KFB or EDKF) sur CpT
 REAL(KIND=JPRB) :: ZDIFCVTH(KLON,0:KLEV) ! Flux de CV sur Theta air sec
@@ -1142,9 +1142,12 @@ INTEGER(KIND=JPIM) :: INND(KLON)
 REAL(KIND=JPRB) :: ZXDROV(KLON),ZXHROV(KLON)
 REAL(KIND=JPRB) :: ZUGST(KLON),ZVGST(KLON)
 REAL(KIND=JPRB) :: ZCDROV(KLON),ZCHROV(KLON),ZDQSTS(KLON),ZGWDCS(KLON),&
- & ZCDNH(KLON),ZMOD(KLON),&
- & ZRTI(KLON),ZDPHI(KLON),ZPRS(KLON),ZTAUX(KLON)
-
+ & ZHQ(KLON),ZHU(KLON),ZHTR(KLON),ZCDNH(KLON),&
+ & ZRTI(KLON),ZDPHI(KLON),ZPRS(KLON),ZSTAB(KLON),ZTAUX(KLON)
+REAL(KIND=JPRB) :: ZWFC(KLON),&
+ & &
+ & &
+ & ZNEIJG(KLON),ZNEIJV(KLON)
 REAL(KIND=JPRB) :: ZPCLS(KLON)
 
 REAL(KIND=JPRB) :: ZFRSODS(KLON)
@@ -1236,7 +1239,8 @@ REAL(KIND=JPRB) :: ZTRSOD(KLON)
 !                 --------------------------------------
 
 REAL(KIND=JPRB) :: ZCEMTR(KLON,0:1) , ZCTRSO(KLON,0:1)
-REAL(KIND=JPRB) :: ZALBD(KLON,YDMODEL%YRML_PHY_RAD%YRERAD%NSW), ZALBP(KLON,YDMODEL%YRML_PHY_RAD%YRERAD%NSW)
+REAL(KIND=JPRB) :: ZALBD(KLON,YDMODEL%YRML_PHY_RAD%YRERAD%NSW), ZALBP(KLON,YDMODEL%YRML_PHY_RAD%YRERAD%NSW),&
+                 & ZALB(KLON)
 REAL(KIND=JPRB) :: ZSFSWDIR (KLON,YDMODEL%YRML_PHY_RAD%YRERAD%NSW), ZSFSWDIF (KLON,YDMODEL%YRML_PHY_RAD%YRERAD%NSW)
 REAL(KIND=JPRB) :: ZTRSODIR (KLON,YDMODEL%YRML_PHY_RAD%YRERAD%NSW), ZTRSODIF (KLON,YDMODEL%YRML_PHY_RAD%YRERAD%NSW)
 REAL(KIND=JPRB) :: ZFSDNN(KLON),ZFSDNV(KLON)
@@ -1246,8 +1250,8 @@ REAL(KIND=JPRB) :: ZFSDNN(KLON),ZFSDNV(KLON)
 
 REAL(KIND=JPRB) :: ZSUDU(KLON) , ZDSRP(KLON) , ZSDUR(KLON)
 REAL(KIND=JPRB) :: ZTHETAVS(KLON)
-
-
+REAL(KIND=JPRB) :: ZAESEA(KLON), ZAELAN(KLON), ZAESOO(KLON), ZAEDES(KLON)
+REAL(KIND=JPRB) :: ZAESUL(KLON), ZAEVOL(KLON)
 REAL(KIND=JPRB) :: ZMERL(KLON)
 
 !            2-D ARRAYS
@@ -1290,7 +1294,7 @@ REAL(KIND=JPRB) :: ZEPSA
 ! ICIS       : INDICE DE NIVEAU D'INSTABILITE SECHE.
 
 REAL(KIND=JPRB) :: ZNEBC(KLON,KLEV),ZQLIC(KLON,KLEV)
-REAL(KIND=JPRB) :: ZQCL(KLON,KLEV),ZQCI(KLON,KLEV)
+
 REAL(KIND=JPRB) :: ZFHEVPPC(KLON,0:KLEV),ZFHMLTSC(KLON,0:KLEV)&
  & ,ZFPEVPPC(KLON,0:KLEV)
 INTEGER(KIND=JPIM) :: ICIS(KLON,KLEV)
@@ -1344,7 +1348,7 @@ REAL(KIND=JPRB), DIMENSION(KLON,KLEV,YDMODEL%YRML_PHY_RAD%YRERAD%NSW):: ZTAUREL_
 
 !         ACFLUSO (ECUME) local variable
 !-------------------------------------------
-REAL(KIND=JPRB) :: ZCE(KLON), ZCEROV(KLON)
+REAL(KIND=JPRB) :: ZCE(KLON), ZCEROV(KLON), ZCRTI(KLON)
 
 
 !        New ACDIFV1 local variable
@@ -1465,7 +1469,7 @@ REAL(KIND=JPRB) :: ZHOOK_HANDLE
 
 
 
-#include "accvimpgy.intfb.h"
+
 #include "cucalln_mf.intfb.h"
 
 
@@ -1475,9 +1479,9 @@ REAL(KIND=JPRB) :: ZHOOK_HANDLE
 #include "acdrag.intfb.h"
 #include "acdrme.intfb.h"
 
+#include "acfluso.intfb.h"
+#include "achmt.intfb.h"
 
-
-#include "acmixlenz.intfb.h"
 
 
 
@@ -1497,15 +1501,15 @@ REAL(KIND=JPRB) :: ZHOOK_HANDLE
 
 
 #include "actqsat.intfb.h"
-#include "actqsats.intfb.h"
-#include "acupu.intfb.h"
-#include "acupm.intfb.h"
+
+
+
 
 #include "acuptq.intfb.h"
 
-#include "aplmphys.intfb.h"
-#include "qngcor.intfb.h"
 
+#include "qngcor.intfb.h"
+#include "radaer.intfb.h"
 #include "radheat.intfb.h"
 #include "radozcmf.intfb.h"
 #include "suozon.intfb.h"
@@ -1518,7 +1522,7 @@ REAL(KIND=JPRB) :: ZHOOK_HANDLE
 #include "aro_ground_diag.h"
 #include "aro_ground_diag_2isba.h"
 #include "aro_ground_diag_z0.h"
-#include "accvud.intfb.h"
+
 
 
 
@@ -1528,8 +1532,8 @@ REAL(KIND=JPRB) :: ZHOOK_HANDLE
 #include "acnpart.intfb.h"
 #include "acvppkf.intfb.h"
 
+#include "arp_ground_param.intfb.h"
 
-#include "wrphtrajtm_nl.intfb.h"
 #include "accldia.intfb.h"
 
 
@@ -2142,14 +2146,26 @@ ENDIF
 
     ! End of surface forcing for 1D model MUSC
 
-  
+  IF ( .NOT.LMSE ) THEN
+    
+
+!            INITIALISATION DE L'INERTIE THERMIQUE DU SOL.
+
+!DEC$ IVDEP
+      DO JLON = KIDIA,KFDIA
+        YDMF_PHYS%OUT%CT(JLON)=HSOL /(&
+         & 1.0_JPRB+HSOLIWR*(YDMF_PHYS_STATE%YGSP_RR%W(JLON)+YDMF_PHYS_STATE%YGSP_SB%Q(JLON,1))/(WSMX+WPMX)&
+         & *EXP(-0.5_JPRB*(HSOLIT0*(YDMF_PHYS_STATE%YGSP_RR%T(JLON)-RTT))**2))
+      ENDDO
+    
+  ENDIF
 
 !*
 !     ------------------------------------------------------------------
 !     4.TER.- INITIALISATIONS LIEES AU SCHEMA DE SURFACE EXTERNALISE
 !     ------------------------------------------------------------------
 
-  
+  IF (LMSE) THEN
 
 !     INITIALISATION DU SCHEMA DE SURFACE EXTERNALISE ET DES
 !     VARIABLES PSEUDO-HISTORIQUES ASSOCIEES
@@ -2197,11 +2213,11 @@ ENDIF
       ENDIF
     ENDDO
 
-    ! LMSE
+  ENDIF  ! LMSE
 !
 ! Define z0;z0h if it's necessary
 !
-  IF (KSTEP == 0) THEN
+  IF (LMSE.AND.KSTEP == 0) THEN
   CALL ARO_GROUND_DIAG_Z0( KBL, KGPCOMP,&
           & KFDIA-KIDIA+1, KIDIA, KFDIA,&
           & NDGUNG, NDGUXG, NDLUNG, NDLUXG,&
@@ -2226,7 +2242,7 @@ ENDIF
   
     LLCLS=.TRUE.
     LLHMT=.TRUE.
-    
+    IF (LMSE) THEN
       
         CALL ACHMTLS ( YDMODEL%YRML_PHY_MF,KIDIA,KFDIA,KLON,KLEV,&
           & YDMF_PHYS_STATE%YCPG_DYN%PHI,YDMF_PHYS_STATE%YCPG_DYN%PHIF,YDMF_PHYS_STATE%YCPG_PHY%PREHYD,YDMF_PHYS_STATE%YCPG_PHY%PREHYDF,YDMF_PHYS_STATE%YCPG_DYN%RCP%R,YDMF_PHYS_STATE%T,YDMF_PHYS_STATE%U,YDMF_PHYS_STATE%V,&
@@ -2240,7 +2256,21 @@ ENDIF
            & +ZPRS(JLON)*YDMF_PHYS_STATE%YGSP_RR%T(JLON))
         ENDDO
       
-    
+    ELSE
+      
+        CALL ACHMT ( KIDIA,KFDIA,KLON,KLEV,.FALSE.,&
+         & YDMF_PHYS_STATE%YCPG_DYN%PHI, YDMF_PHYS_STATE%YCPG_DYN%PHIF, YDMF_PHYS_STATE%YCPG_PHY%PREHYD, YDMF_PHYS_STATE%YCPG_PHY%PREHYDF, YDMF_PHYS_STATE%YCPG_DYN%RCP%CP, ZQV, YDMF_PHYS_STATE%YCPG_DYN%RCP%R, YDMF_PHYS_STATE%T, YDMF_PHYS_STATE%U, YDMF_PHYS_STATE%V,&
+         & PFPLSH,PFPLCH,&
+         & ZDPHIT, ZDPHIV, YDMF_PHYS_SURF%GSD_VF%PZ0F, YDMF_PHYS_SURF%GSD_VV%PZ0H, YDMF_PHYS_SURF%GSD_VF%PZ0RLF, YDMF_PHYS_SURF%GSD_VV%PHV, YDMF_PHYS_SURF%GSD_VF%PLSM,&
+         & ZNEIJG, ZNEIJV, YDMF_PHYS_STATE%YGSP_SG%F, YDMF_PHYS_STATE%YGSP_RR%T, YDMF_PHYS_SURF%GSD_VF%PVEG, ZWFC, YDMF_PHYS_STATE%YGSP_RR%W, YDMF_PHYS_STATE%YGSP_RR%IC,&
+         & LLCLS, LLHMT,&
+         & ZNBVNO,ZMRIPP,&
+         & PCD, PCDN, ZCDROV, PCH, ZCHROV, PCPS, ZDQSTS, ZGWDCS,&
+         & YDMF_PHYS%OUT%GZ0, YDMF_PHYS%OUT%GZ0H, ZHQ, ZHU, PNEIJ, YDMF_PHYS%OUT%QCLS, YDCPG_MISC%QS, PQSATS, YDMF_PHYS%OUT%RHCLS,&
+         & PRS, ZRTI, ZSTAB, YDMF_PHYS%OUT%TCLS, YDMF_PHYS%OUT%UCLS, YDMF_PHYS%OUT%VCLS, YDMF_PHYS%OUT%NUCLS, YDMF_PHYS%OUT%NVCLS, ZPCLS, PVEG,&
+         & ZXDROV, ZXHROV,YDMF_PHYS%OUT%UGST,YDMF_PHYS%OUT%VGST)
+      
+    ENDIF
 
     
     
@@ -2277,30 +2307,25 @@ ENDIF
 
    ! end of LVDIF or LHMTO or LGWD
 
-  
-
-    
-      !     new Ayotte-Tudor ZBLH & mixing length
-      CALL ACMIXLENZ ( YDPHY,YDPHY0,KIDIA,KFDIA,KLON,1,KLEV,.FALSE.,&
-       & YDMF_PHYS_STATE%YCPG_DYN%PHI,YDMF_PHYS_STATE%YCPG_DYN%PHIF,ZBLH,YDMF_PHYS%OUT%GZ0,YDMF_PHYS%OUT%GZ0H,ZLMU,ZLMT)
-
-    
-
-     ! LCOEFTKE
-
-    ! FINISHING MIXING LENGTH COMPUTATION
-    
-
    ! (LVDIF or LGWD) and( not(LNEBR or LECT))
 
   
 
-    
+    IF ((.NOT.LMSE)) THEN
+      DO JLON=KIDIA,KFDIA
+        ZCRTI(JLON) = 1.0_JPRB/(YDMF_PHYS_STATE%YGSP_RR%T(JLON)*PRS(JLON))
+      ENDDO
+      CALL ACFLUSO ( YDMODEL%YRML_PHY_MF,KIDIA,KFDIA,KLON,KLEV,&
+       & YDMF_PHYS_STATE%YCPG_DYN%PHI,YDMF_PHYS_STATE%YCPG_DYN%PHIF,YDMF_PHYS_STATE%YCPG_PHY%PREHYD,YDMF_PHYS_STATE%YCPG_PHY%PREHYDF,YDMF_PHYS_STATE%Q,YDMF_PHYS_STATE%T,YDMF_PHYS_STATE%U,YDMF_PHYS_STATE%V,&
+       & ZDPHIT,ZDPHIV,YDMF_PHYS%OUT%GZ0,YDMF_PHYS_SURF%GSD_VF%PLSM,PQSATS,ZCRTI,YDMF_PHYS_STATE%YGSP_RR%T,&
+       & LLHMT,PCD,PCDN,ZCDROV,ZCE,ZCEROV,PCH,ZCHROV,&
+       & YDMF_PHYS%OUT%QCLS,YDMF_PHYS%OUT%RHCLS,YDMF_PHYS%OUT%TCLS,YDMF_PHYS%OUT%UCLS,YDMF_PHYS%OUT%VCLS,YDMF_PHYS%OUT%UGST,YDMF_PHYS%OUT%VGST)
+    ELSE
       DO JLON=KIDIA,KFDIA
         ZCE   (JLON) = PCH   (JLON)
         ZCEROV(JLON) = ZCHROV(JLON)
       ENDDO
-    
+    ENDIF
 
    ! LVDIF or LHMTO or LGWD
 
@@ -2390,7 +2415,7 @@ ENDIF
 !      7.1 Albedo et emissivite en presence de neige
 !          Albedo and emissivity with snow
 
-  
+  IF (.NOT.LMSE) THEN
 !DEC$ IVDEP
     DO JLON=KIDIA,KFDIA
       
@@ -2424,7 +2449,7 @@ ENDIF
       
     
 
-    ! .NOT.LMSE
+  ENDIF  ! .NOT.LMSE
 
   ! Appel de la routine d'aerosols
 
@@ -2432,7 +2457,42 @@ ENDIF
 
   
 
-   ! FOR AEROSOLS
+  IF    (   ((MOD(KSTEP,NRADFR) == 0)) ) THEN
+
+    IF (LLAERO) THEN
+      DO JLON = KIDIA,KFDIA
+        ZAESEA(JLON) = YDMF_PHYS_SURF%GSD_VA%PSEA(JLON)
+        ZAELAN(JLON) = YDMF_PHYS_SURF%GSD_VA%PLAN(JLON)
+        ZAESOO(JLON) = YDMF_PHYS_SURF%GSD_VA%PSOO(JLON)
+        ZAEDES(JLON) = YDMF_PHYS_SURF%GSD_VA%PDES(JLON)
+      ENDDO
+    ELSE
+      DO JLON = KIDIA,KFDIA
+        ZAESEA(JLON) = 0.0_JPRB
+        ZAELAN(JLON) = 0.0_JPRB
+        ZAESOO(JLON) = 0.0_JPRB
+        ZAEDES(JLON) = 0.0_JPRB
+      ENDDO
+    ENDIF
+    
+      DO JLON = KIDIA,KFDIA
+        ZAESUL(JLON) = 0.0_JPRB
+      ENDDO
+    
+    
+      DO JLON = KIDIA,KFDIA
+        ZAEVOL(JLON) = 0.0_JPRB
+      ENDDO
+    
+
+    IF ( ( (NAER /= 0)).AND.LLAERO )  THEN
+      CALL RADAER ( YDMODEL%YRML_PHY_RAD%YREAERD,YDERAD,YDPHY, KIDIA , KFDIA , KLON  , KLEV,&
+       & YDMF_PHYS_STATE%YCPG_PHY%PREHYD , YDMF_PHYS_STATE%YCPG_PHY%PREHYDF, YDMF_PHYS_STATE%T    , YDMF_PHYS_STATE%YGSP_RR%T,&
+       & ZAESEA, ZAELAN, ZAESOO, ZAEDES, ZAESUL, ZAEVOL,&
+       & ZAER,ZAERINDS                                 )
+    ENDIF
+
+  ENDIF ! FOR AEROSOLS
 
 ! We uses the extinction coefficient explicitely solved by ARO_MNHDUST
   
@@ -2449,45 +2509,6 @@ ENDIF
 !          Cloud cover and Convection
 !      7.3.1 Shallow + Deep convection
 
-  
-    ! Le schema de convection de J. F. Gueremy
-    
-      DO JLEV=KTDIA,KLEV
-        DO JLON=KIDIA,KFDIA
-          ZQCL(JLON,JLEV)=ZQL(JLON,JLEV)
-          ZQCI(JLON,JLEV)=ZQI(JLON,JLEV)
-        ENDDO
-      ENDDO
-    
-    CALL ACCVIMPGY ( YDMODEL%YRML_PHY_MF,KIDIA,KFDIA,KLON,NTCVIM,KLEV,&
-     & YDMF_PHYS_STATE%YCPG_PHY%XYB%ALPH, YDMF_PHYS_STATE%YCPG_DYN%PHIF, YDMF_PHYS_STATE%YCPG_PHY%PREHYD, YDMF_PHYS_STATE%YCPG_PHY%PREHYDF, YDMF_PHYS_STATE%YCPG_DYN%RCP%CP,&
-     & YDMF_PHYS_STATE%YCPG_PHY%XYB%DELP,PLH,YDMF_PHYS_STATE%YCPG_PHY%XYB%LNPR,ZQV,ZQCI,ZQCL,ZQLIS,PQSAT,PQW,&
-     & YDMF_PHYS_STATE%YCPG_DYN%RCP%R,YDMF_PHYS_STATE%YCPG_PHY%XYB%RDELP,YDMF_PHYS_STATE%T,PTW, YDMF_PHYS_STATE%U, YDMF_PHYS_STATE%V,&
-     & PCPS,PGM,YDMF_PHYS_STATE%YGSP_RR%T,&
-     & YDMF_PHYS%OUT%DIFCQ,YDMF_PHYS%OUT%DIFCQL,YDMF_PHYS%OUT%DIFCQN,YDMF_PHYS%OUT%DIFCS,YDMF_PHYS%OUT%FCCQL,YDMF_PHYS%OUT%FCCQN,&
-     & YDMF_PHYS%OUT%FPFPCL,YDMF_PHYS%OUT%FPFPCN,YDMF_PHYS%OUT%FPEVPCL,YDMF_PHYS%OUT%FPEVPCN,&
-     & ZFHMLTSC,ZFHEVPPC,ZFPEVPPC,&
-     & YDMF_PHYS%OUT%FPLCL,YDMF_PHYS%OUT%FPLCN,ZNEBC,ZQLIC,YDMF_PHYS%OUT%STRCU,YDMF_PHYS%OUT%STRCV,&
-     & ICIS,INLAB,&
-     & INND,&
-     & YDMF_PHYS_STATE%CVV)
-
-    DO JLEV = KTDIA, KLEV
-      DO JLON = KIDIA, KFDIA
-        YDMF_PHYS%OUT%DIFCS(JLON,JLEV) = YDMF_PHYS%OUT%DIFCS(JLON,JLEV) - ZFHEVPPC(JLON,JLEV)&
-                                            & - ZFHMLTSC(JLON,JLEV)
-        YDMF_PHYS%OUT%DIFCQ(JLON,JLEV) = YDMF_PHYS%OUT%DIFCQ(JLON,JLEV) + YDMF_PHYS%OUT%FPEVPCL(JLON,JLEV)&
-                                            & + YDMF_PHYS%OUT%FPEVPCN(JLON,JLEV)
-      ENDDO
-    ENDDO
-    YDMF_PHYS%OUT%FPEVPCL=0._JPRB
-    YDMF_PHYS%OUT%FPEVPCN=0._JPRB
-    
-    ! Prise en compte des nuages convectifs diagnostiques sortant d'ACMTUD
-    
-
-    ! Annulation possible des flux convectifs pour les eaux condensees.
-    
    !  (LCVPGY)
 
   
@@ -2630,12 +2651,12 @@ ENDIF
        &  ZPIZA_DST,ZCGA_DST,ZTAUREL_DST,ZAERINDS,&
        &  PGELAM, PGEMU, PGPAR, PMU0LU , YDMF_PHYS%OUT%ALB, YDMF_PHYS%RAD%RMOON)
     ELSE
-      
+      IF (LMSE) THEN
       DO JSG=1,NSW
         ZTRSODIR(KIDIA:KFDIA,JSG)=PGPAR(KIDIA:KFDIA,MSWDIR+JSG-1)
         ZTRSODIF(KIDIA:KFDIA,JSG)=PGPAR(KIDIA:KFDIA,MSWDIF+JSG-1)
       ENDDO
-      
+      ENDIF
     ENDIF
 
     YDMF_PHYS%OUT%FRSOLU(KIDIA:KFDIA)=YDMF_PHYS%RAD%RMOON(KIDIA:KFDIA)
@@ -2657,7 +2678,16 @@ ENDIF
     ! ---- Correct solar absorption as a function of pmu0.
     IF(GRSO < 1._JPRB) CALL ACRSO(YDPHY0,KIDIA,KFDIA,KLON,KLEV,KTDIA,KSGST,PGEMU  ,PMU0,YDMF_PHYS_STATE%YCPG_DYN%PHIF,YDMF_PHYS_STATE%YCPG_PHY%XYB%DELP,YDMF_PHYS%OUT%FRSO)
 
-    
+    IF(.NOT.LMSE) THEN
+      DO JLON=KIDIA,KFDIA
+        ZALB(JLON)=0.0_JPRB
+        DO JSG=1,NSW
+          ZALB(JLON)=ZALB(JLON)+0.5_JPRB*(ZALBD(JLON,JSG)+ZALBP(JLON,JSG))
+        ENDDO
+        ZALB(JLON)=ZALB(JLON)/FLOAT(NSW)
+        YDMF_PHYS%OUT%FRSODS(JLON)=YDMF_PHYS%OUT%FRSO(JLON,KLEV,1)/(1.0_JPRB-ZALB(JLON))
+      ENDDO
+    ENDIF
     ! Compute Sunshine Duration (in seconds)
 !DEC$ IVDEP
     DO JLON=KIDIA,KFDIA
@@ -2728,7 +2758,7 @@ ENDIF
         & ZDSE,ZQT)   
         
 
-      IF ( LCALLSFX ) THEN
+      IF ( LMSE.AND.LCALLSFX ) THEN
 
         
           ZCARDI=RCARDI
@@ -2838,6 +2868,45 @@ ENDIF
             & ZALPHA1,ZCOEFA,ZLVT,ZQICE)
         ENDIF
 
+      ELSEIF (.NOT.LMSE) THEN
+
+        IF(NDIFFNEB == 5) THEN
+          ZNEBDIFF(:,:)=ZNEBS(:,:)
+        ELSEIF(NDIFFNEB == 2) THEN
+          ZNEBDIFF(:,:)=YDCPG_MISC%NEB(:,:)
+        ELSEIF(NDIFFNEB == 3) THEN
+          ZNEBDIFF(:,:)=ZNEBS(:,:)+(1.0_JPRB-ZNEBS(:,:))*ZNEBCH(:,:)
+        ENDIF
+
+        
+             
+          CALL ARP_GROUND_PARAM ( YDMCC,YDMODEL%YRML_PHY_MF,KIDIA,KFDIA,KLON,KTDIA,KLEV,KCSS,&
+           & YDMF_PHYS_STATE%YCPG_DYN%PHI,ZCP,YDMF_PHYS%OUT%FRSO,&
+           & ZQV,YDMF_PHYS_STATE%YCPG_PHY%XYB%RDELP,YDMF_PHYS_STATE%T,YDMF_PHYS_STATE%U,YDMF_PHYS_STATE%V,ZXURO,ZXQRO,ZXTRO,&
+           & YDMF_PHYS_STATE%YCPG_PHY%PREHYD,ZQL,ZQI,ZNEBDIFF,&
+           & PCD,PCDN,ZCDROV,ZCHROV,ZCEROV,PCPS,YDMF_PHYS%OUT%CT,ZDQSTS,PEMIS,YDMF_PHYS_SURF%GSD_VH%PSPSH,&
+           & ZHQ,ZHTR,ZHU,YDMF_PHYS_SURF%GSD_VV%PHV,YDMF_PHYS_SURF%GSD_VF%PLSM,YDMF_PHYS_SURF%GSD_VV%PIVEG,PNEIJ,YDCPG_MISC%QS,PQSATS,&
+           & YDMF_PHYS_STATE%YGSP_SB%T,YDMF_PHYS_STATE%YGSP_RR%T,PVEG,ZXDROV,ZXHROV,YDMF_PHYS_STATE%YGSP_RR%W,YDMF_PHYS_STATE%YGSP_RR%IC,&
+           & ZDSE,&
+           & ZCFAS,ZCFAU,&
+           & ZCFBS,ZCFBU,ZCFBV,&
+           & ZCFBQ,ZCOEFA,ZALPHA1,ZLVT,ZQICE,&
+           & ZDIFWQ,ZDIFWS,ZFMDU,ZFMDV,&
+           & ZSC_FEVI,ZSC_FEVN,ZSC_FCLL,ZSC_FCLN,&
+           & YDMF_PHYS%OUT%FCHSP,YDMF_PHYS%OUT%FCLL,YDMF_PHYS%OUT%FCLN,YDMF_PHYS%OUT%FCS,PFEVI,YDMF_PHYS%OUT%FEVL,YDMF_PHYS%OUT%FEVN,&
+           & YDMF_PHYS%OUT%FEVV,YDMF_PHYS%OUT%FTR,PLHS,YDMF_PHYS_SURF%GSD_VH%PQSH,&
+           & YDMF_PHYS%OUT%FRTH,&
+           & YDMF_PHYS_SURF%GSD_VF%PZ0F,YDMF_PHYS_SURF%GSD_VV%PZ0H)
+
+          DO JLON=KIDIA,KFDIA
+            YDMF_PHYS%OUT%DIFTQ(JLON,KLEV)=ZDIFWQ(JLON)
+            YDMF_PHYS%OUT%DIFTS(JLON,KLEV)=ZDIFWS(JLON)
+          ENDDO
+
+             
+
+           ! <== LSFORCS
+
       ELSEIF (.NOT. LCALLSFX) THEN
         YDMF_PHYS%OUT%FCS(:,:) = 0.0_JPRB
         ZFEV(:)   = 0.0_JPRB
@@ -2854,12 +2923,12 @@ ENDIF
 
       
 
-      
+      IF ( LMSE ) THEN
         DO JLON=KIDIA,KFDIA
           PGPAR(JLON,MVTS) = ZTSN (JLON)
           YDMF_PHYS_SURF%GSP_SG%PF_T1(JLON,1) = ZTWSNOW (JLON)
         ENDDO
-      
+      ENDIF
 
       ! First compute horizontal exchange coefficients for momentum:
       !  (there's mo TOMs contribution, thus has to be done at latest here)
@@ -2909,7 +2978,7 @@ ENDIF
 
 !DEC$ IVDEP
   DO JLON=KIDIA,KFDIA
-    
+    IF(.NOT.LMSE)YDMF_PHYS%OUT%FRTHDS(JLON)=YDMF_PHYS%OUT%FRTH(JLON,KLEV,1)/PEMIS(JLON)+RSIGMA*YDMF_PHYS_STATE%YGSP_RR%T(JLON)**4
     IF(PMU0(JLON) <= 0.0_JPRB) THEN
 
 !     NUIT : FLUX SOLAIRE NUL
@@ -2946,23 +3015,6 @@ ENDIF
 
   
 
-
-     
-       ZKTROV_SAVE(:,:)=0.0_JPRB
-       ZKUROV_SAVE(:,:)=0.0_JPRB
-       ZCDROV_SAVE(:)=0.0_JPRB
-       ZCHROV_SAVE(:)=0.0_JPRB
-     
-     IF(.NOT. LGWDSPNL) THEN
-       ZTRAJGWD(:,:)=0.0_JPRB
-     ENDIF
-
-     CALL WRPHTRAJTM_NL(YDGEOMETRY,YDSIMPHL,KIDIA,KFDIA,PTRAJ_PHYS,&
-                & ZKTROV_SAVE,ZKUROV_SAVE,&
-                & ZCDROV_SAVE,ZCHROV_SAVE,ZTRAJGWD,&
-                & YDMF_PHYS_STATE%L,YDMF_PHYS_STATE%I,YDMF_PHYS_STATE%R,YDMF_PHYS_STATE%S,ZQLIS,ZNEBS)
-  
-
 !     ------------------------------------------------------------------
 !     10.- PRECIPITATIONS STRATIFORMES.
 !     ---------------------------------
@@ -2983,151 +3035,7 @@ ENDIF
 !     ---------------------------------
 
   
-!           LA TENDANCE DYNAMIQUE DE Q EST MULTIPLIEE PAR UN
-!           FACTEUR CORRECTIF FONCTION DE LA RESOLUTION LOCALE
-!           DU MODELE PUIS AUGMENTEE DE LA CONTRIBUTION
-!           DE L EVAPORATION DU SOL.
-    
-      
-          DO JLON=KIDIA,KFDIA
-            ZMOD(JLON)=1._JPRB/(1.0_JPRB+PGM(JLON)*TEQK)
-         ENDDO
-      
-!cdir unroll=8
-      DO JLEV = KTDIA, KLEV
-        DO JLON = KIDIA, KFDIA
-          PCVGQ(JLON,JLEV) = PCVGQ(JLON,JLEV)*ZMOD(JLON) &
-           & -RG*YDMF_PHYS_STATE%YCPG_PHY%XYB%RDELP(JLON,JLEV)&
-           & *(YDMF_PHYS%OUT%DIFTQ(JLON,JLEV)-YDMF_PHYS%OUT%DIFTQ(JLON,JLEV-1)&
-           & +ZFCQVNG(JLON,JLEV)-ZFCQVNG(JLON,JLEV-1))
-        ENDDO
-      ENDDO
-    
-    
-  
 
-
-  
-    ! - TEMPORAIRES
-    ! ZSIGPC: CONVECTIVE FRACTION OF PRECIPITATION FLUX, USED A POSTERIORI 
-    ! ZSIGP : PRECIPITATION MESH FRACTION
-    ZSIGPC=0.0_JPRB
-    ZSIGP=1.0_JPRB  ! used to limit/scale dd area
-  
-  !  -------------------------
-  !  UPDRAUGHT CONTRIBUTION
-  !  -------------------------
-
-    CALL ACTQSATS ( YDPHY,YDPHY0,KIDIA,KFDIA,KLON,NTQSAT,KLEV,&
-     & YDMF_PHYS_STATE%YCPG_PHY%PREHYDF, YDMF_PHYS_STATE%YCPG_DYN%RCP%CP, ZQV, ZT,&
-     & ZGEOSLC, ZLH, ZLSCPE, ZQSAT, ZQW, ZRH, ZTW)
-
-    
-      CALL ACCVUD ( YDMODEL%YRML_PHY_EC%YRECUCONVCA,YDMODEL%YRML_PHY_MF,KIDIA,KFDIA,KLON,KTDIA,KLEV,&
-       & YDMF_PHYS_STATE%YCPG_PHY%XYB%ALPH, YDMF_PHYS_STATE%YCPG_DYN%PHI, YDMF_PHYS_STATE%YCPG_DYN%PHIF, YDMF_PHYS_STATE%YCPG_PHY%PREHYD, YDMF_PHYS_STATE%YCPG_PHY%PREHYDF, YDMF_PHYS_STATE%YCPG_DYN%RCP%CP,YDMF_PHYS_STATE%YCPG_DYN%RCP%R,&
-       & PCVGQ, YDMF_PHYS_STATE%YCPG_PHY%XYB%DELP, YDMF_PHYS_STATE%YCPG_PHY%XYB%LNPR,&
-       & ZQV, ZQI, ZQL, ZQSAT, ZQW,&
-       & YDMF_PHYS_STATE%YCPG_PHY%XYB%RDELP, ZT, ZTW, YDMF_PHYS_STATE%U, YDMF_PHYS_STATE%V, YDMF_PHYS_STATE%VOR,&
-       & YDVARS%DAL%T0,&
-       & YDMF_PHYS_STATE%YGSP_RR%T, ZTAUX, PRCORI,PGM, ZDECRD_MF,&
-       & YDMF_PHYS%OUT%DIFCQ, YDMF_PHYS%OUT%DIFCQL, YDMF_PHYS%OUT%DIFCQN, YDMF_PHYS%OUT%DIFCS,&
-       & YDMF_PHYS%OUT%FCCQL, YDMF_PHYS%OUT%FCCQN, YDMF_PHYS%OUT%STRCU, YDMF_PHYS%OUT%STRCV, ZATSLC,&
-       & INLAB, YDVARS%UNEBH%T0, ZDETFI, ZTU, ZQU, ZUU, ZVU,&
-       & INND,YDMF_PHYS%OUT%CAPE,YDMF_PHYS%OUT%CUCONVCA,YDMF_PHYS%OUT%NLCONVCA,&
-       & ZGEOSLC, YDVARS%UEN%T0, YDVARS%UAL%T0, YDVARS%UOM%T0)
-
-    ! Initialize temperature correction
-      ZTCORR(KIDIA:KFDIA,:)=ZTU(KIDIA:KFDIA,:)-ZT(KIDIA:KFDIA,:)
-    ! Initialize Environment horizontal velocity
-      ZU(KIDIA:KFDIA,:)=YDMF_PHYS_STATE%U(KIDIA:KFDIA,:)
-      ZV(KIDIA:KFDIA,:)=YDMF_PHYS_STATE%V(KIDIA:KFDIA,:)
-    
-
-
-    CALL ACUPU(YDPHY,YDPHY0,KIDIA,KFDIA,KLON,KTDIA,KLEV,&
-               & YDVARS%UAL%T0,YDVARS%UNEBH%T0,ZDETFI,&
-               & ZPOID,ZIPOI,ZLHV,ZLHS,YDMF_PHYS_STATE%YCPG_DYN%RCP%CP,&
-               & YDMF_PHYS%OUT%DIFCQ,YDMF_PHYS%OUT%DIFCQN,YDMF_PHYS%OUT%DIFCQL,YDMF_PHYS%OUT%DIFCS,&
-               & YDMF_PHYS%OUT%FCCQL,YDMF_PHYS%OUT%FCCQN,YDMF_PHYS%OUT%FCSQL,YDMF_PHYS%OUT%FCSQN,&
-! output  1d .
-               & ZSIGP, ZSIGPC,&
-!input/output  2d .
-               & ZNEBS,ZQI,ZQL,ZQV,ZT,&
-               & YDMF_PHYS%OUT%FCQNG,YDMF_PHYS%OUT%FCQNNG,YDMF_PHYS%OUT%FCQLNG)
-
-!rb store "-B" state: no protection of Ncv
-    IF(LRKCDEV.AND.(.NOT.LNEBCV)) THEN
-      DO JLEV=KTDIA,KLEV
-        DO JLON=KIDIA,KFDIA
-          YDVARS%RKTH%T0(JLON,JLEV)=YDVARS%RKTH%T0(JLON,JLEV)-ZT(JLON,JLEV)
-          YDVARS%RKTQV%T0(JLON,JLEV)=YDVARS%RKTQV%T0(JLON,JLEV)-ZQV(JLON,JLEV)
-          YDVARS%RKTQC%T0(JLON,JLEV)=YDVARS%RKTQC%T0(JLON,JLEV)-ZQI(JLON,JLEV)&
-        & -ZQL(JLON,JLEV)
-        ENDDO
-      ENDDO
-    ENDIF
-
-   !LCVPRO
-
-
-  !  ---------------------------------------------------------
-  !  MICROPHYSICS (AUTOCONVERSION, COLLECTION AND EVAPORATION)
-  !        OF TOTAL CONDENSATE (RESOLVED + SUB-GRID)
-  !  ---------------------------------------------------------
-
-    ZAUXPRC(:)=0._JPRB
-    ZRCVOTT(:,:)=0._JPRB
-
-    DO JLEV=KTDIA,KLEV
-      DO JLON=KIDIA,KFDIA
-
-    !    COMPUTE TOTAL CONDENSATION FLUX
-    !    -------------------------------
-        ZFCQL(JLON,JLEV)=YDMF_PHYS%OUT%FCSQL(JLON,JLEV)+YDMF_PHYS%OUT%FCCQL(JLON,JLEV)
-        ZFCQI(JLON,JLEV)=YDMF_PHYS%OUT%FCSQN(JLON,JLEV)+YDMF_PHYS%OUT%FCCQN(JLON,JLEV)
-        
-      ENDDO
-    ENDDO
-
-    CALL ACTQSATS ( YDPHY,YDPHY0,KIDIA,KFDIA,KLON,NTQSAT,KLEV,&
-     & YDMF_PHYS_STATE%YCPG_PHY%PREHYDF, YDMF_PHYS_STATE%YCPG_DYN%RCP%CP, ZQV, ZT,&
-     & ZGEOSLC, ZLH, ZLSCPE, ZQSAT, ZQW, ZRH, ZTW)
-
-    DO JLEV=KTDIA,KLEV
-      DO JLON=KIDIA,KFDIA
-        ZDQ(JLON,JLEV)=ZQW(JLON,JLEV)&
-         & -(ZQV(JLON,JLEV)+ZQI(JLON,JLEV)+ZQL(JLON,JLEV))
-        ZDQM(JLON,JLEV)=ZQW(JLON,JLEV)
-      ENDDO
-    ENDDO
-
-    CALL APLMPHYS( YDMODEL%YRML_PHY_MF,KIDIA,KFDIA,KLON,KTDIA,KLEV,&
-     & YDMF_PHYS_STATE%YCPG_PHY%PREHYD, YDMF_PHYS_STATE%YCPG_PHY%PREHYDF, YDMF_PHYS_STATE%YCPG_DYN%RCP%CP, ZQV, ZQI, ZQL, ZQS, ZQR, ZQG, YDMF_PHYS_STATE%YCPG_DYN%RCP%R, ZT,&
-     & ZIPOI, ZDQ, ZDQM, ZLHS, ZLHV, ZNEBS, ZPOID, ZRCVOTT,&
-     & ZTCORR,YDMF_PHYS_SURF%GSD_VF%PLSM, PNEIJ, YDMF_PHYS_STATE%YGSP_RR%T, ZDECRD_MF,&
-     & ZFCQL, ZFCQI,&
-     & ZFALLR, ZFALLS,ZFALLG,&
-     & YDMF_PHYS%OUT%FPFPSL,YDMF_PHYS%OUT%FPFPSN, YDMF_PHYS%OUT%FPFPSG, YDMF_PHYS%OUT%FPEVPSL, YDMF_PHYS%OUT%FPEVPSN, YDMF_PHYS%OUT%FPEVPSG, YDMF_PHYS%OUT%FPLSL, YDMF_PHYS%OUT%FPLSN,YDMF_PHYS%OUT%FPLSG,&
-     & ZSEDIQL,ZSEDIQI,ZMELNET,ZMELGET,YDMF_PHYS%OUT%DIAGH)
-
-    !  ------------------------------------------------------------
-    !   UPDATE AFTER MICROPHYSICS - 3MT
-    !  ------------------------------------------------------------
-
-   CALL ACUPM( YDMODEL%YRML_PHY_MF,KIDIA,KFDIA,KLON,KTDIA,KLEV,&
-              & YDMF_PHYS_STATE%YCPG_DYN%RCP%CP, ZLHS, ZLHV,&
-              & YDCPG_DYN0%CTY%EVEL, ZIPOI, ZPOID, YDVARS%UAL%T0, YDVARS%UOM%T0,&
-              & YDMF_PHYS%OUT%FPEVPSL,YDMF_PHYS%OUT%FPEVPSN,YDMF_PHYS%OUT%FPEVPSG,YDMF_PHYS%OUT%FPFPSL,YDMF_PHYS%OUT%FPFPSN,YDMF_PHYS%OUT%FPFPSG,&
-              & YDMF_PHYS%OUT%FPLSL,YDMF_PHYS%OUT%FPLSN,YDMF_PHYS%OUT%FPLSG,&
-              & ZFCQL,ZFCQI,YDMF_PHYS%OUT%FCCQL,YDMF_PHYS%OUT%FCCQN,&
-! output 2D
-              & ZOME, ZFHP,&
-! input/output  2d .
-              & ZQV,ZQL,ZQI,ZQR,ZQS,ZQG,ZT,&
-              & YDMF_PHYS%OUT%FCSQL,YDMF_PHYS%OUT%FCSQN,&
-              & YDMF_PHYS%OUT%FCQNG,YDMF_PHYS%OUT%FCQRNG,YDMF_PHYS%OUT%FCQSNG,YDMF_PHYS%OUT%FCQGNG)
-
-   ! LCDDPRO
 
    ! L3MT
 
@@ -3315,14 +3223,18 @@ ENDIF
 !     ------------------------------------------------------------------
 !     12. - BILAN HYDRIQUE DU SOL
 !     ---------------------------
-  
+  IF ( LMSE ) THEN
 
     DO JLON=KIDIA,KFDIA
       PGPAR(JLON,MRAIN)=ZFPLSL(JLON,KLEV)+YDMF_PHYS%OUT%FPLCL(JLON,KLEV)
       PGPAR(JLON,MSNOW)=ZFPLSN(JLON,KLEV)+YDMF_PHYS%OUT%FPLCN(JLON,KLEV)
     ENDDO
 
-  
+  ELSE
+
+    
+
+  ENDIF
 
 !*
 !-  --------------------------------------------------------------------

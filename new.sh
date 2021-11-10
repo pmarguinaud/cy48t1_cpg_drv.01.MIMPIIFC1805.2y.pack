@@ -38,7 +38,7 @@ cd $TMPDIR
 for aplpar_new in 0 1
 do
 
-for NAM in ARP
+for NAM in APLPAR_NEW
 do
 
 mkdir -p $NAM.$aplpar_new
@@ -82,7 +82,7 @@ done
 # Set the number of nodes, tasks, threads for the model
 
 NNODE_FC=1
-NTASK_FC=8
+NTASK_FC=4
 NOPMP_FC=1
 
 # Set the number of nodes, tasks, threads for the IO server
@@ -102,7 +102,7 @@ STOP=6
 
 xpnam --delta="
 &NAMRIP
-  CSTOP='t2',
+  CSTOP='h$STOP',
   TSTEP=240,
 /
 &NAMARG
@@ -186,14 +186,17 @@ cat fort.4
 
 # Run the model; use your mpirun
 
+pack=$PACK
+pack=/home/mf/dp/marp/gco/packs/cy48t1_main.01.MIMPIIFC1805.2y.pack
 
 export APLPAR_NEW=$aplpar_new
 
 /opt/softs/mpiauto/mpiauto --verbose --wrap --wrap-stdeo --nouse-slurm-mpi --prefix-mpirun '/usr/bin/time -f "time=%e"' \
-    --nnp $NTASK_FC --nn $NNODE_FC --openmp $NOPMP_FC -- $PACK/bin/MASTERODB \
- -- --nnp $NTASK_IO --nn $NNODE_IO --openmp $NOPMP_IO -- $PACK/bin/MASTERODB 
+    --nnp $NTASK_FC --nn $NNODE_FC --openmp $NOPMP_FC -- $pack/bin/MASTERODB \
+ -- --nnp $NTASK_IO --nn $NNODE_IO --openmp $NOPMP_IO -- $pack/bin/MASTERODB 
 
-#diffNODE.001_01 NODE.001_01 $PACK/ref/NODE.001_01.$NAM
+#diffNODE.001_01 NODE.001_01 $PACK/ref/NODE.001_01.$NAM.$aplpar_new
+cp NODE.001_01 $PACK/ref/NODE.001_01.$NAM.$aplpar_new
 
 ls -lrt
 

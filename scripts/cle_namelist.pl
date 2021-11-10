@@ -50,9 +50,14 @@ while (my $line = <$fh>)
         s/^\s*//o;
         s/\s*$//o;
       }
-    if (($v =~ m/^(?:TRUE|FALSE)$/o) || ($v =~ m/^\'/o))
+    if ($v =~ m/^(?:TRUE|FALSE)$/o)
       {
         $c{$k} = ".$v.";
+        next;
+      }
+    elsif ($v =~ m/^\'/o)
+      {
+        $c{$k} = $v;
         next;
       }
     print STDERR "$k = $v\n";

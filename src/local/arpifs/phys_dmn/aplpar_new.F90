@@ -2944,7 +2944,7 @@ ENDIF
   
  ! SAVE FOR TL/NL COEFS FROM VERT. DIFF AND GWD
 
-  IF (LTRAJPS.AND.(LGWDSPNL)) THEN
+  
 
 
      
@@ -2961,7 +2961,7 @@ ENDIF
                 & ZKTROV_SAVE,ZKUROV_SAVE,&
                 & ZCDROV_SAVE,ZCHROV_SAVE,ZTRAJGWD,&
                 & YDMF_PHYS_STATE%L,YDMF_PHYS_STATE%I,YDMF_PHYS_STATE%R,YDMF_PHYS_STATE%S,ZQLIS,ZNEBS)
-  ENDIF
+  
 
 !     ------------------------------------------------------------------
 !     10.- PRECIPITATIONS STRATIFORMES.

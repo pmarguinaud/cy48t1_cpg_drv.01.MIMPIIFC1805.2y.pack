@@ -15,6 +15,7 @@ my $fh = 'FileHandle'->new ("<$cle");
 
 while (my $line = <$fh>)
   { 
+    next if ($line =~ m/^\s*$/o);
     my ($k, $v) = split (m/\s*=\s*/o, $line);
     for ($k, $v)
       {

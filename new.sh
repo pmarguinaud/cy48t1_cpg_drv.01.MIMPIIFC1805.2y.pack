@@ -5,6 +5,7 @@
 #SBATCH --time=00:05:00
 #SBATCH --exclusive
 #SBATCH --verbose
+#SBATCH -p normal256
 #SBATCH --no-requeue
 
 set -x
@@ -83,7 +84,7 @@ done
 
 NNODE_FC=1
 NTASK_FC=4
-NOPMP_FC=1
+NOPMP_FC=8
 
 # Set the number of nodes, tasks, threads for the IO server
 
@@ -187,7 +188,7 @@ cat fort.4
 # Run the model; use your mpirun
 
 pack=$PACK
-pack=/home/mf/dp/marp/gco/packs/cy48t1_main.01.MIMPIIFC1805.2y.pack
+#ack=/home/mf/dp/marp/gco/packs/cy48t1_main.01.MIMPIIFC1805.2y.pack
 
 export APLPAR_NEW=$aplpar_new
 
@@ -195,8 +196,8 @@ export APLPAR_NEW=$aplpar_new
     --nnp $NTASK_FC --nn $NNODE_FC --openmp $NOPMP_FC -- $pack/bin/MASTERODB \
  -- --nnp $NTASK_IO --nn $NNODE_IO --openmp $NOPMP_IO -- $pack/bin/MASTERODB 
 
-#diffNODE.001_01 NODE.001_01 $PACK/ref/NODE.001_01.$NAM.$aplpar_new
-cp NODE.001_01 $PACK/ref/NODE.001_01.$NAM.$aplpar_new
+diffNODE.001_01 NODE.001_01 $PACK/ref/NODE.001_01.$NAM
+#cp NODE.001_01 $PACK/ref/NODE.001_01.$NAM.$aplpar_new
 
 ls -lrt
 

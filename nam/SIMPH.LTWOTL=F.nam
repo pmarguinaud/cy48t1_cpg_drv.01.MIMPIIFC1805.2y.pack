@@ -21,4 +21,6 @@
 &NAMPHY
   LMPHYS=.TRUE.,
 /
-
+&NAMCT0
+  LTWOTL=.FALSE.,
+/

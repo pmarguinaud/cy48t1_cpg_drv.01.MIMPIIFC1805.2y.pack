@@ -215,9 +215,9 @@ export SIMPH=1
     --nnp $NTASK_FC --nn $NNODE_FC --openmp $NOPMP_FC -- $pack/bin/MASTERODB \
  -- --nnp $NTASK_IO --nn $NNODE_IO --openmp $NOPMP_IO -- $pack/bin/MASTERODB 
 
-#diffNODE.001_01 NODE.001_01 $PACK/ref/NODE.001_01.$NAM
+diffNODE.001_01 NODE.001_01 $PACK/ref/NODE.001_01.$NAM
 #cp NODE.001_01 $PACK/ref/NODE.001_01.$NAM
-cp NODE.001_01 $PACK/NODE.001_01.$NAM
+#cp NODE.001_01 $PACK/NODE.001_01.$NAM
 #cat NODE.001_01 
 
 ls -lrt

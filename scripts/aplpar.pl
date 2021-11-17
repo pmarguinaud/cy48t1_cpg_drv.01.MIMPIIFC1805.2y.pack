@@ -13,7 +13,7 @@ my $F90 = "src/local/arpifs/phys_dmn/mf_phys.F90";
 my $d = &Fxtran::fxtran (location => $F90, fopts => [qw (-line-length 300)]);
 
 
-for my $r (qw (APLPASSH))
+for my $r (qw (CPTENDSM))
   {
     my @call = &F ('//call-stmt[string (procedure-designator)="?"]/arg-spec', $r, $d);
     

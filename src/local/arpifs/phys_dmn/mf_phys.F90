@@ -612,7 +612,8 @@ REAL(KIND=JPRB) :: ZHOOK_HANDLE
 #include "wrphtrajm.intfb.h"
 #include "wrradcoef.intfb.h"
 #include "acajucv.intfb.h"
-#include "gnhqe_conv_tempe.intfb.h"
+#include "mf_phys_nhqe_prolog.intfb.h"
+#include "mf_phys_nhqe_epilog.intfb.h"
 
 !     ------------------------------------------------------------------
 IF (LHOOK) CALL DR_HOOK('MF_PHYS',0,ZHOOK_HANDLE)
@@ -741,34 +742,12 @@ ENDIF
 ! Complete physics is called.
 LLDIAB=(LMPHYS.OR.LEPHYS).AND.(.NOT.LAGPHY)
 
+
 ! In the NHQE model, MF_PHYS enters with Tt and grad(Tt), where Tt = T * exp(-(R/cp) log(pre/prehyd)).
 ! But calculations of MF_PHYS must use T and grad(T).
 ! So we do a conversion Tt -> T.
 IF (LNHQE) THEN
-  ! Valid for NPDVAR=2 only.
-  ! At instant t (with the derivatives):
-  DO JLEV=1,NFLEVG
-    DO JROF=KST,KEND
-      YDMF_PHYS%TMP%NHQ%TT0(JROF,JLEV)=YDVARS%T%T0(JROF,JLEV)
-      YDMF_PHYS%TMP%NHQ%TT0L(JROF,JLEV)=YDVARS%T%DL(JROF,JLEV)
-      YDMF_PHYS%TMP%NHQ%TT0M(JROF,JLEV)=YDVARS%T%DM(JROF,JLEV)
-    ENDDO
-  ENDDO
-  CALL GNHQE_CONV_TEMPE(YDGEOMETRY,.TRUE.,YDMODEL%YRML_GCONF%YGFL%NDIM,KST,KEND,&
-   & YDVARS%SPD%T0,YDVARS%SP%T0,YDVARS%T%T0,&
-   & KGFLTYP=0,PGFL=PGFL,KDDER=2,PQCHAL=YDVARS%SPD%DL,PQCHAM=YDVARS%SPD%DM,&
-   & PTL=YDVARS%T%DL,PTM=YDVARS%T%DM)
-  ! At instant t-dt for leap-frog advections (without the derivatives):
-  IF (.NOT.LTWOTL) THEN
-    DO JLEV=1,NFLEVG
-      DO JROF=KST,KEND
-        YDMF_PHYS%TMP%NHQ%TT9(JROF,JLEV)=YDVARS%T%T9(JROF,JLEV)
-      ENDDO
-    ENDDO
-    CALL GNHQE_CONV_TEMPE(YDGEOMETRY,.TRUE.,YDMODEL%YRML_GCONF%YGFL%NDIM,KST,KEND,&
-     & YDVARS%SPD%T9,YDVARS%SP%T9,YDVARS%T%T9,&
-     & KGFLTYP=9,PGFL=PGFL)
-  ENDIF
+  CALL MF_PHYS_NHQE_PROLOG (YDGEOMETRY, YDMF_PHYS, YDVARS, YDMODEL, KST, KEND, PGFL, LTWOTL, NFLEVG)
 ENDIF
 
 IF (LRAYSP.AND.(NSTEP >= INSTEP_DEB .AND. NSTEP <= INSTEP_FIN)) THEN  
@@ -1880,22 +1859,7 @@ ENDIF
 
 ! Restore Tt and grad(Tt) for NHQE model.
 IF (LNHQE) THEN
-  ! At instant t (with the derivatives):
-  DO JLEV=1,NFLEVG
-    DO JROF=KST,KEND
-      YDVARS%T%T0(JROF,JLEV)=YDMF_PHYS%TMP%NHQ%TT0(JROF,JLEV)
-      YDVARS%T%DL(JROF,JLEV)=YDMF_PHYS%TMP%NHQ%TT0L(JROF,JLEV)
-      YDVARS%T%DM(JROF,JLEV)=YDMF_PHYS%TMP%NHQ%TT0M(JROF,JLEV)
-    ENDDO
-  ENDDO
-  ! At instant t-dt for leap-frog advections (without the derivatives):
-  IF (.NOT.LTWOTL) THEN
-    DO JLEV=1,NFLEVG
-      DO JROF=KST,KEND
-        YDVARS%T%T9(JROF,JLEV)=YDMF_PHYS%TMP%NHQ%TT9(JROF,JLEV)
-      ENDDO
-    ENDDO
-  ENDIF
+  CALL MF_PHYS_NHQE_EPILOG (YDMF_PHYS, YDVARS, KST, KEND, LTWOTL, NFLEVG)
 ENDIF
 
 !     ------------------------------------------------------------------

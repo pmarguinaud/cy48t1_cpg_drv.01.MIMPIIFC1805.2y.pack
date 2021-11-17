@@ -1338,6 +1338,7 @@ sub fxtran
       my $fh = 'File::Temp'->new (SUFFIX => '.F90');
       $fh->print ("PROGRAM MAIN\n");
       $fh->print ($args{statement});
+      $fh->print ("\n") unless ($args{statement} =~ m/\n$/goms);
       $fh->print ("END PROGRAM MAIN\n");
       $fh->flush ();
       system (qw (fxtran -construct-tag -no-include), @fopts, $fh->filename)

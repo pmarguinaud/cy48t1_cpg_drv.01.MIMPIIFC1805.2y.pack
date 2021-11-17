@@ -1676,7 +1676,7 @@ ENDIF
 ! * Restore the initial value of some pseudo-historical surface buffers
 !   if relevant.
 IF (LL_SAVE_PHSURF) THEN
-  CALL MF_PHYS_SAVE_PHSURF_EPILOG (YDMF_PHYS, YDMF_PHYS_SURF, YDVARS, YDSURF, YDMODEL, LCDDPRO, LCVPRO, LGPCMT, NPROMA)
+  CALL MF_PHYS_SAVE_PHSURF_EPILOG (YDGEOMETRY, YDMF_PHYS, YDMF_PHYS_SURF, YDVARS, YDSURF, YDMODEL)
 ENDIF
 
 ! Store horizontal exchange coefficients (3D turbulence) to SL2 buffers

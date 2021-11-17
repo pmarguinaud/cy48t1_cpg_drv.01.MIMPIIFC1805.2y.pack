@@ -93,15 +93,12 @@ xpnam --delta="
   NCOMBFLEN=1800000,
 /
 &NAMCT0
-  LTWOTL=.FALSE.,
+  LTWOTL=.TRUE.,
 /
 &NAMARG
   CNMEXP='FCST',
   NCONF=1,
   LSLAG=.FALSE.,
-/
-&NAMSIMPHL
-  LTRAJPS=.FALSE.,
 /
 " --inplace fort.4
 
@@ -212,12 +209,16 @@ cat fort.4
 
 pack=$PACK
 
+export SIMPH=1
+
+
 /opt/softs/mpiauto/mpiauto --verbose --wrap --wrap-stdeo --nouse-slurm-mpi --prefix-mpirun '/usr/bin/time -f "time=%e"' \
     --nnp $NTASK_FC --nn $NNODE_FC --openmp $NOPMP_FC -- $pack/bin/MASTERODB \
  -- --nnp $NTASK_IO --nn $NNODE_IO --openmp $NOPMP_IO -- $pack/bin/MASTERODB 
 
 diffNODE.001_01 NODE.001_01 $PACK/ref/NODE.001_01.$NAM
 #cp NODE.001_01 $PACK/ref/NODE.001_01.$NAM
+#cat NODE.001_01 
 
 ls -lrt
 

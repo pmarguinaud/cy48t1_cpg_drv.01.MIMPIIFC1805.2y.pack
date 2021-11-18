@@ -269,7 +269,7 @@ sub _fold
 
       my ($lit) = &f ('./ancestor::f:literal-E', $node);
 
-      if (($$plen > 80) && (! $lit))
+      if (($$plen > 100) && (! $lit))
         {
           if ($node->textContent =~ m/^\s*,\s*$/o)
             { 

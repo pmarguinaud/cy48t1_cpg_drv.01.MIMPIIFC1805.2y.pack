@@ -33,186 +33,31 @@ SUBROUTINE MF_PHYS(YDGEOMETRY, YDCPG_MISC, YDCPG_PHY0, YDCPG_PHY9, YDMF_PHYS,  &
 !        PDTPHY    : timestep used in the physics.
 !        KIBL      : index into YRCSGEOM/YRGSGEOM types in YDGEOMETRY
 !        POROGL,POROGM: components of grad(orography).
-!        PCUCONVCA : CA array for interaction with the physics
-!        PNLCONVCA : CA array for interaction with the physics
-!        PGMV      : GMV at time t and t-dt.
-!        PGMVS     : GMVS at time t and t-dt.
 !        PGFL      : GFL at time t and t-dt.
-!        PWT0      : w-wind time t.
-!        PWT0L     : zonal derivative of w-wind at time t.
-!        PWT0M     : merid derivative of w-wind at time t.
-!        PRCP0     : contains "cp", "R" and "Kap=R/Cp" at t.
-!        PHI0      : geopotential height at half levels at time t.
-!        PHIF0     : geopotential height at full levels at time t.
-!        PRE0      : hydrostatic pressure "prehyd" at half levels at time t.
-!        PRE0F     : hydrostatic pressure "prehyd" at full levels at time t.
-!        PREPHY0   : input pressure "pre" for AROME at half levels at time t.
-!        PREPHY0F  : input pressure "pre" for AROME at full levels at time t.
-!        PXYB0     : contains pressure depth, "delta", "alpha" at time t.
-!        PRKQVH    : Rasch-Kristjansson scheme - water vapour tendency
-!        PRKQCH    : Rasch-Kristjansson scheme - condensates tendency
-!        PWT9      : Vertical wind time t-dt.
-!        PRCP9     : contains "cp", "R" and "Kap=R/Cp" at t-dt.
-!        PHI9      : geopotential height at half levels at time t-dt.
-!        PHIF9     : geopotential height at full levels at time t-dt.
-!        PRE9      : hydrostatic pressure "prehyd" at half levels at time t-dt.
-!        PRE9F     : hydrostatic pressure "prehyd" at full levels at time t-dt.
-!        PREPHY9   : input pressure "pre" for AROME at half levels at time t-dt.
-!        PREPHY9F  : input pressure "pre" for AROME at full levels at time t-dt.
-!        PXYB9     : contains pressure depth, "delta", "alpha" at time t-dt.
 !        PKOZO     : fields for photochemistery of ozon.
 !        PGP2DSDT  : stochastic physics random pattern.
-!        PGRADH_PHY: horizontal gradients for physics
 
 !     INPUT/OUTPUT:
 !     -------------
-!        PCTY0     : contains vertical velocities, vertical integral of divergence at t.
 !        PB1       : "SLB1"-buffer, used for interpolations in the SL scheme.
 !        PB2       : "SLB2"-buffer.
 !        PGFLT1    : GFL t+dt
 !        PGPAR     : surface fields for AROME.
-!        PGDEOSI   : DESCENDING INCREMENTAL OPTICAL DEPTHS, SOLAR
-!        PGUEOSI   : ASCENDING  INCREMENTAL OPTICAL DEPTHS, SOLAR
 !        PGMU0     : COSINE OF SOLAR ZENITH ANGLE, APPROXIMATE ACTUAL VALUE
-!        PGMU0_MIN : COSINE OF SOLAR ZENITH ANGLE, MIN VALUE
-!        PGMU0_MAX : COSINE OF SOLAR ZENITH ANGLE, MAX VALUE
-!        PGDEOTI   : descending incremental optical depths, dB/dT(T0) weights
-!        PGDEOTI2  : descending incremental optical depths, B weights with
 !                    linear T_e correction
-!        PGUEOTI   : ascending incremental optical depths, dB/dT(T0) weights
-!        PGUEOTI2  : ascending incremental optical depths, B weights with
 !                    linear T_e correction
-!        PGEOLT    : local optical depths, dB/dT(T0) weights
-!        PGEOXT    : maximum optical depths for EBL-EAL, dB/dT(T0) weights
-!        PGRPROX   : correction term for adjacent exchanges
-!        PGMIXP    : non-statistical weights for bracketing
-!        PGFLUXC   : out of bracket part of clearsky EBL, resp. EBL-EAL flux
-!        PGRSURF   : corrective ratio for surface cts contribution
 
 !     OUTPUT:
 !     -------
 !        PDHSF     : distribution of horizontal mean weights used for
 !                    simplified radiation scheme.
 !        ---------------------- output of aplpar ------------------------------
-!        PALBDG      : modele surface shortwave albedo (diagnostic).
-!        PCAPE     : CAPE.
-!        PCTOP     : top of convective nebulosity (diagnostic).
-!        PCLCC     : convective cloud cover (diagnostic).
-!        PCLCH     : high cloud cover (diagnostic).
-!        PCLCL     : low cloud cover (diagnostic).
-!        PCLCM     : medium cloud cover (diagnostic).
-!        PCLCT     : total cloud cover (diagnostic).
-!        PCLPH     : height (in meters) of the PBL.
-!        PVEIN     : ventilation index in the PBL.
-!        PCT       : thermical coefficient of soil-vegetation middle.
-!        PDIFCQ    : convective flux of specific humidity (not rain/snow).
-!        PDIFCQI   : convective flux of solid water (not rain/snow).
-!        PDIFCQL   : convective flux of liquid water (not rain/snow).
-!        PDIFCS    : convective flux of enthalpy (not rain/snow).
-!        PDIFTQ    : turbulent flux (inc. "q" negative) of specific humidity.
-!        PDIFTQI   : turbulent flux (inc. "q" negative) of solid water.
-!        PDIFTQL   : turbulent flux (inc. "q" negative) of liquid water.
-!        PDIFTS    : turbulent flux of enthalpy (or dry static energy).
-!        PFCCQL    : convective condensation flux for liquid water.
-!        PFCCQN    : convective condensation flux for ice.
-!        PFCHOZ    : ozon photo-chemical flux.
-!        PFPFPSL   : flux of liquid resol. precipitation: the generation term. 
-!        PFPFPSN   : flux of solid resolved precipitation: the generation term. 
-!        PFPFPCL   : flux of liquid conv. precipitation: the generation term. 
-!        PFPFPCN   : flux of solid conv. precipitation: the generation term. 
-!        PFPEVPSL  : resolved precipitation flux due to evaporation.
-!        PFPEVPSN  : resolved precipitation flux due to sublimation.
-!        PFPEVPCL  : convective precipitation flux due to evaporation.
-!        PFPEVPCN  : convective precipitation flux due to sublimation.
-!        PFCHSP    : heat flux from surface to deep soil.
-!        PFCLL     : latent heat flux over liquid water (or wet soil).
-!        PFCLN     : latent heat flux over snow (or ice).
-!        PFCQING   : pseudo-flux of ice to correct for "qi"<0.
-!        PFCQLNG   : pseudo-flux of liquid water to correct for "ql"<0.
 !        PFCQNG    : pseudo-flux of water to correct for Q<0.
-!        PFCS      : sensible heat flux at surface level.
-!        PFCSQL    : stratiform condensation flux for liquid water.
-!        PFCSQN    : stratiform condensation flux for ice.
-!        PFEVL     : water vapour flux over liquid water (or wet soil).
-!        PFEVN     : water vapour flux over snow (or ice) and frozen soil.
-!        PFEVV     : evapotranspiration flux.
-!        PFGEL     : freezing flux of soil water.
-!        PFGELS    : freezing flux of soil water at surface level.
-!        PFLWSP    : water flux from surface to deep soil.
-!        PFONTE    : water flux corresponding to surface snow melt.
-!        PFPLCL    : convective precipitation as rain.
-!        PFPLCN    : convective precipitation as snow.
-!        PFPLCG    : convective precipitation as graupel.
-!        PFPLCHL   : convective precipitation as hail.
-!        PFPLSL    : stratiform precipitation as rain.
-!        PFPLSN    : stratiform precipitation as snow.
-!        PFPLSG    : stratiform precipitation as graupel.
-!        PFPLSHL   : stratiform precipitation as hail.
-!        PMRT      : mean radiant temperature.
-!        PFRMH     : mesospheric enthalpy flux.
-!        PFRSO     : shortwave radiative flux.
-!        PFRSOC    : shortwave clear sky radiative flux.
-!        PFRSODS   : surface downwards solar flux.
-!        PFRSOLU   : downward lunar flux at surface.
-!        PFRSGNI   : Global normal irradiance
-!        PFRSDNI   : Direct normal irradiance
-!        PFRSOPS   : surface parallel solar flux.
-!        PFRSOPT   : top parallel solar flux.
-!        PFRTH     : longwave radiative flux.
-!        PFRTHC    : longwave clear sky radiative flux.
-!        PFRTHDS   : surface downwards IR flux.
-!        PFTR      : transpiration flux.
-!        PGZ0      : g*roughness length (current).
-!        PGZ0H     : current g*thermal roughness length (if KVCLIV >=8).
-!        PNEB      : fractional cloudiness for radiation.
-!        PQCLS     : specific humidity at 2 meters (diagnostic).
-!        PQICE     : specific humidity of solid water for radiation.
-!        PQLI      : specific humidity of liquid water for radiation.
-!        PQS       : specific humidity at surface level.
-!        PRH       : relative humidity.
-!        PRHCLS    : relative humidity at 2 meters (diagnostic).
-!        PRUISL    : run-off flux out the interception water-tank.
-!        PRUISP    : run-off flux in soil.
-!        PRUISS    : run-off flux at surface level.
-!        PSTRCU    : convective flux of momentum "U".
-!        PSTRCV    : convective flux of momentum "V".
-!        PSTRDU    : gravity wave drag flux "U".
-!        PSTRDV    : gravity wave drag flux "V".
-!        PSTRMU    : mesospheric flux for "U"-momentum.
-!        PSTRMV    : mesospheric flux for "V"-momentum.
-!        PSTRTU    : turbulent flux of momentum "U".
-!        PSTRTV    : turbulent flux of momentum "V".
 !        PDIFCQLC to PFCNEGQSC:
-!        PUCLS     : U-component of wind at 10 meters (diagnostic).
-!        PVCLS     : V-component of wind at 10 meters (diagnostic).
-!        PNUCLS    : U-component of neutral wind at 10 meters (diagnostic).
-!        PNVCLS    : V-component of neutral wind at 10 meters (diagnostic).
-!        PTCLS     : temperature at 2 meters (diagnostic).
-!        PTPWCLS   : wet-bulb temperature at 2 meters (diagnostic)
-!        PUGST     : U-component of gusts (diagnostic).
-!        PVGST     : V-component of gusts (diagnostic).
-!        PDERNSHF  : derivative of the non solar surface with respect to Tsurf
 !        ---------------------- end of output of aplpar -----------------------
-!        PMOCON    : moisture convergence.
-!        PFDIS     : enthalpy flux due to dissipation of kinetic energy. 
-!        PFHPCL    : liquid water convective condensation enthalpy flux.
-!        PFHPCN    : snow convective condensation enthalpy flux.
-!        PFHPSL    : liquid water stratiform condensation enthalpy flux.
-!        PFHPSN    : snow stratiform condensation enthalpy flux.
-!        PFHSCL    : sensible heat flux due to liquid convective precipitations
-!        PFHSCN    : sensible heat flux due to snow convective precipitations.
-!        PFHSSL    : sensible heat flux due to liquid stratiform precipitations
-!        PFHSSN    : sensible heat flux due to snow stratiform precipitations.
 !        PTENDU    : "U"-wind tendency due to physics.
 !        PTENDV    : "V"-wind tendency due to physics.
-!        PQSOL     : surface specific humidity used in case "delta m=1".
-!        PFCQRNG   : pseudo-flux of rain to correct for Q<0
-!        PFCQSNG   : pseudo-flux of snow to correct for Q<0
 !        PDIAGH    : Add Hail diagnostic PDIAGH (AROME)
-!        PFLASH    : Add lightening density (fl/ km2 /s )
-!        PVISICLD  : Visibility due to ice and/or water cloud
-!        PVISIHYDRO : Vsibility due to precipitations(rain, graupel, snow)
-!        PMXCLWC   : Cloud Water Liquid Content at HVISI meters
 
 !        Implicit arguments :
 !        --------------------

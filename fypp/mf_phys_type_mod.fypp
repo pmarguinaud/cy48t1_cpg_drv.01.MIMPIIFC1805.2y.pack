@@ -12,7 +12,8 @@
 #:set AS_0_NSORAYFRm1    = [ [ '0', 'YDPHY%NSORAYFR-1' ] ]
 #:set AS_NGRAD_1_nflevg  = [ [ '1', 'YDARPHY%NGRADIENTS' ], [ '1', 'NLEV' ] ]
 #:set AS_1_NTSSGp1       = [ [ '1', 'YDMODEL%YRML_PHY_G%YRDPHY%NTSSG+1' ] ]
-
+#:set AS_1_NDTPREC       = [ [ '1', 'YDMODEL%YRML_PHY_MF%YRPHY%YRDPRECIPS%NDTPREC' ] ]
+#:set AS_1_NDTPREC2      = [ [ '1', 'YDMODEL%YRML_PHY_MF%YRPHY%YRDPRECIPS%NDTPREC2' ] ]
 
 #:set vars_mf_phys_out = { &
 & "DIFCQ"          : [False, False, AS_0_nflevg,        None,                 None,               "convective flux of specific humidity (not rain/snow)        " ], &
@@ -279,6 +280,11 @@
 & "Q"              : [True,  False, AS_1_nflevg,        None,                 "LLMF_PHYS"          ], &
 & }
 
+#:set vars_mf_phys_prc = { &
+& "DPRECIPS"       : [False, False, AS_1_NDTPREC,       None,                "LLMF_PHYS"           ], &
+& "DPRECIPS2"      : [False, False, AS_1_NDTPREC2,      None,                "LLMF_PHYS"           ], &
+& }
+
 #:set vars_mf_phys_rdg = { &
 & "MMU0"           : [False, False, AS_void,            None,                 "LLMF_PHYS",         "mean solar angle for given day for simpl. rad. scheme)"                      ], &
 & "MU0"            : [False, False, AS_void,            None,                 "LLMF_PHYS",         "local cosine of instantaneous solar zenith angle."                           ], &
@@ -325,6 +331,7 @@ IMPLICIT NONE
 $:pcpg_type_definition ("MF_PHYS_OUT_TYPE",  vars_mf_phys_out)
 $:pcpg_type_definition ("MF_PHYS_OPT_TYPE" , vars_mf_phys_opt)
 $:pcpg_type_definition ("MF_PHYS_FOR_TYPE" , vars_mf_phys_for)
+$:pcpg_type_definition ("MF_PHYS_PRC_TYPE" , vars_mf_phys_prc)
 $:pcpg_type_definition ("MF_PHYS_GRA_TYPE" , vars_mf_phys_gra)
 $:pcpg_type_definition ("MF_PHYS_RAD_TYPE" , vars_mf_phys_rad)
 $:pcpg_type_definition ("MF_PHYS_NHQ_TYPE" , vars_mf_phys_nhq)
@@ -356,6 +363,7 @@ TYPE MF_PHYS_TMP_TYPE
   TYPE (MF_PHYS_NHQ_TYPE) :: NHQ
   TYPE (MF_PHYS_SAV_TYPE) :: SAV
   TYPE (MF_PHYS_RDG_TYPE) :: RDG
+  TYPE (MF_PHYS_PRC_TYPE) :: PRC
   TYPE (APLPAR_TMP_TYPE)  :: APLPAR
 CONTAINS
   PROCEDURE :: INIT => MF_PHYS_TMP_TYPE_INIT
@@ -382,6 +390,8 @@ $:pcpg_type_methods ("MF_PHYS_OUT_TYPE", vars_mf_phys_out)
 $:pcpg_type_methods ("MF_PHYS_OPT_TYPE", vars_mf_phys_opt)
 
 $:pcpg_type_methods ("MF_PHYS_FOR_TYPE", vars_mf_phys_for)
+
+$:pcpg_type_methods ("MF_PHYS_PRC_TYPE", vars_mf_phys_prc)
 
 $:pcpg_type_methods ("MF_PHYS_GRA_TYPE", vars_mf_phys_gra)
 
@@ -422,6 +432,7 @@ CALL SELF%GRA%UPDATE_VIEW (BLOCK_INDEX)
 CALL SELF%RAD%UPDATE_VIEW (BLOCK_INDEX)
 CALL SELF%TMP%NHQ%UPDATE_VIEW (BLOCK_INDEX)
 CALL SELF%TMP%SAV%UPDATE_VIEW (BLOCK_INDEX)
+CALL SELF%TMP%PRC%UPDATE_VIEW (BLOCK_INDEX)
 CALL SELF%TMP%RDG%UPDATE_VIEW (BLOCK_INDEX)
 CALL SELF%TMP%APLPAR%RDT%UPDATE_VIEW (BLOCK_INDEX)
 CALL SELF%TMP%APLPAR%FLU%UPDATE_VIEW (BLOCK_INDEX)
@@ -445,6 +456,7 @@ CALL SELF%GRA%FINAL ()
 CALL SELF%RAD%FINAL ()
 CALL SELF%TMP%NHQ%FINAL ()
 CALL SELF%TMP%SAV%FINAL ()
+CALL SELF%TMP%PRC%FINAL ()
 CALL SELF%TMP%RDG%FINAL ()
 CALL SELF%TMP%APLPAR%RDT%FINAL ()
 CALL SELF%TMP%APLPAR%FLU%FINAL ()
@@ -485,6 +497,7 @@ IF (LLMF_PHYS) THEN
 & CALL SELF%NHQ%INIT (REGISTRY, NLEV, PERSISTENT)
   IF (LLCONFX) &
 & CALL SELF%SAV%INIT (REGISTRY, NLEV, PERSISTENT, LLMF_PHYS)
+  CALL SELF%PRC%INIT (REGISTRY, NLEV, PERSISTENT, LDMF_PHYS=LLMF_PHYS, YDMODEL=YDMODEL)
   CALL SELF%RDG%INIT (REGISTRY, NLEV, PERSISTENT, LLMF_PHYS)
   IF (YDMODEL%YRML_PHY_MF%YRARPHY%LMPA) THEN
   ELSE

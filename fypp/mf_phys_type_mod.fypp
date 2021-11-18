@@ -216,6 +216,17 @@
 & "QS1"            : [False, False, AS_void,            None,                 "LLMF_PHYS",        ""                                                       ], & 
 & }
 
+#:set vars_aplpar_msc = { &
+& "CVGQ"           : [False, False, AS_1_nflevg,        None,                 "LLMF_PHYS",        "convergence of humidity 'Kuo' condition"                                                                       ], &
+& "FHP"            : [False, False, AS_0_nflevg,        None,                 "LLMF_PHYS",        "Total enthalpy flux + sensible heat flux"                                                                      ], &
+& "LCVQ"           : [False, False, AS_1_nflevg,        None,                 "LLMF_PHYS",        "limited physical contribution to the diagnostic of moisture convergence (remove large scale precip. contrib.)" ], &
+& "LSCPE"          : [False, False, AS_1_nflevg,        None,                 "LLMF_PHYS",        "EFFECTIVE RATIO OF L AND CP FOR CONDENSATION/EVAPORATION"                                                      ], &
+& "LH"             : [False, False, AS_1_nflevg,        None,                 "LLMF_PHYS",        "LATENT HEAT AT AIR TEMPERATURE"                                                                                ], &
+& "QW"             : [False, False, AS_1_nflevg,        None,                 "LLMF_PHYS",        "SPECIFIC HUMIDITY OF THE WET THERMOMETER"                                                                      ], &
+& "TW"             : [False, False, AS_1_nflevg,        None,                 "LLMF_PHYS",        "TEMPERATURE OF THE WET THERMOMETER"                                                                            ], &
+& "FRMQ"           : [False, False, AS_0_nflevg,        None,                 "LLMF_PHYS",        "cf. MESOSPHERIC humidity flux in APLPAR"                                                                       ], &
+& }
+
 #:set vars_aplpar_pfl = { &
 & "FP"             : [False, False, AS_0_nflevg,        None,                 "LLMF_PHYS",        "Total rainfall flux"                       ], &
 & "FPLCH"          : [False, False, AS_0_nflevg,        None,                 "LLMF_PHYS",        "convective precipitation flux"             ], &
@@ -311,6 +322,7 @@ $:pcpg_type_definition ("MF_PHYS_RDG_TYPE" , vars_mf_phys_rdg)
 
 $:pcpg_type_definition ("APLPAR_FLU_TYPE" , vars_aplpar_flu)
 $:pcpg_type_definition ("APLPAR_PFL_TYPE" , vars_aplpar_pfl)
+$:pcpg_type_definition ("APLPAR_MSC_TYPE" , vars_aplpar_msc)
 $:pcpg_type_definition ("APLPAR_TDS_TYPE" , vars_aplpar_tds)
 $:pcpg_type_definition ("APLPAR_DSA_TYPE" , vars_aplpar_dsa)
 
@@ -319,6 +331,7 @@ $:pcpg_struct_definition ("APLPAR_RDT_TYPE", vars_aplpar_rdt)
 TYPE APLPAR_TMP_TYPE
   TYPE (APLPAR_FLU_TYPE) :: FLU
   TYPE (APLPAR_PFL_TYPE) :: PFL
+  TYPE (APLPAR_MSC_TYPE) :: MSC
   TYPE (APLPAR_TDS_TYPE) :: TDS
   TYPE (APLPAR_DSA_TYPE) :: DSA
   TYPE (APLPAR_RDT_TYPE) :: RDT
@@ -369,6 +382,8 @@ $:pcpg_type_methods ("APLPAR_FLU_TYPE", vars_aplpar_flu)
 
 $:pcpg_type_methods ("APLPAR_PFL_TYPE", vars_aplpar_pfl)
 
+$:pcpg_type_methods ("APLPAR_MSC_TYPE", vars_aplpar_msc)
+
 $:pcpg_type_methods ("APLPAR_TDS_TYPE", vars_aplpar_tds)
 
 $:pcpg_type_methods ("APLPAR_DSA_TYPE", vars_aplpar_dsa)
@@ -392,6 +407,7 @@ CALL SELF%TMP%RDG%UPDATE_VIEW (BLOCK_INDEX)
 CALL SELF%TMP%APLPAR%RDT%UPDATE_VIEW (BLOCK_INDEX)
 CALL SELF%TMP%APLPAR%FLU%UPDATE_VIEW (BLOCK_INDEX)
 CALL SELF%TMP%APLPAR%PFL%UPDATE_VIEW (BLOCK_INDEX)
+CALL SELF%TMP%APLPAR%MSC%UPDATE_VIEW (BLOCK_INDEX)
 CALL SELF%TMP%APLPAR%TDS%UPDATE_VIEW (BLOCK_INDEX)
 CALL SELF%TMP%APLPAR%DSA%UPDATE_VIEW (BLOCK_INDEX)
 
@@ -412,6 +428,7 @@ CALL SELF%TMP%RDG%FINAL ()
 CALL SELF%TMP%APLPAR%RDT%FINAL ()
 CALL SELF%TMP%APLPAR%FLU%FINAL ()
 CALL SELF%TMP%APLPAR%PFL%FINAL ()
+CALL SELF%TMP%APLPAR%MSC%FINAL ()
 CALL SELF%TMP%APLPAR%TDS%FINAL ()
 CALL SELF%TMP%APLPAR%DSA%FINAL ()
 
@@ -450,6 +467,7 @@ IF (LLMF_PHYS) THEN
   ELSE
     CALL SELF%APLPAR%FLU%INIT (REGISTRY, NLEV, PERSISTENT, LDMF_PHYS=LLMF_PHYS, YDMODEL=YDMODEL)
     CALL SELF%APLPAR%PFL%INIT (REGISTRY, NLEV, PERSISTENT, LDMF_PHYS=LLMF_PHYS)
+    CALL SELF%APLPAR%MSC%INIT (REGISTRY, NLEV, PERSISTENT, LDMF_PHYS=LLMF_PHYS)
     CALL SELF%APLPAR%TDS%INIT (REGISTRY, NLEV, PERSISTENT, LDMF_PHYS=LLMF_PHYS, YDSURF=YDSURF)
     CALL SELF%APLPAR%DSA%INIT (REGISTRY, NLEV, PERSISTENT, LDMF_PHYS=LLMF_PHYS)
     CALL SELF%APLPAR%RDT%INIT (REGISTRY, NLEV, YM_RADTC, PERSISTENT)

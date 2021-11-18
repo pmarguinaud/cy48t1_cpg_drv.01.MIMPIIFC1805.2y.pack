@@ -10,8 +10,8 @@ use Fxtran;
 
 my ($F90_1, $F90_2) = @ARGV;
 
-my $d1 = &Fxtran::fxtran (location => $F90_1, fopts => [qw (-line-length 300)]);
-my $d2 = &Fxtran::fxtran (location => $F90_2, fopts => [qw (-line-length 300)]);
+my $d1 = &Fxtran::fxtran (location => $F90_1, fopts => [qw (-line-length 500)]);
+my $d2 = &Fxtran::fxtran (location => $F90_2, fopts => [qw (-line-length 500)]);
 
 
 my %k = qw (UVH 0 XYB 1 RCP 1 CTY 0);
@@ -33,7 +33,8 @@ for my $call (&F ('.//call-stmt[string(procedure-designator)="?"]', $name, $d1))
 #       next unless ($actual =~ m/^(?:YDCPG_DYN0|YDCPG_DYN9|YDCPG_PHY0|YDCPG_PHY9|YDCPG_TND|YDCPG_MISC)%/o);
 #       next unless ($actual =~ m/^(?:YLAPLPAR%)/o);
 #       next unless ($actual =~ m/^(?:YDMF_PHYS%TMP%RDT%)/o);
-        next unless ($actual =~ m/^(?:YDCPG_DYN|YDCPG_PHY|YDMF_PHYS_SURF|YDVARS|YDMF_PHYS|YDCPG_MISC|YLMF_PHYS_STATE)/o);
+#       next unless ($actual =~ m/^(?:YDCPG_DYN|YDCPG_PHY|YDMF_PHYS_SURF|YDVARS|YDMF_PHYS|YDCPG_MISC|YLMF_PHYS_STATE)/o);
+        next unless ($actual =~ m/^YDMF_PHYS%/o);
         $actual =~ s/^YL/YD/o;
         $d2a{$dummy[$i]->textContent} = $actual;
         if ($actual[$i]->parentNode->nextSibling)

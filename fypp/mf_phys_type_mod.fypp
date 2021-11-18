@@ -266,6 +266,12 @@
 & "QSCONV"         : [False, False, AS_1_nflevg,        None,                 "LLMF_PHYS"          ], &
 & }
 
+#!  Horizontal exchange coefficients for 3D turbulence
+#:set vars_aplpar_kur = { &
+& "KUROV_H"        : [False, False, AS_1_nflevg,        None,                 "LLMF_PHYS"          ], &
+& "KTROV_H"        : [False, False, AS_1_nflevg,        None,                 "LLMF_PHYS"          ], &
+& }
+
 #:set vars_mf_phys_for = { &
 & "U"              : [True,  False, AS_1_nflevg,        None,                 "LLMF_PHYS"          ], &
 & "V"              : [True,  False, AS_1_nflevg,        None,                 "LLMF_PHYS"          ], &
@@ -331,6 +337,7 @@ $:pcpg_type_definition ("APLPAR_MSC_TYPE" , vars_aplpar_msc)
 $:pcpg_type_definition ("APLPAR_TDS_TYPE" , vars_aplpar_tds)
 $:pcpg_type_definition ("APLPAR_DSA_TYPE" , vars_aplpar_dsa)
 $:pcpg_type_definition ("APLPAR_BAY_TYPE" , vars_aplpar_bay)
+$:pcpg_type_definition ("APLPAR_KUR_TYPE" , vars_aplpar_kur)
 
 $:pcpg_struct_definition ("APLPAR_RDT_TYPE", vars_aplpar_rdt)
 
@@ -341,6 +348,7 @@ TYPE APLPAR_TMP_TYPE
   TYPE (APLPAR_TDS_TYPE) :: TDS
   TYPE (APLPAR_DSA_TYPE) :: DSA
   TYPE (APLPAR_BAY_TYPE) :: BAY
+  TYPE (APLPAR_KUR_TYPE) :: KUR
   TYPE (APLPAR_RDT_TYPE) :: RDT
 END TYPE
 
@@ -397,6 +405,8 @@ $:pcpg_type_methods ("APLPAR_DSA_TYPE", vars_aplpar_dsa)
 
 $:pcpg_type_methods ("APLPAR_BAY_TYPE", vars_aplpar_bay)
 
+$:pcpg_type_methods ("APLPAR_KUR_TYPE", vars_aplpar_kur)
+
 $:pcpg_struct_methods ("APLPAR_RDT_TYPE", vars_aplpar_rdt, "TYPE_RADTC", "MODULE_RADTC_MIX", "M")
 
 
@@ -420,6 +430,7 @@ CALL SELF%TMP%APLPAR%MSC%UPDATE_VIEW (BLOCK_INDEX)
 CALL SELF%TMP%APLPAR%TDS%UPDATE_VIEW (BLOCK_INDEX)
 CALL SELF%TMP%APLPAR%DSA%UPDATE_VIEW (BLOCK_INDEX)
 CALL SELF%TMP%APLPAR%BAY%UPDATE_VIEW (BLOCK_INDEX)
+CALL SELF%TMP%APLPAR%KUR%UPDATE_VIEW (BLOCK_INDEX)
 
 END SUBROUTINE
 
@@ -442,6 +453,7 @@ CALL SELF%TMP%APLPAR%MSC%FINAL ()
 CALL SELF%TMP%APLPAR%TDS%FINAL ()
 CALL SELF%TMP%APLPAR%DSA%FINAL ()
 CALL SELF%TMP%APLPAR%BAY%FINAL ()
+CALL SELF%TMP%APLPAR%KUR%FINAL ()
 
 END SUBROUTINE
 
@@ -482,6 +494,7 @@ IF (LLMF_PHYS) THEN
     CALL SELF%APLPAR%TDS%INIT (REGISTRY, NLEV, PERSISTENT, LDMF_PHYS=LLMF_PHYS, YDSURF=YDSURF)
     CALL SELF%APLPAR%DSA%INIT (REGISTRY, NLEV, PERSISTENT, LDMF_PHYS=LLMF_PHYS)
     CALL SELF%APLPAR%BAY%INIT (REGISTRY, NLEV, PERSISTENT, LDMF_PHYS=LLMF_PHYS)
+    CALL SELF%APLPAR%KUR%INIT (REGISTRY, NLEV, PERSISTENT, LDMF_PHYS=LLMF_PHYS)
     CALL SELF%APLPAR%RDT%INIT (REGISTRY, NLEV, YM_RADTC, PERSISTENT)
   ENDIF
   

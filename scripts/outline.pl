@@ -8,6 +8,39 @@ use File::Basename;
 use lib $Bin;
 use Fxtran;
 
+
+sub resolveAssociates
+{
+  my $node = shift;
+  
+
+AGAIN:
+  my @N = &F ('.//named-E/N', $node);
+
+  my $count = 0;
+    
+  for my $N (@N)
+    {
+      my ($expr) = $N->parentNode;
+      my @s = &F ('ancestor::associate-construct/associate-stmt/associate-LT/associate[associate-N[string(.)="?"]]/selector/*', $N->textContent, $node);
+      die if (@s > 1);
+      next unless (my $s = $s[0]);
+      $s = $s->cloneNode (1);
+      my @r = &F ('./R-LT/*', $expr);
+      my ($rlt) = &F ('./R-LT', $s);
+      for my $r (@r)
+        {
+          $rlt->appendChild ($r->cloneNode (1));
+        }
+      $expr->replaceNode ($s);
+      $count++;
+    }
+
+  goto AGAIN if ($count);
+
+
+}
+
 sub sortArgs
 {
   my ($d, @args) = @_;
@@ -64,6 +97,11 @@ EOF
           {
             last;
           }
+      }
+
+    for my $node (@node)
+      {
+        &resolveAssociates ($node);
       }
     
     my (%N, %do, %call);

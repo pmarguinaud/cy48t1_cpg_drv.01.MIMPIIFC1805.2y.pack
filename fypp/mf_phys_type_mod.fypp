@@ -216,6 +216,18 @@
 & "QS1"            : [False, False, AS_void,            None,                 "LLMF_PHYS",        ""                                                       ], & 
 & }
 
+#:set vars_aplpar_pfl = { &
+& "FP"             : [False, False, AS_0_nflevg,        None,                 "LLMF_PHYS",        "Total rainfall flux"                       ], &
+& "FPLCH"          : [False, False, AS_0_nflevg,        None,                 "LLMF_PHYS",        "convective precipitation flux"             ], &
+& "FPLSH"          : [False, False, AS_0_nflevg,        None,                 "LLMF_PHYS",        "stratiform precipitation flux"             ], &
+& "FPLSN"          : [False, False, AS_0_nflevg,        None,                 "LLMF_PHYS",        "all solid stratiform precipitation flux"   ], &
+& "FTKE"           : [False, False, AS_0_nflevg,        None,                 "LLMF_PHYS",        "TKE flux"                                  ], &
+& "FTKEI"          : [False, False, AS_0_nflevg,        None,                 "LLMF_PHYS",        "TKE flux"                                  ], &
+& "FEFB1"          : [False, False, AS_0_nflevg,        None,                 "LLMF_PHYS",        "EFB1 flux"                                 ], &
+& "FEFB2"          : [False, False, AS_0_nflevg,        None,                 "LLMF_PHYS",        "EFB2 flux"                                 ], &
+& "FEFB3"          : [False, False, AS_0_nflevg,        None,                 "LLMF_PHYS",        "EFB3 flux"                                 ], &
+& }
+
 #:set vars_aplpar_tds = { &
 & "TDTS"           : [False, False, AS_void,            None,                 "LLMF_PHYS",         "Surface temperature tendency"    ], &  
 & "TDTP"           : [False, False, AS_ysp_sbd_nlevs,   None,                 "LLMF_PHYS",         "Deep temperature tendency"       ], &  
@@ -236,6 +248,7 @@
 & "LHS"            : [False, False, AS_void,            None,                 "LLMF_PHYS",         "CHALEUR LATENTE EN SURFACE"                                                           ], &
 & "RS"             : [False, False, AS_void,            None,                 "LLMF_PHYS",         "CONSTANTE DES GAZ DE L'AIR EN SURFACE"                                                ], &
 & }
+
 
 #:set vars_mf_phys_for = { &
 & "U"              : [True,  False, AS_1_nflevg,        None,                 "LLMF_PHYS"          ], &
@@ -276,6 +289,8 @@
 & "RAT5N"          : [False, False, AS_1_nflevg,   ], &
 & }
 
+
+
 #:endmute
 MODULE MF_PHYS_TYPE_MOD
 
@@ -295,6 +310,7 @@ $:pcpg_type_definition ("MF_PHYS_SAV_TYPE" , vars_mf_phys_sav)
 $:pcpg_type_definition ("MF_PHYS_RDG_TYPE" , vars_mf_phys_rdg)
 
 $:pcpg_type_definition ("APLPAR_FLU_TYPE" , vars_aplpar_flu)
+$:pcpg_type_definition ("APLPAR_PFL_TYPE" , vars_aplpar_pfl)
 $:pcpg_type_definition ("APLPAR_TDS_TYPE" , vars_aplpar_tds)
 $:pcpg_type_definition ("APLPAR_DSA_TYPE" , vars_aplpar_dsa)
 
@@ -302,6 +318,7 @@ $:pcpg_struct_definition ("APLPAR_RDT_TYPE", vars_aplpar_rdt)
 
 TYPE APLPAR_TMP_TYPE
   TYPE (APLPAR_FLU_TYPE) :: FLU
+  TYPE (APLPAR_PFL_TYPE) :: PFL
   TYPE (APLPAR_TDS_TYPE) :: TDS
   TYPE (APLPAR_DSA_TYPE) :: DSA
   TYPE (APLPAR_RDT_TYPE) :: RDT
@@ -350,6 +367,8 @@ $:pcpg_type_methods ("MF_PHYS_RDG_TYPE", vars_mf_phys_rdg)
 
 $:pcpg_type_methods ("APLPAR_FLU_TYPE", vars_aplpar_flu)
 
+$:pcpg_type_methods ("APLPAR_PFL_TYPE", vars_aplpar_pfl)
+
 $:pcpg_type_methods ("APLPAR_TDS_TYPE", vars_aplpar_tds)
 
 $:pcpg_type_methods ("APLPAR_DSA_TYPE", vars_aplpar_dsa)
@@ -372,6 +391,7 @@ CALL SELF%TMP%SAV%UPDATE_VIEW (BLOCK_INDEX)
 CALL SELF%TMP%RDG%UPDATE_VIEW (BLOCK_INDEX)
 CALL SELF%TMP%APLPAR%RDT%UPDATE_VIEW (BLOCK_INDEX)
 CALL SELF%TMP%APLPAR%FLU%UPDATE_VIEW (BLOCK_INDEX)
+CALL SELF%TMP%APLPAR%PFL%UPDATE_VIEW (BLOCK_INDEX)
 CALL SELF%TMP%APLPAR%TDS%UPDATE_VIEW (BLOCK_INDEX)
 CALL SELF%TMP%APLPAR%DSA%UPDATE_VIEW (BLOCK_INDEX)
 
@@ -391,6 +411,7 @@ CALL SELF%TMP%SAV%FINAL ()
 CALL SELF%TMP%RDG%FINAL ()
 CALL SELF%TMP%APLPAR%RDT%FINAL ()
 CALL SELF%TMP%APLPAR%FLU%FINAL ()
+CALL SELF%TMP%APLPAR%PFL%FINAL ()
 CALL SELF%TMP%APLPAR%TDS%FINAL ()
 CALL SELF%TMP%APLPAR%DSA%FINAL ()
 
@@ -428,6 +449,7 @@ IF (LLMF_PHYS) THEN
   IF (YDMODEL%YRML_PHY_MF%YRARPHY%LMPA) THEN
   ELSE
     CALL SELF%APLPAR%FLU%INIT (REGISTRY, NLEV, PERSISTENT, LDMF_PHYS=LLMF_PHYS, YDMODEL=YDMODEL)
+    CALL SELF%APLPAR%PFL%INIT (REGISTRY, NLEV, PERSISTENT, LDMF_PHYS=LLMF_PHYS)
     CALL SELF%APLPAR%TDS%INIT (REGISTRY, NLEV, PERSISTENT, LDMF_PHYS=LLMF_PHYS, YDSURF=YDSURF)
     CALL SELF%APLPAR%DSA%INIT (REGISTRY, NLEV, PERSISTENT, LDMF_PHYS=LLMF_PHYS)
     CALL SELF%APLPAR%RDT%INIT (REGISTRY, NLEV, YM_RADTC, PERSISTENT)

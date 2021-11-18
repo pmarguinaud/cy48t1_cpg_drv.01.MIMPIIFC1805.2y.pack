@@ -58,7 +58,6 @@ SUBROUTINE CPG(YDGEOMETRY,YDCPG_TND,YDCPG_MISC,&
 !        PGMVTNDHD_DDH: tendencies of horizontal diffusion scheme for GMV.
 !        PGFLTNDHD_DDH: tendencies of horizontal diffusion for spectrally treated GFL.
 !        PGPSDT2D     : cf. YGPSDT%GP2D in YOMSPSDT (buffer for stochastic physics).
-!        PGRADH_PHY   : Horizontal Gradients for Physics
 
 !     INPUT/OUTPUT:
 !     -------------
@@ -67,43 +66,12 @@ SUBROUTINE CPG(YDGEOMETRY,YDCPG_TND,YDCPG_MISC,&
 !        PGFL         : unified_treatment grid-point fields at t
 !        PGFLPC       : unified_treatment grid-point fields at t (3TL PC only)
 !        PGFLPT       : tendency of X variable from phy.
-!        PSP_SB       : soil prognostic quantities for the different reservoirs
-!        PSP_SG       : surface snow prognostic quantities
-!        PSP_CL       : cls diagnostic fields
-!        PSD_VP       : deep soil diagnostic fields
-!        PSD_VV       : vegetation diagnostic fields
-!        PSD_VH       : convective cloud diagnostic fields
-!        PSD_VK       : convective cloud prognostic fields
-!        PSD_VA       : aerosol diagnostic fields
-!        PSD_VC       : climatological ozone profiles diagnostic fields
-!        PSD_VD       : diagnostic fields
-!        PSD_SFL      : SFLUX diagnostic fields
-!        PSD_SFO      : SFORC diagonstic fields
 !        PSD_PF       : precip fraction 
 !        PSD_XP       : precipitation type diagnostic
-!        PSD_XP2      : precipitation type diagnostic
-!        PEMTD        : downward longwave emissivity
-!        PEMTU        : upward longwave emissivity
-!        PTRSW        : shortwave transmissivity
-!        PRMOON       : Moon radiation
 !        PGMVTNDSI_DDH: tendencies of semi-implicit scheme.
-!        PGDEOSI      : DESCENDING INCREMENTAL OPTICAL DEPTHS, SOLAR
-!        PGUEOSI      : ASCENDING  INCREMENTAL OPTICAL DEPTHS, SOLAR
 !        PGMU0        : COSINE OF SOLAR ZENITH ANGLE, APPROXIMATE ACTUAL VALUE
-!        PGMU0_MIN    : COSINE OF SOLAR ZENITH ANGLE, MIN VALUE
-!        PGMU0_MAX    : COSINE OF SOLAR ZENITH ANGLE, MAX VALUE
-!        PGDEOTI      : descending incremental optical depths, dB/dT(T0) weights
-!        PGDEOTI2     : descending incremental optical depths, B weights with
 !                       linear T_e correction
-!        PGUEOTI      : ascending incremental optical depths, dB/dT(T0) weights
-!        PGUEOTI2     : ascending incremental optical depths, B weights with
 !                       linear T_e correction
-!        PGEOLT       : local optical depths, dB/dT(T0) weights
-!        PGEOXT       : maximum optical depths for EBL-EAL, dB/dT(T0) weights
-!        PGRPROX      : correction term for adjacent exchanges
-!        PGMIXP       : non-statistical weights for bracketing
-!        PGFLUXC      : out of bracket part of EBL, resp. EBL-EAL flux
-!        PGRSURF      : corrective ratio for surface CTS contribution
 !        YDDDH        : diagnostic superstructure
 
 !     OUTPUT:
@@ -115,7 +83,6 @@ SUBROUTINE CPG(YDGEOMETRY,YDCPG_TND,YDCPG_MISC,&
 !        PGFLT1       : GFL variables buffer.
 !        PEXTRA       : additional quantity for diagnostics.
 !        PGMVTNDSL_DDH: GMV(t+dt,F)-GMV(t or t-dt,O) for DDH
-!        PGFLNDSL_DDH : GFL(t+dt,F)-GFL(t or t-dt,O) for DDH
 
 !        Implicit arguments :
 !        --------------------

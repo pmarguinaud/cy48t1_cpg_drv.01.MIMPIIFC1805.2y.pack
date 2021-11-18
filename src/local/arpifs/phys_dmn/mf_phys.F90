@@ -590,10 +590,10 @@ REAL(KIND=JPRB) :: ZHOOK_HANDLE
 #include "wrphtrajm.intfb.h"
 #include "wrradcoef.intfb.h"
 #include "acajucv.intfb.h"
-#include "mf_phys_nhqe_prolog.intfb.h"
-#include "mf_phys_nhqe_epilog.intfb.h"
-#include "mf_phys_save_phsurf_prolog.intfb.h"
-#include "mf_phys_save_phsurf_epilog.intfb.h"
+#include "mf_phys_nhqe_part1.intfb.h"
+#include "mf_phys_nhqe_part2.intfb.h"
+#include "mf_phys_save_phsurf_part1.intfb.h"
+#include "mf_phys_save_phsurf_part2.intfb.h"
 
 !     ------------------------------------------------------------------
 IF (LHOOK) CALL DR_HOOK('MF_PHYS',0,ZHOOK_HANDLE)
@@ -728,7 +728,7 @@ LLDIAB=(LMPHYS.OR.LEPHYS).AND.(.NOT.LAGPHY)
 ! But calculations of MF_PHYS must use T and grad(T).
 ! So we do a conversion Tt -> T.
 IF (LNHQE) THEN
-  CALL MF_PHYS_NHQE_PROLOG (YDGEOMETRY, YDMF_PHYS, YDVARS, YDMODEL, KST, KEND, PGFL)
+  CALL MF_PHYS_NHQE_PART1 (YDGEOMETRY, YDMF_PHYS, YDVARS, YDMODEL, KST, KEND, PGFL)
 ENDIF
 
 IF (LRAYSP.AND.(NSTEP >= INSTEP_DEB .AND. NSTEP <= INSTEP_FIN)) THEN  
@@ -785,7 +785,7 @@ ENDIF
 !   - QSH (group VH):
 LL_SAVE_PHSURF=LLDIAB.AND.LDCONFX
 IF (LL_SAVE_PHSURF) THEN
-  CALL MF_PHYS_SAVE_PHSURF_PROLOG (YDGEOMETRY, YDMF_PHYS, YDMF_PHYS_SURF, YDVARS, YDSURF, YDMODEL)
+  CALL MF_PHYS_SAVE_PHSURF_PART1 (YDGEOMETRY, YDMF_PHYS, YDMF_PHYS_SURF, YDVARS, YDSURF, YDMODEL)
 ENDIF
 
 CALL INITAPLPAR (   YDMF_PHYS, YDCPG_MISC, YDMF_PHYS_SURF, YGFL, YDARPHY, KST, &
@@ -1673,7 +1673,7 @@ ENDIF
 ! * Restore the initial value of some pseudo-historical surface buffers
 !   if relevant.
 IF (LL_SAVE_PHSURF) THEN
-  CALL MF_PHYS_SAVE_PHSURF_EPILOG (YDGEOMETRY, YDMF_PHYS, YDMF_PHYS_SURF, YDVARS, YDSURF, YDMODEL)
+  CALL MF_PHYS_SAVE_PHSURF_PART2 (YDGEOMETRY, YDMF_PHYS, YDMF_PHYS_SURF, YDVARS, YDSURF, YDMODEL)
 ENDIF
 
 ! Store horizontal exchange coefficients (3D turbulence) to SL2 buffers
@@ -1735,7 +1735,7 @@ ENDIF
 
 ! Restore Tt and grad(Tt) for NHQE model.
 IF (LNHQE) THEN
-  CALL MF_PHYS_NHQE_EPILOG (YDGEOMETRY, YDMF_PHYS, YDVARS, KST, KEND)
+  CALL MF_PHYS_NHQE_PART2 (YDGEOMETRY, YDMF_PHYS, YDVARS, KST, KEND)
 ENDIF
 
 !     ------------------------------------------------------------------

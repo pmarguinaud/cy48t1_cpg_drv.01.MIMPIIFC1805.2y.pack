@@ -15,167 +15,169 @@
 
 
 #:set vars_mf_phys_out = { &
-& "DIFCQ"          : [False, False, AS_0_nflevg,        None,                 None,                ], &
-& "DIFCQL"         : [False, False, AS_0_nflevg,        None,                 None,                ], &
-& "DIFCQN"         : [False, False, AS_0_nflevg,        None,                 None,                ], &
-& "DIFCS"          : [False, False, AS_0_nflevg,        None,                 None,                ], &
-& "DIFTQ"          : [False, False, AS_0_nflevg,        None,                 None,                ], &
-& "DIFTQL"         : [False, False, AS_0_nflevg,        None,                 None,                ], &
-& "DIFTQN"         : [False, False, AS_0_nflevg,        None,                 None,                ], &
-& "DIFTS"          : [False, False, AS_0_nflevg,        None,                 None,                ], &
-& "FCCQL"          : [False, False, AS_0_nflevg,        None,                 None,                ], &
-& "FCCQN"          : [False, False, AS_0_nflevg,        None,                 None,                ], &
-& "FCSQL"          : [False, False, AS_0_nflevg,        None,                 None,                ], &
-& "FCSQN"          : [False, False, AS_0_nflevg,        None,                 None,                ], &
-& "FCQLNG"         : [False, False, AS_0_nflevg,        None,                 None,                ], &
-& "FCQNNG"         : [False, False, AS_0_nflevg,        None,                 None,                ], &
-& "FCQNG"          : [False, False, AS_0_nflevg,        None,                 None,                ], &
-& "FPLCL"          : [False, False, AS_0_nflevg,        None,                 None,                ], &
-& "FPLCN"          : [False, False, AS_0_nflevg,        None,                 None,                ], &
-& "FPLCG"          : [False, False, AS_0_nflevg,        None,                 None,                ], &
-& "FPLCH"          : [False, False, AS_0_nflevg,        None,                 None,                ], &
-& "FPLSL"          : [False, False, AS_0_nflevg,        None,                 None,                ], &
-& "FPLSN"          : [False, False, AS_0_nflevg,        None,                 None,                ], &
-& "FPLSG"          : [False, False, AS_0_nflevg,        None,                 None,                ], &
-& "FPLSH"          : [False, False, AS_0_nflevg,        None,                 None,                ], &
-& "FPFPSL"         : [False, False, AS_0_nflevg,        None,                 None,                ], &
-& "FPFPSN"         : [False, False, AS_0_nflevg,        None,                 None,                ], &
-& "FPFPSG"         : [False, False, AS_0_nflevg,        None,                 None,                ], &
-& "FPFPCL"         : [False, False, AS_0_nflevg,        None,                 None,                ], &
-& "FPFPCN"         : [False, False, AS_0_nflevg,        None,                 None,                ], &
-& "FPEVPSL"        : [False, False, AS_0_nflevg,        None,                 None,                ], &
-& "FPEVPSN"        : [False, False, AS_0_nflevg,        None,                 None,                ], &
-& "FPEVPSG"        : [False, False, AS_0_nflevg,        None,                 None,                ], &
-& "FPEVPCL"        : [False, False, AS_0_nflevg,        None,                 None,                ], &
-& "FPEVPCN"        : [False, False, AS_0_nflevg,        None,                 None,                ], &
-& "FPEVPCG"        : [False, False, AS_0_nflevg,        None,                 None,                ], &
-& "FRSO"           : [False, False, AS_0_nflevg_ntssg1, None,                 None,                ], &
-& "FRTH"           : [False, False, AS_0_nflevg_ntssg1, None,                 None,                ], &
-& "STRCU"          : [False, False, AS_0_nflevg,        None,                 None,                ], &
-& "STRCV"          : [False, False, AS_0_nflevg,        None,                 None,                ], &
-& "STRDU"          : [False, False, AS_0_nflevg,        None,                 None,                ], &
-& "STRDV"          : [False, False, AS_0_nflevg,        None,                 None,                ], &
-& "STRTU"          : [False, False, AS_0_nflevg,        None,                 None,                ], &
-& "STRTV"          : [False, False, AS_0_nflevg,        None,                 None,                ], &
-& "STRMU"          : [False, False, AS_0_nflevg,        None,                 None,                ], &
-& "STRMV"          : [False, False, AS_0_nflevg,        None,                 None,                ], &
-& "DIFCQLC"        : [False, False, AS_0_nflevg,        None,                 None,                ], &
-& "DIFCQIC"        : [False, False, AS_0_nflevg,        None,                 None,                ], &
-& "FIMCC"          : [False, False, AS_0_nflevg,        None,                 None,                ], &
-& "FEDQLC"         : [False, False, AS_0_nflevg,        None,                 None,                ], &
-& "FEDQIC"         : [False, False, AS_0_nflevg,        None,                 None,                ], &
-& "FEDQRC"         : [False, False, AS_0_nflevg,        None,                 None,                ], &
-& "FEDQSC"         : [False, False, AS_0_nflevg,        None,                 None,                ], &
-& "FCNEGQLC"       : [False, False, AS_0_nflevg,        None,                 None,                ], &
-& "FCNEGQIC"       : [False, False, AS_0_nflevg,        None,                 None,                ], &
-& "FCNEGQRC"       : [False, False, AS_0_nflevg,        None,                 None,                ], &
-& "FCNEGQSC"       : [False, False, AS_0_nflevg,        None,                 None,                ], &
-& "FRMH"           : [False, False, AS_0_nflevg,        None,                 None,                ], &
-& "FCHOZ"          : [False, False, AS_0_nflevg,        None,                 None,                ], &
-& "FDIS"           : [False, False, AS_0_nflevg,        None,                 None,                ], &
-& "FHPSL"          : [False, False, AS_0_nflevg,        None,                 None,                ], &
-& "FHPSN"          : [False, False, AS_0_nflevg,        None,                 None,                ], &
-& "FHPSG"          : [False, False, AS_0_nflevg,        None,                 None,                ], &
-& "FHPCL"          : [False, False, AS_0_nflevg,        None,                 None,                ], &
-& "FHPCN"          : [False, False, AS_0_nflevg,        None,                 None,                ], &
-& "FHSCL"          : [False, False, AS_0_nflevg,        None,                 None,                ], &
-& "FHSCN"          : [False, False, AS_0_nflevg,        None,                 None,                ], &
-& "FHPCG"          : [False, False, AS_0_nflevg,        None,                 None,                ], &
-& "FHSSL"          : [False, False, AS_0_nflevg,        None,                 None,                ], &
-& "FHSSN"          : [False, False, AS_0_nflevg,        None,                 None,                ], &
-& "FEPFP"          : [False, False, AS_0_nflevg,        None,                 None,                ], &
-& "FCMPCQ"         : [False, False, AS_0_nflevg,        None,                 None,                ], &
-& "FCMPSN"         : [False, False, AS_0_nflevg,        None,                 None,                ], &
-& "FHSSG"          : [False, False, AS_0_nflevg,        None,                 None,                ], &
-& "FCMPSL"         : [False, False, AS_0_nflevg,        None,                 None,                ], &
-& "FRSOC"          : [False, False, AS_0_1,             None,                 None,                ], &
-& "FRTHC"          : [False, False, AS_0_1,             None,                 None,                ], &
-& "FCHSP"          : [False, False, AS_ysp_sbd_nlevs,   None,                 None,                ], &
-& "FCLL"           : [False, False, AS_ntssg1,          None,                 None,                ], &
-& "FCLN"           : [False, False, AS_ntssg1,          None,                 None,                ], &
-& "FCS"            : [False, False, AS_ntssg1,          None,                 None,                ], &
-& "FEVL"           : [False, False, AS_ntssg1,          None,                 None,                ], &
-& "FEVN"           : [False, False, AS_ntssg1,          None,                 None,                ], &
-& "FEVV"           : [False, False, AS_void,            None,                 None,                ], &
-& "FLWSP"          : [False, False, AS_void,            None,                 None,                ], &
-& "FTR"            : [False, False, AS_void,            None,                 None,                ], &
-& "FRSODS"         : [False, False, AS_void,            None,                 None,                ], &
-& "FRSOPS"         : [False, False, AS_void,            None,                 None,                ], &
-& "FRSDNI"         : [False, False, AS_void,            None,                 None,                ], &
-& "FRSGNI"         : [False, False, AS_void,            None,                 None,                ], &
-& "FRTHDS"         : [False, False, AS_void,            None,                 None,                ], &
-& "FONTE"          : [False, False, AS_void,            None,                 None,                ], &
-& "FGEL"           : [False, False, AS_void,            None,                 None,                ], &
-& "FGELS"          : [False, False, AS_void,            None,                 None,                ], &
-& "ALB"            : [False, False, AS_void,            None,                 None,                ], &
-& "GZ0"            : [False, False, AS_void,            None,                 None,                ], &
-& "GZ0H"           : [False, False, AS_void,            None,                 None,                ], &
-& "RUISL"          : [False, False, AS_void,            None,                 None,                ], &
-& "RUISP"          : [False, False, AS_void,            None,                 None,                ], &
-& "RUISS"          : [False, False, AS_void,            None,                 None,                ], &
-& "FRSOPT"         : [False, False, AS_void,            None,                 None,                ], &
-& "FRSOLU"         : [False, False, AS_void,            None,                 None,                ], &
-& "QCLS"           : [False, False, AS_void,            None,                 None,                ], &
-& "TCLS"           : [False, False, AS_void,            None,                 None,                ], &
-& "UCLS"           : [False, False, AS_void,            None,                 None,                ], &
-& "VCLS"           : [False, False, AS_void,            None,                 None,                ], &
-& "NUCLS"          : [False, False, AS_void,            None,                 None,                ], &
-& "NVCLS"          : [False, False, AS_void,            None,                 None,                ], &
-& "RHCLS"          : [False, False, AS_void,            None,                 None,                ], &
-& "MRT"            : [False, False, AS_void,            None,                 None,                ], &
-& "CLCH"           : [False, False, AS_void,            None,                 None,                ], &
-& "CLCM"           : [False, False, AS_void,            None,                 None,                ], &
-& "CLCL"           : [False, False, AS_void,            None,                 None,                ], &
-& "CLCC"           : [False, False, AS_void,            None,                 None,                ], &
-& "CLPH"           : [False, False, AS_void,            None,                 None,                ], &
-& "VEIN"           : [False, False, AS_void,            None,                 None,                ], &
-& "DRNSHF"         : [False, False, AS_void,            None,                 None,                ], &
-& "CAPE"           : [False, False, AS_void,            None,                 None,                ], &
-& "CTOP"           : [False, False, AS_void,            None,                 None,                ], &
-& "MOCON"          : [False, False, AS_void,            None,                 None,                ], &
-& "UGST"           : [False, False, AS_void,            None,                 None,                ], &
-& "VGST"           : [False, False, AS_void,            None,                 None,                ], &
-& "CT"             : [False, False, AS_void,            None,                 None,                ], &
-& "TENDU"          : [False, False, AS_1_nflevg,        None,                 None,                ], &
-& "TENDV"          : [False, False, AS_1_nflevg,        None,                 None,                ], &
-& "FCQRNG"         : [False, False, AS_0_nflevg,        None,                 None,                ], &
-& "FCQSNG"         : [False, False, AS_0_nflevg,        None,                 None,                ], &
-& "FCQGNG"         : [False, False, AS_0_nflevg,        None,                 None,                ], &
-& "DIAGH"          : [False, False, AS_void,            None,                 None,                ], &
-& "VISICLD"        : [False, False, AS_void,            None,                 None,                ], &
-& "FLASH"          : [False, False, AS_void,            None,                 None,                ], &
-& "VISIHYD"        : [False, False, AS_void,            None,                 None,                ], &
-& "MXCLWC"         : [False, False, AS_void,            None,                 None,                ], &
-& "TPWCLS"         : [False, False, AS_void,            None,                 None,                ], &
-& "CUCONVCA"       : [False, False, AS_void,            None,                 None,                ], &
-& "NLCONVCA"       : [False, False, AS_void,            None,                 None,                ], &
+& "DIFCQ"          : [False, False, AS_0_nflevg,        None,                 None,               "convective flux of specific humidity (not rain/snow)        " ], &
+& "DIFCQL"         : [False, False, AS_0_nflevg,        None,                 None,               "convective flux of liquid water (not rain/snow)             " ], &
+& "DIFCQN"         : [False, False, AS_0_nflevg,        None,                 None,               "convective flux of solid water (not rain/snow)              " ], &
+& "DIFCS"          : [False, False, AS_0_nflevg,        None,                 None,               "convective flux of enthalpy (not rain/snow)                 " ], &
+& "DIFTQ"          : [False, False, AS_0_nflevg,        None,                 None,               "turbulent flux (inc. 'q' negative) of specific humidity     " ], &
+& "DIFTQL"         : [False, False, AS_0_nflevg,        None,                 None,               "turbulent flux (inc. 'q' negative) of liquid water          " ], &
+& "DIFTQN"         : [False, False, AS_0_nflevg,        None,                 None,               "turbulent flux (inc. 'q' negative) of solid water           " ], &
+& "DIFTS"          : [False, False, AS_0_nflevg,        None,                 None,               "turbulent flux of enthalpy (or dry static energy)           " ], &
+& "FCCQL"          : [False, False, AS_0_nflevg,        None,                 None,               "convective condensation flux for liquid water               " ], &
+& "FCCQN"          : [False, False, AS_0_nflevg,        None,                 None,               "convective condensation flux for ice                        " ], &
+& "FCSQL"          : [False, False, AS_0_nflevg,        None,                 None,               "stratiform condensation flux for liquid water               " ], &
+& "FCSQN"          : [False, False, AS_0_nflevg,        None,                 None,               "stratiform condensation flux for ice                        " ], &
+& "FCQLNG"         : [False, False, AS_0_nflevg,        None,                 None,               "pseudo-flux of liquid water to correct for 'ql'<0           " ], &
+& "FCQNNG"         : [False, False, AS_0_nflevg,        None,                 None,               "pseudo-flux of ice to correct for 'qi'<0                    " ], &
+& "FCQNG"          : [False, False, AS_0_nflevg,        None,                 None,               "pseudo-flux of water to correct for Q<0                     " ], &
+& "FPLCL"          : [False, False, AS_0_nflevg,        None,                 None,               "convective precipitation as rain                            " ], &
+& "FPLCN"          : [False, False, AS_0_nflevg,        None,                 None,               "convective precipitation as snow                            " ], &
+& "FPLCG"          : [False, False, AS_0_nflevg,        None,                 None,               "convective precipitation as graupel                         " ], &
+& "FPLCH"          : [False, False, AS_0_nflevg,        None,                 None,               "convective precipitation as hail                            " ], &
+& "FPLSL"          : [False, False, AS_0_nflevg,        None,                 None,               "stratiform precipitation as rain                            " ], &
+& "FPLSN"          : [False, False, AS_0_nflevg,        None,                 None,               "stratiform precipitation as snow                            " ], &
+& "FPLSG"          : [False, False, AS_0_nflevg,        None,                 None,               "stratiform precipitation as graupel                         " ], &
+& "FPLSH"          : [False, False, AS_0_nflevg,        None,                 None,               "stratiform precipitation as hail                            " ], &
+& "FPFPSL"         : [False, False, AS_0_nflevg,        None,                 None,               "flux of liquid resol. precipitation: the generation term.   " ], &
+& "FPFPSN"         : [False, False, AS_0_nflevg,        None,                 None,               "flux of solid resolved precipitation: the generation term.  " ], &
+& "FPFPSG"         : [False, False, AS_0_nflevg,        None,                 None,               "                                                            " ], &
+& "FPFPCL"         : [False, False, AS_0_nflevg,        None,                 None,               "flux of liquid conv. precipitation: the generation term.    " ], &
+& "FPFPCN"         : [False, False, AS_0_nflevg,        None,                 None,               "flux of solid conv. precipitation: the generation term.     " ], &
+& "FPEVPSL"        : [False, False, AS_0_nflevg,        None,                 None,               "resolved precipitation flux due to evaporation              " ], &
+& "FPEVPSN"        : [False, False, AS_0_nflevg,        None,                 None,               "resolved precipitation flux due to sublimation              " ], &
+& "FPEVPSG"        : [False, False, AS_0_nflevg,        None,                 None,               "                                                            " ], &
+& "FPEVPCL"        : [False, False, AS_0_nflevg,        None,                 None,               "convective precipitation flux due to evaporation            " ], &
+& "FPEVPCN"        : [False, False, AS_0_nflevg,        None,                 None,               "convective precipitation flux due to sublimation            " ], &
+& "FPEVPCG"        : [False, False, AS_0_nflevg,        None,                 None,               "                                                            " ], &
+& "FRSO"           : [False, False, AS_0_nflevg_ntssg1, None,                 None,               "shortwave radiative flux                                    " ], &
+& "FRTH"           : [False, False, AS_0_nflevg_ntssg1, None,                 None,               "longwave radiative flux                                     " ], &
+& "STRCU"          : [False, False, AS_0_nflevg,        None,                 None,               "convective flux of momentum 'U'                             " ], &
+& "STRCV"          : [False, False, AS_0_nflevg,        None,                 None,               "convective flux of momentum 'V'                             " ], &
+& "STRDU"          : [False, False, AS_0_nflevg,        None,                 None,               "gravity wave drag flux 'U'                                  " ], &
+& "STRDV"          : [False, False, AS_0_nflevg,        None,                 None,               "gravity wave drag flux 'V'                                  " ], &
+& "STRTU"          : [False, False, AS_0_nflevg,        None,                 None,               "turbulent flux of momentum 'U'                              " ], &
+& "STRTV"          : [False, False, AS_0_nflevg,        None,                 None,               "turbulent flux of momentum 'V'                              " ], &
+& "STRMU"          : [False, False, AS_0_nflevg,        None,                 None,               "mesospheric flux for 'U'-momentum                           " ], &
+& "STRMV"          : [False, False, AS_0_nflevg,        None,                 None,               "mesospheric flux for 'V'-momentum                           " ], &
+& "DIFCQLC"        : [False, False, AS_0_nflevg,        None,                 None,               "                                                            " ], &
+& "DIFCQIC"        : [False, False, AS_0_nflevg,        None,                 None,               "                                                            " ], &
+& "FIMCC"          : [False, False, AS_0_nflevg,        None,                 None,               "                                                            " ], &
+& "FEDQLC"         : [False, False, AS_0_nflevg,        None,                 None,               "                                                            " ], &
+& "FEDQIC"         : [False, False, AS_0_nflevg,        None,                 None,               "                                                            " ], &
+& "FEDQRC"         : [False, False, AS_0_nflevg,        None,                 None,               "                                                            " ], &
+& "FEDQSC"         : [False, False, AS_0_nflevg,        None,                 None,               "                                                            " ], &
+& "FCNEGQLC"       : [False, False, AS_0_nflevg,        None,                 None,               "                                                            " ], &
+& "FCNEGQIC"       : [False, False, AS_0_nflevg,        None,                 None,               "                                                            " ], &
+& "FCNEGQRC"       : [False, False, AS_0_nflevg,        None,                 None,               "                                                            " ], &
+& "FCNEGQSC"       : [False, False, AS_0_nflevg,        None,                 None,               "                                                            " ], &
+& "FRMH"           : [False, False, AS_0_nflevg,        None,                 None,               "mesospheric enthalpy flux                                   " ], &
+& "FCHOZ"          : [False, False, AS_0_nflevg,        None,                 None,               "ozon photo-chemical flux                                    " ], &
+& "FDIS"           : [False, False, AS_0_nflevg,        None,                 None,               "enthalpy flux due to dissipation of kinetic energy.         " ], &
+& "FHPSL"          : [False, False, AS_0_nflevg,        None,                 None,               "liquid water stratiform condensation enthalpy flux          " ], &
+& "FHPSN"          : [False, False, AS_0_nflevg,        None,                 None,               "snow stratiform condensation enthalpy flux                  " ], &
+& "FHPSG"          : [False, False, AS_0_nflevg,        None,                 None,               "                                                            " ], &
+& "FHPCL"          : [False, False, AS_0_nflevg,        None,                 None,               "liquid water convective condensation enthalpy flux          " ], &
+& "FHPCN"          : [False, False, AS_0_nflevg,        None,                 None,               "snow convective condensation enthalpy flux                  " ], &
+& "FHSCL"          : [False, False, AS_0_nflevg,        None,                 None,               "sensible heat flux due to liquid convective precipitations  " ], &
+& "FHSCN"          : [False, False, AS_0_nflevg,        None,                 None,               "sensible heat flux due to snow convective precipitations    " ], &
+& "FHPCG"          : [False, False, AS_0_nflevg,        None,                 None,               "                                                            " ], &
+& "FHSSL"          : [False, False, AS_0_nflevg,        None,                 None,               "sensible heat flux due to liquid stratiform precipitations  " ], &
+& "FHSSN"          : [False, False, AS_0_nflevg,        None,                 None,               "sensible heat flux due to snow stratiform precipitations    " ], &
+& "FEPFP"          : [False, False, AS_0_nflevg,        None,                 None,               "                                                            " ], &
+& "FCMPCQ"         : [False, False, AS_0_nflevg,        None,                 None,               "                                                            " ], &
+& "FCMPSN"         : [False, False, AS_0_nflevg,        None,                 None,               "                                                            " ], &
+& "FHSSG"          : [False, False, AS_0_nflevg,        None,                 None,               "                                                            " ], &
+& "FCMPSL"         : [False, False, AS_0_nflevg,        None,                 None,               "                                                            " ], &
+& "FRSOC"          : [False, False, AS_0_1,             None,                 None,               "shortwave clear sky radiative flux                          " ], &
+& "FRTHC"          : [False, False, AS_0_1,             None,                 None,               "longwave clear sky radiative flux                           " ], &
+& "FCHSP"          : [False, False, AS_ysp_sbd_nlevs,   None,                 None,               "heat flux from surface to deep soil                         " ], &
+& "FCLL"           : [False, False, AS_ntssg1,          None,                 None,               "latent heat flux over liquid water (or wet soil)            " ], &
+& "FCLN"           : [False, False, AS_ntssg1,          None,                 None,               "latent heat flux over snow (or ice)                         " ], &
+& "FCS"            : [False, False, AS_ntssg1,          None,                 None,               "sensible heat flux at surface level                         " ], &
+& "FEVL"           : [False, False, AS_ntssg1,          None,                 None,               "water vapour flux over liquid water (or wet soil)           " ], &
+& "FEVN"           : [False, False, AS_ntssg1,          None,                 None,               "water vapour flux over snow (or ice) and frozen soil        " ], &
+& "FEVV"           : [False, False, AS_void,            None,                 None,               "evapotranspiration flux                                     " ], &
+& "FLWSP"          : [False, False, AS_void,            None,                 None,               "water flux from surface to deep soil                        " ], &
+& "FTR"            : [False, False, AS_void,            None,                 None,               "transpiration flux                                          " ], &
+& "FRSODS"         : [False, False, AS_void,            None,                 None,               "surface downwards solar flux                                " ], &
+& "FRSOPS"         : [False, False, AS_void,            None,                 None,               "surface parallel solar flux                                 " ], &
+& "FRSDNI"         : [False, False, AS_void,            None,                 None,               "Direct normal irradiance                                    " ], &
+& "FRSGNI"         : [False, False, AS_void,            None,                 None,               "Global normal irradiance                                    " ], &
+& "FRTHDS"         : [False, False, AS_void,            None,                 None,               "surface downwards IR flux                                   " ], &
+& "FONTE"          : [False, False, AS_void,            None,                 None,               "water flux corresponding to surface snow melt               " ], &
+& "FGEL"           : [False, False, AS_void,            None,                 None,               "freezing flux of soil water                                 " ], &
+& "FGELS"          : [False, False, AS_void,            None,                 None,               "freezing flux of soil water at surface level                " ], &
+& "ALB"            : [False, False, AS_void,            None,                 None,               "modele surface shortwave albedo (diagnostic)                " ], &
+& "GZ0"            : [False, False, AS_void,            None,                 None,               "g*roughness length (current)                                " ], &
+& "GZ0H"           : [False, False, AS_void,            None,                 None,               "current g*thermal roughness length (if KVCLIV >=8)          " ], &
+& "RUISL"          : [False, False, AS_void,            None,                 None,               "run-off flux out the interception water-tank                " ], &
+& "RUISP"          : [False, False, AS_void,            None,                 None,               "run-off flux in soil                                        " ], &
+& "RUISS"          : [False, False, AS_void,            None,                 None,               "run-off flux at surface level                               " ], &
+& "FRSOPT"         : [False, False, AS_void,            None,                 None,               "top parallel solar flux                                     " ], &
+& "FRSOLU"         : [False, False, AS_void,            None,                 None,               "downward lunar flux at surface                              " ], &
+& "QCLS"           : [False, False, AS_void,            None,                 None,               "specific humidity at 2 meters (diagnostic)                  " ], &
+& "TCLS"           : [False, False, AS_void,            None,                 None,               "temperature at 2 meters (diagnostic)                        " ], &
+& "UCLS"           : [False, False, AS_void,            None,                 None,               "U-component of wind at 10 meters (diagnostic)               " ], &
+& "VCLS"           : [False, False, AS_void,            None,                 None,               "V-component of wind at 10 meters (diagnostic)               " ], &
+& "NUCLS"          : [False, False, AS_void,            None,                 None,               "U-component of neutral wind at 10 meters (diagnostic)       " ], &
+& "NVCLS"          : [False, False, AS_void,            None,                 None,               "V-component of neutral wind at 10 meters (diagnostic)       " ], &
+& "RHCLS"          : [False, False, AS_void,            None,                 None,               "relative humidity at 2 meters (diagnostic)                  " ], &
+& "MRT"            : [False, False, AS_void,            None,                 None,               "mean radiant temperature                                    " ], &
+& "CLCH"           : [False, False, AS_void,            None,                 None,               "high cloud cover (diagnostic)                               " ], &
+& "CLCM"           : [False, False, AS_void,            None,                 None,               "medium cloud cover (diagnostic)                             " ], &
+& "CLCL"           : [False, False, AS_void,            None,                 None,               "low cloud cover (diagnostic)                                " ], &
+& "CLCC"           : [False, False, AS_void,            None,                 None,               "convective cloud cover (diagnostic)                         " ], &
+& "CLPH"           : [False, False, AS_void,            None,                 None,               "height (in meters) of the PBL                               " ], &
+& "VEIN"           : [False, False, AS_void,            None,                 None,               "ventilation index in the PBL                                " ], &
+& "DRNSHF"         : [False, False, AS_void,            None,                 None,               "derivative of the non solar surface with respect to Tsurf   " ], &
+& "CAPE"           : [False, False, AS_void,            None,                 None,               "CAPE                                                        " ], &
+& "CTOP"           : [False, False, AS_void,            None,                 None,               "top of convective nebulosity (diagnostic)                   " ], &
+& "MOCON"          : [False, False, AS_void,            None,                 None,               "moisture convergence                                        " ], &
+& "UGST"           : [False, False, AS_void,            None,                 None,               "U-component of gusts (diagnostic)                           " ], &
+& "VGST"           : [False, False, AS_void,            None,                 None,               "V-component of gusts (diagnostic)                           " ], &
+& "CT"             : [False, False, AS_void,            None,                 None,               "thermical coefficient of soil-vegetation middle             " ], &
+& "TENDU"          : [False, False, AS_1_nflevg,        None,                 None,               "'U'-wind tendency due to physics                            " ], &
+& "TENDV"          : [False, False, AS_1_nflevg,        None,                 None,               "'V'-wind tendency due to physics                            " ], &
+& "FCQRNG"         : [False, False, AS_0_nflevg,        None,                 None,               "pseudo-flux of rain to correct for Q<0                      " ], &
+& "FCQSNG"         : [False, False, AS_0_nflevg,        None,                 None,               "pseudo-flux of snow to correct for Q<0                      " ], &
+& "FCQGNG"         : [False, False, AS_0_nflevg,        None,                 None,               "                                                            " ], &
+& "DIAGH"          : [False, False, AS_void,            None,                 None,               "Add Hail diagnostic PDIAGH (AROME)                          " ], &
+& "VISICLD"        : [False, False, AS_void,            None,                 None,               "Visibility due to ice and/or water cloud                    " ], &
+& "FLASH"          : [False, False, AS_void,            None,                 None,               "Add lightening density (fl/ km2 /s )                        " ], &
+& "VISIHYD"        : [False, False, AS_void,            None,                 None,               "Vsibility due to precipitations(rain, graupel, snow)        " ], &
+& "MXCLWC"         : [False, False, AS_void,            None,                 None,               "Cloud Water Liquid Content at HVISI meters                  " ], &
+& "TPWCLS"         : [False, False, AS_void,            None,                 None,               "wet-bulb temperature at 2 meters (diagnostic)               " ], &
+& "CUCONVCA"       : [False, False, AS_void,            None,                 None,               "CA array for interaction with the physics                   " ], &
+& "NLCONVCA"       : [False, False, AS_void,            None,                 None,               "CA array for interaction with the physics                   " ], &
 & }
 
 #:set vars_mf_phys_opt = { &
-& "GDEOSI"         : [True,  False, AS_0_nflevg_2,      None,                 "LLMF_PHYS"          ], &
-& "GUEOSI"         : [True,  False, AS_0_nflevg_2,      None,                 "LLMF_PHYS"          ], &
-& "GMU0"           : [True,  False, AS_0_NSORAYFRm1,    None,                 "LLMF_PHYS"          ], &
-& "GMU0_MIN"       : [True,  False, AS_void,            None,                 "LLMF_PHYS"          ], &
-& "GMU0_MAX"       : [True,  False, AS_void,            None,                 "LLMF_PHYS"          ], &
-& "GDEOTI"         : [True,  False, AS_0_nflevg,        None,                 "LLMF_PHYS"          ], &
-& "GDEOTI2"        : [True,  False, AS_0_nflevg,        None,                 "LLMF_PHYS"          ], &
-& "GUEOTI"         : [True,  False, AS_0_nflevg,        None,                 "LLMF_PHYS"          ], &
-& "GUEOTI2"        : [True,  False, AS_0_nflevg,        None,                 "LLMF_PHYS"          ], &
-& "GEOLT"          : [True,  False, AS_1_nflevg,        None,                 "LLMF_PHYS"          ], &
-& "GEOXT"          : [True,  False, AS_1_nflevg,        None,                 "LLMF_PHYS"          ], &
-& "GRPROX"         : [True,  False, AS_0_nflevg,        None,                 "LLMF_PHYS"          ], &
-& "GMIXP"          : [True,  False, AS_0_nflevg,        None,                 "LLMF_PHYS"          ], &
-& "GFLUXC"         : [True,  False, AS_0_nflevg,        None,                 "LLMF_PHYS"          ], &
-& "GRSURF"         : [True,  False, AS_void,            None,                 "LLMF_PHYS"          ], &
+& "GDEOSI"         : [True,  False, AS_0_nflevg_2,      None,                 "LLMF_PHYS",        "DESCENDING INCREMENTAL OPTICAL DEPTHS, SOLAR"                                ], &
+& "GUEOSI"         : [True,  False, AS_0_nflevg_2,      None,                 "LLMF_PHYS",        "ASCENDING  INCREMENTAL OPTICAL DEPTHS, SOLAR"                                ], &
+& "GMU0"           : [True,  False, AS_0_NSORAYFRm1,    None,                 "LLMF_PHYS",        "COSINE OF SOLAR ZENITH ANGLE, APPROXIMATE ACTUAL VALUE"                      ], &
+& "GMU0_MIN"       : [True,  False, AS_void,            None,                 "LLMF_PHYS",        "COSINE OF SOLAR ZENITH ANGLE, MIN VALUE"                                     ], &
+& "GMU0_MAX"       : [True,  False, AS_void,            None,                 "LLMF_PHYS",        "COSINE OF SOLAR ZENITH ANGLE, MAX VALUE"                                     ], &
+& "GDEOTI"         : [True,  False, AS_0_nflevg,        None,                 "LLMF_PHYS",        "descending incremental optical depths, dB/dT(T0) weights"                    ], &
+& "GDEOTI2"        : [True,  False, AS_0_nflevg,        None,                 "LLMF_PHYS",        "descending incremental optical depths, B weights with linear T_e correction" ], &
+& "GUEOTI"         : [True,  False, AS_0_nflevg,        None,                 "LLMF_PHYS",        "ascending incremental optical depths, dB/dT(T0) weights"                     ], &
+& "GUEOTI2"        : [True,  False, AS_0_nflevg,        None,                 "LLMF_PHYS",        "ascending incremental optical depths, B weights with linear T_e correction"  ], &
+& "GEOLT"          : [True,  False, AS_1_nflevg,        None,                 "LLMF_PHYS",        "local optical depths, dB/dT(T0) weights"                                     ], &
+& "GEOXT"          : [True,  False, AS_1_nflevg,        None,                 "LLMF_PHYS",        "maximum optical depths for EBL-EAL, dB/dT(T0) weights"                       ], &
+& "GRPROX"         : [True,  False, AS_0_nflevg,        None,                 "LLMF_PHYS",        "correction term for adjacent exchanges"                                      ], &
+& "GMIXP"          : [True,  False, AS_0_nflevg,        None,                 "LLMF_PHYS",        "non-statistical weights for bracketing"                                      ], &
+& "GFLUXC"         : [True,  False, AS_0_nflevg,        None,                 "LLMF_PHYS",        "out of bracket part of clearsky EBL, resp. EBL-EAL flux"                     ], &
+& "GRSURF"         : [True,  False, AS_void,            None,                 "LLMF_PHYS",        "corrective ratio for surface cts contribution"                               ], &
 & }
+
 
 #:set vars_mf_phys_rad = { &
-& "EMTD"           : [True,  False, AS_0_nflevg,        None,                 "LLMF_PHYS"          ], &
-& "EMTU"           : [True,  False, AS_0_nflevg,        None,                 "LLMF_PHYS"          ], &
-& "TRSW"           : [True,  False, AS_0_nflevg,        None,                 "LLMF_PHYS"          ], &
-& "RMOON"          : [True,  False, AS_void,            None,                 "LLMF_PHYS"          ], &
+& "EMTD"           : [True,  False, AS_0_nflevg,        None,                 "LLMF_PHYS",        "DOWNWARD LONGWAVE EMISSIVITY" ], &
+& "EMTU"           : [True,  False, AS_0_nflevg,        None,                 "LLMF_PHYS",        "UPWARD   LONGWAVE EMISSIVITY" ], &
+& "TRSW"           : [True,  False, AS_0_nflevg,        None,                 "LLMF_PHYS",        "SHORTWAVE TRANSMISSIVITY"     ], &
+& "RMOON"          : [True,  False, AS_void,            None,                 "LLMF_PHYS",        "Moon radiation"               ], &
 & }
 
+#! To save Tt for NHQE model
 #:set vars_mf_phys_nhq = { &
 & "TT0"            : [False, False, AS_1_nflevg,        None,                 None                 ], &
 & "TT9"            : [False, False, AS_1_nflevg,        None,                 None                 ], &
@@ -183,6 +185,8 @@
 & "TT0M"           : [False, False, AS_1_nflevg,        None,                 None                 ], &
 & }
 
+#!     --- Buffers to save the initial value of   ---
+#!     --- some pseudo-historical surface buffers ---
 #:set vars_mf_phys_sav = { &
 & "UDOM"           : [False, False, AS_1_nflevg,        None,                 "LLMF_PHYS"          ], &
 & "UDAL"           : [False, False, AS_1_nflevg,        None,                 "LLMF_PHYS"          ], &
@@ -200,16 +204,29 @@
 & }
 
 #:set vars_aplpar_flu = { &
-& "CD"             : [False, False, AS_void,            None,                 "LLMF_PHYS"          ], & 
-& "CDN"            : [False, False, AS_void,            None,                 "LLMF_PHYS"          ], & 
-& "CH"             : [False, False, AS_void,            None,                 "LLMF_PHYS"          ], & 
-& "EMIS"           : [False, False, AS_void,            None,                 "LLMF_PHYS"          ], & 
-& "FEVI"           : [False, False, AS_1_NTSSGp1,       None,                 "LLMF_PHYS"          ], & 
-& "NEIJ"           : [False, False, AS_void,            None,                 "LLMF_PHYS"          ], & 
-& "VEG"            : [False, False, AS_void,            None,                 "LLMF_PHYS"          ], & 
-& "QSAT"           : [False, False, AS_1_nflevg,        None,                 "LLMF_PHYS"          ], & 
-& "QSATS"          : [False, False, AS_void,            None,                 "LLMF_PHYS"          ], & 
-& "QS1"            : [False, False, AS_void,            None,                 "LLMF_PHYS"          ], & 
+& "CD"             : [False, False, AS_void,            None,                 "LLMF_PHYS",        "EXCHANGE COEFFICIENT AT SURFACE LEVEL FOR U AND V"      ], &  
+& "CDN"            : [False, False, AS_void,            None,                 "LLMF_PHYS",        "EXCHANGE COEFF. AT SURFACE LEVEL IN NEUTRAL CONDITIONS" ], & 
+& "CH"             : [False, False, AS_void,            None,                 "LLMF_PHYS",        "EXCHANGE COEFFICIENT AT SURFACE LEVEL FOR T AND Q"      ], & 
+& "EMIS"           : [False, False, AS_void,            None,                 "LLMF_PHYS",        "MODEL SURFACE LONGWAVE EMISSIVITY"                      ], & 
+& "FEVI"           : [False, False, AS_1_NTSSGp1,       None,                 "LLMF_PHYS",        "WATER VAPOUR FLUX OVER FROZEN SOIL"                     ], & 
+& "NEIJ"           : [False, False, AS_void,            None,                 "LLMF_PHYS",        "FRACTION OF SOIL COVERED BY SNOW"                       ], & 
+& "VEG"            : [False, False, AS_void,            None,                 "LLMF_PHYS",        "FRACTIONAL COVER BY APPARENT VEGETATION"                ], & 
+& "QSAT"           : [False, False, AS_1_nflevg,        None,                 "LLMF_PHYS",        "specific humidity at saturation"                        ], & 
+& "QSATS"          : [False, False, AS_void,            None,                 "LLMF_PHYS",        "SATURATED SPECIFIC HUMIDITY AT SURFACE LEVEL"           ], & 
+& "QS1"            : [False, False, AS_void,            None,                 "LLMF_PHYS",        ""                                                       ], & 
+& }
+
+#:set vars_aplpar_tds = { &
+& "TDTS"           : [False, False, AS_void,            None,                 "LLMF_PHYS",         "Surface temperature tendency"    ], &  
+& "TDTP"           : [False, False, AS_ysp_sbd_nlevs,   None,                 "LLMF_PHYS",         "Deep temperature tendency"       ], &  
+& "TDWS"           : [False, False, AS_void,            None,                 "LLMF_PHYS",         "Surface water res. tendency"     ], &  
+& "TDWP"           : [False, False, AS_void,            None,                 "LLMF_PHYS",         "Deep water res. tendency"        ], &  
+& "TDWL"           : [False, False, AS_void,            None,                 "LLMF_PHYS",         "Interception water res. tendency"], &  
+& "TDSNS"          : [False, False, AS_void,            None,                 "LLMF_PHYS",         "Snow res. tendency"              ], &  
+& "TDWPI"          : [False, False, AS_void,            None,                 "LLMF_PHYS",         "Deep ice res. tendency"          ], &  
+& "TDWSI"          : [False, False, AS_void,            None,                 "LLMF_PHYS",         "Surface ice res. tendency"       ], &  
+& "TDALBNS"        : [False, False, AS_void,            None,                 "LLMF_PHYS",         "Snow albedo tendency"            ], &  
+& "TDRHONS"        : [False, False, AS_void,            None,                 "LLMF_PHYS",         "Snow density tendency"           ], &  
 & }
 
 #:set vars_mf_phys_for = { &

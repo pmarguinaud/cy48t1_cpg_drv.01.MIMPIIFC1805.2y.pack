@@ -37,7 +37,7 @@ $fh->close ();
 my $F90 = shift;
 
 
-my $d = &Fxtran::fxtran (location => $F90, fopts => [qw (-line-length 300)]);
+my $d = &Fxtran::fxtran (location => $F90, fopts => [qw (-line-length 500)]);
 
 for my $n (&F ('//subroutine-N/N/n/text()', $d))
   {

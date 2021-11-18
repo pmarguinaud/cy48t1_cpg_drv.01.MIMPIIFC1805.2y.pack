@@ -182,17 +182,20 @@ $:pcpg_struct_methods (name, vars, "T" + type, "INTDYN_MOD", "M_")
 #:set use_lnhdyn    = False
 #:set use_yddphy    = False
 #:set use_ydsurf    = False
+#:set use_ydmodel   = False
 #:for var in vars
   #:if vars[var][NCOND]
     #:set cond = vars[var][NCOND]
     #:set use_llt0      = use_llt0      or ("LLT0"      in cond)
     #:set use_llmf_phys = use_llmf_phys or ("LLMF_PHYS" in cond)
     #:set use_lnhdyn    = use_lnhdyn    or ("LNHDYN"    in cond)
+    #:set use_ydmodel   = use_ydmodel   or ("YDMODEL"   in cond)
   #:endif
   #:for dim in vars[var][NDIMS]
     #:for x in dim
       #:set use_yddphy  = use_yddphy    or ("YDDPHY"    in x)
       #:set use_ydsurf  = use_ydsurf    or ("YDSURF"    in x)
+      #:set use_ydmodel = use_ydmodel   or ("YDMODEL"   in x)
     #:endfor
   #:endfor
 #:endfor
@@ -205,13 +208,16 @@ SUBROUTINE ${name}$_INIT (SELF &
 #:endif
                                 & , REGISTRY &
                                 & , NLEV &
+                                & , PERSISTENT &
 #:if use_yddphy
                                 & , YDDPHY &
 #:endif
 #:if use_ydsurf
                                 & , YDSURF &
 #:endif
-                                & , PERSISTENT &
+#:if use_ydmodel
+                                & , YDMODEL &
+#:endif
 #:if use_llmf_phys
                                 & , LDMF_PHYS &
 #:endif
@@ -231,6 +237,9 @@ USE INTDYN_MOD, ONLY : TRCP, TCTY, THWIND, TXYB
 #:if use_lnhdyn
 USE YOMCT0    , ONLY : LNHDYN
 #:endif
+#:if use_ydmodel
+USE TYPE_MODEL, ONLY : MODEL
+#:endif
 #:if use_yddphy
 USE YOMDPHY, ONLY : TDPHY
 #:endif
@@ -244,13 +253,16 @@ INTEGER(KIND=JPIM),           INTENT (IN)    :: KT
 #:endif
 TYPE (FIELD_REGISTRY),        INTENT (INOUT) :: REGISTRY
 INTEGER (KIND=JPIM),          INTENT (IN)    :: NLEV
+LOGICAL, OPTIONAL,            INTENT (IN)    :: PERSISTENT
+#:if use_ydmodel
+TYPE (MODEL),                 INTENT (IN)    :: YDMODEL
+#:endif
 #:if use_yddphy
 TYPE (TDPHY),                 INTENT (IN)    :: YDDPHY
 #:endif
 #:if use_ydsurf
 TYPE (TSURF),                 INTENT (IN)    :: YDSURF
 #:endif
-LOGICAL, OPTIONAL,            INTENT (IN)    :: PERSISTENT
 #:if use_llmf_phys
 LOGICAL, OPTIONAL,            INTENT (IN)    :: LDMF_PHYS
 #:endif

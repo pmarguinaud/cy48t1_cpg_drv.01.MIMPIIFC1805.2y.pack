@@ -260,6 +260,11 @@
 & "RS"             : [False, False, AS_void,            None,                 "LLMF_PHYS",         "CONSTANTE DES GAZ DE L'AIR EN SURFACE"                                                ], &
 & }
 
+#!     --- FOR BAYRAD ALLSKY FRAMEWORK ---
+#:set vars_aplpar_bay = { &
+& "QRCONV"         : [False, False, AS_1_nflevg,        None,                 "LLMF_PHYS"          ], &
+& "QSCONV"         : [False, False, AS_1_nflevg,        None,                 "LLMF_PHYS"          ], &
+& }
 
 #:set vars_mf_phys_for = { &
 & "U"              : [True,  False, AS_1_nflevg,        None,                 "LLMF_PHYS"          ], &
@@ -325,6 +330,7 @@ $:pcpg_type_definition ("APLPAR_PFL_TYPE" , vars_aplpar_pfl)
 $:pcpg_type_definition ("APLPAR_MSC_TYPE" , vars_aplpar_msc)
 $:pcpg_type_definition ("APLPAR_TDS_TYPE" , vars_aplpar_tds)
 $:pcpg_type_definition ("APLPAR_DSA_TYPE" , vars_aplpar_dsa)
+$:pcpg_type_definition ("APLPAR_BAY_TYPE" , vars_aplpar_bay)
 
 $:pcpg_struct_definition ("APLPAR_RDT_TYPE", vars_aplpar_rdt)
 
@@ -334,6 +340,7 @@ TYPE APLPAR_TMP_TYPE
   TYPE (APLPAR_MSC_TYPE) :: MSC
   TYPE (APLPAR_TDS_TYPE) :: TDS
   TYPE (APLPAR_DSA_TYPE) :: DSA
+  TYPE (APLPAR_BAY_TYPE) :: BAY
   TYPE (APLPAR_RDT_TYPE) :: RDT
 END TYPE
 
@@ -388,6 +395,8 @@ $:pcpg_type_methods ("APLPAR_TDS_TYPE", vars_aplpar_tds)
 
 $:pcpg_type_methods ("APLPAR_DSA_TYPE", vars_aplpar_dsa)
 
+$:pcpg_type_methods ("APLPAR_BAY_TYPE", vars_aplpar_bay)
+
 $:pcpg_struct_methods ("APLPAR_RDT_TYPE", vars_aplpar_rdt, "TYPE_RADTC", "MODULE_RADTC_MIX", "M")
 
 
@@ -410,6 +419,7 @@ CALL SELF%TMP%APLPAR%PFL%UPDATE_VIEW (BLOCK_INDEX)
 CALL SELF%TMP%APLPAR%MSC%UPDATE_VIEW (BLOCK_INDEX)
 CALL SELF%TMP%APLPAR%TDS%UPDATE_VIEW (BLOCK_INDEX)
 CALL SELF%TMP%APLPAR%DSA%UPDATE_VIEW (BLOCK_INDEX)
+CALL SELF%TMP%APLPAR%BAY%UPDATE_VIEW (BLOCK_INDEX)
 
 END SUBROUTINE
 
@@ -431,6 +441,7 @@ CALL SELF%TMP%APLPAR%PFL%FINAL ()
 CALL SELF%TMP%APLPAR%MSC%FINAL ()
 CALL SELF%TMP%APLPAR%TDS%FINAL ()
 CALL SELF%TMP%APLPAR%DSA%FINAL ()
+CALL SELF%TMP%APLPAR%BAY%FINAL ()
 
 END SUBROUTINE
 
@@ -470,6 +481,7 @@ IF (LLMF_PHYS) THEN
     CALL SELF%APLPAR%MSC%INIT (REGISTRY, NLEV, PERSISTENT, LDMF_PHYS=LLMF_PHYS)
     CALL SELF%APLPAR%TDS%INIT (REGISTRY, NLEV, PERSISTENT, LDMF_PHYS=LLMF_PHYS, YDSURF=YDSURF)
     CALL SELF%APLPAR%DSA%INIT (REGISTRY, NLEV, PERSISTENT, LDMF_PHYS=LLMF_PHYS)
+    CALL SELF%APLPAR%BAY%INIT (REGISTRY, NLEV, PERSISTENT, LDMF_PHYS=LLMF_PHYS)
     CALL SELF%APLPAR%RDT%INIT (REGISTRY, NLEV, YM_RADTC, PERSISTENT)
   ENDIF
   

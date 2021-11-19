@@ -357,12 +357,23 @@ ${ind}$ENDIF
     #:else
 $:temporary (var, elt[NDIMS], ind + "")
     #:endif
-  #:else
+  #:elif (NDEFS < len (elt)) and (elt[NDEFS] is not None)
     #:set defs = elt[NDEFS]
     #:if elt[ISARG]
 ${ind}$CALL SELF%${var}$%INIT (REGISTRY, NLEV, ${defs}$, PERSISTENT, ${argn (var)}$)
     #:else
 ${ind}$CALL SELF%${var}$%INIT (REGISTRY, NLEV, ${defs}$, PERSISTENT)
+    #:endif
+  #:else
+    #:if (var == "T0") or (var == "T9")
+      #:set kt = var[1] + ", "
+    #:else
+      #:set kt = ""
+    #:endif
+    #:if elt[ISARG]
+${ind}$CALL SELF%${var}$%INIT (${kt}$REGISTRY, NLEV, PERSISTENT, ${argn (var)}$)
+    #:else
+${ind}$CALL SELF%${var}$%INIT (${kt}$REGISTRY, NLEV, PERSISTENT)
     #:endif
   #:endif
   #:if not elt[NCOND] is None

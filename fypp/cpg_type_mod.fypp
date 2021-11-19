@@ -8,14 +8,29 @@
 #:set AS_0_NSORAYFRm1         = [ [ '0', 'YDPHY%NSORAYFR-1' ] ]
 #:set AS_4D                   = [ [], [] ]
 
+#:set vars_cpg_gp_t_tmp = { &
+& "GDW"            : [False, False, AS_1_nflevg,        None,                 "LNHDYN"             ], &
+& "GWHT"           : [False, False, AS_0_nflevg,        None,                 None                 ], &
+& "OROGLL"         : [False, False, AS_void,            None,                 "LNHDYN.AND.LLT0"    ], &
+& "OROGMM"         : [False, False, AS_void,            None,                 "LNHDYN.AND.LLT0"    ], &
+& "OROGLM"         : [False, False, AS_void,            None,                 "LNHDYN.AND.LLT0"    ], &
+& }
+
+#:set vars_cpg_gp_tmp = { &
+& "T0"             : [False, False, AS_void,            "CPG_GP_T_TMP_TYPE",  None                 ], &
+& "T9"             : [False, False, AS_void,            "CPG_GP_T_TMP_TYPE",  None                 ], &
+& }
+
 #:set vars_cpg_dyn = { &                                                                                         
 & "OROGL"          : [False, False, AS_void,            None,                 "LLT0"               ], &
 & "OROGM"          : [False, False, AS_void,            None,                 "LLT0"               ], &
+& "GDW"            : [False, False, AS_1_nflevg,        None,                 "LNHDYN"             ], &
+& "GDW"            : [False, False, AS_1_nflevg,        None,                 "LNHDYN"             ], &
+& "GWHT"           : [False, False, AS_0_nflevg,        None,                 None                 ], &
+& "GWHT"           : [False, False, AS_0_nflevg,        None,                 None                 ], &
 & "OROGLL"         : [False, False, AS_void,            None,                 "LNHDYN .AND. LLT0"  ], &
 & "OROGMM"         : [False, False, AS_void,            None,                 "LNHDYN .AND. LLT0"  ], &
 & "OROGLM"         : [False, False, AS_void,            None,                 "LNHDYN .AND. LLT0"  ], &
-& "GDW"            : [False, False, AS_1_nflevg,        None,                 "LNHDYN"             ], &
-& "GWHT"           : [False, False, AS_0_nflevg,        None,                 None                 ], &
 & "PHI"            : [False, False, AS_0_nflevg,        None,                 None                 ], &
 & "PRE"            : [False, False, AS_0_nflevg,        None,                 None                 ], &
 & "PHIF"           : [True,  True,  AS_1_nflevg,        None,                 None                 ], &
@@ -129,6 +144,17 @@ USE PARKIND1, ONLY : JPRB, JPIM
 
 IMPLICIT NONE
 
+$:pcpg_type_definition ("CPG_GP_T_TMP_TYPE" ,  vars_cpg_gp_t_tmp)
+$:pcpg_type_definition ("CPG_GP_TMP_TYPE" ,  vars_cpg_gp_tmp)
+
+TYPE CPG_TMP_TYPE
+  TYPE (CPG_GP_TMP_TYPE) :: CPG_GP
+CONTAINS
+  PROCEDURE :: INIT => CPG_TMP_TYPE_INIT
+  PROCEDURE :: UPDATE_VIEW => CPG_TMP_TYPE_UPDATE_VIEW
+  PROCEDURE :: FINAL => CPG_TMP_TYPE_FINAL
+END TYPE CPG_TMP_TYPE
+
 $:pcpg_intdyn_definition ("CPG_XYB_TYPE"  , vars_cpg_dyn_xyb  )
 
 $:pcpg_intdyn_definition ("CPG_HWIND_TYPE", vars_cpg_dyn_hwind)
@@ -149,6 +175,10 @@ REAL(KIND=JPRB), PRIVATE, SAVE, TARGET :: ZDUM1 (1), ZDUM2 (1, 1), ZDUM3 (1,1,1)
 
 CONTAINS
 
+$:pcpg_type_methods ("CPG_GP_T_TMP_TYPE" , vars_cpg_gp_t_tmp)
+
+$:pcpg_type_methods ("CPG_GP_TMP_TYPE" , vars_cpg_gp_tmp)
+
 $:pcpg_intdyn_methods ("CPG_XYB_TYPE"  , vars_cpg_dyn_xyb  ,"XYB"  )
 
 $:pcpg_intdyn_methods ("CPG_HWIND_TYPE", vars_cpg_dyn_hwind,"HWIND")
@@ -164,6 +194,34 @@ $:pcpg_type_methods ("CPG_DYN_TYPE" , vars_cpg_dyn , use_intdyn=True)
 $:pcpg_type_methods ("CPG_PHY_TYPE" , vars_cpg_phy , use_intdyn=True)
 
 $:pcpg_type_methods ("CPG_MISC_TYPE", vars_cpg_misc)
+
+SUBROUTINE CPG_TMP_TYPE_INIT (SELF, REGISTRY, NLEV, PERSISTENT)
+
+CLASS (CPG_TMP_TYPE) :: SELF
+TYPE (FIELD_REGISTRY),        INTENT (INOUT) :: REGISTRY
+INTEGER (KIND=JPIM),          INTENT (IN)    :: NLEV
+LOGICAL, OPTIONAL,            INTENT (IN)    :: PERSISTENT
+
+CALL SELF%CPG_GP%INIT (REGISTRY, NLEV, PERSISTENT)
+
+END SUBROUTINE
+
+SUBROUTINE CPG_TMP_TYPE_UPDATE_VIEW (SELF, BLOCK_INDEX)
+
+CLASS (CPG_TMP_TYPE)         :: SELF
+INTEGER(KIND=JPIM), INTENT (IN)   :: BLOCK_INDEX
+
+CALL SELF%CPG_GP%UPDATE_VIEW (BLOCK_INDEX)
+
+END SUBROUTINE 
+
+SUBROUTINE CPG_TMP_TYPE_FINAL (SELF)
+
+CLASS (CPG_TMP_TYPE)         :: SELF
+
+CALL SELF%CPG_GP%FINAL
+
+END SUBROUTINE
 
 END MODULE CPG_TYPE_MOD
 

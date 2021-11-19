@@ -24,13 +24,6 @@
 #:set vars_cpg_dyn = { &                                                                                         
 & "OROGL"          : [False, False, AS_void,            None,                 "LLT0"               ], &
 & "OROGM"          : [False, False, AS_void,            None,                 "LLT0"               ], &
-& "GDW"            : [False, False, AS_1_nflevg,        None,                 "LNHDYN"             ], &
-& "GDW"            : [False, False, AS_1_nflevg,        None,                 "LNHDYN"             ], &
-& "GWHT"           : [False, False, AS_0_nflevg,        None,                 None                 ], &
-& "GWHT"           : [False, False, AS_0_nflevg,        None,                 None                 ], &
-& "OROGLL"         : [False, False, AS_void,            None,                 "LNHDYN .AND. LLT0"  ], &
-& "OROGMM"         : [False, False, AS_void,            None,                 "LNHDYN .AND. LLT0"  ], &
-& "OROGLM"         : [False, False, AS_void,            None,                 "LNHDYN .AND. LLT0"  ], &
 & "PHI"            : [False, False, AS_0_nflevg,        None,                 None                 ], &
 & "PRE"            : [False, False, AS_0_nflevg,        None,                 None                 ], &
 & "PHIF"           : [True,  True,  AS_1_nflevg,        None,                 None                 ], &

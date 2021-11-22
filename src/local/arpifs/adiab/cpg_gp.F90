@@ -6,7 +6,6 @@ SUBROUTINE CPG_GP(YDGEOMETRY,YDCPG_DIM,YDTMP,YDCPG_TND,YDCPG_MISC,YDCPG_DYN0,YDC
  !---------------------------------------------------------------------
  ! - INPUT .
  & LD_DFISTEP,LDLFSTEP,LDLDIAB,PDT,PTE,&
- & &
  !---------------------------------------------------------------------
  ! - INPUT/OUTPUT .
  & PGFL,&
@@ -223,11 +222,6 @@ TYPE(MODEL)       ,INTENT(INOUT) :: YDMODEL
 TYPE(FIELDS)      ,INTENT(INOUT) :: YDFIELDS
 !---
 LOGICAL           ,INTENT(IN)    :: LD_DFISTEP
-
-
-
-
-
 LOGICAL           ,INTENT(IN)    :: LDLFSTEP
 LOGICAL           ,INTENT(IN)    :: LDLDIAB
 REAL(KIND=JPRB)   ,INTENT(IN)    :: PDT

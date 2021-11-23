@@ -474,6 +474,11 @@ IF (LLDIAB .AND. (.NOT. LMPA)) THEN
 
   DO JROF=YDCPG_DIM%KIDIA,YDCPG_DIM%KFDIA
     YDMF_PHYS%TMP%APLPAR%FLU%QSATS(JROF)=0.0_JPRB
+  ENDDO
+
+!* outline MF_PHYS_FPL_PART1
+
+  DO JROF=YDCPG_DIM%KIDIA,YDCPG_DIM%KFDIA
     YDMF_PHYS%TMP%APLPAR%PFL%FPLCH(JROF,0)=0.0_JPRB
     YDMF_PHYS%TMP%APLPAR%PFL%FPLSH(JROF,0)=0.0_JPRB
   ENDDO
@@ -493,6 +498,8 @@ IF (LLDIAB .AND. (.NOT. LMPA)) THEN
       ENDDO
     ENDDO
   ENDIF
+
+!* end outline
 
 ENDIF
 
@@ -873,6 +880,8 @@ ENDIF
 
 IF (LLDIAB .AND. (.NOT. LMPA)) THEN
 
+!* outline MF_PHYS_FPL_PART2
+
 !        2.9a Evolution of precipitation fluxes
 !             ------------------------------------------
 
@@ -890,6 +899,8 @@ IF (LLDIAB .AND. (.NOT. LMPA)) THEN
       ENDDO
     ENDDO
   ENDIF
+
+!* end outline
 
 ENDIF
 

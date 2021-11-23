@@ -33,10 +33,13 @@ TYPE ${name}$
 
 #:for var in vars
   #:set elt = vars[var]
+  #:set ndim = 1 + len (elt[NDIMS])
   #:if elt[NTYPE] is None
-    #:set ndim = 1 + len (elt[NDIMS])
   REAL (KIND=JPRB), POINTER, CONTIGUOUS :: ${var}$ (${", ".join ([":"] * ndim)}$) => NULL ()
   TYPE (FIELD_${ndim+1}$D), POINTER :: F_${var}$ => NULL ()
+  #:elif elt[NTYPE] == 'INTEGER'
+  INTEGER (KIND=JPIM), POINTER, CONTIGUOUS :: ${var}$ (${", ".join ([":"] * ndim)}$) => NULL ()
+  TYPE (FIELD_INT${ndim+1}$D), POINTER :: F_${var}$ => NULL ()
   #:else
   TYPE (${elt[NTYPE]}$) :: ${var}$
   #:endif
@@ -61,17 +64,22 @@ END TYPE ${name}$
 $:s
 #:enddef gdim
 
-#:def temporary (var, dim, ind)
+#:def temporary (var, dim, ind, typ)
   #:set ndim = 1 + len (dim)
+  #:if typ is None
+    #:set suf = ""
+  #:else
+    #:set suf = '_INT'
+  #:endif
   #:if ndim == 1
-${ind}$SELF%F_${var}$ => CREATE_TEMPORARY ("${var}$", GEOM=REGISTRY%GEOM, PERSISTENT=PERSISTENT)
+${ind}$SELF%F_${var}$ => CREATE_TEMPORARY${suf}$ ("${var}$", GEOM=REGISTRY%GEOM, PERSISTENT=PERSISTENT)
   #:elif ndim == 2
     #:set s2 = gdim (dim[0])
-${ind}$SELF%F_${var}$ => CREATE_TEMPORARY ("${var}$", GEOM=REGISTRY%GEOM, NLEV=${s2}$, PERSISTENT=PERSISTENT)
+${ind}$SELF%F_${var}$ => CREATE_TEMPORARY${suf}$ ("${var}$", GEOM=REGISTRY%GEOM, NLEV=${s2}$, PERSISTENT=PERSISTENT)
   #:elif ndim == 3
     #:set s2 = gdim (dim[0])
     #:set s3 = gdim (dim[1])
-${ind}$SELF%F_${var}$ => CREATE_TEMPORARY ("${var}$", GEOM=REGISTRY%GEOM, NLEV=${s2}$, NDIM=${s3}$, PERSISTENT=PERSISTENT)
+${ind}$SELF%F_${var}$ => CREATE_TEMPORARY${suf}$ ("${var}$", GEOM=REGISTRY%GEOM, NLEV=${s2}$, NDIM=${s3}$, PERSISTENT=PERSISTENT)
   #:endif
 #:enddef temporary
 
@@ -131,7 +139,7 @@ ENDIF
 #! 
 #! #:for var in vars
 #!  IF (YD${type}$%${memb}$${var}$ > 0) THEN
-#! $:temporary (var, vars[var][NDIMS], "    ")
+#! $:temporary (var, vars[var][NDIMS], "    ", vars[var][NTYPE])
 #!  ENDIF
 #! #:endfor
 #!
@@ -345,17 +353,17 @@ IF (${elt[NCOND]}$) THEN
   #:else
     #:set ind = ""
   #:endif
-  #:if elt[NTYPE] is None
+  #:if (elt[NTYPE] is None) or (elt[NTYPE] == 'INTEGER')
     #:if elt[ISARG]
 ${ind}$IF (PRESENT (${argn (var)}$)) THEN
 ${ind}$  SELF%F_${var}$ => CREATE_FIELD_WRAP ('${var}$', ${argn (var)}$)
       #:if elt[ELARG]
 ${ind}$ELSE
-$:temporary (var, elt[NDIMS], ind + "  ")
+$:temporary (var, elt[NDIMS], ind + "  ", elt[NTYPE])
       #:endif
 ${ind}$ENDIF
     #:else
-$:temporary (var, elt[NDIMS], ind + "")
+$:temporary (var, elt[NDIMS], ind + "", elt[NTYPE])
     #:endif
   #:elif (NDEFS < len (elt)) and (elt[NDEFS] is not None)
     #:set defs = elt[NDEFS]
@@ -399,6 +407,14 @@ IF (ASSOCIATED (SELF%F_${var}$)) THEN
 ELSE
   SELF%${var}$ ${ss}$ => ZDUM${ndim}$
 ENDIF
+  #:elif elt[NTYPE] == 'INTEGER'
+    #:set ss = pdim (elt[NDIMS])
+    #:set ndim = 1 + len (elt[NDIMS])
+IF (ASSOCIATED (SELF%F_${var}$)) THEN
+  SELF%${var}$ ${ss}$ => SELF%F_${var}$%GET_VIEW (BLOCK_INDEX)
+ELSE
+  SELF%${var}$ ${ss}$ => IDUM${ndim}$
+ENDIF
   #:else
 CALL SELF%${var}$%UPDATE_VIEW (BLOCK_INDEX)
   #:endif
@@ -411,7 +427,7 @@ CLASS (${name}$)         :: SELF
 
 #:for var in vars
   #:set elt = vars[var]
-  #:if elt[NTYPE] is None
+  #:if (elt[NTYPE] is None) or (elt[NTYPE] == 'INTEGER')
 IF (ASSOCIATED (SELF%F_${var}$)) CALL DELETE_TEMPORARY (SELF%F_${var}$) 
   #:else
 CALL SELF%${var}$%FINAL ()

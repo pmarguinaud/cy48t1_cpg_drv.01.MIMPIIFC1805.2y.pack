@@ -204,6 +204,10 @@
 & "UDGRO"          : [False, False, AS_void,            None,                 "LLMF_PHYS"          ], &
 & }
 
+#:set vars_aplpar_moc = { &
+& "CLPH"           : [False, False, AS_void,            "INTEGER",            "LLMF_PHYS"         ], &
+& }
+
 #:set vars_aplpar_flu = { &
 & "CD"             : [False, False, AS_void,            None,                 "LLMF_PHYS",        "EXCHANGE COEFFICIENT AT SURFACE LEVEL FOR U AND V"      ], &  
 & "CDN"            : [False, False, AS_void,            None,                 "LLMF_PHYS",        "EXCHANGE COEFF. AT SURFACE LEVEL IN NEUTRAL CONDITIONS" ], & 
@@ -343,6 +347,7 @@ $:pcpg_type_definition ("MF_PHYS_NHQ_TYPE" , vars_mf_phys_nhq)
 $:pcpg_type_definition ("MF_PHYS_SAV_TYPE" , vars_mf_phys_sav)
 $:pcpg_type_definition ("MF_PHYS_RDG_TYPE" , vars_mf_phys_rdg)
 
+$:pcpg_type_definition ("APLPAR_MOC_TYPE" , vars_aplpar_moc)
 $:pcpg_type_definition ("APLPAR_FLU_TYPE" , vars_aplpar_flu)
 $:pcpg_type_definition ("APLPAR_PFL_TYPE" , vars_aplpar_pfl)
 $:pcpg_type_definition ("APLPAR_MSC_TYPE" , vars_aplpar_msc)
@@ -355,6 +360,7 @@ $:pcpg_type_definition ("APLPAR_ADJ_TYPE" , vars_aplpar_adj)
 $:pcpg_struct_definition ("APLPAR_RDT_TYPE", vars_aplpar_rdt)
 
 TYPE APLPAR_TMP_TYPE
+  TYPE (APLPAR_MOC_TYPE) :: MOC
   TYPE (APLPAR_FLU_TYPE) :: FLU
   TYPE (APLPAR_PFL_TYPE) :: PFL
   TYPE (APLPAR_MSC_TYPE) :: MSC
@@ -388,7 +394,8 @@ CONTAINS
   PROCEDURE :: FINAL => MF_PHYS_TYPE_FINAL
 END TYPE MF_PHYS_TYPE
 
-REAL(KIND=JPRB), PRIVATE, SAVE, TARGET :: ZDUM1 (1), ZDUM2 (1, 1), ZDUM3 (1,1,1)
+REAL(KIND=JPRB),    PRIVATE, SAVE, TARGET :: ZDUM1 (1), ZDUM2 (1, 1), ZDUM3 (1,1,1)
+INTEGER(KIND=JPIM), PRIVATE, SAVE, TARGET :: IDUM1 (1), IDUM2 (1, 1), IDUM3 (1,1,1)
 
 CONTAINS
 
@@ -409,6 +416,8 @@ $:pcpg_type_methods ("MF_PHYS_NHQ_TYPE", vars_mf_phys_nhq)
 $:pcpg_type_methods ("MF_PHYS_SAV_TYPE", vars_mf_phys_sav)
 
 $:pcpg_type_methods ("MF_PHYS_RDG_TYPE", vars_mf_phys_rdg)
+
+$:pcpg_type_methods ("APLPAR_MOC_TYPE", vars_aplpar_moc)
 
 $:pcpg_type_methods ("APLPAR_FLU_TYPE", vars_aplpar_flu)
 
@@ -444,6 +453,7 @@ CALL SELF%TMP%SAV%UPDATE_VIEW (BLOCK_INDEX)
 CALL SELF%TMP%PRC%UPDATE_VIEW (BLOCK_INDEX)
 CALL SELF%TMP%RDG%UPDATE_VIEW (BLOCK_INDEX)
 CALL SELF%TMP%APLPAR%RDT%UPDATE_VIEW (BLOCK_INDEX)
+CALL SELF%TMP%APLPAR%MOC%UPDATE_VIEW (BLOCK_INDEX)
 CALL SELF%TMP%APLPAR%FLU%UPDATE_VIEW (BLOCK_INDEX)
 CALL SELF%TMP%APLPAR%PFL%UPDATE_VIEW (BLOCK_INDEX)
 CALL SELF%TMP%APLPAR%MSC%UPDATE_VIEW (BLOCK_INDEX)
@@ -469,6 +479,7 @@ CALL SELF%TMP%SAV%FINAL ()
 CALL SELF%TMP%PRC%FINAL ()
 CALL SELF%TMP%RDG%FINAL ()
 CALL SELF%TMP%APLPAR%RDT%FINAL ()
+CALL SELF%TMP%APLPAR%MOC%FINAL ()
 CALL SELF%TMP%APLPAR%FLU%FINAL ()
 CALL SELF%TMP%APLPAR%PFL%FINAL ()
 CALL SELF%TMP%APLPAR%MSC%FINAL ()
@@ -512,6 +523,7 @@ IF (LLMF_PHYS) THEN
   CALL SELF%RDG%INIT (REGISTRY, NLEV, PERSISTENT, LLMF_PHYS)
   IF (YDMODEL%YRML_PHY_MF%YRARPHY%LMPA) THEN
   ELSE
+    CALL SELF%APLPAR%MOC%INIT (REGISTRY, NLEV, PERSISTENT, LDMF_PHYS=LLMF_PHYS)
     CALL SELF%APLPAR%FLU%INIT (REGISTRY, NLEV, PERSISTENT, LDMF_PHYS=LLMF_PHYS, YDMODEL=YDMODEL)
     CALL SELF%APLPAR%PFL%INIT (REGISTRY, NLEV, PERSISTENT, LDMF_PHYS=LLMF_PHYS)
     CALL SELF%APLPAR%MSC%INIT (REGISTRY, NLEV, PERSISTENT, LDMF_PHYS=LLMF_PHYS)

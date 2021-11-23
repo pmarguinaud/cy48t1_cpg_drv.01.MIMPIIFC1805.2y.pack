@@ -468,10 +468,8 @@ ELSE
   ! * Hydrostatic model:
   YDCPG_DYN0%NHX(:,:)=0.0_JPRB
   YDCPG_DYN0%GWFT(:,:)=0.0_JPRB
-  YDTMP%T0%GWHT(:,:)=0.0_JPRB
   YDCPG_DYN9%NHX(:,:)=0.0_JPRB
   YDCPG_DYN9%GWFT(:,:)=0.0_JPRB
-  YDTMP%T9%GWHT(:,:)=0.0_JPRB
   LLGPXX=(LMPHYS.OR.LSIMPH) .AND. NCURRENT_ITER == 0
   LLUVH=LLGPXX.OR.LSLHD
   CALL CPG_GP_HYD(YDGEOMETRY,YDTMP,YDVARS,YDCPG_DYN0,YDCPG_DYN9,YDMODEL,YDFIELDS%YRGMV,&
@@ -485,6 +483,8 @@ ELSE
    !---------------------------------------------------------------------
    ! - OUTPUT .
    & YDCPG_TND%ZVIEW)
+  YDTMP%T0%GWHT(:,:)=0.0_JPRB
+  YDTMP%T9%GWHT(:,:)=0.0_JPRB
 ENDIF
 
 !     ------------------------------------------------------------------

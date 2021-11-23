@@ -58,6 +58,10 @@ sub sortArgs
   return (@d, @l);
 }
 
+my @INTRINSIC = qw (SIGN MAX MIN);
+my %INTRINSIC = map { ($_, 1) } @INTRINSIC;
+
+
 my $F90 = shift;
 
 my $d = &Fxtran::fxtran (location => $F90, fopts => [qw (-line-length 200)]);
@@ -111,6 +115,7 @@ EOF
         for my $expr (@expr)
           {
             my ($n) = &F ('./N/n', $expr, 1);
+            next if ($INTRINSIC{$n});
             if ($expr->parentNode->nodeName eq 'do-V')
               {
                 $do{$n} = 1;

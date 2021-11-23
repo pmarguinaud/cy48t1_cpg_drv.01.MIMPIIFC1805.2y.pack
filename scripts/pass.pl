@@ -16,11 +16,13 @@ use Fxtran;
 #my ($var, $typ, $mod) = qw (YDCPG_TND CPG_TND_TYPE CPG_DYN_TYPE_MOD);
 #my ($var, $typ, $mod) = qw (YDCPG_MISC CPG_MISC_TYPE CPG_DYN_TYPE_MOD);
 #my ($var, $typ, $mod) = qw (YDCPG_TND CPG_TND_TYPE CPG_DYN_TYPE_MOD);
-my ($var, $typ, $mod) = qw (YDCPG_OPT CPG_OPT_TYPE CPG_DYN_TYPE_MOD);
+#my ($var, $typ, $mod) = qw (YDCPG_OPT CPG_OPT_TYPE CPG_DYN_TYPE_MOD);
+my ($var, $typ, $mod) = qw (YDCPG_DIM CPG_DIM_TYPE CPG_DIM_TYPE_MOD);
 
 
 #my @r = qw (MF_PHYS CPG CPG_GP CPG_DYN CPG_DIA MF_PHYS_PREP CPDYSLDIA);
-my @r = qw (MF_PHYS APLPAR APL_AROME);
+my @r = qw (MF_PHYS_NHQE_PART1 MF_PHYS_NHQE_PART2 MF_PHYS_SAVE_PHSURF_PART1 MF_PHYS_SAVE_PHSURF_PART2 MF_PHYS_TRANSFER);
+
 
 my $F90 = shift;
 

@@ -1,13 +1,17 @@
 #!/bin/bash
 
 for f in \
-  arpifs/adiab/cpg_gp_nhee.F90 \
-  arpifs/adiab/cpg_gp_nhqe.F90 \
-  arpifs/adiab/cpg_gp_hyd.F90
+arpifs/phys_dmn/mf_phys_nhqe_part1.F90 \
+arpifs/phys_dmn/mf_phys_nhqe_part2.F90 \
+arpifs/phys_dmn/mf_phys_save_phsurf_part1.F90 \
+arpifs/phys_dmn/mf_phys_save_phsurf_part2.F90 \
+arpifs/phys_dmn/mf_phys_transfer.F90 \
+arpifs/phys_dmn/mf_phys.F90
 do
-  ./pass.pl src/local/$f
-  \mv src/local/$f.new src/local/$f
-  rm src/local/$f.xml
+  echo "==> $f <=="
+  ./scripts/pass.pl src/local/$f
+# \mv src/local/$f.new src/local/$f
+# rm src/local/$f.xml
 done
 
 

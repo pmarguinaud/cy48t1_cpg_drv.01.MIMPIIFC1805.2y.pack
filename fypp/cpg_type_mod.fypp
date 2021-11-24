@@ -72,6 +72,7 @@
 & "Z3DIVG"         : [False, False, AS_1_nflevg,        None,                 "LLT0.AND.LNHEE"               ], &
 & "WH2F"           : [False, False, AS_1_nflevg_2,      None,                 "LLT0.AND.LNHEE"               ], &
 & "ZERO"           : [False, False, AS_void,            None,                 "LLT0.AND.LNHEE"               ], &
+& "ONE"            : [False, False, AS_1_nflevg,        None,                 "LLT0.AND.LNHQE"               ], &
 & "XYBDER"         : [False, False, AS_4D,              "CPG_XYBDER_TYPE",    "LLT0"               , "YLTXYBDER"  ], &
 & "UVH"            : [False, False, AS_4D,              "CPG_HWIND_TYPE",     ".NOT.LLT0"          , "YLTHW"      ], &
 & }

@@ -243,7 +243,7 @@ USE INTDYN_MOD, ONLY : TRCP, TCTY, THWIND, TXYB
 #:endif
 
 #:if use_lnhdyn
-USE YOMCT0    , ONLY : LNHDYN
+USE YOMCT0    , ONLY : LNHDYN, LNHEE, LNHQE
 #:endif
 #:if use_ydmodel
 USE TYPE_MODEL, ONLY : MODEL

@@ -4,7 +4,8 @@
 #:set AS_void                 = []
 #:set AS_0_nflevg             = [ [ '0', 'NLEV' ] ]
 #:set AS_1_nflevg             = [ [ '1', 'NLEV' ] ]
-#:set AS_0_nflevg_6           = [ [ '1', 'NLEV' ], [ '1', '6' ] ]
+#:set AS_1_nflevg_2           = [ [ '1', 'NLEV' ], [ '1', '2' ] ]
+#:set AS_0_nflevg_6           = [ [ '0', 'NLEV' ], [ '1', '6' ] ]
 #:set AS_0_NSORAYFRm1         = [ [ '0', 'YDPHY%NSORAYFR-1' ] ]
 #:set AS_4D                   = [ [], [] ]
 
@@ -69,6 +70,7 @@
 & "VS_L"           : [False, False, AS_void,            None,                 "LLT0.AND.LNHDYN"              ], &
 & "VS_M"           : [False, False, AS_void,            None,                 "LLT0.AND.LNHDYN"              ], &
 & "Z3DIVG"         : [False, False, AS_1_nflevg,        None,                 "LLT0.AND.LNHEE"               ], &
+& "WH2F"           : [False, False, AS_1_nflevg_2,      None,                 "LLT0.AND.LNHEE"               ], &
 & "XYBDER"         : [False, False, AS_4D,              "CPG_XYBDER_TYPE",    "LLT0"               , "YLTXYBDER"  ], &
 & "UVH"            : [False, False, AS_4D,              "CPG_HWIND_TYPE",     ".NOT.LLT0"          , "YLTHW"      ], &
 & }

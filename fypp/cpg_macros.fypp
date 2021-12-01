@@ -8,8 +8,8 @@
 #:def pcpg_struct_definition (name, vars)
 TYPE ${name}$
   LOGICAL :: LOWNED = .FALSE.
-  REAL (KIND=JPRB), POINTER :: ZDATA (:,:,:,:) => NULL ()
-  REAL (KIND=JPRB), POINTER :: ZVIEW (:,:,:) => NULL ()
+  REAL (KIND=JPRB), POINTER, CONTIGUOUS :: ZDATA (:,:,:,:) => NULL ()
+  REAL (KIND=JPRB), POINTER, CONTIGUOUS :: ZVIEW (:,:,:) => NULL ()
 
 #:for var in vars
   #:set ndim = 1 + len (vars[var][NDIMS])

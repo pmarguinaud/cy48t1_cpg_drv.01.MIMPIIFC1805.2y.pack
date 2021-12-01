@@ -8,37 +8,26 @@ use File::Basename;
 use lib $Bin;
 use Fxtran;
 
-my $d = &Fxtran::fxtran (location => 'src/local/arpifs/phys_dmn/aplpar_init.F90', fopts => [qw (-line-length 800)]);
+my $F90 = shift;
+
+my $d = &Fxtran::fxtran (location => $F90, fopts => [qw (-line-length 800)]);
 
 my @da = &F ('//dummy-arg-LT/arg-N', $d, 1);
+my %da = map { ($_, 1) } @da;
 
-my %del;
+my @en_decl = &F ('.//ANY-stmt//EN-decl', $d);
 
-for my $da (@da)
+for my $en_decl (@en_decl)
   {
-    my @expr = &F ('.//named-E[string(N)="?"]', $da, $d);
+    my ($n) = &F ('./EN-N', $en_decl, 1);
+    next if ($da{$n});
+    my @expr = &F ('.//named-E[string(N)="?"]', $n, $d);
     unless (@expr)
       {
-        $del{$da} = 1;
+        $en_decl->unbindNode ();
       }
   }
 
-for (qw (KIDIA KFDIA))
-  {
-    delete $del{$_};
-  }
-
-for my $n (keys (%del))
-  {
-    my ($decl) = &F ('.//ANY-stmt[.//EN-decl[string(EN-N)="?"]]', $n, $d);
-    $decl->unbindNode ();
-    my ($da) = &F ('//dummy-arg-LT/arg-N[string(.)="?"]', $n, $d);
-    if ($da->nextSibling)
-      {
-        $da->nextSibling->unbindNode ();
-      }
-    $da->unbindNode ();
-  }
 
 
-'FileHandle'->new (">src/local/arpifs/phys_dmn/aplpar_init.F90.new")->print ($d->textContent);
+'FileHandle'->new (">$F90.new")->print ($d->textContent);

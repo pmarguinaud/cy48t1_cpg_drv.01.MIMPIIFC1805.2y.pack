@@ -268,8 +268,9 @@ sub _fold
       $$plen += length ($node->textContent);
 
       my ($lit) = &f ('./ancestor::f:literal-E', $node);
+      my ($nam) = &f ('./ancestor::f:named-E', $node);
 
-      if (($$plen > 100) && (! $lit))
+      if (($$plen > 100) && (! $lit) && (! $nam))
         {
           if ($node->textContent =~ m/^\s*,\s*$/o)
             { 

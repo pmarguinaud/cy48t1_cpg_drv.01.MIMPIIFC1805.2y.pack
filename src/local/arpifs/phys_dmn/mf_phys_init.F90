@@ -1,4 +1,4 @@
-SUBROUTINE INITAPLPAR &
+SUBROUTINE MF_PHYS_INIT &
  !---------------------------------------------------------------------
  ! - INPUT .
  & (YGFL,YDARPHY,KIDIA , KFDIA  , KLON   , KLEV   , KSGST  , KCSS   ,&
@@ -35,7 +35,7 @@ USE YOMCT0    ,ONLY : LAROME
 USE YOMARPHY  ,ONLY : TARPHY
 USE YOM_YGFL  ,ONLY : TYPE_GFLD
 
-!**** *INITAPLPAR*
+!**** *MF_PHYS_INIT*
 
 !     Purpose.
 !     --------
@@ -43,7 +43,7 @@ USE YOM_YGFL  ,ONLY : TYPE_GFLD
 
 !**   Interface.
 !     ----------
-!        *CALL* *INITAPLPAR(...)*
+!        *CALL* *MF_PHYS_INIT(...)*
 
 !        Explicit arguments :
 !        --------------------
@@ -531,7 +531,7 @@ REAL(KIND=JPRB) :: ZHOOK_HANDLE
 
 !     CHECK RELIABILITY OF INPUT ARGUMENTS.
 
-IF (LHOOK) CALL DR_HOOK('INITAPLPAR',0,ZHOOK_HANDLE)
+IF (LHOOK) CALL DR_HOOK('MF_PHYS_INIT',0,ZHOOK_HANDLE)
 ASSOCIATE(LMDUST=>YDARPHY%LMDUST, NGFL_EXT=>YGFL%NGFL_EXT)
 !     ------------------------------------------------------------------
 
@@ -702,5 +702,5 @@ ENDIF
 !     ------------------------------------------------------------------
 
 END ASSOCIATE
-IF (LHOOK) CALL DR_HOOK('INITAPLPAR',1,ZHOOK_HANDLE)
-END SUBROUTINE INITAPLPAR
+IF (LHOOK) CALL DR_HOOK('MF_PHYS_INIT',1,ZHOOK_HANDLE)
+END SUBROUTINE MF_PHYS_INIT

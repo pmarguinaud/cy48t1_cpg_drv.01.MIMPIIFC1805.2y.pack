@@ -24,6 +24,7 @@
 & "DIFTQL"         : [False, False, AS_0_nflevg,        None,                 None,               "turbulent flux (inc. 'q' negative) of liquid water          " ], &
 & "DIFTQN"         : [False, False, AS_0_nflevg,        None,                 None,               "turbulent flux (inc. 'q' negative) of solid water           " ], &
 & "DIFTS"          : [False, False, AS_0_nflevg,        None,                 None,               "turbulent flux of enthalpy (or dry static energy)           " ], &
+& "EDR"            : [False, False, AS_1_nflevg,        None,                 None,               ""                                                             ], &
 & "FCCQL"          : [False, False, AS_0_nflevg,        None,                 None,               "convective condensation flux for liquid water               " ], &
 & "FCCQN"          : [False, False, AS_0_nflevg,        None,                 None,               "convective condensation flux for ice                        " ], &
 & "FCSQL"          : [False, False, AS_0_nflevg,        None,                 None,               "stratiform condensation flux for liquid water               " ], &

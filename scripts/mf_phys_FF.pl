@@ -20,6 +20,7 @@ my @dummy = &F ('//dummy-arg-LT/arg-N', $d2);
 my @remove = map { 0 } @dummy;
 
 my ($name) = &F ('//subroutine-N', $d2, 1);
+print "name=$name\n";
 
 for my $call (&F ('.//call-stmt[string(procedure-designator)="?"]', $name, $d1))
   {
@@ -48,6 +49,8 @@ for my $call (&F ('.//call-stmt[string(procedure-designator)="?"]', $name, $d1))
         $actual[$i]->parentNode->unbindNode;
         $remove[$i] = 1;
       }
+
+print &Dumper (\%d2a);
 
     while (my ($k, $v) = each (%d2a))
       {

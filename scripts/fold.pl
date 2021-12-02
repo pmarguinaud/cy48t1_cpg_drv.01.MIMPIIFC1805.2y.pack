@@ -10,7 +10,7 @@ use Fxtran;
 
 my ($F90, $xpath) = @ARGV;
 
-my $d = &Fxtran::fxtran (location => $F90, fopts => [qw (-line-length 500)]);
+my $d = &Fxtran::fxtran (location => $F90, fopts => [qw (-line-length 1000)]);
 
 
 sub normalizeCommas

@@ -223,9 +223,7 @@
 & }
 
 #:set vars_aplpar_msc = { &
-& "CVGQ"           : [False, False, AS_1_nflevg,        None,                 "LLMF_PHYS",        "convergence of humidity 'Kuo' condition"                                                                       ], &
 & "FHP"            : [False, False, AS_0_nflevg,        None,                 "LLMF_PHYS",        "Total enthalpy flux + sensible heat flux"                                                                      ], &
-& "LCVQ"           : [False, False, AS_1_nflevg,        None,                 "LLMF_PHYS",        "limited physical contribution to the diagnostic of moisture convergence (remove large scale precip. contrib.)" ], &
 & "LSCPE"          : [False, False, AS_1_nflevg,        None,                 "LLMF_PHYS",        "EFFECTIVE RATIO OF L AND CP FOR CONDENSATION/EVAPORATION"                                                      ], &
 & "LH"             : [False, False, AS_1_nflevg,        None,                 "LLMF_PHYS",        "LATENT HEAT AT AIR TEMPERATURE"                                                                                ], &
 & "QW"             : [False, False, AS_1_nflevg,        None,                 "LLMF_PHYS",        "SPECIFIC HUMIDITY OF THE WET THERMOMETER"                                                                      ], &
@@ -301,6 +299,8 @@
 & "MU0LU"          : [False, False, AS_void,            None,                 "LLMF_PHYS",         "local cosine of instantaneous lunar angle."                                  ], &
 & "MU0M"           : [False, False, AS_void,            None,                 "LLMF_PHYS",         "local cosine of averaged solar zenith angle"                                 ], &
 & "MU0N"           : [False, False, AS_void,            None,                 "LLMF_PHYS",         "same as ZMU0 for next time step used for YDMODEL%YRML_PHY_MF%YRARPHY%LMSE)"  ], &
+& "CVGQ"           : [False, False, AS_1_nflevg,        None,                 "LLMF_PHYS",         "convergence of humidity 'Kuo' condition"                                                                       ], &
+& "LCVQ"           : [False, False, AS_1_nflevg,        None,                 "LLMF_PHYS",         "limited physical contribution to the diagnostic of moisture convergence (remove large scale precip. contrib.)" ], &
 & }
 
 #:set vars_mf_phys_gra = { &

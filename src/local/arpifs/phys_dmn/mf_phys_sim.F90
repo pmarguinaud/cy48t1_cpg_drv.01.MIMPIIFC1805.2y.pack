@@ -218,7 +218,6 @@ TYPE(TYP_DDH)     ,INTENT(INOUT) :: YDDDH
 !     ------------------------------------------------------------------
 LOGICAL :: LLDIAB
 LOGICAL :: LL_SAVE_PHSURF
-LOGICAL :: LLXFUMSE
 
 INTEGER(KIND=JPIM) :: IFIELDSS
 INTEGER(KIND=JPIM) :: IPQ,IPO3
@@ -257,9 +256,6 @@ REAL(KIND=JPRB) :: ZAC_HC(YDGEOMETRY%YRDIMV%NFLEVG+1,YDGEOMETRY%YRDIMV%NFLEVG+1)
 
 ! required for INTFLEX
 TYPE(TYPE_INTPROCSET) :: YLPROCSET
-
-! SPP
-REAL(KIND=JPRB) :: ZGP2DSPP(YDGEOMETRY%YRDIM%NPROMA,YSPP%N2D)
 
 
 REAL(KIND=JPRB), POINTER :: ZP1CHEM0(:,:,:), ZP1CHEM9(:,:,:)
@@ -387,22 +383,6 @@ IF (LINTFLEX) YLPROCSET=NEWINTPROCSET()
 !              ------------------------------------
 
 
-INSTEP_DEB=1
-INSTEP_FIN=1
-
-! initialisation for surfex if XFU
-LLXFUMSE=.FALSE.
-IF (LDCONFX) THEN
-  LLXFUMSE=.TRUE.
-ENDIF
-
-! SPP 
-IF ( YSPP_CONFIG%LSPP ) THEN
- DO JROF=1,YSPP%N2D
-   ZGP2DSPP(:,JROF) = YSPP%GP_ARP(JROF)%GP2D(:,1,YDCPG_DIM%KBL)
- ENDDO
-ENDIF
-
 ! Complete physics is called.
 LLDIAB=.NOT.LAGPHY
 
@@ -413,6 +393,9 @@ LLDIAB=.NOT.LAGPHY
 IF (LNHQE) THEN
   CALL MF_PHYS_NHQE_PART1 (YDGEOMETRY, YDCPG_DIM, YDMF_PHYS_TMP, YDVARS, YDMODEL, PGFL)
 ENDIF
+
+INSTEP_DEB=1
+INSTEP_FIN=1
 
 IF (LRAYSP.AND.(YDCPG_DIM%KSTEP >= INSTEP_DEB .AND. YDCPG_DIM%KSTEP <= INSTEP_FIN)) THEN  
   CALL CPPSOLAN(YDGEOMETRY%YRDIM,YDCPG_DIM%KIDIA,YDCPG_DIM%KFDIA,YDGSGEOM%GEMU,YDGSGEOM%GELAM,YDMF_PHYS_TMP%RDG%MMU0)
@@ -514,17 +497,6 @@ YDMF_PHYS%OUT%MOCON(YDCPG_DIM%KIDIA:YDCPG_DIM%KFDIA)=0.0_JPRB
 IF (LCORWAT) THEN
   CALL MF_PHYS_CORWAT (YDCPG_DIM, YDMF_PHYS, YDMF_PHYS_SURF)
 ENDIF
-
-!        2.4  Stores radiation coefficients.
-!             ------------------------------
-
-! * writes grid-point transmission coefficients for simplified physics.
-
-!       2.5   Ozone
-!             -----
-
-!        2.7  Computation of tendencies T,u,v and Q.
-!             --------------------------------------
 
 ! Set GFL tendencies to 0
 

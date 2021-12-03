@@ -1,13 +1,13 @@
 #ifdef RS6K
 @PROCESS NOCHECK
 #endif
-SUBROUTINE MF_PHYS(YDGEOMETRY, YDCPG_DIM, YDCPG_MISC, YDCPG_PHY0, YDCPG_PHY9, YDMF_PHYS, YDMF_PHYS_TMP, YDAPLPAR_TMP, &
+SUBROUTINE MF_PHYS_SIM(YDGEOMETRY, YDCPG_DIM, YDCPG_MISC, YDCPG_PHY0, YDCPG_PHY9, YDMF_PHYS, YDMF_PHYS_TMP, YDAPLPAR_TMP, &
 & YDCPG_DYN0, YDCPG_DYN9, YDMF_PHYS_SURF, YDVARS, YDGMV, YDSURF, YDCFU, YDXFU, &
 & YDMODEL, LDCONFX, PDTPHY, &
 & PGFL, PKOZO, PGP2DSDT, PB1, PB2, PGMVT1, PGFLT1, PGPAR, PTRAJ_PHYS, YDDDH,   &
 & PFTCNS)
 
-!**** *MF_PHYS* METEO-FRANCE PHYSICS.
+!**** *MF_PHYS_SIM* METEO-FRANCE PHYSICS.
 
 !     Purpose.
 !     --------
@@ -15,7 +15,7 @@ SUBROUTINE MF_PHYS(YDGEOMETRY, YDCPG_DIM, YDCPG_MISC, YDCPG_PHY0, YDCPG_PHY9, YD
 
 !**   Interface.
 !     ----------
-!        *CALL* *MF_PHYS(...)*
+!        *CALL* *MF_PHYS_SIM(...)*
 
 !        Explicit arguments :
 !        --------------------
@@ -329,7 +329,7 @@ REAL(KIND=JPRB) :: ZHOOK_HANDLE
 #include "mf_phys_cvv.intfb.h"
 
 !     ------------------------------------------------------------------
-IF (LHOOK) CALL DR_HOOK('MF_PHYS',0,ZHOOK_HANDLE)
+IF (LHOOK) CALL DR_HOOK('MF_PHYS_SIM',0,ZHOOK_HANDLE)
 ASSOCIATE(YDDIM=>YDGEOMETRY%YRDIM, YDDIMV=>YDGEOMETRY%YRDIMV, YDVAB=>YDGEOMETRY%YRVAB, YDCSGEOM=>   &
 & YDGEOMETRY%YRCSGEOM(YDCPG_DIM%KBL), YDGSGEOM=>YDGEOMETRY%YRGSGEOM(YDCPG_DIM%KBL), YDOROG=>YDGEOMETRY%YROROG(YDCPG_DIM%KBL),  &
 & YDPHY=>YDMODEL%YRML_PHY_MF%YRPHY, YDPTRSLB1=>YDMODEL%YRML_DYN%YRPTRSLB1, YDPTRSLB2=>YDMODEL%      &
@@ -430,8 +430,8 @@ ENDIF
 LLDIAB=LMPHYS.AND.(.NOT.LAGPHY)
 
 
-! In the NHQE model, MF_PHYS enters with Tt and grad(Tt), where Tt = T * exp(-(R/cp) log(pre/prehyd)).
-! But calculations of MF_PHYS must use T and grad(T).
+! In the NHQE model, MF_PHYS_SIM enters with Tt and grad(Tt), where Tt = T * exp(-(R/cp) log(pre/prehyd)).
+! But calculations of MF_PHYS_SIM must use T and grad(T).
 ! So we do a conversion Tt -> T.
 IF (LNHQE) THEN
   CALL MF_PHYS_NHQE_PART1 (YDGEOMETRY, YDCPG_DIM, YDMF_PHYS_TMP, YDVARS, YDMODEL, PGFL)
@@ -466,7 +466,7 @@ IF (LLDIAB) THEN
 ENDIF
 
 ! * In some cases, some pseudo-historic surface buffers (like z0) should
-!   not be modified between the entrance and the output of MF_PHYS
+!   not be modified between the entrance and the output of MF_PHYS_SIM
 !   (this is the case for example if LDCONFX=T).
 !   For the time being, we must save:
 !   - HV (group VV) : resistance to evapotranspiration
@@ -1057,7 +1057,7 @@ IF (LTRAJPS) THEN
      & YDVARS%Q%T9,YDVARS%L%T9,YDVARS%I%T9,YDVARS%SP%T9)  
   ENDIF
 
-  IF (LPRTTRAJ.AND.PTRAJ_PHYS%LASTCHUNK) WRITE(NULOUT,*)'GREPTRAJ STORE TRAJ_PHYS in MF_PHYS'
+  IF (LPRTTRAJ.AND.PTRAJ_PHYS%LASTCHUNK) WRITE(NULOUT,*)'GREPTRAJ STORE TRAJ_PHYS in MF_PHYS_SIM'
 ENDIF
 
 !        3.4  Computation of tendencies T,u,v and Q.
@@ -1166,5 +1166,5 @@ IF (LINTFLEX) CALL CLEANINTPROCSET(YLPROCSET)
 
 END ASSOCIATE
 END ASSOCIATE
-IF (LHOOK) CALL DR_HOOK('MF_PHYS',1,ZHOOK_HANDLE)
-END SUBROUTINE MF_PHYS
+IF (LHOOK) CALL DR_HOOK('MF_PHYS_SIM',1,ZHOOK_HANDLE)
+END SUBROUTINE MF_PHYS_SIM

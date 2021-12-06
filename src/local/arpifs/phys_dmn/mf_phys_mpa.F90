@@ -219,8 +219,9 @@ LOGICAL :: LLDIAB
 LOGICAL :: LL_SAVE_PHSURF
 LOGICAL :: LLXFUMSE
 
-INTEGER(KIND=JPIM) :: IPTREXT,IPTR_CONT,IEFB1,IEFB2,IEFB3
-INTEGER(KIND=JPIM) :: IPGFL(YDMODEL%YRML_GCONF%YGFL%NUMFLDS),IPTR(YDMODEL%YRML_GCONF%YGFL%NUMFLDS)
+INTEGER(KIND=JPIM) :: IPTREXT,IEFB1,IEFB2,IEFB3
+INTEGER(KIND=JPIM) :: IPTR(YDMODEL%YRML_GCONF%YGFL%NUMFLDS)
+INTEGER(KIND=JPIM) :: IPGFL(YDMODEL%YRML_GCONF%YGFL%NUMFLDS)
 
 INTEGER(KIND=JPIM) :: INSTEP_DEB,INSTEP_FIN
 INTEGER(KIND=JPIM) :: JLEV, JGFL
@@ -310,6 +311,7 @@ REAL(KIND=JPRB) :: ZHOOK_HANDLE
 #include "mf_phys_transfer.intfb.h"
 #include "mf_phys_precips.intfb.h"
 #include "apl_arome_calc_iptr.intfb.h"
+#include "apl_arome_calc_ipgfl.intfb.h"
 
 !     ------------------------------------------------------------------
 IF (LHOOK) CALL DR_HOOK('MF_PHYS_MPA',0,ZHOOK_HANDLE)
@@ -477,16 +479,7 @@ ZTENDGFL(:,:,:) = 0.0_JPRB
 !        2.9  Computation of evolution of T, u, v and Q.
 !             ------------------------------------------
 
-! * Calculation of IPGFL, since the old pointers
-!   MSLB1[X]9 (=MSLB1GFL9+IP[X]) do not exist any longer in PTRSLB1.
-
-! usefull pointer for new version of cputqy
-
-DO JGFL=1,NUMFLDS
-  IF ((YCOMP(JGFL)%MP1 > 0) .AND. (YCOMP(JGFL)%MP_SL1 > 0)) THEN
-     IPGFL(YCOMP(JGFL)%MP1) = (YCOMP(JGFL)%MP_SL1-1)*(YDCPG_DIM%KFLEVG+2*NFLSUL)
-  ENDIF   
-ENDDO  
+CALL APL_AROME_CALC_IPGFL (YDGEOMETRY, YDCPG_DIM, YDMODEL, IPGFL)
 
 ! ky: non-zero option not yet coded for the time being.
 ZTENDD=0.0_JPRB
@@ -509,8 +502,7 @@ CALL MF_PHYS_TRANSFER (YDCPG_DIM, YDVARS, YDMODEL)
 !      4.1  CALL APL_AROME
 !           --------------
 
-CALL APL_AROME_CALC_IPTR (YDMODEL, IEFB1, IEFB2, IEFB3, IPTR, IPTREXT, IPTRLIMA, IPTRTKE, IPTR_CONT, IRR)
-
+CALL APL_AROME_CALC_IPTR (YDMODEL, IEFB1, IEFB2, IEFB3, IPTR, IPTREXT, IPTRLIMA, IPTRTKE, IRR)
 
 ! If an incorrect address is used, then the initialization below will detect it :
 ZTENDGFLR(:,:,0)=HUGE(1._JPRB)

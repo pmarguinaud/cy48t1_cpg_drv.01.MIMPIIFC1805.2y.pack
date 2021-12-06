@@ -64,7 +64,7 @@ my %INTRINSIC = map { ($_, 1) } @INTRINSIC;
 
 my $F90 = shift;
 
-my $d = &Fxtran::fxtran (location => $F90, fopts => [qw (-line-length 200)]);
+my $d = &Fxtran::fxtran (location => $F90, fopts => [qw (-line-length 400)]);
 
 my @C = &F ('//C[starts-with(string (.),"!* outline")]', $d);
 

@@ -4,9 +4,6 @@ SUBROUTINE APL_AROME(YDGEOMETRY,YDCPG_DIM,YDMF_PHYS_STATE,YDCPG_MISC,YDMF_PHYS,&
  & KMAXDRAFT, KSGST, KNFRRC, PDT, LDXFUMSE, PINDX, PINDY ,&
  & PGEMU,PGELAM,POROG,PGM,PCLON, PSLON,&
  & PGP2DSDT, PGP2DSPP, &
- !---------------------------------------------------------------------
- ! - INPUT A M
- !---------------------------------------------------------------------
  !  - INOUT A S
  & PGPAR, &
  !  - OUT A S

@@ -228,10 +228,6 @@ REAL(KIND=JPRB) :: ZTENDH(YDCPG_DIM%KLON,YDCPG_DIM%KFLEVG)     ! Enthalpy tenden
 REAL(KIND=JPRB) :: ZTENDQ(YDCPG_DIM%KLON,YDCPG_DIM%KFLEVG)     ! Moisture tendency.
 REAL(KIND=JPRB) :: ZTENDPTKE(YDCPG_DIM%KLON,YDCPG_DIM%KFLEVG)  ! Pseudo progn. TKE
 
-! GFL tendencies for APL_AROME (assumes YDMODEL%YRML_GCONF%YGFL%NUMFLDS>=YDMODEL%YRML_PHY_MF%YRPARAR%NRR)
-! for now, use Jovi's trick :
-REAL(KIND=JPRB) :: ZTENDGFL(YDCPG_DIM%KLON,YDCPG_DIM%KFLEVG,YDMODEL%YRML_GCONF%YGFL%NUMFLDS)   ! GFL tendencies
-
 !     --- UPPER AIR PHYSICAL TENDENCIES FOR AROME.
 !       (the previous one are not used in AROME)
 REAL(KIND=JPRB) :: ZTENDT (YDGEOMETRY%YRDIM%NPROMA,YDCPG_DIM%KFLEVG)        ! temperature tendency
@@ -270,7 +266,6 @@ REAL(KIND=JPRB), POINTER :: ZP1EXT0(:,:,:), ZP1EXT9(:,:,:)
 REAL(KIND=JPRB), POINTER :: ZP1LIMA0(:,:,:), ZP1LIMA9(:,:,:)
 REAL(KIND=JPRB), POINTER :: ZP1EZDIAG(:,:)
 REAL(KIND=JPRB), POINTER :: ZP1NOGW0(:,:), ZP1NOGW9(:,:), ZP2NOGW0(:,:), ZP2NOGW9(:,:)
-REAL(KIND=JPRB), POINTER :: ZPTENDTKE1(:,:)
 
 TYPE (MF_PHYS_STATE_TYPE) :: YLMF_PHYS_STATE
 REAL(KIND=JPRB) :: ZHOOK_HANDLE
@@ -335,8 +330,6 @@ CALL SC2PRG(1,YNOGW(:)%MP ,PGFL ,ZP1NOGW0)    !  YDVARS%NOGW(1)%T0
 CALL SC2PRG(1,YNOGW(:)%MP9,PGFL ,ZP1NOGW9)    !  YDVARS%NOGW(1)%T9 
 CALL SC2PRG(2,YNOGW(:)%MP ,PGFL ,ZP2NOGW0)    !  YDVARS%NOGW(2)%T0
 CALL SC2PRG(2,YNOGW(:)%MP9,PGFL ,ZP2NOGW9)    !  YDVARS%NOGW(2)%T9 
-
-CALL SC2PRG(YTKE%MP1  ,ZTENDGFL ,ZPTENDTKE1)
 
 CALL YLMF_PHYS_STATE%INIT (LTWOTL, YDCPG_DYN0, YDCPG_DYN9, YDCPG_PHY0, YDCPG_PHY9, YDVARS, YDMF_PHYS_SURF, &
                   & P1EXT0=ZP1EXT0, P1EXT9=ZP1EXT9, P1CHEM0=ZP1CHEM0, P1CHEM9=ZP1CHEM9, &
@@ -412,13 +405,6 @@ CALL MF_PHYS_INIT ( YGFL, YDARPHY, YDCPG_DIM%KIDIA, YDCPG_DIM%KFDIA, YDCPG_DIM%K
   & YDMF_PHYS%OUT%CAPE  , YDMF_PHYS%OUT%CTOP  , YDMF_PHYS%OUT%CLPH  , YDMF_PHYS%OUT%VEIN  , YDMF_PHYS%OUT%UGST  , YDMF_PHYS%OUT%VGST  ,&
   & YDMF_PHYS%OUT%DIAGH , YDMF_PHYS%OUT%EDR, YDMF_PHYS%OUT%VISICLD, YDMF_PHYS%OUT%VISIHYD, YDMF_PHYS%OUT%MXCLWC, YDMF_PHYS%OUT%MOCON)
 
-!*       2.    Complete physics.
-!              -----------------
-
-! Set GFL tendencies to 0
-
-ZTENDGFL(:,:,:) = 0.0_JPRB
-
 !        2.9  Computation of evolution of T, u, v and Q.
 !             ------------------------------------------
 
@@ -432,32 +418,6 @@ DO JGFL=1,NUMFLDS
      IPGFL(YCOMP(JGFL)%MP1) = (YCOMP(JGFL)%MP_SL1-1)*(YDCPG_DIM%KFLEVG+2*NFLSUL)
   ENDIF   
 ENDDO  
-
-!  ALARO does not respect the coding rules, tendency of pseudo-TKE is computed in APLPAR and not
-!  in CPTEND_NEW. To use the new version of cputqy it is then necessary to write it in GFL tendencies array.
-! This memory transfer is not necessary, please respect coding rules to avoid it.
-
-! Not necessary for intflex: already done in aplpar2intflex
-
-IF (LPTKE) THEN
-  DO JLEV=1,YDCPG_DIM%KFLEVG
-    DO JROF=YDCPG_DIM%KIDIA,YDCPG_DIM%KFDIA
-      ZPTENDTKE1(JROF,JLEV) = ZTENDPTKE(JROF,JLEV)
-    ENDDO
-  ENDDO    
-ENDIF
-! Extra-GFL
-IF(LMDUST.AND.(NGFL_EXT/=0)) THEN
-  DO JGFL=1, NGFL_EXT
-    DO JLEV=1,YDCPG_DIM%KFLEVG
-      DO JROF=YDCPG_DIM%KIDIA,YDCPG_DIM%KFDIA
-        ZTENDGFL(JROF,JLEV,YEXT(JGFL)%MP1) = ZTENDEXT(JROF,JLEV,JGFL)+&! turbulent tendency
-                                           & ZTENDEXT_DEP(JROF,JLEV,JGFL) ! moist tendency
-      ENDDO
-    ENDDO 
-  ENDDO   
-ENDIF
-
 
 ! ky: non-zero option not yet coded for the time being.
 ZTENDD=0.0_JPRB

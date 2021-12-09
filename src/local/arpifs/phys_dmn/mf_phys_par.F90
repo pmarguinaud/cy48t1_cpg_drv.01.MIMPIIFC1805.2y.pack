@@ -7,142 +7,438 @@ SUBROUTINE MF_PHYS_PAR(YDGEOMETRY, YDCPG_DIM, YDCPG_MISC, YDCPG_PHY0, YDCPG_PHY9
 & PGFL, PKOZO, PGP2DSDT, PB1, PB2, PGMVT1, PGFLT1, PGPAR, PTRAJ_PHYS, YDDDH,   &
 & PFTCNS)
 
-!**** *MF_PHYS_PAR* METEO-FRANCE PHYSICS.
+!**** *APLPAR * - APPEL DES PARAMETRISATIONS PHYSIQUES.
 
-!     Purpose.
-!     --------
-!         Call METEO-FRANCE physics and physical tendencies.
+!     Sujet.
+!     ------
+!     - APPEL DES SOUS-PROGRAMMES DE PARAMETRISATION
+!       INTERFACE AVEC LES PARAMETRISATIONS PHYSIQUES (IALPP).
+!     - CALL THE SUBROUTINES OF THE E.C.M.W.F. PHYSICS PACKAGE.
 
 !**   Interface.
 !     ----------
-!        *CALL* *MF_PHYS_PAR(...)*
+!        *CALL* *APLPAR*
 
-!        Explicit arguments :
-!        --------------------
+!-----------------------------------------------------------------------
 
-!     INPUT:
-!     ------
-!        KBL       : NPROMA-packets number
-!        KGPCOMP   : total number of grid points in the domain
-!        KST       : first element of work.
-!        KEND      : last element of work.
-!        KSTGLO    : global offset.
-!        LDCONFX   : (see in CPG)
-!        PDTPHY    : timestep used in the physics.
-!        KIBL      : index into YRCSGEOM/YRGSGEOM types in YDGEOMETRY
-!        POROGL,POROGM: components of grad(orography).
-!        PGFL      : GFL at time t and t-dt.
-!        PKOZO     : fields for photochemistery of ozon.
-!        PGP2DSDT  : stochastic physics random pattern.
+! -   ARGUMENTS D'ENTREE.
+! -   INPUT ARGUMENTS.
+!     -------------------
 
-!     INPUT/OUTPUT:
-!     -------------
-!        PB1       : "SLB1"-buffer, used for interpolations in the SL scheme.
-!        PB2       : "SLB2"-buffer.
-!        PGFLT1    : GFL t+dt
-!        PGPAR     : surface fields for AROME.
-!        PGMU0     : COSINE OF SOLAR ZENITH ANGLE, APPROXIMATE ACTUAL VALUE
-!                    linear T_e correction
-!                    linear T_e correction
+! - NOM DES PARAMETRES DE DIMENSIONNEMENT DE LA PHYSIQUE.
+! - DIMENSIONS.
 
-!     OUTPUT:
+! KBL  : NUMERO DE BLOC NPROMA
+! KBL  : NPROMA-PACKETS NUMBER
+! KGPCOMP : NOMBRE TOTAL DE POINTS DE GRILLE SUR LE DOMAINE
+! KGPCOMP : TOTAL GRID POINTS NUMBER IN THE DOMAIN
+! KIDIA, KFDIA : BORNES BOUCLES HORIZONTALES   (IST,IEND DANS CPG).
+! KIDIA, KFDIA : START/END OF HORIZONTAL LOOP  (IST,IEND IN *CPG*).
+! KLON : DIMENSION HORIZONTALE                 (NPROMA DANS CPG).
+! KLON : HORIZONTAL DIMENSION                  (NPROMA IN *CPG*).
+! KLON: IDEM BUT FOR ARRAYS USED SOLELY BY DMN PHYSICS
+! KLEV : FIN BOUCLE VERTICE ET DIMENSION VERTICALE (NFLEVG DANS CPG).
+! KLEV : END OF VERTICAL LOOP AND VERTICAL DIMENSION(NFLEVG IN *CPG*).
+! KSTGLO     : global offset.
+! KSGST      : NOMBRE DE TEMPERATURES ET DE FLUX DE SURFACE SOUS-MAILLE
+!                     (NTSSG DANS CPG)
+! KSGST      : NUMBER OF SUBGRID SURFACE TEMPERATURES AND FLUXES
+!                     (NTSSG IN *CPG*)
+! KNFRRC     : FREQUENCE DE CALCUL DU RAYONNEMENT CLEAR SKY
+! KNFRRC     : FREQUENCY FOR CLEAR SKY RADIATION CALCULATION
+! PDT        : TIME STEP (in s)
+
+! LOGICAL
+! LDXFUMSE   : T if CDCONF=X in order not to increment surfex timer in that case
+
+! - NOM DES VARIABLES DE LA PHYSIQUE (PAR ORDRE ALPHABETIQUE DANS CHAQUE
+!   CATEGORIE).
+
+! - 2D (0:KLEV) .
+
+
+! - 2D (1:KLEV) .
+
+! PGFL       : GFL FIELDS
+! PCVGQ      : CONVERGENCE D'HUMIDITE (CONDITION DE "KUO").
+! PCVGQ      : CONVERGENCE OF HUMIDITY ("KUO" CONDITION).
+! PKOZO      : CHAMPS POUR LA PHOTOCHIMIE DE L'OZONE (KVCLIS CHAMPS).
+! PKOZO      : FIELDS FOR PHOTOCHEMISTERY OF OZONE   (KVCLIS FIELDS).
+
+! - 1D (PROGNOSTIQUE) .
+! - 1D (PROGNOSTIC QUANTITIES) .
+
+
+! - 1D (GEOGRAPHIQUE) .
+! - 1D (GEOGRAPHICAL DISTRIBUTION) .
+
+! PALV       : ALBEDO DE LA VEGETATION.
+! PALV       : VEGETATION ALBEDO.
+! PALBF      : ALBEDO FIXE (SOL SANS NEIGE).
+! PALBF      : BACKGROUND SURFACE SHORTWAVE ALBEDO (SNOW-FREE).
+! PALBSF     : ALBEDO FIXE DU SOL (SOL SANS NEIGE).
+! PALBSF     : BACKGROUND SOIL SHORTWAVE ALBEDO (SNOW-FREE).
+! PARG       : POURCENTAGE D'ARGILE DANS LE SOL.
+! PARG       : SILT PERCENTAGE WITHIN THE SOIL.
+! PD2        : EPAISSEUR DU RESERVOIR PROFOND.
+! PD2        : DEEP-LAYER OF THE OF THE PROFOUND WATER-TANK.
+! PEMISF     : EMISSIVITE FIXE (SOL SANS NEIGE).
+! PEMISF     : BACKGROUND SURFACE LONGWAVE EMISSIVITY (SNOW-FREE).
+! PGETRL     : ECART TYPE DE L'OROGRAPHIE (EN J/KG).
+! PGETRL     : STANDARD DEVIATION OF OROGRAPHY  (UNIT: J/KG).
+! PLSM       : INDICE TERRE/MER.
+! PLSM       : LAND/SEA MASK.
+! PIVEG      : TYPE DE VEGETATION.
+! PIVEG      : TYPE OF VEGETATION.
+! PLAI       : INDICE FOLIAIRE.
+! PLAI       : FOLIAIRE INDICE.
+! PRCORI     : FACTEUR DE CORIOLIS.
+! PRCORI     : CORIOLIS FACTOR.
+! PRSMIN     : RESISTANCE STOMATIQUE MINIMALE.
+! PRSMIN     : STOMATAL MINIMAL RESISTANCE.
+! PSAB       : POURCENTAGE DE SABLE DANS LE SOL.
+! PSAB       : PERCENTAGE OF SAND WITHIN THE SOIL.
+! PVRLAN     : ANISOTROPIE DU RELIEF SOUS MAILLE.
+! PVRLDI     : ANGLE DE LA DIRECTION DU RELIEF AVEC L'AXE DES X.
+!              DUE AU RELIEF.
+
+! - 1D (DIAGNOSTIQUE) .
+! - 1D (DIAGNOSTIC QUANTITIES).
+
+! PHV        : RESISTANCE A L'EVAPOTRANSPIRATION.
+! PHV        : RESISTANCE TO EVAPOTRANSPIRATION.
+! PMU0       : COSINUS LOCAL INSTANTANE DE L'ANGLE ZENITHAL SOLAIRE.
+! PMU0LU     : COSINUS LOCAL INSTANTANE DE L'ANGLE ZENITHAL LUNAIRE.
+! PMU0       : LOCAL COSINE OF INSTANTANEOUS SOLAR ZENITH ANGLE.
+! PMU0LU     : LOCAL COSINE OF INSTANTANEOUS LUNAR ZENITH ANGLE.
+! PMU0M      : COSINUS LOCAL MOYEN DE L'ANGLE ZENITHAL.
+! PMU0M      : LOCAL COSINE OF AVERAGED SOLAR ZENITH ANGLE.
+! PMU0N      : COSINUS LOCAL AU PAS DE TEMPS SUIVANT DE L'ANGLE ZENITHAL SOLAIRE.
+! PMU0N      : NEXT TIME STEP COSINUS LOCAL INSTANTANE DE L'ANGLE ZENITHAL SOLAIRE.
+! PFPLCH     : CHAMP "HISTORIQUE" POUR LES PRECIPITATIONS CONVECTIVES.
+! PFPLCH     : HISTORICAL FIELD FOR CONVECTIVE PRECIPITATIONS.
+! PFPLSH     : CHAMP "HISTORIQUE" POUR LES PRECIPITATIONS STRATIFORMES.
+! PFPLSH     : HISTORICAL FIELD FOR STRATIFORM PRECIPITATIONS.
+! PGPAR       : BUFFER FOR 2D FIELDS - CONTAINS PRECIP, ALBEDO, EMISS, TS
+!             : SURFACE FLUXES
+
+! PMMU0      : MEAN SOLAR ANGLE FOR GIVEN GRID POINT FOR SIMPL.
+!              RADIATION SCHEME.
+!              SIMPLIFIED RADIATION SCHEME.
+
+! PTCCH      : PSEUDO-HISTORICAL ARRAY FOR TOTAL CONVECTIVE CLOUDINESS (1D).
+! PSCCH      : PSEUDO-HISTORICAL ARRAY FOR CONVECTIVE CLOUD SUMMIT (1D).
+! PBCCH      : PSEUDO-HISTORICAL ARRAY FOR CONVECTIVE CLOUD BASE (1D).
+! PPBLH      : PSEUDO-HISTORICAL ARRAY FOR PBL HEIGHT (1D).
+! PQSH       : PSEUDO-HISTORICAL ARRAY FOR SURFACE MOISTURE (1D).
+! PUDGRO     : PSEUDO-HISTORICAL ARRAY FOR UPDRAFT RISING TOP (1D) - ACCSU
+!              FRACTION OF PATH COMPLETED ABOVE LAST ACTIVE LEVEL AT T9
+
+! - CONSTANTES
+
+! POMPAC    : Horizontally variable Curtis matrix for thermal rad. (clear sky)
+! PAC       : Horizontally cst Curtis matrix for thermal rad. (clear sky)
+
+
+
+!-----------------------------------------------------------------------
+
+! -   INPUT/OUTPUT ARGUMENTS.
+!     -----------------------
+
+! - 2D (ACRANEB2 INTERMITTENCY STORAGE)
+
+!             LINEAR T_e CORRECTION
+!             LINEAR T_e CORRECTION
+
+! - 1D (ACRANEB2 INTERMITTENCY STORAGE)
+
+
+!-----------------------------------------------------------------------
+
+! -   ARGUMENTS DE SORTIE.
+! -   OUTPUT ARGUMENTS.
+!     --------------------
+
+! - NOM DES VARIABLES DE LA PHYSIQUE (PAR ORDRE ALPHABETIQUE DANS CHAQUE
+!   CATEGORIE).
+
+! - 2D (0:KLEV) .
+
+! PDIFSV     : FLUX TURBULENT DES SCALAIRES PASSIFS.
+! PDIFSV     : TURBULENT FLUX OF PASSIVE SCALAR.
+! PFTKE      : FLUX DE TKE.
+! PFTKE      : TKE FLUX.
+! PFRMQ      : FLUX MESOSPHERIQUE D'humidite.
+! PFRMQ      : MESOSPHERIC humidity flux
+
+! - 2D (1:KLEV) .
+
+! PLH        : CHALEUR LATENTE A LA TEMPERATURE DE L'AIR.
+! PLH        : LATENT HEAT AT AIR TEMPERATURE.
+! PLSCPE     : RAPPORT EFECTIF DES L ET CP EN CONDENSATION/EVAPORATION.
+! PLSCPE     : EFFECTIVE RATIO OF L AND CP FOR CONDENSATION/EVAPORATION.
+! PQSAT      : HUMIDITE SPECIFIQUE DE SATURATION.
+! PQSAT      : SPECIFIC HUMIDITY AT SATURATION.
+! PQW        : HUMIDITE SPECIFIQUE DU THERMOMETRE MOUILLE.
+! PQW        : SPECIFIC HUMIDITY OF THE WET THERMOMETER.
+! PTW        : TEMPERATURE DU THERMOMETRE MOUILLE.
+! PTW        : TEMPERATURE OF THE WET THERMOMETER.
+! PTENDPTKE  : INCREMENT DE LA ENERGIE CINETIQUE TURBULENTE (schema pTKE)
+! PTENDPTKE  : TKE INCREMENT (USED BY PSEUDOPROGNOSTIC TKE SCHEME)
+! PKUROV_H   : Coefficient d'echange horizontal de u et v
+! PKUROV_H   : Horizontal exchange coefficient for momentum
+! PKTROV_H   : Coefficient d'echange horizontal de T et q
+! PKTROV_H   : Horizontal exchange coefficient for heat
+
+! - 2D (CLOUD AND RADIATION I/O FOR ECMWF PHYSICS)
+
+! ZTENT      : TENDENCY OF TEMPERATURE.
+
+! - 2D (0:1)
+
+! - 1D (DIAGNOSTIQUE) .
+
+! PCD        : COEFFICIENT D'ECHANGE EN SURFACE POUR U ET V.
+! PCD        : EXCHANGE COEFFICIENT AT SURFACE LEVEL FOR U AND V.
+! PCDN       : COEFFICIENT NEUTRE D'ECHANGE EN SURFACE.
+! PCDN       : EXCHANGE COEFF. AT SURFACE LEVEL IN NEUTRAL CONDITIONS.
+! PCH        : COEFFICIENT D'ECHANGE EN SURFACE POUR T ET Q.
+! PCH        : EXCHANGE COEFFICIENT AT SURFACE LEVEL FOR T AND Q.
+! PCPS       : CHALEUR MASSIQUE DE L'AIR EN SURFACE.
+! PC1        : COEFF. HYDRIQUE REPRESENTANT L'INTENSITE AVEC LAQUELLE
+!              LES FLUX DE SURFACE PARTICIPENT A L'EVOLUTION DE WS.
+! PC1        : HYDROLOGICAL COEFF. SHOWING THE CONTRIBUTION OF SURFACE
+!              FLUXES IN THE WS EVOLUTION.
+! PC2        : COEFF. HYDRIQUE TRADUISANT LA RAPIDITE DES TRANSFERTS
+!              D'EAU ENTRE LES DEUX RESERVOIRS.
+! PC2        : HYDROLOGICAL COEFFICIENT SHOWING THE QUICKNESS OF WATER
+!              TRANSFERS BETWEEN BOTH TANKS.
+! PEMIS      : EMISSIVITE DE SURFACE COURANTE.
+! PEMIS      : MODEL SURFACE LONGWAVE EMISSIVITY.
+! PFEVI      : FLUX DE VAPEUR D'EAU SUR SOL GELE.
+! PFEVI      : WATER VAPOUR FLUX OVER FROZEN SOIL.
+! PLHS       : CHALEUR LATENTE EN SURFACE.
+! PNEIJ      : PROPORTION DE SOL ENNEIGE.
+! PNEIJ      : FRACTION OF SOIL COVERED BY SNOW.
+! PVEG       : FRACTION DE VEGETATION APPARENTE.
+! PVEG       : FRACTIONAL COVER BY APPARENT VEGETATION.
+! PQSATS     : HUMIDITE SPECIFIQUE DE SATURATION EN SURFACE.
+! PQSATS     : SATURATED SPECIFIC HUMIDITY AT SURFACE LEVEL.
+! PRS        : CONSTANTE DES GAZ DE L'AIR EN SURFACE.
+! PCLCC      : SORTIE DIAGNOSTIQUE DE LA NEBULOSITE CONVECTIVE.
+! PCLCC      : CONVECTIVE CLOUD COVER (DIAGNOSTIC).
+! PDPRECIPS  : PRECIPITATION TYPE
+! PDPRECIPS2 : PRECIPITATION TYPE FOR 2NDE PERIOD
+! PTENDEXT_DEP:WET TENDENCY OF PASSIVES SCALAIRE
+! PTENDEXT_DEP:TENDANCE HUMIDE DES SCALAR PASSIFS
+! - INPUT/OUTPUT 1D
+! YDDDH      : DDH superstructure
+!-----------------------------------------------------------------------
+
+! -   ARGUMENTS IMPLICITES.
+! -   IMPLICIT ARGUMENTS.
+!     ---------------------
+
+!-----------------------------------------------------------------------
+
+!     Externes.
+!     ---------
+
+!     Methode.
+!     --------
+!     - TERMINE LES INITIALISATIONS.
+!     - APPELLE LES SS-PRGMS TAMPONS SUIVANT LA LOGIQUE TROUVEE
+!        DANS /YOMPHY/. EUX MEMES VONT DECLARER LES TABLEAUX DE TRAVAIL
+!        ET APPELER LES PARAMETRISATIONS ELLES MEMES.
+!     - FINISH UP THE INITIALIZATION.
+!     - CALL THE BUFFER SUBROUTINES FOLLOWING /YOEPHY/ REQUIREMENTS
+!        WHICH IN TURN CALL THE ACTUAL PHYSICS SUBROUTINES
+!        (THIS LAST POINT NOT PARTIALLY DONE)
+
+!     Auteur.
 !     -------
-!        PDHSF     : distribution of horizontal mean weights used for
-!                    simplified radiation scheme.
-!        ---------------------- output of aplpar ------------------------------
-!        PFCQNG    : pseudo-flux of water to correct for Q<0.
-!        PDIFCQLC to PFCNEGQSC:
-!        ---------------------- end of output of aplpar -----------------------
-!        PTENDU    : "U"-wind tendency due to physics.
-!        PTENDV    : "V"-wind tendency due to physics.
-!        PDIAGH    : Add Hail diagnostic PDIAGH (AROME)
-
-!        Implicit arguments :
-!        --------------------
-
-!     Method.
-!     -------
-
-!     Externals.
-!     ----------
-
-!     Reference.
-!     ----------
-
-!     Author.
-!     -------
-!       2000-12-04: F. Bouyssel & J.M. Piriou
+!     90-09-28: A. Joly, *CNRM*.
 
 !     Modifications.
 !     --------------
-!       04-Mar-2009 A.Alias : call CPTEND/INITAPLPAR modified to add
-!                         Humidity Mesopheric flux (ZFRMQ).
-!                     and IVCLIA removed and call to CPNUDG modified as
-!                         Nuding mask is now in SD_VF group
-!                         call HL_APLPAR modified to add PFCQNG for acdifus
-!                         call APL_AROME modified to add Sulfate/Volcano aerosols for radaer
-!       K. Yessad (Jul 2009): remove CDLOCK + some cleanings
-!       2009-10-15 Y. Bouteloup : Store radiative cloud water and ice in GFL (YIRAD and YLRAD)
-!       F. Vana   15-Oct-2009 : NSPLTHOI option
-!       K.Yessad (Feb 2010): use YM_RADTC and RFORADTC
-!       2010-03-26 Y. Bouteloup : Store radiative cloud water and ice in GFL (AROME case)
-!       2010-04-26 Y. Bouteloup : Only one call to cputqy, cputqys and cputqy_arome
-!            This need the use of ZTENDGFL as argument of cptend, cptend_new and apl_arome.
-!       2010-05-11 F. Bouyssel : Use of PINDX, PINDY
-!       2010-05-28 C. Geijo    : Fix error in IPTR array element referencing 
-!       2010-06-21 O.Riviere/F. Bouyssel : Fix to have Ts evolving in Fa files with Surfex
-!       Dec 2010 A.Alias   : ZMU0N added to call CPPHINP/APLPAR/APL_AROME/HL_APLPAR
-!                            CALL to CPNUDG with or with LMSE (A.Voldoire)
-!       K. Yessad (Jan 2011): introduce INTDYN_MOD structures.
-!       L. Bengtsson-Sedlar & F. Vana 18-Feb-2011 : CA scheme for convection
-!       F. Vana   22-Feb-2011 : 3D turbulence
-!       2011-02-01 M. Mokhtari: Add LMDUST and PEXTT9 and PEXTT0 IN APLPAR
-!                             (treatment of the desert aerosols) 
-!       2011-03 A.Alias  : new argument to  for sunshine hours YSD_VD%YSUND 
-!                      CPNUDG if LMSE=.T. or LMSE=.F. (bugfix)
-!                      debug ozone GFL (IPO3) (D. St-Martin)
-!                      Humidity Mesopheric flux (ZFRMQ) added in CPTEND_NEW
-!       F.Bouyssel (26-03-2011): Fix to have Snow in hist file with surfex
-!       2011-06: M. Jerczynski - some cleaning to meet norms
-!       E. Bazile 2011-08-26 : Output for MUSC 1D with LFA files with WRITEPHYSIO
-!         used previously for extracting profiles from 3D (now also available for AROME).
-!       K. Yessad (Dec 2011): use YDOROG, YDGSGEOM and YDCSGEOM.
-!       2011-11-21 JF Gueremy : dry convective adjustment (LAJUCV)
-!       F. Vana  26-Jan-2012 : historic Qs for TOM's BBC.
-!       F.Bouttier Jul 2012: stochastic physics for AROME
-!       Z. SASSI  : 07-Mar-2013   INITIALIZING THE WEIGHT VECTORS PDHSF(NPROMA)
-!       [DISTRIBUTION OF HORIZONTAL MEANS WEIGHTS]
-!       F. Vana  28-Nov-2013 : Redesigned trajectory handling
-!       T. Wilhelmsson (Sept 2013) Geometry and setup refactoring.
-!       2013-11, D. Degrauwe: Flexible interface CPTEND_FLEX.
-!       2013-11, J. Masek: Passing intermittency arrays for ACRANEB2.
-!       K. Yessad (July 2014): Move some variables.
-!       2016-04, J. Masek: Passing sunshine duration to APL_AROME.
-!       2016-09, M. Mokhtari & A. Ambar: replacement of ZEXT and ZEZDIAG by PGFL
-!                                        in aplpar.F90 argument.
-!       2016-10, P. Marguinaud : Port to single precision
-!       K. Yessad (Dec 2016): Prune obsolete options.
-!       K. Yessad (June 2017): Introduce NHQE model.
-!       2017-09, J. Masek: Shifted dimensioning of PGMU0.
-!       K. Yessad (Feb 2018): remove deep-layer formulations.
-!       K. Yessad (Apr 2018): introduce key L_RDRY_VD (ensure consistent definition of "dver" everywhere).
-!       2018-09, F. Duruisseau: add rconv and sconv in gfl for bayrad
-!       2018-09, R. Brozkova: Passing of diagnostic hail, global normal
-!         irradiance and mean radiant temperature from APLPAR.
-!       2018-09, D. St-Martin : add NOGWD inputs in aplpar
-!       2018-09, M. Michou : add ARPEGE-Climat chemistry call in aplpar  
-!   R. El Khatib 27-02-2019 Use pointer function SC2PRG to avoid bounds violation
-!       2019-05, I. Etchevers : add visibilities and precipitation type
-!   R. El Khatib 27-02-2019 memory bandwidth savings.
-!   R. El Khatib 30-Oct-2018 IMAXDRAFT
-!       2019-09, M. Hrastinski: Dataflow for TKE and TTE terms in ALARO DDH (PFTCNS).
-!       2019-09, J. Masek: Modified call to APL_AROME (added argument NFRRC).
-!       2019-12, Y. Bouteloup: Introduction of ZTENDU and ZTENDV for computation of ZDEC in cputqy
-!                diferent from PTENDU and PTENDV in the case of the use of Tiedtke scheme to avoid double counting
-!       2020-12, U. Andrae : Introduce SPP for HARMONIE-AROME
-!       2021-01, R. Brozkova: ALARO graupel fix.
+!     2007-02-01 M.Janousek : Introduction of 3MT routines
+!     2007-02-19 R.Brozkova : Cleaning obsolet features (LSRCON, LSRCONT, LNEBT,
+!                             pre-ISBA, modularisation and racionalisation.
+!     2007-04-17 S.Ivatek-S : Over dimensioning of PGPAR (KLON,NGPAR+1) is used
+!                             boundary checking bf
+!     2007-05-10 E. Bazile  : Introduction of the AROME shallow convection (LCVPPKF)
+!     2007-03-21 A. Alias   : Modifications for SURFEX (IGFL_EXT)
+!     2007-05-07 F. Bouyssel: Several modifications for SURFEX
+!     2007-05-07 F. Bouyssel: New argument in ACCOEFK
+!     2007-06-27 A. Alias   : Use NGFL_EXT instead of IGFL_EXT
+!     2008-02-18 F. Bouyssel: New acdifv1 & acdifv2 & arp_ground_param
+!     2008-02-21 E. Bazile  : Cleaning for the call of the AROME shallow convection (LCVPPKF)
+!     4-Mar-2008 Y. Seity : Cleaning IR and WV similated sat radiances
+!                            (replaced by Fullpos Calculations)
+!     2008-03-14 Y. Bouteloup: Store diffusion coefficients from non-linear model
+!     2007-10-11 A. Alias   : New Call to ACHMT/ACNEBR/ACPBLH (P. Marquet/JF. Gueremy)
+!     2008-02-01 P. Marquet : modify ZALBD/ZALBP and PFRSODS if LRAYFM15 (idem V4)
+!     2008-03-26 F. Bouyssel: Intrduction of LACDIFUS
+!     2008-04-28 E. Bazile  : Introduction of ZPROTH_CVPP for the TKE scheme
+!     2008-05-09, J.F. Gueremy : Flux MEMO sur mer (ACFLUSO/LFLUSO) +
+!            and  P. Marquet   : ZCEROV as new argument in ACDIFUS
+!     2008-06-01 F. Bouyssel: Interface of radozc (ECMWF ozone)
+!     2008-09-02 F. Vana  : Better split of ACPTKE and ACDIFV1 code
+!     2008-10-01 F. Bouyssel: Call of radozcmf instead of radozc (ECMWF ozone)
+!     2008-10-05 E. Bazile : Computation of the PBL height from the TKE.
+!     03-Oct-2008 J. Masek    parameters for NER statistical model via namelist
+!     2009-Jan-21 F. Vana : new mixing lengths for pTKE + few fixes
+!     2008-11    C. Payan: Neutral Wind (new arg in the call of ACHMT)
+!     2008-11-15 F. Bouyssel: Correction of negative humidities
+!     2009-05-01 Y. Bouteloup : Store radiative cloud water and ice in GFL (YIRAD and YLRAD)
+!     2009-05-25 F. Bouyssel: Cleaning
+!     K. Yessad (Jul 2009): remove CDLOCK + some cleanings
+!     2009-08-07 A. Alias   : LCALLSFX introduced to call only once SURFEX at NSTEP=0
+!                             Computation of ZRTI (INVERSE DE R*T) added (after ACHMTLS)-not done
+!                             Negatives humidity correction PFCQVNG in acdifus (J.F. Gueremy)
+!                             add ZAESUL/ZAEVOL to CALL RADAER
+!     2009-09-21  D. Banciu: complete the cascade within 3MT frame;
+!            prepare the environment for Rash and Kristjansson condensation (RK) scheme
+!            remove some arguments of ACPUM and ACUPD (LUDEN option was removed)
+!     12-Oct-2009 F. Vana : optimization + update of mixing lengths for p/eTKE
+!     2009-10-15 Y. Bouteloup : Store radiative cloud water and ice in GFL (YIRAD and YLRAD)
+!     2009-10-23 O.Riviere Intro. of LGWDSPNL for GWD in simpl. phys.
+!     2010-01-21 S. Riette: PU, PV and ZDEPTH_HEIGHT in 3D for ARO_GROUND_DIAG
+!     2010-05-11 F. Bouyssel : Use of PINDX, PINDY
+!     2010-06-20 Y. Seity : Use AROCLDIA to compute PBLH
+!     2010-10    A. Alias Compute Sunshine duration
+!     2010-10    A. Alias modify ZALBD/ZALBP and PEMIS if LRAYFM for CLIMAT (JF Gueremy)
+!     2010-08-10 P.marguinaud : Cleaning
+!     2011-01-10 F. Bouyssel: Intro. of LADJCLD and some cleaning.
+!     2010-12-01 E. Bazile: TKE1 for AROCLDIA and contributions terms of the
+!          TKE equations for DDH.
+!     2010-12 S. Riette: aro_ground_diag interface modified to add snow cover
+!     2010-12    B. Decharme  : modify the radiative coupling with surfex (SW per band in ACRADIN and RADHEAT)
+!     2011-02    A. Alias     : Computation of ZRTI (INVERSE DE R*T) added (after ACHMTLS)
+!     2011-02    A. Voldoire : add ZAERINDS to CALL RADAER and ACRADIN
+!                              for sulfate indirect effect computation
+!     L. Bengtsson-Sedlar & F. Vana 18-Feb-2011 : CA scheme for convection
+!     I. Bastak-Duran, F. Vana & R. Brozkova  16-Mar-2011: TOUCANS, version 0
+!     2011-02-01 M. Mokhtari: Several modifications for aplpar and introduction of the key LMDUST
+!                             (treatment of the desert aerosols)
+!     2011-02-24 Y. Bouteloup : EDKF + Surface forcing for MUSC
+!     2011-03-26 F. Bouyssel: Intro. of PSPSG (snow cover with surfex)
+!     2011-09-07 J.M. Piriou: PCMT convection scheme.
+!     2011-11-17 J.F. Gueremy: ZQLI_CVP diagnostic convective water content
+!     2011-06: M. Jerczynski - some cleaning to meet norms
+!     2011-11-29 K-I. Ivarsson, L. Bengtsson: RK-scheme modifications   
+!     26-Jan-2012: F. Vana + I. Bastak-Duran - TOUCANS update + bugfixes 
+!     2012-04-24 F. Bouyssel: Bug correction on surface water fluxes with surfex
+!     2012-06-09 M. Mile: Bug correction for undefined z0;z0h at 0th step CALL ARO_GROUND_DIAG_Z0
+!     2012-09-11 : P.Marguinaud : Add control threshold for
+!     2013-06-17 J.M. Piriou: evaporation for PCMT scheme.
+!     T. Wilhelmsson (Sept 2013) Geometry and setup refactoring.
+!     2013-11-08 Y. Bouteloup New version of ACDIFV1 and ACDIFV2 for "full implicit PMMC09 scheme"
+!     F. Vana  28-Nov-2013 : Redesigned trajectory handling.
+!     2013-11, J. Masek: Introduction of ACRANEB2 scheme, externalized
+!                        computation of direct albedo for ACRANEB/ACRANEB2.
+!                        Phasing to cy40t1.
+!     K. Yessad (July 2014): Move some variables.
+!     2014-09, C. Wastl: Adaptations for orographic shadowing
+!     2014-10, R. Brozkova: phasing TOUCANS.
+!     2016-03, E. Bazile: phasing MUSC for surf_ideal_flux
+!     2016-03, L. Gerard: LNSDO AND LCVCSD
+!     2016-04, J. Masek: Exponential-random cloud overlap with variable
+!                        decorrelation depth.
+!     2016-09, J. Masek: Proper diagnostics of sunshine duration in ACRANEB2.
+!     2016-09, M. Mokhtari & A. Ambar: preliminary calculation for passive scalar
+!     2016-10, P. Marguinaud : Port to single precision
+!     K. Yessad (Dec 2016): Prune obsolete options.
+!     2016-06, F.Taillefer: add of aro_ground_diag_2isba call
+!     2017-09, Y.Bouteloup: Phased Francoise's modification on cy45
+!     2017-09, J. Masek: Fix for protected convective cloudiness,
+!                        shifted dimensioning of PGMU0.
+!     R. El Khatib 05-Feb-2018 fix bounds violations
+!     2018-09, F. Duruisseau: Add PQRCONV1 and PQSCONV1 out (BAYRAD)
+!     2018-09, D. St-Martin: Add non-orographic GWD scheme (ACNORGWD)
+!     2018-09, R. Roehrig: add ACTKE input/output (ZQLC/ZQIC and ZKQROV/ZKQLROV) (from JF Guérémy)
+!     2018-09, M. Michou: Add call to chem_main to activate ARPEGE-Climat chemistry scheme
+!     2018-09, R. Brozkova: Fixes in thermodynamic adjustment - deep convective
+!                           condensates protection. Passing of diagnostic hail.
+!     2018-09, J. Masek: Calculation of snow fractions over bare ground and
+!                        vegetation moved to ACSOL (case LVGSN=T). Coding of
+!                        ALARO-1 fixes for LZ0HSREL=T. Diagnostics of global
+!                        normal irradiance and mean radiant temperature.
+!     2018-11, J.M. Piriou: correct 2010 historical bug about adding cloud sedimentation to resolved surface precipitation.
+!     R. Hogan     24-Jan-2019 Removed radiation scheme from cycle 15
+!     R. El Khatib 30-Apr-2019 fix uninitialized variable
+!     2018-10, I. Etchevers : add Visibilities
+!     2019-01, I. Etchevers, Y. Seity : add Precipitation Type
+!     2019-05, J.M. Piriou: LCVRESDYN + LADJCLD.
+!     2019-09, M. Hrastinski: Dataflow for TKE and TTE terms in ALARO DDH (PFTCNS).
+!     2019-09, L. Gerard: Modified call to ACNSDO.
+!     2019-09, R. Brozkova: Introduction of new NDIFFNEB options.
+!     2019-09, J. Masek: Introduction of ETKE_MIN, efficient ACRANEB2 clearsky
+!                        computations.
+!    2019-10, I. Etchevers : Visibilities in ACVISIH, AROCLDIA=>ACCLDIA
+!    2019-10, Y.Bouteloup : New anti-GPS in accvimp.F90 
+!    2019-10, Y.Bouteloup and M. Bouzghaiam : Radiation modifications. Remove of FMR15, remove acradin.F90 direct
+!                   call to recmwf.F90 and add interface to ecrad (in recmwf !)
+!    2020-07, J.M. Piriou and O. Jaron: lightning flash density.
+!    2020-10, J. Masek : modified call to ACCLDIA
+!    2020-10, M. Hrastinski: Reorganized computation of the moist gustiness
+!             correction. Modified call of ACMRIP and ACMIXELEN subroutines.
+!    2020-11, Y.Bouteloup : Interface to IFS deep convection scheme under LCVTDK key
+!    2020-12, U.Andrae : Introduce SPP for HARMONIE-AROME
 ! End Modifications
 !-------------------------------------------------------------------------------
+
+!-----------------------------------------------------------------------
+!     ******************************************************************
+!     ****** IDIOSYNCRASIES *** IDIOSYNCRASIES *** IDIOSYNCRASIES ******
+!     ******************************************************************
+!     ***  HEALTH WARNING:                                           ***
+!     ***  ===============                                           ***
+!     ***  NOTE THAT WITHIN THE E.C.M.W.F. PHYSICS HALF-LEVELS       ***
+!     ***  ARE INDEXED FROM 1 TO NFLEVG+1 WHILE THEY ARE BETWEEN     ***
+!     ***  0 AND NFLEVG IN THE REST OF THE MODEL. THE CHANGE IS TAKEN***
+!     ***  CARE OF IN THE CALL TO THE VARIOUS SUBROUTINES OF THE     ***
+!     ***  PHYSICS PACKAGE                                           ***
+!     ***                                                            ***
+!     ***    THIS IS SUPPOSED TO BE A "TEMPORARY" FEATURE TO BE      ***
+!     ***    STRAIGHTENED OUT IN THE "NEAR" FUTURE                   ***
+!     ******************************************************************
+
+!     ------------------------------------------------------------------
+
+USE GEOMETRY_MOD       , ONLY : GEOMETRY
+USE MF_PHYS_TYPE_MOD   , ONLY : MF_PHYS_TYPE, MF_PHYS_TMP_TYPE, APLPAR_TMP_TYPE
+USE CPG_TYPE_MOD       , ONLY : CPG_MISC_TYPE, CPG_DYN_TYPE
+USE CPG_DIM_TYPE_MOD   , ONLY : CPG_DIM_TYPE
+USE MF_PHYS_SURFACE_TYPE_MOD,ONLY : MF_PHYS_SURF_TYPE
+USE FIELD_VARIABLES_MOD, ONLY : FIELD_VARIABLES
+USE SURFACE_FIELDS_MIX , ONLY : TSURF
+USE YOMXFU             , ONLY : TXFU
+USE TYPE_MODEL         , ONLY : MODEL
+USE PARKIND1           , ONLY : JPIM     ,JPRB
+USE YOMHOOK            , ONLY : LHOOK    ,DR_HOOK
+USE YOMMP0             , ONLY : NPRINTLEV
+USE YOMVERT            , ONLY : VP00
+USE YOMCST             , ONLY : RG       ,RSIGMA   ,RV       ,RD       ,&
+                              & RCPV     ,RETV     ,RCW      ,RCS      ,RLVTT    ,&
+                              & RLSTT    ,RTT      ,RALPW    ,RBETW    ,RGAMW    ,&
+                              & RALPS    ,RBETS    ,RGAMS    ,RALPD    ,RBETD    ,&
+                              & RGAMD    ,RCPD     ,RATM     ,RKAPPA   ,RLMLT
+USE YOMCT0             , ONLY : LCALLSFX ,LSFORCS, LELAM
+USE YOMDYNA            , ONLY : L3DTURB
+USE YOMRIP0            , ONLY : NINDAT
+USE DDH_MIX            , ONLY : ADD_FIELD_3D ,ADD_FIELD_2D ,NTOTSVAR , & 
+                              & NTOTSURF ,NTOTSVFS, NEW_ADD_FIELD_3D, NEW_ADD_FIELD_2D, &
+                              & TYP_DDH
+USE YOMLUN             , ONLY : NULOUT
+USE YOMLSFORC          , ONLY : LMUSCLFA,NMUSCLFA
+USE YOMTRAJ            , ONLY : TRAJ_PHYS_TYPE
+USE YOMCFU             , ONLY : TCFU !!! for parameters of FLASH
+USE SPP_MOD  , ONLY : YSPP, YSPP_CONFIG
+USE MF_PHYS_STATE_TYPE_MOD &
+                       , ONLY : MF_PHYS_STATE_TYPE
+
 
 USE GEOMETRY_MOD       , ONLY : GEOMETRY
 USE MF_PHYS_TYPE_MOD   , ONLY : MF_PHYS_TYPE, MF_PHYS_TMP_TYPE, APLPAR_TMP_TYPE
@@ -225,7 +521,6 @@ INTEGER(KIND=JPIM) :: IPQ,IPO3
 INTEGER(KIND=JPIM) :: IPGFL(YDMODEL%YRML_GCONF%YGFL%NUMFLDS)
 
 INTEGER(KIND=JPIM) :: INSTEP_DEB,INSTEP_FIN
-INTEGER(KIND=JPIM) :: JLEV, JGFL
 INTEGER(KIND=JPIM) :: JROF
 INTEGER(KIND=JPIM) :: ISLB1U9  ,ISLB1V9  ,ISLB1T9  ,ISLB1GFL9, ISLB1VD9
 
@@ -279,6 +574,518 @@ REAL(KIND=JPRB), POINTER :: ZPTENDL1(:,:)
 TYPE (MF_PHYS_STATE_TYPE) :: YLMF_PHYS_STATE
 LOGICAL :: LLNEW
 CHARACTER*16 :: CLNEW
+
+!     ------------------------------------------------------------------
+!        ATTENTION SI KVCLIG < 7 LES CHAMPS SUIVANTS NE SONT
+!        PAS REELLEMENT ALLOUES EN MEMOIRE.
+!*
+!     ------------------------------------------------------------------
+!     DECLARATION DES TABLEAUX LOCAUX-GLOBAUX DES PARAMETRISATIONS
+INTEGER(KIND=JPIM) :: INLAB(YDCPG_DIM%KLON,YDCPG_DIM%KFLEVG), INLAB_CVPP(YDCPG_DIM%KLON,YDCPG_DIM%KFLEVG)
+REAL(KIND=JPRB) :: ZVETAH(0:YDCPG_DIM%KFLEVG),ZNLAB(YDCPG_DIM%KLON,YDCPG_DIM%KFLEVG),ZNLABCVP(YDCPG_DIM%KLON,YDCPG_DIM%KFLEVG)
+REAL(KIND=JPRB) :: ZVETAF(YDCPG_DIM%KFLEVG)
+
+!     ------------------------------------------------------------------
+!     ARE DIMENSIONNED 0:KLEV ONLY IN ORDER TO KEEP IN MIND
+!     THAT THEY ARE COMPUTED AT "HALF LEVELS".
+!     THEY ARE USED HOWEVER FROM 1 TO KLEV.
+
+REAL(KIND=JPRB) :: ZXTROV(YDCPG_DIM%KLON,0:YDCPG_DIM%KFLEVG),ZXUROV(YDCPG_DIM%KLON,0:YDCPG_DIM%KFLEVG)
+REAL(KIND=JPRB) :: ZXPTKEROV(YDCPG_DIM%KLON,0:YDCPG_DIM%KFLEVG)
+REAL(KIND=JPRB) :: ZRRCOR(YDCPG_DIM%KLON,0:YDCPG_DIM%KFLEVG)
+REAL(KIND=JPRB) :: ZMRIPP(YDCPG_DIM%KLON,0:YDCPG_DIM%KFLEVG),ZMRIFPP(YDCPG_DIM%KLON,0:YDCPG_DIM%KFLEVG),ZBNEBCVPP(YDCPG_DIM%KLON,0:YDCPG_DIM%KFLEVG)
+REAL(KIND=JPRB) :: ZBNEBQ(YDCPG_DIM%KLON,0:YDCPG_DIM%KFLEVG)
+REAL(KIND=JPRB) :: ZMN2PP(YDCPG_DIM%KLON,0:YDCPG_DIM%KFLEVG),ZMN2_ES(YDCPG_DIM%KLON,0:YDCPG_DIM%KFLEVG),ZMN2_EQ(YDCPG_DIM%KLON,0:YDCPG_DIM%KFLEVG)
+REAL(KIND=JPRB) :: ZMN2_DS(YDCPG_DIM%KLON,0:YDCPG_DIM%KFLEVG),ZMN2_DQ(YDCPG_DIM%KLON,0:YDCPG_DIM%KFLEVG)
+! ZMRIMC     : M(C) from P. Marquet's moist Ri computation - for TKE correction after TOMs
+! ZMRICTERM  : Rv/R.F(C)-1/M(C).T/Tv from P. Marquet's moist Ri computation - for TKE correction after TOMs
+REAL(KIND=JPRB) :: ZMRIMC(YDCPG_DIM%KLON,0:YDCPG_DIM%KFLEVG),ZMRICTERM(YDCPG_DIM%KLON,0:YDCPG_DIM%KFLEVG)
+REAL(KIND=JPRB) :: ZTSTAR(YDCPG_DIM%KLON,YDCPG_DIM%KFLEVG),ZTSTAR2(YDCPG_DIM%KLON,0:YDCPG_DIM%KFLEVG) !diag 
+REAL(KIND=JPRB) :: ZTSTARQ(YDCPG_DIM%KLON,YDCPG_DIM%KFLEVG),ZTSTAR2Q(YDCPG_DIM%KLON,0:YDCPG_DIM%KFLEVG)!diag
+REAL(KIND=JPRB) :: ZTAU_TKE(YDCPG_DIM%KLON,0:YDCPG_DIM%KFLEVG)!DISSIPATION TIME SCALE TAU  -FOR TOM's CALCULATION
+REAL(KIND=JPRB) :: ZF_EPS(YDCPG_DIM%KLON,0:YDCPG_DIM%KFLEVG)   !  Conversion function lm-L
+REAL(KIND=JPRB) :: ZFUN_TTE(YDCPG_DIM%KLON,0:YDCPG_DIM%KFLEVG)   !  Function in computation of tte_tilde
+REAL(KIND=JPRB) :: ZKTROV(YDCPG_DIM%KLON,0:YDCPG_DIM%KFLEVG),ZKUROV(YDCPG_DIM%KLON,0:YDCPG_DIM%KFLEVG),ZNBVNO(YDCPG_DIM%KLON,0:YDCPG_DIM%KFLEVG)
+REAL(KIND=JPRB) :: ZKQROV(YDCPG_DIM%KLON,0:YDCPG_DIM%KFLEVG),ZKQLROV(YDCPG_DIM%KLON,0:YDCPG_DIM%KFLEVG)
+REAL(KIND=JPRB) :: ZKNROV(YDCPG_DIM%KLON,0:YDCPG_DIM%KFLEVG)
+
+REAL(KIND=JPRB) :: ZFHORM(YDCPG_DIM%KLON,0:YDCPG_DIM%KFLEVG),ZFHORH(YDCPG_DIM%KLON,0:YDCPG_DIM%KFLEVG) ! arrays for 3D turb
+! ZFMTKE - F_m function for static K_m computation
+! ZFHTKE - F_h function for static K_h computation
+REAL(KIND=JPRB) :: ZFMTKE(YDCPG_DIM%KLON,0:YDCPG_DIM%KFLEVG),ZFTTKE(YDCPG_DIM%KLON,0:YDCPG_DIM%KFLEVG)
+REAL(KIND=JPRB) :: ZRHS(YDCPG_DIM%KLON,YDCPG_DIM%KFLEVG)
+! ZAUTKE - alpha_u for dry AF scheme
+! ZATTKE - alpha_theta for dry AF scheme
+REAL(KIND=JPRB) :: ZAUTKE(YDCPG_DIM%KLON,0:YDCPG_DIM%KFLEVG),ZATTKE(YDCPG_DIM%KLON,0:YDCPG_DIM%KFLEVG)
+!ZTH_FUN, ZWW_FUN - T_h, A_h, F_ww - stability functions for TOMs par.
+REAL(KIND=JPRB) :: ZTH_FUN(YDCPG_DIM%KLON,0:YDCPG_DIM%KFLEVG),ZWW_FUN(YDCPG_DIM%KLON,0:YDCPG_DIM%KFLEVG)
+! ZFMGST - stability function F_m for moist gustiness correction
+REAL(KIND=JPRB) :: ZFMGST(YDCPG_DIM%KLON,0:YDCPG_DIM%KFLEVG)
+
+
+!     ------------------------------------------------------------------
+REAL(KIND=JPRB) :: ZATSLC(YDCPG_DIM%KLON,0:YDCPG_DIM%KFLEVG)
+REAL(KIND=JPRB) :: ZNEBS(YDCPG_DIM%KLON,YDCPG_DIM%KFLEVG),ZQLIS(YDCPG_DIM%KLON,YDCPG_DIM%KFLEVG)
+REAL(KIND=JPRB) :: ZNEBS0(YDCPG_DIM%KLON,YDCPG_DIM%KFLEVG),ZQLIS0(YDCPG_DIM%KLON,YDCPG_DIM%KFLEVG)
+REAL(KIND=JPRB) :: ZNEBC0(YDCPG_DIM%KLON,YDCPG_DIM%KFLEVG)   !Nebulosite convective radiative
+REAL(KIND=JPRB) :: ZNEBDIFF(YDCPG_DIM%KLON,YDCPG_DIM%KFLEVG) !Nebulosite: calcul de la diffusion
+REAL(KIND=JPRB) :: ZNEBCH(YDCPG_DIM%KLON,YDCPG_DIM%KFLEVG)   !Nebulosite convective condensation
+REAL(KIND=JPRB) :: ZUNEBH(YDCPG_DIM%KLON,YDCPG_DIM%KFLEVG)   !Nebulosite convective histo
+REAL(KIND=JPRB) :: ZDETFI(YDCPG_DIM%KLON,YDCPG_DIM%KFLEVG)   !fraction of instantaneous detrained air
+REAL(KIND=JPRB) :: ZFPCOR(YDCPG_DIM%KLON,0:YDCPG_DIM%KFLEVG)
+REAL(KIND=JPRB) :: ZFHP(YDCPG_DIM%KLON,0:YDCPG_DIM%KFLEVG)
+REAL(KIND=JPRB) :: ZLMT(YDCPG_DIM%KLON,0:YDCPG_DIM%KFLEVG)
+REAL(KIND=JPRB) :: ZZLMT(YDCPG_DIM%KLON,0:YDCPG_DIM%KFLEVG)
+REAL(KIND=JPRB) :: ZLMU(YDCPG_DIM%KLON,0:YDCPG_DIM%KFLEVG)
+REAL(KIND=JPRB) :: ZLMU2(YDCPG_DIM%KLON,0:YDCPG_DIM%KFLEVG),ZLMT2(YDCPG_DIM%KLON,0:YDCPG_DIM%KFLEVG) ! temporary storage of lm,lh
+REAL(KIND=JPRB) :: ZLML(YDCPG_DIM%KLON,0:YDCPG_DIM%KFLEVG) ! TKE type mixing length
+REAL(KIND=JPRB) :: ZLMLTILD(YDCPG_DIM%KLON,0:YDCPG_DIM%KFLEVG) ! 'STATIC' TKE type mixing length
+REAL(KIND=JPRB) :: ZOME(YDCPG_DIM%KLON,YDCPG_DIM%KFLEVG)   ! updraught envt vert vel*dt
+REAL(KIND=JPRB) :: ZFALLR(YDCPG_DIM%KLON,YDCPG_DIM%KFLEVG) ! fall velocity of rain
+REAL(KIND=JPRB) :: ZFALLS(YDCPG_DIM%KLON,YDCPG_DIM%KFLEVG) ! fall velocity of snow
+REAL(KIND=JPRB) :: ZFALLG(YDCPG_DIM%KLON,YDCPG_DIM%KFLEVG) ! fall velocity of graupel
+REAL(KIND=JPRB) :: ZICEFR1(YDCPG_DIM%KLON,YDCPG_DIM%KFLEVG)! Resolved Condensate ice fraction
+REAL(KIND=JPRB) :: ZRHCRI(YDCPG_DIM%KLON,YDCPG_DIM%KFLEVG) ! Smith scheme critical RH
+REAL(KIND=JPRB) :: ZRHDFDA(YDCPG_DIM%KLON,YDCPG_DIM%KFLEVG)! RK scheme change in RH over cloud
+REAL(KIND=JPRB) :: ZLHS(YDCPG_DIM%KLON,YDCPG_DIM%KFLEVG)   ! Sublimation latent heat
+REAL(KIND=JPRB) :: ZLHV(YDCPG_DIM%KLON,YDCPG_DIM%KFLEVG)   ! Evaporation latent heat
+REAL(KIND=JPRB) :: ZLH(YDCPG_DIM%KLON,YDCPG_DIM%KFLEVG)    ! Temporar storage for updated PLH
+REAL(KIND=JPRB) :: ZLSCPE(YDCPG_DIM%KLON,YDCPG_DIM%KFLEVG) ! Temporar storage for updated PLSCPE
+REAL(KIND=JPRB) :: ZQSAT(YDCPG_DIM%KLON,YDCPG_DIM%KFLEVG)  ! Temporar storage for updated PQSAT
+REAL(KIND=JPRB) :: ZQSATS(YDCPG_DIM%KLON,YDCPG_DIM%KFLEVG) ! QSAT of resolved cond./evap. scheme
+REAL(KIND=JPRB) :: ZQW(YDCPG_DIM%KLON,YDCPG_DIM%KFLEVG)    ! Temporar storage for updated PQW
+REAL(KIND=JPRB) :: ZRH(YDCPG_DIM%KLON,YDCPG_DIM%KFLEVG)    ! Temporar storage for updated PRH
+REAL(KIND=JPRB) :: ZTW(YDCPG_DIM%KLON,YDCPG_DIM%KFLEVG)    ! Temporar storage for updated PTW)
+REAL(KIND=JPRB) :: ZDQ(YDCPG_DIM%KLON,YDCPG_DIM%KFLEVG)    ! Saturation departure for a given thermodynamic state
+REAL(KIND=JPRB) :: ZDQM(YDCPG_DIM%KLON,YDCPG_DIM%KFLEVG)   ! maximum saturation departure
+REAL(KIND=JPRB) :: ZPOID(YDCPG_DIM%KLON,YDCPG_DIM%KFLEVG)  ! DP/(RG*DT) FOR A GIVEN LEVEL AND A GIVEN TIME STEP.
+REAL(KIND=JPRB) :: ZIPOI(YDCPG_DIM%KLON,YDCPG_DIM%KFLEVG)  ! INVERSE OF ZPOID.
+
+REAL(KIND=JPRB) :: ZQU(YDCPG_DIM%KLON,YDCPG_DIM%KFLEVG) ! Updraught Specific moisture
+REAL(KIND=JPRB) :: ZTU(YDCPG_DIM%KLON,YDCPG_DIM%KFLEVG) ! Updraught Temperature
+REAL(KIND=JPRB) :: ZUU(YDCPG_DIM%KLON,YDCPG_DIM%KFLEVG) ! Updraught zonal wind
+REAL(KIND=JPRB) :: ZVU(YDCPG_DIM%KLON,YDCPG_DIM%KFLEVG) ! Updraught merid. wind
+
+REAL(KIND=JPRB) :: ZTMIC(YDCPG_DIM%KLON,YDCPG_DIM%KFLEVG) ! Temperature for microphysics
+REAL(KIND=JPRB) :: ZQMIC(YDCPG_DIM%KLON,YDCPG_DIM%KFLEVG) ! Specific moisture for microphysics
+
+REAL(KIND=JPRB) :: ZT(YDCPG_DIM%KLON,YDCPG_DIM%KFLEVG)     ! updated temperature T for cascading parameterization
+REAL(KIND=JPRB) :: ZTCORR(YDCPG_DIM%KLON,YDCPG_DIM%KFLEVG) ! temperature corr. for convective cloud
+REAL(KIND=JPRB) :: ZMELNET(YDCPG_DIM%KLON,YDCPG_DIM%KFLEVG) ! net melting (-freezing) rate of ice
+REAL(KIND=JPRB) :: ZMELGET(YDCPG_DIM%KLON,YDCPG_DIM%KFLEVG)! net melting (-freezing) rate of graupel
+REAL(KIND=JPRB) :: ZU(YDCPG_DIM%KLON,YDCPG_DIM%KFLEVG)     ! updated zonal velocity
+REAL(KIND=JPRB) :: ZV(YDCPG_DIM%KLON,YDCPG_DIM%KFLEVG)     ! updated meridional velocity
+
+REAL(KIND=JPRB) :: ZQV(YDCPG_DIM%KLON,YDCPG_DIM%KFLEVG)    ! corrected (for negative values) vapour
+                                     ! updated value for cascading parameterization
+REAL(KIND=JPRB) :: ZQI(YDCPG_DIM%KLON,YDCPG_DIM%KFLEVG)    ! corrected (for negative values) cloud ice
+                                     ! updated value for cascading parameterization
+REAL(KIND=JPRB) :: ZQL(YDCPG_DIM%KLON,YDCPG_DIM%KFLEVG)    ! corrected (for negative values) cloud liquid
+                                     ! updated value for cascading parameterization
+REAL(KIND=JPRB) :: ZQR(YDCPG_DIM%KLON,YDCPG_DIM%KFLEVG)    ! corrected (for negative values) rain
+                                     ! updated value for cascading parameterization
+REAL(KIND=JPRB) :: ZQS(YDCPG_DIM%KLON,YDCPG_DIM%KFLEVG)    ! corrected (for negative values) snow
+                                     ! updated value for cascading parameterization
+REAL(KIND=JPRB) :: ZCP(YDCPG_DIM%KLON,YDCPG_DIM%KFLEVG)    ! new cp for turbulent diffusion
+REAL(KIND=JPRB) :: ZQT(YDCPG_DIM%KLON,YDCPG_DIM%KFLEVG)
+REAL(KIND=JPRB) :: ZTENHA(YDCPG_DIM%KLON,YDCPG_DIM%KFLEVG)
+REAL(KIND=JPRB) :: ZTENQVA(YDCPG_DIM%KLON,YDCPG_DIM%KFLEVG)
+REAL(KIND=JPRB) :: ZFCQVNG(YDCPG_DIM%KLON,0:YDCPG_DIM%KFLEVG) ! correction flux increment for neg vapour
+REAL(KIND=JPRB) :: ZFCQING(YDCPG_DIM%KLON,0:YDCPG_DIM%KFLEVG) ! correction flux increment for neg ice
+REAL(KIND=JPRB) :: ZFCQLNG(YDCPG_DIM%KLON,0:YDCPG_DIM%KFLEVG) ! correction flux increment for neg liquid water
+REAL(KIND=JPRB) :: ZFPLSL(YDCPG_DIM%KLON,0:YDCPG_DIM%KFLEVG) ! total liquid water flux: diff+sedi+rain
+REAL(KIND=JPRB) :: ZFPLSN(YDCPG_DIM%KLON,0:YDCPG_DIM%KFLEVG) ! total solid water flux: diff+sedi+snow
+REAL(KIND=JPRB) :: ZFCQL(YDCPG_DIM%KLON,0:YDCPG_DIM%KFLEVG)   ! condensation flux(liquid)
+REAL(KIND=JPRB) :: ZFCQI(YDCPG_DIM%KLON,0:YDCPG_DIM%KFLEVG)   ! condensation flux(ice)
+REAL(KIND=JPRB) :: ZDIFCQD(YDCPG_DIM%KLON,0:YDCPG_DIM%KFLEVG) ! downdraft flux of specific humidity
+REAL(KIND=JPRB) :: ZDIFCQLD(YDCPG_DIM%KLON,0:YDCPG_DIM%KFLEVG) ! downdraft flux of liquid water
+REAL(KIND=JPRB) :: ZDIFCQID(YDCPG_DIM%KLON,0:YDCPG_DIM%KFLEVG) ! downdraft flux of  solid water
+REAL(KIND=JPRB) :: ZSEDIQL(YDCPG_DIM%KLON,0:YDCPG_DIM%KFLEVG) ! sedimentation flux of cloud liquid water
+REAL(KIND=JPRB) :: ZSEDIQI(YDCPG_DIM%KLON,0:YDCPG_DIM%KFLEVG) ! sedimentation flux of cloud ice water
+REAL(KIND=JPRB) :: ZDIFCSD(YDCPG_DIM%KLON,0:YDCPG_DIM%KFLEVG) ! downdraft entalphy flux
+REAL(KIND=JPRB) :: ZSTRCUD(YDCPG_DIM%KLON,0:YDCPG_DIM%KFLEVG) ! change in horizontal mom.
+REAL(KIND=JPRB) :: ZSTRCVD(YDCPG_DIM%KLON,0:YDCPG_DIM%KFLEVG) ! change in horizontal mom.
+REAL(KIND=JPRB) :: ZRCVOTT(YDCPG_DIM%KLON,0:YDCPG_DIM%KFLEVG) ! degree of inhomogeneity in precips.
+REAL(KIND=JPRB) :: ZSIGPC(YDCPG_DIM%KLON)         ! Convective precipit mesh fraction
+REAL(KIND=JPRB) :: ZSIGP(YDCPG_DIM%KLON)         ! Precipitation mesh fraction
+REAL(KIND=JPRB) :: ZAUXPRC(YDCPG_DIM%KLON)        ! Precipitation auxilary
+REAL(KIND=JPRB) :: ZDIFCVPPQ(YDCPG_DIM%KLON,0:YDCPG_DIM%KFLEVG) ! Flux de CVPP (KFB or EDKF) sur Qv
+REAL(KIND=JPRB) :: ZDIFCVPPS(YDCPG_DIM%KLON,0:YDCPG_DIM%KFLEVG) ! Flux de CVPP (KFB or EDKF) sur CpT
+REAL(KIND=JPRB) :: ZDIFCVTH(YDCPG_DIM%KLON,0:YDCPG_DIM%KFLEVG) ! Flux de CV sur Theta air sec
+REAL(KIND=JPRB) :: ZDIFCVPPU(YDCPG_DIM%KLON,0:YDCPG_DIM%KFLEVG) ! Flux de CVPP (EDKF) sur U
+REAL(KIND=JPRB) :: ZDIFCVPPV(YDCPG_DIM%KLON,0:YDCPG_DIM%KFLEVG) ! Flux de CVPP (EDKF) sur V
+
+REAL(KIND=JPRB) :: ZEDMFQ(YDCPG_DIM%KLON,0:YDCPG_DIM%KFLEVG) ! Mass flux part of EDMF flux for Qv
+REAL(KIND=JPRB) :: ZEDMFS(YDCPG_DIM%KLON,0:YDCPG_DIM%KFLEVG) ! Mass flux part of EDMF flux for CpT
+REAL(KIND=JPRB) :: ZEDMFU(YDCPG_DIM%KLON,0:YDCPG_DIM%KFLEVG) ! Mass flux part of EDMF flux for U
+REAL(KIND=JPRB) :: ZEDMFV(YDCPG_DIM%KLON,0:YDCPG_DIM%KFLEVG) ! Mass flux part of EDMF flux for V
+REAL(KIND=JPRB) :: ZMF_UP(YDCPG_DIM%KLON,0:YDCPG_DIM%KFLEVG) ! Mass flux for implicit formulation of EDMF equation (LEDMFI)
+REAL(KIND=JPRB) :: ZMU(YDCPG_DIM%KLON,0:YDCPG_DIM%KFLEVG) ! Flux de masse (updraft) pour XIOS output
+REAL(KIND=JPRB) :: ZMD(YDCPG_DIM%KLON,0:YDCPG_DIM%KFLEVG) ! Flux de masse (downdraft) pour XIOS output
+
+REAL(KIND=JPRB) :: ZCONDCVPPL(YDCPG_DIM%KLON,0:YDCPG_DIM%KFLEVG) ! Flux de condensation liquide du a CVVPP (KFB)
+REAL(KIND=JPRB) :: ZCONDCVPPI(YDCPG_DIM%KLON,0:YDCPG_DIM%KFLEVG) ! Flux de condensation glace du a CVVPP (KFB)
+REAL(KIND=JPRB) :: ZPRODTH_CVPP(YDCPG_DIM%KLON,0:YDCPG_DIM%KFLEVG) ! Flux de production thermique de TKE du a CVPP(KFB)
+REAL(KIND=JPRB) :: ZDTRAD(YDCPG_DIM%KLON,YDCPG_DIM%KFLEVG) ! radiation contribution to T tendency
+REAL(KIND=JPRB) :: ZDQVDIFF(YDCPG_DIM%KLON,YDCPG_DIM%KFLEVG) ! turtb.diff contribution to Qv tendency
+REAL(KIND=JPRB) :: ZRKQCTEND(YDCPG_DIM%KLON,YDCPG_DIM%KFLEVG) ! Qc input for RK condensation scheme
+REAL(KIND=JPRB) :: ZRKQVTEND(YDCPG_DIM%KLON,YDCPG_DIM%KFLEVG) ! Qv input for RK condensation scheme
+REAL(KIND=JPRB) :: ZRKTTEND(YDCPG_DIM%KLON,YDCPG_DIM%KFLEVG) ! T input for RK condensation scheme
+REAL(KIND=JPRB) :: ZDQV, ZDQI, ZDQL, ZDQR, ZDQS, ZDQC, ZGDT, ZGDTI,&
+                 & ZQV0, ZQX0, ZQX1,&
+                 & ZCONVC, ZTOTC,ZDTURDIFF
+REAL(KIND=JPRB) :: ZTMPAF(YDCPG_DIM%KLON,YDCPG_DIM%KFLEVG)    ! temporary array for Add_Field_3d.
+REAL(KIND=JPRB) :: ZTMPAS(YDCPG_DIM%KLON)         ! temporary array for Add_Field_2d..
+REAL(KIND=JPRB) :: ZTMPPRODTH(YDCPG_DIM%KLON,0:YDCPG_DIM%KFLEVG) ! temporary array
+
+!!for BAYRAD
+REAL(KIND=JPRB) :: ZDE2MR(YDCPG_DIM%KLON,YDCPG_DIM%KFLEVG) ! temporary array for conversion of density to mixing ratio
+REAL(KIND=JPRB) :: ZCOEFRAIN(2) ! RTTOVSCATT coefficients to convert flux to density for rain
+REAL(KIND=JPRB) :: ZCOEFSNOW(2) ! RTTOVSCATT coefficients to convert flux to density for snow
+REAL(KIND=JPRB) :: ZRHORAIN ! RTTOVSCATT fixed density for rain
+REAL(KIND=JPRB) :: ZRHOSNOW ! RTTOVSCATT fixed density of snow
+!-----------------------------------------------------------------
+
+! - 2D (0:KLEV) .
+
+! ZKTROV     : COEFFICIENT D'ECHANGE VERTICAL DE T ET Q EN KG/(M*M*S).
+! ZKUROV     : COEFFICIENT D'ECHANGE VERTICAL DE U ET V EN KG/(M*M*S).
+! ZKNROV     : COEFFICIENT D'ECHANGE VERTICAL NEUTRE EN KG/(M*M*S).
+! ZNBVNO     : FREQUENCE DE BRUNT-VAISALA DIVISEE PAR G FOIS LA DENSITE.
+
+! ZNEBS      : NEBULOSITE STRATIFORME (SCHEMA STATISTIQUE DE NUAGES).
+!            : STRATIFORM CLOUDINESS (STATISTICAL CLOUD SCHEME)
+! ZQLIS      : QUANTITE D'EAU LIQUIDE STRATIFORME (SCHEMA STATISTIQUE).
+!            : STRATIFORM LIQUID WATER (STATISTICAL CLOUD SCHEME)
+
+
+! - 2D (1:KLEV) .
+
+! INLAB      : INDICE D'INSTABILITE CONVECTIVE.
+
+INTEGER(KIND=JPIM) :: INND(YDCPG_DIM%KLON)
+REAL(KIND=JPRB) :: ZXDROV(YDCPG_DIM%KLON),ZXHROV(YDCPG_DIM%KLON)
+REAL(KIND=JPRB) :: ZUGST(YDCPG_DIM%KLON),ZVGST(YDCPG_DIM%KLON)
+REAL(KIND=JPRB) :: ZCDROV(YDCPG_DIM%KLON),ZCHROV(YDCPG_DIM%KLON),ZDQSTS(YDCPG_DIM%KLON),ZGWDCS(YDCPG_DIM%KLON),&
+ & ZHQ(YDCPG_DIM%KLON),ZHU(YDCPG_DIM%KLON),ZHTR(YDCPG_DIM%KLON),ZCDNH(YDCPG_DIM%KLON),ZMOD(YDCPG_DIM%KLON),&
+ & ZRTI(YDCPG_DIM%KLON),ZDPHI(YDCPG_DIM%KLON),ZPRS(YDCPG_DIM%KLON),ZSTAB(YDCPG_DIM%KLON),ZTAUX(YDCPG_DIM%KLON)
+REAL(KIND=JPRB) :: ZWFC(YDCPG_DIM%KLON),ZWPMX(YDCPG_DIM%KLON),ZWLMX(YDCPG_DIM%KLON),ZWSEQ(YDCPG_DIM%KLON),&
+ & ZWSMX(YDCPG_DIM%KLON),ZWWILT(YDCPG_DIM%KLON),&
+ & ZC3(YDCPG_DIM%KLON),ZCG(YDCPG_DIM%KLON),ZCN(YDCPG_DIM%KLON),&
+ & ZNEIJG(YDCPG_DIM%KLON),ZNEIJV(YDCPG_DIM%KLON)
+REAL(KIND=JPRB) :: ZPCLS(YDCPG_DIM%KLON)
+REAL(KIND=JPRB) :: ZPREN(YDCPG_DIM%KLON)
+REAL(KIND=JPRB) :: ZFRSODS(YDCPG_DIM%KLON)
+REAL(KIND=JPRB) :: ZCD(YDCPG_DIM%KLON)
+
+! - 1D (DIAGNOSTIQUE) .
+
+! ZCDROV     : PCD RENORME EN DENSITE FOIS VITESSE.
+! ZCDNH      : COEFFICIENT NEUTRE D'ECHANGE EN SURFACE POUR LA CHALEUR.
+! ZCDNH      : EXCHANGE COEFF. AT SURFACE LEVEL IN NEUTRAL CONDITIONS FOR HEAT.
+! ZCG        : COEFFICIENT THERMIQUE DU SOL NU.
+! ZCG        : THERMICAL COEFFICIENT OF BARE GROUND.
+! ZCN        : COEFFICIENT THERMIQUE DE LA NEIGE.
+! ZCN        : THERMICAL COEFFICIENT OF SNOW.
+! ZCHROV     : PCH RENORME EN DENSITE FOIS VITESSE.
+! ZC3        : COEFFICIENT UTILE POUR LE CALCUL DU DRAINAGE
+! ZDQSTS     : DERIVEE DE PQSATS PAR RAPPORT A LA TEMPERATURE.
+! ZGWDCS     : VARIABLE DE SURFACE POUR LE DRAG OROGRAPHIQUE (RHO*N0/G).
+! ZHQ        : POIDS DE L'HUMIDITE DE L'AIR DANS L'HUMIDITE DE SURFACE.
+! ZHTR       : RESISTANCE A LA TRANSPIRATION DU COUVERT VEGETAL.
+! ZHTR       : FOLIAGE TRANSPIRATION RESISTANCE.
+! ZHU        : POIDS DE L'HUMIDITE SATURANTE DANS L'HUMIDITE DE SURFACE.
+! ZNEIJG     : FRACTION DE NEIGE RECOUVRANT LE SOL.
+! ZNEIJV     : FRACTION DE NEIGE RECOUVRANT LA VEGETATION.
+! ZRTI       : INVERSE DE R*T.
+! ZDPHI      : EPAISSEUR EN GEOPOTENTIEL DU NIVEAU DE SURFACE.
+! ZPRS       : CONSTANTE DES GAZ POUR L'AIR AU SOL.
+! ZSTAB      : INDICE DE STABILITE A LA SURFACE.
+! INND       : INDICE DE PRECIPITATIONS CONVECTIVES.
+! ZWFC       : TENEUR EN EAU A LA CAPACITE AUX CHAMPS.
+! ZWFC       : FIELD CAPACITY WATER CONTENT.
+! ZWPMX      : TENEUR EN EAU MAXIMALE DU RESERVOIR PROFOND.
+! ZWPMX      : MAXIMUM WATER CONTENT OF THE DEEP WATER-TANK.
+! ZWLMX      : TENEUR EN EAU MAXIMALE DU RESERVOIR D'INTERCEPTION.
+! ZWLMX      : MAXIMUM WATER CONTENT OF THE INTERCEPTION WATER-TANK.
+! ZWSEQ      : TENEUR EN EAU A L'EQUILIBRE (EQUILIBRE ENTRE GRAVITE ET
+!              CAPILLARITE) EN SURFACE.
+! ZWSEQ      : SURFACE WATER CONTENT FOR THE BALANCE BETWEEN GRAVITY
+!              AND CAPILLARITY
+! ZWSMX      : TENEUR EN EAU MAXIMALE DU RESERVOIR SUPERFICIEL.
+! ZWSMX      : MAXIMUM WATER CONTENT FOR THE SUPERFICIAL WATER-TANK.
+! ZWWILT     : TENEUR EN EAU AU POINT DE FLETRISSEMENT.
+! ZWWILT     : WATER CONTENT AT THE WILTING POINT.
+! ZSSO_STDEV : OROGRAPHY STANDARD DEVIATION
+! ZTWSNOW    : SNOW COVER FROM SURFEX
+! ZTOWNS     : FRACTION OF TOWN FROM SURFEX
+REAL(KIND=JPRB) :: ZDAER(YDCPG_DIM%KFLEVG), ZHUC(YDCPG_DIM%KFLEVG), ZBLH(YDCPG_DIM%KLON)
+REAL(KIND=JPRB) :: ZQO3(YDCPG_DIM%KLON,0:YDCPG_DIM%KFLEVG)
+REAL(KIND=JPRB) :: ZAER(YDCPG_DIM%KLON,YDCPG_DIM%KFLEVG,6)
+REAL(KIND=JPRB) :: ZAERD(YDCPG_DIM%KLON,YDCPG_DIM%KFLEVG)
+REAL(KIND=JPRB) :: ZAERINDS(YDCPG_DIM%KLON,YDCPG_DIM%KFLEVG)
+REAL(KIND=JPRB) :: ZQCO2(YDCPG_DIM%KLON,YDCPG_DIM%KFLEVG)
+REAL(KIND=JPRB) :: ZROZ(YDCPG_DIM%KLON,YDCPG_DIM%KFLEVG)
+REAL(KIND=JPRB) :: ZDPHIV(YDCPG_DIM%KLON),ZDPHIT(YDCPG_DIM%KLON)
+
+REAL(KIND=JPRB) :: ZMAN(0:YDCPG_DIM%KFLEVG), ZMAK(0:YDCPG_DIM%KFLEVG)
+REAL(KIND=JPRB) :: ZSSO_STDEV(YDCPG_DIM%KLON)
+REAL(KIND=JPRB) :: ZTWSNOW(YDCPG_DIM%KLON),ZTOWNS(YDCPG_DIM%KLON)
+! - (PROFILS DIAGNOSTIQUES)
+! ZDAER     : EPAISSEUR OPTIQUE DES AEROSOLS STANDARDS DANS LA COUCHE
+! ZDAER     : OPTICAL DEPTH OF STANDARD AEROSOLS IN THE LAYER.
+! ZHUC      : HUMIDITE CRITIQUE PAR NIVEAU POUR LE CALCUL DE PNEB
+! ZHUC      : CRITICAL MOISTURE FOR EACH LEVEL FOR PNEB CALCULATION.
+!   ZQO3    : RAPPORT DE MELANGE MASSIQUE D'OZONE
+!        (0):     "         "    MOYEN AU-DESSUS DU MODELE
+!   ZQO3    : OZONE MIXING RATIO (MASS).
+!        (0):AVERAGED-ABOVE      "         " .
+!   ZQCO2   : RAPPORT MASSIQUE LOCAL DU CO2.
+!   ZQCO2   : CO2 MIXING RATIO (MASS).
+
+! IJN        : DIMENSION TABLEAUX ETENDUS POUR CYCLE DIURNE RAYONNEMENT
+!              IJN AU PLUSL A KLON
+
+!* INPUT ARGUMENTS FOR ACRADIN ( RAYT ECMWF POUR CLIMAT )
+
+!            1-D ARRAYS
+!            ----------
+
+REAL(KIND=JPRB) :: ZTRSOD(YDCPG_DIM%KLON)
+
+!            2-D ARRAYS
+!            ----------
+
+!* OUTPUT ARGUMENTS FOR THE ECMWF PHYSICS
+
+!            0.2  LOCAL ARRAYS FOR ECMWF PHYSICS PACKAGE
+!                 --------------------------------------
+
+REAL(KIND=JPRB) :: ZCEMTR(YDCPG_DIM%KLON,0:1) , ZCTRSO(YDCPG_DIM%KLON,0:1)
+REAL(KIND=JPRB) :: ZALBD(YDCPG_DIM%KLON,YDMODEL%YRML_PHY_RAD%YRERAD%NSW), ZALBP(YDCPG_DIM%KLON,YDMODEL%YRML_PHY_RAD%YRERAD%NSW),&
+                 & ZALB(YDCPG_DIM%KLON)
+REAL(KIND=JPRB) :: ZSFSWDIR (YDCPG_DIM%KLON,YDMODEL%YRML_PHY_RAD%YRERAD%NSW), ZSFSWDIF (YDCPG_DIM%KLON,YDMODEL%YRML_PHY_RAD%YRERAD%NSW)
+REAL(KIND=JPRB) :: ZTRSODIR (YDCPG_DIM%KLON,YDMODEL%YRML_PHY_RAD%YRERAD%NSW), ZTRSODIF (YDCPG_DIM%KLON,YDMODEL%YRML_PHY_RAD%YRERAD%NSW)
+REAL(KIND=JPRB) :: ZFSDNN(YDCPG_DIM%KLON),ZFSDNV(YDCPG_DIM%KLON)
+
+!            1-D ARRAYS
+!            ----------
+
+REAL(KIND=JPRB) :: ZSUDU(YDCPG_DIM%KLON) , ZDSRP(YDCPG_DIM%KLON) , ZSDUR(YDCPG_DIM%KLON)
+REAL(KIND=JPRB) :: ZTHETAVS(YDCPG_DIM%KLON), ZTHETAS(YDCPG_DIM%KLON)
+REAL(KIND=JPRB) :: ZAESEA(YDCPG_DIM%KLON), ZAELAN(YDCPG_DIM%KLON), ZAESOO(YDCPG_DIM%KLON), ZAEDES(YDCPG_DIM%KLON)
+REAL(KIND=JPRB) :: ZAESUL(YDCPG_DIM%KLON), ZAEVOL(YDCPG_DIM%KLON)
+REAL(KIND=JPRB) :: ZMERL(YDCPG_DIM%KLON)
+
+!            2-D ARRAYS
+!            ----------
+
+REAL(KIND=JPRB) :: ZTENT(YDCPG_DIM%KLON,YDCPG_DIM%KFLEVG), ZGEOSLC(YDCPG_DIM%KLON,YDCPG_DIM%KFLEVG)
+REAL(KIND=JPRB) :: ZTHETAV(YDCPG_DIM%KLON,YDCPG_DIM%KFLEVG)
+
+!            LOCAL ARRAYS FOR TKE
+! ZCOEFN : COEFFICIENT STATISTIQUE POUR LES FLUX D'EAUX CONDENSEES.
+
+REAL(KIND=JPRB) :: ZCOEFN(YDCPG_DIM%KLON,YDCPG_DIM%KFLEVG)
+
+!            LOCAL ARRAYS FOR ACVPPKF
+REAL(KIND=JPRB) :: ZQLI_CVPP(YDCPG_DIM%KLON,YDCPG_DIM%KFLEVG)
+REAL(KIND=JPRB) :: ZNEB_CVPP(YDCPG_DIM%KLON,YDCPG_DIM%KFLEVG)
+!            LOCAL ARRAYS FOR EDKF
+REAL(KIND=JPRB) :: ZIMPL
+
+!           2-D ARRAY FOR SIMPL.RADIATION SCHEME
+
+REAL(KIND=JPRB) :: ZZNEB(YDCPG_DIM%KLON,YDCPG_DIM%KFLEVG)
+
+INTEGER(KIND=JPIM) :: IJN, IMLTYPE, JCHA, JLEV, JLON, JSG, JGFL, JDIAG
+INTEGER(KIND=JPIM) :: ILONMNH, IKRR, ISPLITR ! useful size of klon arrays for mesonh physics
+LOGICAL :: LLCLS, LLHMT, LLMAF, LLREDPR
+
+REAL(KIND=JPRB) :: ZAEN, ZAEO, ZALBV, ZCARDI, ZEPS, ZEPS0, ZEPSNEB, ZEPSO3
+REAL(KIND=JPRB) :: ZEPSA, ZALBPMER
+
+!            2-D ARRAYS
+
+! ZNEBC      : NEBULOSITE  CONVECTIVE A L'ECHELLE DE LA MAILLE.
+! ZQLIC      : EAU LIQUIDE CONVECTIVE A L'ECHELLE DE LA MAILLE.
+! ZQCL       : CONDENSAT STRATIFORME LIQUIDE
+! ZQCI       : CONDENSAT STRATIFORME SOLIDE
+! ZFHEVPPC   : FLUX DE CHALEUR DU A L'EVAPORATION DES PREC. CONVECTIVES.
+! ZFHMLTSC   : FLUX DE CHALEUR DU A LA FONTE/GEL DES PREC. CONVECTIVES.
+! ZFPEVPPC   : EVAPORATION DES PREC. CONVECTIVES.
+! ICIS       : INDICE DE NIVEAU D'INSTABILITE SECHE.
+
+REAL(KIND=JPRB) :: ZNEBC(YDCPG_DIM%KLON,YDCPG_DIM%KFLEVG),ZQLIC(YDCPG_DIM%KLON,YDCPG_DIM%KFLEVG)
+REAL(KIND=JPRB) :: ZQCL(YDCPG_DIM%KLON,YDCPG_DIM%KFLEVG),ZQCI(YDCPG_DIM%KLON,YDCPG_DIM%KFLEVG)
+REAL(KIND=JPRB) :: ZFHEVPPC(YDCPG_DIM%KLON,0:YDCPG_DIM%KFLEVG),ZFHMLTSC(YDCPG_DIM%KLON,0:YDCPG_DIM%KFLEVG)&
+ & ,ZFPEVPPC(YDCPG_DIM%KLON,0:YDCPG_DIM%KFLEVG)
+INTEGER(KIND=JPIM) :: ICIS(YDCPG_DIM%KLON,YDCPG_DIM%KFLEVG)
+
+
+!           SURFEX local VARIABLES
+!           ----------------------------
+
+! Implicit coupling coefficients
+INTEGER(KIND=JPIM) :: IRR
+REAL(KIND=JPRB) :: ZDTMSE,ZRHGMT,ZSTATI
+REAL(KIND=JPRB) :: ZCFAQ(YDCPG_DIM%KLON,YDCPG_DIM%KFLEVG),ZCFAS(YDCPG_DIM%KLON,YDCPG_DIM%KFLEVG),&
+ & ZCFATH(YDCPG_DIM%KLON,YDCPG_DIM%KFLEVG),ZCFAU(YDCPG_DIM%KLON,YDCPG_DIM%KFLEVG),ZCFBQ(YDCPG_DIM%KLON,YDCPG_DIM%KFLEVG),&
+ & ZCFBS(YDCPG_DIM%KLON,YDCPG_DIM%KFLEVG),ZCFBTH(YDCPG_DIM%KLON,YDCPG_DIM%KFLEVG),&
+ & ZCFBU(YDCPG_DIM%KLON,YDCPG_DIM%KFLEVG),ZCFBV(YDCPG_DIM%KLON,YDCPG_DIM%KFLEVG),&
+ & ZCFBU_G(YDCPG_DIM%KLON,YDCPG_DIM%KFLEVG),ZCFBV_G(YDCPG_DIM%KLON,YDCPG_DIM%KFLEVG),&
+ & ZCFBS_G(YDCPG_DIM%KLON,YDCPG_DIM%KFLEVG),ZCFBQ_G(YDCPG_DIM%KLON,YDCPG_DIM%KFLEVG)
+
+REAL(KIND=JPRB) :: ZDSE(YDCPG_DIM%KLON,YDCPG_DIM%KFLEVG)
+REAL(KIND=JPRB) :: ZFEV(YDCPG_DIM%KLON),ZFMDU(YDCPG_DIM%KLON),ZFMDV(YDCPG_DIM%KLON),ZFEVS(YDCPG_DIM%KLON)
+REAL(KIND=JPRB) :: ZSRAIN(YDCPG_DIM%KLON), ZSSNOW(YDCPG_DIM%KLON), ZSGROUPEL(YDCPG_DIM%KLON)
+REAL(KIND=JPRB) :: ZSFCO2(YDCPG_DIM%KLON), ZRHODREFM(YDCPG_DIM%KLON)
+REAL(KIND=JPRB) :: ZDEPTH_HEIGHT(YDCPG_DIM%KLON,YDCPG_DIM%KFLEVG), ZZS(YDCPG_DIM%KLON)
+REAL(KIND=JPRB) :: ZTSN(YDCPG_DIM%KLON),ZTN(YDCPG_DIM%KLON)
+REAL(KIND=JPRB)   :: ZBUDTH (YDCPG_DIM%KLON)
+REAL(KIND=JPRB)   :: ZBUDSO (YDCPG_DIM%KLON)
+REAL(KIND=JPRB)   :: ZFCLL  (YDCPG_DIM%KLON)
+! FOR Hv
+REAL(KIND=JPRB)   :: ZHV2(YDCPG_DIM%KLON)
+! FOR DUST
+REAL(KIND=JPRB), DIMENSION (YDCPG_DIM%KLON,YDCPG_DIM%KFLEVG) ::  ZQDM
+REAL(KIND=JPRB) :: ZCFASV(YDCPG_DIM%KLON,YDCPG_DIM%KFLEVG,1:YDMODEL%YRML_GCONF%YGFL%NGFL_EXT) ! SCOND MEMBRE POUR LES SCALAIRES PASSIFS
+REAL(KIND=JPRB) :: ZCFBSV(YDCPG_DIM%KLON,YDCPG_DIM%KFLEVG,1:YDMODEL%YRML_GCONF%YGFL%NGFL_EXT) ! SCOND MEMBRE POUR LES SCALAIRES PASSIFS
+REAL(KIND=JPRB) :: ZSMOOTRAC(1:YDMODEL%YRML_GCONF%YGFL%NGFL_EXT) ! SCOND MEMBRE POUR LES SCALAIRES PASSIFS
+REAL(KIND=JPRB) :: ZINVDT, ZINVG, ZRSCP, ZINVATM
+
+REAL(KIND=JPRB),  DIMENSION(YDCPG_DIM%KLON,1,YDCPG_DIM%KFLEVG,YDMODEL%YRML_GCONF%YGFL%NGFL_EXT):: ZZI_SVM
+REAL(KIND=JPRB),  DIMENSION (YDCPG_DIM%KLON,YDCPG_DIM%KFLEVG,YDMODEL%YRML_GCONF%YGFL%NGFL_EZDIAG):: ZZI_PEZDIAG
+REAL(KIND=JPRB), DIMENSION (:,:,:), ALLOCATABLE  :: ZSVM, ZPSV
+REAL(KIND=JPRB), DIMENSION (:,:),   ALLOCATABLE  :: ZSFSV  ! passifs scalaires surf flux
+! TRAITEMENT DES SCALAIRES PASSIFS
+REAL(KIND=JPRB) :: ZTM(YDCPG_DIM%KLON,YDCPG_DIM%KFLEVG)
+REAL(KIND=JPRB), DIMENSION (YDCPG_DIM%KLON,1,YDCPG_DIM%KFLEVG) :: ZZZ,ZDZZ,ZZI_PABSM, ZZI_THM,&
+                & ZZI_EXNREFM, ZZI_RHODREFM,ZEVAP,ZZDEP,ZZI_RHO
+REAL(KIND=JPRB) :: ZZI_APHI(YDCPG_DIM%KLON,0:YDCPG_DIM%KFLEVG)
+REAL(KIND=JPRB), DIMENSION (YDCPG_DIM%KLON,1,YDCPG_DIM%KFLEVG,6) :: ZZI_RM
+!            3-D ARRAYS
+REAL(KIND=JPRB), DIMENSION(YDCPG_DIM%KLON,YDCPG_DIM%KFLEVG,YDMODEL%YRML_PHY_RAD%YRERAD%NSW):: ZPIZA_DST !Single scattering
+                                             ! albedo of dust (points,lev,wvl)
+REAL(KIND=JPRB), DIMENSION(YDCPG_DIM%KLON,YDCPG_DIM%KFLEVG,YDMODEL%YRML_PHY_RAD%YRERAD%NSW):: ZCGA_DST  !Assymetry factor
+                                             ! for dust (points,lev,wvl)
+REAL(KIND=JPRB), DIMENSION(YDCPG_DIM%KLON,YDCPG_DIM%KFLEVG,YDMODEL%YRML_PHY_RAD%YRERAD%NSW):: ZTAUREL_DST !tau/tau_{550}
+                                             !dust (points,lev,wvl)
+
+!         ACFLUSO (ECUME) local variable
+!-------------------------------------------
+REAL(KIND=JPRB) :: ZCE(YDCPG_DIM%KLON), ZCEROV(YDCPG_DIM%KLON), ZCRTI(YDCPG_DIM%KLON)
+
+
+!        New ACDIFV1 local variable
+!--------------------------------------------
+REAL(KIND=JPRB)   :: ZXURO(YDCPG_DIM%KLON,0:YDCPG_DIM%KFLEVG)
+REAL(KIND=JPRB)   :: ZXQRO(YDCPG_DIM%KLON,0:YDCPG_DIM%KFLEVG)
+REAL(KIND=JPRB)   :: ZXTRO(YDCPG_DIM%KLON,0:YDCPG_DIM%KFLEVG)
+
+!        New ACNORGWD local variables
+!--------------------------------------------
+REAL(KIND=JPRB) :: ZD_U(YDCPG_DIM%KLON,YDCPG_DIM%KFLEVG), ZD_V(YDCPG_DIM%KLON,YDCPG_DIM%KFLEVG)
+REAL(KIND=JPRB) :: Z_PP(YDCPG_DIM%KLON,YDCPG_DIM%KFLEVG) 
+REAL(KIND=JPRB) :: Z_UU(YDCPG_DIM%KLON,YDCPG_DIM%KFLEVG) 
+REAL(KIND=JPRB) :: Z_VV(YDCPG_DIM%KLON,YDCPG_DIM%KFLEVG)
+REAL(KIND=JPRB) :: Z_TT(YDCPG_DIM%KLON,YDCPG_DIM%KFLEVG)
+REAL(KIND=JPRB) :: Z_VO(YDCPG_DIM%KLON,YDCPG_DIM%KFLEVG)  
+REAL(KIND=JPRB) :: ZFLX_LOTT_GWU(YDCPG_DIM%KLON,0:YDCPG_DIM%KFLEVG), ZFLX_LOTT_GWV(YDCPG_DIM%KLON,0:YDCPG_DIM%KFLEVG)
+REAL(KIND=JPRB) :: ZPRECGWD(YDCPG_DIM%KLON)
+
+!    TKE+ for ACCLDIA
+REAL(KIND=JPRB)   :: ZTKE1(YDCPG_DIM%KLON,YDCPG_DIM%KFLEVG)
+REAL(KIND=JPRB)   :: ZTPRDY(YDCPG_DIM%KLON,YDCPG_DIM%KFLEVG)
+
+!   For ACVISIH
+REAL(KIND=JPRB)   :: ZQGM(YDCPG_DIM%KLON,YDCPG_DIM%KFLEVG)
+
+
+!        New ARP_GROUND_PARAM local variable
+!------------------------------------------------
+
+REAL(KIND=JPRB)   :: ZALPHA1(YDCPG_DIM%KLON,0:YDCPG_DIM%KFLEVG)
+REAL(KIND=JPRB)   :: ZCOEFA (YDCPG_DIM%KLON,0:YDCPG_DIM%KFLEVG)
+REAL(KIND=JPRB)   :: ZLVT   (YDCPG_DIM%KLON,0:YDCPG_DIM%KFLEVG)
+REAL(KIND=JPRB)   :: ZQICE  (YDCPG_DIM%KLON,0:YDCPG_DIM%KFLEVG)
+REAL(KIND=JPRB)   :: ZDIFWQ (YDCPG_DIM%KLON)
+REAL(KIND=JPRB)   :: ZDIFWS (YDCPG_DIM%KLON)
+REAL(KIND=JPRB)   :: ZSC_FEVI (YDCPG_DIM%KLON),ZSC_FEVN(YDCPG_DIM%KLON),ZSC_FCLL(YDCPG_DIM%KLON),ZSC_FCLN(YDCPG_DIM%KLON)
+
+!           TRAJECTORY (For diffusion !) local VARIABLES
+!           ----------------------------
+REAL(KIND=JPRB) :: ZCDROV_SAVE(YDCPG_DIM%KLON),ZCHROV_SAVE(YDCPG_DIM%KLON)
+REAL(KIND=JPRB) :: ZKTROV_SAVE(YDCPG_DIM%KLON,0:YDCPG_DIM%KFLEVG),ZKUROV_SAVE(YDCPG_DIM%KLON,0:YDCPG_DIM%KFLEVG)
+REAL(KIND=JPRB) :: ZTRAJGWD(YDCPG_DIM%KLON,0:YDCPG_DIM%KFLEVG) !Traj buffer saved for TL/AD (YDMODEL%YRML_PHY_MF%YRSIMPHL%LGWDSPNL)
+
+REAL(KIND=JPRB)    :: ZRVMD,ZDELTA
+LOGICAL            :: LLAERO, LLAROME, LLCALLRAD
+REAL(KIND=JPRB)    :: ZAIPCMT(YDCPG_DIM%KLON) ! Activity Index of PCMT: 1. if PCMT is active, 0. else case.
+REAL(KIND=JPRB)    :: ZALF_CAPE(YDCPG_DIM%KLON)
+REAL(KIND=JPRB)    :: ZALF_CVGQ(YDCPG_DIM%KLON)
+REAL(KIND=JPRB)    :: ZQIC(YDCPG_DIM%KLON,YDCPG_DIM%KFLEVG),ZQLC(YDCPG_DIM%KLON,YDCPG_DIM%KFLEVG),ZQRC(YDCPG_DIM%KLON,YDCPG_DIM%KFLEVG),ZQSC(YDCPG_DIM%KLON,YDCPG_DIM%KFLEVG),ZQVI
+REAL(KIND=JPRB)    :: ZQLI_CVP(YDCPG_DIM%KLON,YDCPG_DIM%KFLEVG)
+REAL(KIND=JPRB)    :: ZQC_DET_PCMT(YDCPG_DIM%KLON,YDCPG_DIM%KFLEVG)
+REAL(KIND=JPRB)    :: ZFPLS(YDCPG_DIM%KLON,0:YDCPG_DIM%KFLEVG),ZFPLC(YDCPG_DIM%KLON,0:YDCPG_DIM%KFLEVG),ZFPL(YDCPG_DIM%KLON,0:YDCPG_DIM%KFLEVG)
+REAL(KIND=JPRB)    :: ZCSGC(YDCPG_DIM%KLON,YDCPG_DIM%KFLEVG)
+REAL(KIND=JPRB)    :: ZTZER
+CHARACTER(LEN=200) :: CLERR
+
+! Tracers: prognostique aerosols, passive scalars...
+INTEGER(KIND=JPIM) :: INBTRA
+INTEGER(KIND=JPIM) :: INBTRA_DEP
+REAL(KIND=JPRB), ALLOCATABLE :: ZSTRCTRA(:,:,:)
+REAL(KIND=JPRB), ALLOCATABLE :: ZTRA(:,:,:)
+
+!        New chemistry local variables
+!-------------------------------------
+INTEGER(KIND=JPIM)               :: IFLDX, IFLDX2, ILEVX 
+INTEGER(KIND=JPIM), ALLOCATABLE  :: INDCHEM(:), IGPLAT(:)
+REAL(KIND=JPRB), ALLOCATABLE     :: ZSD_XA(:,:,:), ZSD_X2(:,:), ZTENGFL(:,:,:)
+REAL(KIND=JPRB), ALLOCATABLE     :: ZCFLX(:,:), ZCFLXO(:,:), ZCHEMDV(:,:), ZAEROP(:,:,:)
+REAL(KIND=JPRB), ALLOCATABLE     :: ZTENC(:,:,:), ZDELP(:,:), ZWND(:), ZDUMMY1(:,:), ZGELAT(:)
+REAL(KIND=JPRB), ALLOCATABLE     :: ZNEEFLX(:), ZCHEM2AER(:,:,:)
+CHARACTER (LEN = 20) , POINTER ::   CGMIXLEN
+REAL(KIND=JPRB) :: ZDCAPE(YDCPG_DIM%KLON) ! Descending CAPE for gusts.
+
+! ACRANEB/ACRANEB2 local variables
+! --------------------------------
+REAL(KIND=JPRB) :: ZLAMB           ! proportion of Lambertian scattering
+REAL(KIND=JPRB) :: ZALBDIR  (YDCPG_DIM%KLON) ! direct (parallel) surface albedo
+REAL(KIND=JPRB) :: ZCLCT_RAD(YDCPG_DIM%KLON) ! total cloud cover for radiation
+REAL(KIND=JPRB) :: ZDECRD   (YDCPG_DIM%KLON) ! decorrelation depth for cloud overlaps
+REAL(KIND=JPRB) :: ZDECRD_MF(YDCPG_DIM%KLON) ! decorrelation depth for cloud overlaps
+                                   ! in microphysics
+
+REAL(KIND=JPRB) :: ZQG(YDCPG_DIM%KLON,YDCPG_DIM%KFLEVG)
+REAL(KIND=JPRB) :: ZDQG
+
+! IFS deep convection scheme local variables
+! --------------------------------
+INTEGER(KIND=JPIM) :: ITOPC(YDCPG_DIM%KLON),IBASC(YDCPG_DIM%KLON),ITYPE(YDCPG_DIM%KLON),ISPPN2D
+INTEGER(KIND=JPIM) :: ICBOT(YDCPG_DIM%KLON),ICTOP(YDCPG_DIM%KLON),IBOTSC(YDCPG_DIM%KLON)
+LOGICAL :: LLDSLPHY,LLPTQ,LLLAND(YDCPG_DIM%KLON),LLCUM(YDCPG_DIM%KLON),LLSC(YDCPG_DIM%KLON),LLSHCV(YDCPG_DIM%KLON),LLLINOX(YDCPG_DIM%KLON)
+REAL(KIND=JPRB) :: ZLIGH_CTG(YDCPG_DIM%KLON),ZCTOPH(YDCPG_DIM%KLON),ZPRECMX(YDCPG_DIM%KLON),ZICE(YDCPG_DIM%KLON),ZCDEPTH(YDCPG_DIM%KLON),ZWMFU(YDCPG_DIM%KLON)
+REAL(KIND=JPRB) :: ZVERVEL(YDCPG_DIM%KLON,YDCPG_DIM%KFLEVG), ZGEOM1(YDCPG_DIM%KLON,YDCPG_DIM%KFLEVG), ZGEOMH(YDCPG_DIM%KLON,0:YDCPG_DIM%KFLEVG)
+REAL(KIND=JPRB) :: ZTENQ(YDCPG_DIM%KLON,YDCPG_DIM%KFLEVG),ZTENU(YDCPG_DIM%KLON,YDCPG_DIM%KFLEVG),ZTENV(YDCPG_DIM%KLON,YDCPG_DIM%KFLEVG)
+REAL(KIND=JPRB) :: ZLCRIT_AER(YDCPG_DIM%KLON,YDCPG_DIM%KFLEVG),ZSNDE(YDCPG_DIM%KLON,YDCPG_DIM%KFLEVG,2)
+REAL(KIND=JPRB) :: ZCUCONVCA(YDCPG_DIM%KLON),ZGAW(YDCPG_DIM%KLON),ZVDIFTS,ZDXTDK(YDCPG_DIM%KLON)
+REAL(KIND=JPRB) :: ZLU(YDCPG_DIM%KLON,YDCPG_DIM%KFLEVG),ZLUDE(YDCPG_DIM%KLON,YDCPG_DIM%KFLEVG),ZMFU(YDCPG_DIM%KLON,YDCPG_DIM%KFLEVG)
+REAL(KIND=JPRB) :: ZLISUM(YDCPG_DIM%KLON,YDCPG_DIM%KFLEVG),ZMFD(YDCPG_DIM%KLON,YDCPG_DIM%KFLEVG)
+REAL(KIND=JPRB) :: ZWMEAN(YDCPG_DIM%KLON),ZACPR(YDCPG_DIM%KLON),ZDIFF(YDCPG_DIM%KLON,YDCPG_DIM%KFLEVG)
+REAL(KIND=JPRB) :: ZMFUDE_RATE(YDCPG_DIM%KLON,YDCPG_DIM%KFLEVG),ZMFDDE_RATE(YDCPG_DIM%KLON,YDCPG_DIM%KFLEVG)
+REAL(KIND=JPRB) :: ZFHPCL(YDCPG_DIM%KLON,0:YDCPG_DIM%KFLEVG),ZFHPCN(YDCPG_DIM%KLON,0:YDCPG_DIM%KFLEVG)
+REAL(KIND=JPRB) :: ZFCQLF(YDCPG_DIM%KLON,0:YDCPG_DIM%KFLEVG),ZFCQLI(YDCPG_DIM%KLON,0:YDCPG_DIM%KFLEVG),ZFRSO(YDCPG_DIM%KLON,0:YDCPG_DIM%KFLEVG),ZFRTH(YDCPG_DIM%KLON,0:YDCPG_DIM%KFLEVG)
+REAL(KIND=JPRB) :: ZGP2DSPPA(YDCPG_DIM%KLON,1),ZLUDELI(YDCPG_DIM%KLON,YDCPG_DIM%KFLEVG,4),ZLRAIN(YDCPG_DIM%KLON,YDCPG_DIM%KFLEVG),ZRSUD(YDCPG_DIM%KLON,YDCPG_DIM%KFLEVG,2)
+REAL(KIND=JPRB), ALLOCATABLE :: ZCEN(:,:,:),ZSCAV(:)
+
+! Precipitation type diagnostics
+!--------------------------------
+REAL(KIND=JPRB)   :: ZFPLSG(YDCPG_DIM%KLON,0:YDCPG_DIM%KFLEVG)
+
+REAL(KIND=JPRB) :: ZENTCH(YDCPG_DIM%KLON,YDCPG_DIM%KFLEVG)
+
 
 REAL(KIND=JPRB) :: ZHOOK_HANDLE
 

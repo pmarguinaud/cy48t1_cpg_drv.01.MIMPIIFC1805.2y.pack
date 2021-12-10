@@ -187,6 +187,8 @@ EOF
     for my $N (@N)
       {
 
+        $N2M{$N} or die $N;
+
         $dummy_arg_LT->appendChild (&n ("<arg-N><N><n>$N2M{$N}</n></N></arg-N>"));
         $dummy_arg_LT->appendChild (&t (", ")) if ($N ne $N[-1]);
 

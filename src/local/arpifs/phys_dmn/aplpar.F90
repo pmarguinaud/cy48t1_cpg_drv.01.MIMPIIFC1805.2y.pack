@@ -1,12 +1,12 @@
 #ifdef RS6K
 @PROCESS NOCHECK
 #endif
-SUBROUTINE MF_PHYS_PAR(YDGEOMETRY, YDCPG_DIM, YDCPG_MISC, YDCPG_PHY0, YDCPG_PHY9, YDMF_PHYS,         &
+SUBROUTINE APLPAR(YDGEOMETRY, YDCPG_DIM, YDCPG_MISC, YDCPG_PHY0, YDCPG_PHY9, YDMF_PHYS,         &
 & YDMF_PHYS_TMP, YDAPLPAR_TMP, YDCPG_DYN0, YDCPG_DYN9, YDMF_PHYS_SURF, YDVARS, YDGMV, YDSURF, YDCFU, &
 & YDXFU, YDMODEL, LDCONFX, PDTPHY, PGFL, PKOZO, PGP2DSDT, PB1, PB2, PGMVT1, PGFLT1, PGPAR,           &
 & PTRAJ_PHYS, YDDDH, PFTCNS)
 
-!**** *MF_PHYS_PAR * - APPEL DES PARAMETRISATIONS PHYSIQUES.
+!**** *APLPAR * - APPEL DES PARAMETRISATIONS PHYSIQUES.
 
 !     Sujet.
 !     ------
@@ -988,7 +988,7 @@ REAL(KIND=JPRB) :: ZHOOK_HANDLE
 #include "fcttrm.func.h"
 
 !     ------------------------------------------------------------------
-IF (LHOOK) CALL DR_HOOK('MF_PHYS_PAR',0,ZHOOK_HANDLE)
+IF (LHOOK) CALL DR_HOOK('APLPAR',0,ZHOOK_HANDLE)
 ASSOCIATE(YDDIM=>YDGEOMETRY%YRDIM, YDDIMV=>YDGEOMETRY%YRDIMV, YDVAB=>YDGEOMETRY%YRVAB, YDCSGEOM=> YDGEOMETRY%YRCSGEOM(YDCPG_DIM%KBL), &
 & YDGSGEOM=>YDGEOMETRY%YRGSGEOM(YDCPG_DIM%KBL), YDOROG=>YDGEOMETRY%YROROG(YDCPG_DIM%KBL), YDPHY=>YDMODEL%YRML_PHY_MF%YRPHY,           &
 & YDPTRSLB1=>YDMODEL%YRML_DYN%YRPTRSLB1, YDPTRSLB2=>YDMODEL%YRML_DYN%YRPTRSLB2, YDTOPH=>YDMODEL%YRML_PHY_MF%YRTOPH,                   &
@@ -1105,8 +1105,8 @@ IF ( YSPP_CONFIG%LSPP ) THEN
  ENDDO
 ENDIF
 
-! In the NHQE model, MF_PHYS_PAR enters with Tt and grad(Tt), where Tt = T * exp(-(R/cp) log(pre/prehyd)).
-! But calculations of MF_PHYS_PAR must use T and grad(T).
+! In the NHQE model, APLPAR enters with Tt and grad(Tt), where Tt = T * exp(-(R/cp) log(pre/prehyd)).
+! But calculations of APLPAR must use T and grad(T).
 ! So we do a conversion Tt -> T.
 IF (LNHQE) THEN
   CALL MF_PHYS_NHQE_PART1 (YDGEOMETRY, YDCPG_DIM, YDMF_PHYS_TMP, YDVARS, YDMODEL, PGFL)
@@ -1125,7 +1125,7 @@ CALL MF_PHYS_FPL_PART1 (YDCPG_DIM, YDAPLPAR_TMP, YDVARS, YDMODEL)
 
 
 ! * In some cases, some pseudo-historic surface buffers (like z0) should
-!   not be modified between the entrance and the output of MF_PHYS_PAR
+!   not be modified between the entrance and the output of APLPAR
 !   (this is the case for example if LDCONFX=T).
 !   For the time being, we must save:
 !   - HV (group VV) : resistance to evapotranspiration
@@ -5217,7 +5217,7 @@ IF (LTRAJPS) THEN
      & YDVARS%Q%T9,YDVARS%L%T9,YDVARS%I%T9,YDVARS%SP%T9)  
   ENDIF
 
-  IF (LPRTTRAJ.AND.PTRAJ_PHYS%LASTCHUNK) WRITE(NULOUT,*)'GREPTRAJ STORE TRAJ_PHYS in MF_PHYS_PAR'
+  IF (LPRTTRAJ.AND.PTRAJ_PHYS%LASTCHUNK) WRITE(NULOUT,*)'GREPTRAJ STORE TRAJ_PHYS in APLPAR'
 ENDIF
 
 !     ------------------------------------------------------------------
@@ -5280,5 +5280,5 @@ IF (LINTFLEX) CALL CLEANINTPROCSET(YLPROCSET)
 
 END ASSOCIATE
 END ASSOCIATE
-IF (LHOOK) CALL DR_HOOK('MF_PHYS_PAR',1,ZHOOK_HANDLE)
-END SUBROUTINE MF_PHYS_PAR
+IF (LHOOK) CALL DR_HOOK('APLPAR',1,ZHOOK_HANDLE)
+END SUBROUTINE APLPAR

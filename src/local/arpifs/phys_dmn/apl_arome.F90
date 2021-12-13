@@ -1,12 +1,12 @@
 #ifdef RS6K
 @PROCESS NOCHECK
 #endif
-SUBROUTINE MF_PHYS_MPA(YDGEOMETRY, YDCPG_DIM, YDCPG_MISC, YDCPG_PHY0, YDCPG_PHY9, YDMF_PHYS,    &
+SUBROUTINE APL_AROME(YDGEOMETRY, YDCPG_DIM, YDCPG_MISC, YDCPG_PHY0, YDCPG_PHY9, YDMF_PHYS,    &
 & YDMF_PHYS_TMP, YDCPG_DYN0, YDCPG_DYN9, YDMF_PHYS_SURF, YDVARS, YDGMV, YDSURF, YDCFU, YDXFU,   &
 & YDMODEL, LDCONFX, PDTPHY, PGFL, PKOZO, PGP2DSDT, PB1, PB2, PGMVT1, PGFLT1, PGPAR, PTRAJ_PHYS, &
 & YDDDH, PFTCNS)
 
-!**** *MF_PHYS_MPA * - CALL OF PHYSICAL PARAMETERISATIONS FOR ALARO/AROME
+!**** *APL_AROME * - CALL OF PHYSICAL PARAMETERISATIONS FOR ALARO/AROME
 
 !     Sujet.
 !     ------
@@ -14,7 +14,7 @@ SUBROUTINE MF_PHYS_MPA(YDGEOMETRY, YDCPG_DIM, YDCPG_MISC, YDCPG_PHY0, YDCPG_PHY9
 
 !**   Interface.
 !     ----------
-!        *CALL* *MF_PHYS_MPA*
+!        *CALL* *APL_AROME*
 
 !-----------------------------------------------------------------------
 
@@ -773,7 +773,7 @@ REAL(KIND=JPRB) :: ZHOOK_HANDLE
 
 
 !     ------------------------------------------------------------------
-IF (LHOOK) CALL DR_HOOK('MF_PHYS_MPA', 0, ZHOOK_HANDLE)
+IF (LHOOK) CALL DR_HOOK('APL_AROME', 0, ZHOOK_HANDLE)
 
 ASSOCIATE(YDDIM=>YDGEOMETRY%YRDIM, YDGEM=>YDGEOMETRY%YRGEM, YDCSGEOM=> YDGEOMETRY%YRCSGEOM(YDCPG_DIM%KBL),                         &
 & YDGSGEOM=>YDGEOMETRY%YRGSGEOM(YDCPG_DIM%KBL), YDOROG=>YDGEOMETRY%YROROG(YDCPG_DIM%KBL), YDSTA=>YDGEOMETRY%YRSTA,                 &
@@ -853,8 +853,8 @@ ENDIF
 ! Complete physics is called.
 LLDIAB=(.NOT.LAGPHY)
 
-! In the NHQE model, MF_PHYS_MPA enters with Tt and grad(Tt), where Tt = T * exp(-(R/cp) log(pre/prehyd)).
-! But calculations of MF_PHYS_MPA must use T and grad(T).
+! In the NHQE model, APL_AROME enters with Tt and grad(Tt), where Tt = T * exp(-(R/cp) log(pre/prehyd)).
+! But calculations of APL_AROME must use T and grad(T).
 ! So we do a conversion Tt -> T.
 IF (LNHQE) THEN
   CALL MF_PHYS_NHQE_PART1 (YDGEOMETRY, YDCPG_DIM, YDMF_PHYS_TMP, YDVARS, YDMODEL, PGFL)
@@ -869,7 +869,7 @@ IF (LLDIAB) THEN
 ENDIF
 
 ! * In some cases, some pseudo-historic surface buffers (like z0) should
-!   not be modified between the entrance and the output of MF_PHYS_MPA
+!   not be modified between the entrance and the output of APL_AROME
 !   (this is the case for example if LDCONFX=T).
 !   For the time being, we must save:
 !   - HV (group VV) : resistance to evapotranspiration
@@ -3558,7 +3558,7 @@ IF (LVERTFE.AND.LVFE_GWMPA) THEN
   ! * case LVFE_GWMPA not yet coded.
   !   (in this case ZGWT1 must be computed at full levels and
   !   not at half levels)
-  CALL ABOR1(' MF_PHYS_MPA: case LVFE_GWMPA not yet coded if LMPA=T!')
+  CALL ABOR1(' APL_AROME: case LVFE_GWMPA not yet coded if LMPA=T!')
 ENDIF
 
 ! * compute ZTT1:
@@ -3713,7 +3713,7 @@ IF (LINTFLEX) CALL CLEANINTPROCSET(YLPROCSET)
 END ASSOCIATE
 END ASSOCIATE
 
-IF (LHOOK) CALL DR_HOOK('MF_PHYS_MPA', 1, ZHOOK_HANDLE)
+IF (LHOOK) CALL DR_HOOK('APL_AROME', 1, ZHOOK_HANDLE)
 
 CONTAINS
 
@@ -3772,4 +3772,4 @@ ENDIF
 LLSWAP_LIMAS=.NOT.LLSWAP_LIMAS
 END SUBROUTINE SWAP_LIMAS
 
-END SUBROUTINE MF_PHYS_MPA
+END SUBROUTINE APL_AROME

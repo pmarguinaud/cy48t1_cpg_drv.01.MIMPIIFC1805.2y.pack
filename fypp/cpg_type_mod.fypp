@@ -259,10 +259,50 @@ CONTAINS
   PROCEDURE :: FINAL => CPG_DDH_TYPE_FINAL
 END TYPE CPG_DDH_TYPE
 
-#:def pcpg_sl_type_definition (ind)
+#:set N3D = 0
+#:set pb1_vars = { &
+& 'U9'         : [ True   ],  'V9'         : [ True   ], &
+& 'T9'         : [ True   ],  'PD9'        : [ True   ], &
+& 'VD9'        : [ True   ],  'NHX9'       : [ True   ], &
+& 'UR0'        : [ True   ],  'VR0'        : [ True   ], &
+& 'ZR0'        : [ True   ],  'WR0'        : [ True   ], &
+& 'UR00'       : [ True   ],  'VR00'       : [ True   ], &
+& 'ZR00'       : [ True   ],  'WR00'       : [ True   ], &
+& 'WRA'        : [ True   ],  'UR9'        : [ True   ], &
+& 'VR9'        : [ True   ],  'DBBC9'      : [ True   ], &
+& 'DPHI9'      : [ True   ],  'GWS9'       : [ False  ], &
+& 'U0'         : [ True   ],  'V0'         : [ True   ], &
+& 'T0'         : [ True   ],  'PD0'        : [ True   ], &
+& 'VD0'        : [ True   ],  'C9'         : [ True   ], &
+& 'SP9'        : [ False  ],  'SP0'        : [ False  ], &
+& 'C0'         : [ True   ],  'UP9'        : [ True   ], &
+& 'VP9'        : [ True   ],  'TP9'        : [ True   ], &
+& 'U9_SI'      : [ True   ],  'V9_SI'      : [ True   ], &
+& 'T9_SI'      : [ True   ],  'PD9_SI'     : [ True   ], &
+& 'VD9_SI'     : [ True   ],  'C9_SI'      : [ True   ], &
+& 'UF9'        : [ True   ],  'VF9'        : [ True   ], &
+& 'TF9'        : [ True   ],  'VDF9'       : [ True   ], &
+& 'U9_NL'      : [ True   ],  'V9_NL'      : [ True   ], &
+& 'T9_NL'      : [ True   ],  'PD9_NL'     : [ True   ], &
+& 'VD9_NL'     : [ True   ],  'C9_NL'      : [ True   ], &
+& }
+
+#:set pb2_vars = { &
+& }
+
+#:def pcpg_sl_type_definition (ind, vars)
 TYPE CPG_SL${ind}$_TYPE
-  REAL(KIND=JPRB), POINTER, CONTIGUOUS :: ZVIEW (:,:) => NULL ()
+  INTEGER (KIND=JPIM) :: NLEV = -1
+  REAL (KIND=JPRB), POINTER, CONTIGUOUS :: ZVIEW (:,:) => NULL ()
   TYPE (FIELD_3D), POINTER :: F_DATA => NULL ()
+#:for var in vars
+  #:if vars[var][N3D]
+  REAL (KIND=JPRB), POINTER, CONTIGUOUS :: ${var}$ (:,:) => NULL ()
+  #:else
+  REAL (KIND=JPRB), POINTER, CONTIGUOUS :: ${var}$ (:) => NULL ()
+  #:endif
+  INTEGER (KIND=JPIM) :: I_${var}$
+#:endfor
 CONTAINS
   PROCEDURE :: INIT => CPG_SL${ind}$_TYPE_INIT
   PROCEDURE :: UPDATE_VIEW => CPG_SL${ind}$_TYPE_UPDATE_VIEW
@@ -270,9 +310,9 @@ CONTAINS
 END TYPE CPG_SL${ind}$_TYPE
 #:enddef
 
-$:pcpg_sl_type_definition ("1")
+$:pcpg_sl_type_definition ("1", pb1_vars)
 
-$:pcpg_sl_type_definition ("2")
+$:pcpg_sl_type_definition ("2", pb2_vars)
 
 REAL(KIND=JPRB),    PRIVATE, SAVE, TARGET :: ZDUM1 (1), ZDUM2 (1, 1), ZDUM3 (1,1,1)
 INTEGER(KIND=JPIM), PRIVATE, SAVE, TARGET :: IDUM1 (1), IDUM2 (1, 1), IDUM3 (1,1,1)
@@ -386,7 +426,7 @@ SELF%DDHI  => NULL ()
 
 END SUBROUTINE CPG_DDH_TYPE_FINAL
 
-#:def pcpg_sl_type_methods (ind)
+#:def pcpg_sl_type_methods (ind, vars)
 SUBROUTINE CPG_SL${ind}$_TYPE_INIT (SELF, REGISTRY, NLEV, YDTPTRSLB${ind}$, PERSISTENT, PB${ind}$)
 
 USE PTRSLB${ind}$, ONLY : TPTRSLB${ind}$
@@ -398,11 +438,17 @@ TYPE (TPTRSLB${ind}$),              INTENT (IN)    :: YDTPTRSLB${ind}$
 LOGICAL, OPTIONAL,                  INTENT (IN)    :: PERSISTENT
 REAL (KIND=JPRB), OPTIONAL, TARGET, INTENT (IN)    :: PB${ind}$ (:, :, :)
 
+SELF%NLEV = NLEV
+
 IF (PRESENT (PB${ind}$)) THEN
   SELF%F_DATA => CREATE_FIELD_WRAP ('PB${ind}$', PB${ind}$)
 ELSE
   SELF%F_DATA => CREATE_TEMPORARY ('PB${ind}$', GEOM=REGISTRY%GEOM, NLEV=YDTPTRSLB${ind}$%NFLDSLB${ind}$, PERSISTENT=PERSISTENT)
 ENDIF
+
+#:for var in vars
+  SELF%I_${var}$ = YDTPTRSLB${ind}$%MSLB1${var}$
+#:endfor
 
 END SUBROUTINE CPG_SL${ind}$_TYPE_INIT
 
@@ -413,8 +459,33 @@ INTEGER(KIND=JPIM), INTENT (IN)   :: BLOCK_INDEX
 
 IF (ASSOCIATED (SELF%F_DATA)) THEN
   SELF%ZVIEW => SELF%F_DATA%GET_VIEW (BLOCK_INDEX)
+#:for var in vars
+  #:if vars[var][N3D]
+  IF (SELF%I_${var}$ > 0) THEN
+    SELF%${var}$ => SELF%ZVIEW (:, SELF%I_${var}$:SELF%I_${var}$+SELF%NLEV+1)
+  ELSE
+    SELF%${var}$ => ZDUM2
+  ENDIF
+  #:else
+  IF (SELF%I_${var}$ > 0) THEN
+    SELF%${var}$ => SELF%ZVIEW (:, SELF%I_${var}$)
+  ELSE
+    SELF%${var}$ => ZDUM1
+  ENDIF
+  #:endif
+#:endfor
+
 ELSE
   SELF%ZVIEW => ZDUM2
+
+#:for var in vars
+  #:if vars[var][N3D]
+  SELF%${var}$ => ZDUM2
+  #:else
+  SELF%${var}$ => ZDUM1
+  #:endif
+#:endfor
+
 ENDIF
 
 END SUBROUTINE CPG_SL${ind}$_TYPE_UPDATE_VIEW
@@ -429,9 +500,9 @@ IF (ASSOCIATED (SELF%F_DATA)) CALL DELETE_TEMPORARY (SELF%F_DATA)
 END SUBROUTINE CPG_SL${ind}$_TYPE_FINAL
 #:enddef
 
-$:pcpg_sl_type_methods ("1")
+$:pcpg_sl_type_methods ("1", pb1_vars)
 
-$:pcpg_sl_type_methods ("2")
+$:pcpg_sl_type_methods ("2", pb2_vars)
 
 END MODULE CPG_TYPE_MOD
 

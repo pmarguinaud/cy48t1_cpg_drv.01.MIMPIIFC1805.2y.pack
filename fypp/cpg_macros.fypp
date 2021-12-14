@@ -8,13 +8,13 @@
 #:def pcpg_struct_definition (name, vars)
 TYPE ${name}$
   LOGICAL :: LOWNED = .FALSE.
-  REAL (KIND=JPRB), POINTER, CONTIGUOUS :: ZDATA (:,:,:,:) => NULL ()
   REAL (KIND=JPRB), POINTER, CONTIGUOUS :: ZVIEW (:,:,:) => NULL ()
-
+  TYPE (FIELD_4D), POINTER :: F_DATA => NULL ()
 #:for var in vars
   #:set ndim = 1 + len (vars[var][NDIMS])
   REAL (KIND=JPRB), POINTER, CONTIGUOUS :: ${var}$ (${", ".join ([":"] * ndim)}$) => NULL ()
   TYPE (FIELD_${ndim+1}$D), POINTER :: F_${var}$ => NULL ()
+  INTEGER (KIND=JPIM) :: I_${var}$ = -1_JPIM
 #:endfor
 
 CONTAINS
@@ -112,20 +112,10 @@ LOGICAL, OPTIONAL,                  INTENT (IN)    :: PERSISTENT
 REAL (KIND=JPRB), OPTIONAL, TARGET, INTENT (IN)    :: P${type}$ (:, :, :, :)
 
 IF (PRESENT (P${type}$)) THEN
-  SELF%ZDATA => P${type}$
-  SELF%LOWNED = .FALSE.
+  SELF%F_DATA => CREATE_FIELD_WRAP ('${name}$', P${type}$ (:, :, :, :))
 ELSE
-#:set var = list (vars.keys ())[0]
-#:set s2 = gdim (vars[var][NDIMS][0])
-  ALLOCATE (SELF%ZDATA (REGISTRY%NPROMA, ${s2}$, YD${type}$%NDIM, REGISTRY%NBLOCKS))
-  SELF%LOWNED = .TRUE.
+  SELF%F_DATA => CREATE_TEMPORARY ('${name}$', GEOM=REGISTRY%GEOM, NLEV=NLEV, NDIM=YD${type}$%NDIM, PERSISTENT=PERSISTENT)
 ENDIF
-
-#:for var in vars
- IF (YD${type}$%${memb}$${var}$ > 0) THEN
-   SELF%F_${var}$ => CREATE_FIELD_WRAP ('${var}$', SELF%ZDATA (:, :, YD${type}$%${memb}$${var}$, :))
- ENDIF
-#:endfor
 
 #! IF (PRESENT (P${type}$)) THEN
 #! 
@@ -152,25 +142,46 @@ SUBROUTINE ${name}$_UPDATE_VIEW (SELF, BLOCK_INDEX)
 CLASS (${name}$)         :: SELF
 INTEGER(KIND=JPIM), INTENT (IN)   :: BLOCK_INDEX
 
-SELF%ZVIEW => SELF%ZDATA (:,:,:,BLOCK_INDEX)
+IF (ASSOCIATED (SELF%F_DATA)) THEN
+
+  SELF%ZVIEW => SELF%F_DATA%GET_VIEW (BLOCK_INDEX)
 
 #:for var in vars
   #:set ss = pdim (vars[var][NDIMS])
   #:set ndim = 1 + len (vars[var][NDIMS])
-IF (ASSOCIATED (SELF%F_${var}$)) THEN  
-  SELF%${var}$ ${ss}$ => SELF%F_${var}$%GET_VIEW (BLOCK_INDEX)
-ELSE
-  SELF%${var}$ ${ss}$ => ZDUM${ndim}$
-ENDIF
+  IF (SELF%I_${var}$ > 0) THEN
+    SELF%${var}$ ${ss}$ => SELF%ZVIEW (:, :, SELF%I_${var}$)
+  ELSE
+    SELF%${var}$ ${ss}$ => ZDUM${ndim}$
+  ENDIF
 #:endfor
+
+ELSE
+
+#:for var in vars
+  #:set ss = pdim (vars[var][NDIMS])
+  #:set ndim = 1 + len (vars[var][NDIMS])
+  SELF%${var}$ ${ss}$ => ZDUM${ndim}$
+#:endfor
+
+ENDIF
+
+#! #:for var in vars
+#!   #:set ss = pdim (vars[var][NDIMS])
+#!   #:set ndim = 1 + len (vars[var][NDIMS])
+#! IF (ASSOCIATED (SELF%F_${var}$)) THEN  
+#!   SELF%${var}$ ${ss}$ => SELF%F_${var}$%GET_VIEW (BLOCK_INDEX)
+#! ELSE
+#!   SELF%${var}$ ${ss}$ => ZDUM${ndim}$
+#! ENDIF
+#! #:endfor
 
 END SUBROUTINE ${name}$_UPDATE_VIEW
 
 SUBROUTINE ${name}$_FINAL (SELF)
 CLASS (${name}$)          :: SELF
 
-IF (SELF%LOWNED) DEALLOCATE (SELF%ZDATA)
-SELF%ZDATA => NULL ()
+IF (ASSOCIATED (SELF%F_DATA)) CALL DELETE_TEMPORARY (SELF%F_DATA)
 
 #:for var in vars
 IF (ASSOCIATED (SELF%F_${var}$)) CALL DELETE_TEMPORARY (SELF%F_${var}$) 

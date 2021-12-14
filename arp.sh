@@ -21,7 +21,7 @@ export DR_HOOK_OPT=prof
 export EC_PROFILE_HEAP=0
 export EC_MPI_ATEXIT=0
 
-export PATH=$HOME/benchmf1709/scripts:$PATH
+export PATH=$HOME/bin:$HOME/benchmf1709/scripts:$PATH
 
 # Directory where input data is stored
 
@@ -30,6 +30,8 @@ DATA=/scratch/work/marguina/benchmf1709-data
 # Change to a temporary directory
 
 export workdir=/scratch/work/marguina
+
+export TMPDIR=$workdir/tmp/arp.$SLURM_JOBID
 
 mkdir -p $TMPDIR
 

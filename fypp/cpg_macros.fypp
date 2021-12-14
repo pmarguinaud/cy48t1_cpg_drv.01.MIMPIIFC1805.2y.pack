@@ -164,6 +164,8 @@ IF (ASSOCIATED (SELF%F_DATA)) THEN
 
 ELSE
 
+  SELF%ZVIEW => ZDUM3
+
 #:for var in vars
   #:set ss = pdim (vars[var][NDIMS])
   #:set ndim = 1 + len (vars[var][NDIMS])

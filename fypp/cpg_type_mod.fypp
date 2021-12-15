@@ -288,6 +288,23 @@ END TYPE CPG_DDH_TYPE
 & }
 
 #:set pb2_vars = { &
+& 'DBBC1'      : [ False ],  'DPHI1'      : [ False ], &
+& 'USI'        : [ True  ],  'VSI'        : [ True  ], &
+& 'TSI'        : [ True  ],  'PDSI'       : [ True  ], &
+& 'VDSI'       : [ True  ],  'SPSI'       : [ True  ], &
+& 'VVEL'       : [ True  ],  'URL'        : [ True  ], &
+& 'VRL'        : [ True  ],  'WRL'        : [ True  ], &
+& 'URL5'       : [ True  ],  'VRL5'       : [ True  ], &
+& 'WRL5'       : [ True  ],  'USI5'       : [ True  ], &
+& 'VSI5'       : [ True  ],  'U15'        : [ True  ], &
+& 'V15'        : [ True  ],  'T15'        : [ True  ], &
+& 'Q15'        : [ True  ],  'KAPPA'      : [ True  ], &
+& 'KAPPAT'     : [ True  ],  'KAPPAM'     : [ True  ], &
+& 'KAPPAH'     : [ True  ],  'KAPPA5'     : [ True  ], &
+& 'KAPPAT5'    : [ True  ],  'GWF'        : [ True  ], &
+& 'GDW'        : [ True  ],  'GWS'        : [ True  ], &
+& 'STDDISU'    : [ True  ],  'STDDISV'    : [ True  ], &
+& 'STDDISW'    : [ True  ], &
 & }
 
 #:def pcpg_sl_type_definition (ind, vars)
@@ -447,7 +464,7 @@ ELSE
 ENDIF
 
 #:for var in vars
-  SELF%I_${var}$ = YDTPTRSLB${ind}$%MSLB1${var}$
+  SELF%I_${var}$ = YDTPTRSLB${ind}$%MSLB${ind}$${var}$
 #:endfor
 
 END SUBROUTINE CPG_SL${ind}$_TYPE_INIT

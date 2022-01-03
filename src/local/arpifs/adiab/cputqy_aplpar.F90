@@ -1,4 +1,4 @@
-SUBROUTINE CPUTQY_APLPAR(YDDIMV,YDGMV, YGFL,YDPTRSLB1,YDPHY,KPROMA, KST, KPROF, KFLEV, PDT, KPGFL, &
+SUBROUTINE CPUTQY_APLPAR(YDVARS,YDDIMV,YDGMV, YGFL,YDPTRSLB1,YDPHY,KPROMA, KST, KPROF, KFLEV, PDT, KPGFL, &
  !  Pointeurs
  & KSLB1T9,KSLB1U9,KSLB1V9,KSLB1D9, KSLB1GFL9,&
  !  Variables 2D Input
@@ -80,11 +80,13 @@ USE YOMCST   , ONLY : RG, RCPD
 USE YOMPHY   , ONLY : TPHY
 USE YOM_YGFL , ONLY : TYPE_GFLD
 USE PTRSLB1  , ONLY : TPTRSLB1
+USE FIELD_VARIABLES_MOD, ONLY : FIELD_VARIABLES
  
 !-----------------------------------------------------------------------
 
 IMPLICIT NONE
 
+TYPE(FIELD_VARIABLES),INTENT(INOUT) :: YDVARS
 TYPE(TDIMV)       ,INTENT(IN)    :: YDDIMV
 TYPE(TGMV)        ,INTENT(INOUT) :: YDGMV
 TYPE(TPHY)        ,INTENT(IN)    :: YDPHY
@@ -218,7 +220,31 @@ DO JGFL=1,NDIM1
   ENDIF
 ENDDO
 
-! ZDEC,ZRRGDELP,ZDTT1:
+IF (YDVARS%Q%LWATER .AND. YDVARS%Q%LT1) THEN
+  
+ENDIF
+
+! GMV                                      
+! PTENDD      : YD                         PTENDD
+! PTENDT      : YT                         PTENDT
+! PTENDU      : YU                         PTENDU
+! PTENDV      : YV                         PTENDV
+                    
+! GFL                                      
+! PTENDQ      : YQ                         PTENDQ
+! PTENDQL     : YL                         PTENDL
+! PTENDQI     : YI                         PTENDI
+! PTENDQR     : YR                         PTENDR
+! PTENDQS     : YS                         PTENDS
+! PTENDQLCONV : YLCONV                     PTENDLCONV
+! PTENDQICONV : YICONV                     PTENDICONV
+! PTENDQRCONV : YRCONV                     PTENDRCONV
+! PTENDQSCONV : YSCONV                     PTENDSCONV
+! PTENDTKE    : YTKE                       PTENDTKE
+!               YG                         PTENDG
+!               YEFB1                      PTENDEFB1
+!               YEFB2                      PTENDEFB2
+!               YEFB3                      PTENDEFB3
 
 DO JLEV=1,KFLEV
   DO JROF=KST,KPROF

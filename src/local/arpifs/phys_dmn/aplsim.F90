@@ -93,8 +93,8 @@ USE YOMLUN             , ONLY : NULOUT
 
 USE DDH_MIX            , ONLY : TYP_DDH
 USE SPP_MOD            , ONLY : YSPP_CONFIG,YSPP
-USE MF_PHYS_STATE_TYPE_MOD &
-                       , ONLY : MF_PHYS_STATE_TYPE
+USE MF_PHYS_BASE_STATE_TYPE_MOD &
+                       , ONLY : MF_PHYS_BASE_STATE_TYPE
 !     -------------------------------------------------------------------------
 
 IMPLICIT NONE
@@ -162,7 +162,7 @@ REAL(KIND=JPRB) :: ZRAT5C (YDCPG_DIM%KLON,YDCPG_DIM%KFLEVG)
 REAL(KIND=JPRB) :: ZRAT5N (YDCPG_DIM%KLON,YDCPG_DIM%KFLEVG)
 REAL(KIND=JPRB) :: ZQS1   (YDCPG_DIM%KLON)
 
-TYPE (MF_PHYS_STATE_TYPE) :: YLMF_PHYS_STATE
+TYPE (MF_PHYS_BASE_STATE_TYPE) :: YLMF_PHYS_STATE
 REAL(KIND=JPRB) :: ZHOOK_HANDLE
 
 !     ------------------------------------------------------------------

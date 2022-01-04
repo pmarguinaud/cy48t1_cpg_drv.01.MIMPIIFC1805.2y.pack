@@ -136,6 +136,7 @@ REAL(KIND=JPRB)   ,INTENT(OUT)   :: PFDIS(KPROMA,0:KFLEV)
 REAL(KIND=JPRB)   ,TARGET, INTENT(INOUT) :: PB1(KPROMA,YDPTRSLB1%NFLDSLB1) 
 REAL(KIND=JPRB)   ,TARGET, INTENT(INOUT) :: PGMVT1(KPROMA,KFLEV,YDGMV%YT1%NDIM) 
 REAL(KIND=JPRB)   ,INTENT(INOUT) :: PGFLT1(KPROMA,KFLEV,YGFL%NDIM1)
+
 !-----------------------------------------------------------------------
 INTEGER(KIND=JPIM) :: JLEV, JROF, IPGFL, JGFL
 
@@ -149,6 +150,7 @@ REAL(KIND=JPRB),DIMENSION(:,:),    POINTER :: ZDT1
 
 REAL(KIND=JPRB) :: ZCPF, ZFLAG, ZRDT, ZRRG, ZH
 REAL(KIND=JPRB) :: ZDTT1(KPROMA,KFLEV),ZTDCP(KPROMA,KFLEV),ZDEC(KPROMA,KFLEV),ZRRGDELP(KPROMA,KFLEV)
+REAL(KIND=JPRB) :: ZTDCPX(KPROMA,KFLEV)
 REAL(KIND=JPRB) :: ZHOOK_HANDLE
 
 LOGICAL :: LLPREC, LLTKE
@@ -214,15 +216,35 @@ ENDIF
 
 !     Calculation of ZTDCP,ZDEC,ZRRGDELP,ZDTT1:
 ZTDCP(KST:KPROF,:)=0.
-DO JGFL=1,NDIM1
-  IF (YCOMP(JGFL)%LWATER .AND. YCOMP(JGFL)%LT1) THEN
-    ZTDCP(KST:KPROF,:)=ZTDCP(KST:KPROF,:)+(YCOMP(JGFL)%RCP-RCPD)*PTENDGFL(KST:KPROF,:,YCOMP(JGFL)%MP1)
-  ENDIF
-ENDDO
+ZTDCPX(KST:KPROF,:)=0.
 
-IF (YDVARS%Q%LWATER .AND. YDVARS%Q%LT1) THEN
-  
-ENDIF
+
+! DO JGFL=1,NDIM1
+! WRITE (0, *) " CPUTQY : ", YCOMP(JGFL)%CNAME, JGFL, YCOMP(JGFL)%LWATER, YCOMP(JGFL)%LT1
+!   IF (YCOMP(JGFL)%LWATER .AND. YCOMP(JGFL)%LT1) THEN
+!     ZTDCP(KST:KPROF,:)=ZTDCP(KST:KPROF,:)+(YCOMP(JGFL)%RCP-RCPD)*PTENDGFL(KST:KPROF,:,YCOMP(JGFL)%MP1)
+!   ENDIF
+! ENDDO
+  IF (YDVARS%L%LT1)     ZTDCPX(KST:KPROF,:)=ZTDCPX(KST:KPROF,:)+(YDVARS%L%RCP-RCPD)    *PTENDL(KST:KPROF,:)
+
+  IF (YDVARS%I%LT1)     ZTDCPX(KST:KPROF,:)=ZTDCPX(KST:KPROF,:)+(YDVARS%I%RCP-RCPD)    *PTENDI(KST:KPROF,:)
+
+  IF (YDVARS%S%LT1)     ZTDCPX(KST:KPROF,:)=ZTDCPX(KST:KPROF,:)+(YDVARS%S%RCP-RCPD)    *PTENDS(KST:KPROF,:)
+
+  IF (YDVARS%R%LT1)     ZTDCPX(KST:KPROF,:)=ZTDCPX(KST:KPROF,:)+(YDVARS%R%RCP-RCPD)    *PTENDR(KST:KPROF,:)
+
+  IF (YDVARS%LCONV%LT1) ZTDCPX(KST:KPROF,:)=ZTDCPX(KST:KPROF,:)+(YDVARS%LCONV%RCP-RCPD)*PTENDLCONV(KST:KPROF,:)
+
+  IF (YDVARS%ICONV%LT1) ZTDCPX(KST:KPROF,:)=ZTDCPX(KST:KPROF,:)+(YDVARS%ICONV%RCP-RCPD)*PTENDICONV(KST:KPROF,:)
+
+  IF (YDVARS%RCONV%LT1) ZTDCPX(KST:KPROF,:)=ZTDCPX(KST:KPROF,:)+(YDVARS%RCONV%RCP-RCPD)*PTENDRCONV(KST:KPROF,:)
+
+  IF (YDVARS%SCONV%LT1) ZTDCPX(KST:KPROF,:)=ZTDCPX(KST:KPROF,:)+(YDVARS%SCONV%RCP-RCPD)*PTENDSCONV(KST:KPROF,:)
+
+  IF (YDVARS%Q%LT1)     ZTDCPX(KST:KPROF,:)=ZTDCPX(KST:KPROF,:)+(YDVARS%Q%RCP-RCPD)    *PTENDQ(KST:KPROF,:)
+
+  ZTDCP (KST:KPROF,:) = ZTDCPX (KST:KPROF,:)
+
 
 ! GMV                                      
 ! PTENDD      : YD                         PTENDD
@@ -230,21 +252,56 @@ ENDIF
 ! PTENDU      : YU                         PTENDU
 ! PTENDV      : YV                         PTENDV
                     
-! GFL                                      
-! PTENDQ      : YQ                         PTENDQ
+! GFL (sorted)
 ! PTENDQL     : YL                         PTENDL
 ! PTENDQI     : YI                         PTENDI
-! PTENDQR     : YR                         PTENDR
 ! PTENDQS     : YS                         PTENDS
+! PTENDQR     : YR                         PTENDR
+!               YG                         PTENDG
+! PTENDTKE    : YTKE                       PTENDTKE
+!               YEFB1                      PTENDEFB1
+!               YEFB2                      PTENDEFB2
+!               YEFB3                      PTENDEFB3
 ! PTENDQLCONV : YLCONV                     PTENDLCONV
 ! PTENDQICONV : YICONV                     PTENDICONV
 ! PTENDQRCONV : YRCONV                     PTENDRCONV
 ! PTENDQSCONV : YSCONV                     PTENDSCONV
-! PTENDTKE    : YTKE                       PTENDTKE
-!               YG                         PTENDG
-!               YEFB1                      PTENDEFB1
-!               YEFB2                      PTENDEFB2
-!               YEFB3                      PTENDEFB3
+! PTENDQ      : YQ                         PTENDQ
+
+!sugfl2.F90:     YL : LIQUID_WATER               1
+!sugfl2.F90:     YI : SOLID_WATER                2
+!sugfl2.F90:     YS : SNOW                       3
+!sugfl2.F90:     YR : RAIN                       4
+!sugfl2.F90:     YTKE : TKE                        5
+!sugfl2.F90:     YLCONV : QL_CONV                    8
+!sugfl2.F90:     YICONV : QI_CONV                    9
+!sugfl2.F90:     YRCONV : QR_CONV                   10
+!sugfl2.F90:     YSCONV : QS_CONV                   11
+!sugfl2.F90:     YQ : HUMI.SPECIFI              18
+
+! LACE                                  LWATER LT1
+! CPUTQY : LIQUID_WATER               1 T T
+! CPUTQY : SOLID_WATER                2 T T
+! CPUTQY : SNOW                       3 T T
+! CPUTQY : RAIN                       4 T T
+! CPUTQY : TKE                        5 F T
+! CPUTQY : CLOUD_FRACTI               6 F T
+! CPUTQY : CV_PREC_FLUX               7 F T
+! CPUTQY : ST_PREC_FLUX               8 F T
+! CPUTQY : QL_CONV                    9 T T
+! CPUTQY : QI_CONV                   10 T T
+! CPUTQY : QR_CONV                   11 T T
+! CPUTQY : QS_CONV                   12 T T
+! CPUTQY : RAD_LIQUID_WATER          13 F T
+! CPUTQY : RAD_SOLID_WATER           14 F T
+! CPUTQY : UD_OMEGA                  15 F T
+! CPUTQY : UD_MESH_FRAC              16 F T
+! CPUTQY : DD_OMEGA                  17 F T
+! CPUTQY : DD_MESH_FRAC              18 F T
+! CPUTQY : PSHI_CONV_CLOUD           19 F T
+! CPUTQY : HUMI.SPECIFI              20 T T
+
+
 
 DO JLEV=1,KFLEV
   DO JROF=KST,KPROF

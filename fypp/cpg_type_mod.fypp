@@ -328,8 +328,10 @@ TYPE CPG_SL${ind}$_TYPE
   #:for v in gfl.variables
     #:if v.array
     #:elif v.dim == 3
-  REAL (KIND=JPRB), POINTER, CONTIGUOUS :: ${v.name}$ (${', '.join ([':'] * (v.dim-1))}$) => NULL ()
+  REAL (KIND=JPRB), POINTER, CONTIGUOUS :: ${v.name}$   (${', '.join ([':'] * (v.dim-1))}$) => NULL ()
   INTEGER (KIND=JPIM) :: I_${v.name}$
+  REAL (KIND=JPRB), POINTER, CONTIGUOUS :: ${v.name}$_F (${', '.join ([':'] * (v.dim-1))}$) => NULL ()
+  INTEGER (KIND=JPIM) :: I_${v.name}$_F
     #:endif
   #:endfor
 #:endif
@@ -459,6 +461,7 @@ END SUBROUTINE CPG_DDH_TYPE_FINAL
 #:def pcpg_sl_type_methods (ind, vars, use_gfl=False)
 SUBROUTINE CPG_SL${ind}$_TYPE_INIT (SELF, REGISTRY, NLEV, YDTPTRSLB${ind}$ &
   #:if use_gfl
+                                & , YDMODEL &
                                 & , YGFL &
   #:endif
                                 & , PERSISTENT, PB${ind}$)
@@ -467,6 +470,7 @@ USE PTRSLB${ind}$, ONLY : TPTRSLB${ind}$
 
 #:if use_gfl
 USE YOM_YGFL, ONLY: TYPE_GFLD
+USE TYPE_MODEL, ONLY : MODEL
 #:endif
 
 CLASS (CPG_SL${ind}$_TYPE)                         :: SELF
@@ -475,6 +479,7 @@ INTEGER (KIND=JPIM),                INTENT (IN)    :: NLEV
 TYPE (TPTRSLB${ind}$),              INTENT (IN)    :: YDTPTRSLB${ind}$
 #:if use_gfl
 TYPE (TYPE_GFLD),                   INTENT (IN)    :: YGFL
+TYPE (MODEL),                       INTENT (IN)    :: YDMODEL
 #:endif
 LOGICAL, OPTIONAL,                  INTENT (IN)    :: PERSISTENT
 REAL (KIND=JPRB), OPTIONAL, TARGET, INTENT (IN)    :: PB${ind}$ (:, :, :)
@@ -496,9 +501,16 @@ SELF%I_${var}$ = YDTPTRSLB${ind}$%MSLB${ind}$${var}$
     #:if v.array
     #:elif v.dim == 3
 IF (YGFL%Y${v.name}$%MP_SL1 > 0 .AND. YGFL%Y${v.name}$%MP1 > 0) THEN
-  SELF%I_${v.name}$ = (YGFL%Y${v.name}$%MP_SL1-1)*(NLEV+2)
+  SELF%I_${v.name}$   = YDTPTRSLB${ind}$%MSLB1GFL9  + (YGFL%Y${v.name}$%MP_SL1-1)*(NLEV+2)
 ELSE
-  SELF%I_${v.name}$ = -1
+  SELF%I_${v.name}$   = -1
+ENDIF
+IF (YDMODEL%YRML_DYN%YRDYN%LSPLTHOIGFL .OR. (YDMODEL%YRML_DYN%YRDYN%NSPLTHOI /= 0)) THEN
+  IF (YGFL%Y${v.name}$%MP_SL1 > 0 .AND. YGFL%Y${v.name}$%MP1 > 0) THEN
+    SELF%I_${v.name}$_F = YDTPTRSLB${ind}$%MSLB1GFLF9 + (YGFL%Y${v.name}$%MP_SL1-1)*(NLEV+2)
+  ELSE
+    SELF%I_${v.name}$_F = -1
+  ENDIF
 ENDIF
     #:endif
   #:endfor
@@ -534,9 +546,14 @@ IF (ASSOCIATED (SELF%F_DATA)) THEN
     #:if v.array
     #:elif v.dim == 3
   IF (SELF%I_${v.name}$ > 0) THEN
-    SELF%${v.name}$ => SELF%ZVIEW (:, SELF%I_${var}$:SELF%I_${var}$+SELF%NLEV+1)
+    SELF%${v.name}$ => SELF%ZVIEW (:, SELF%I_${v.name}$:SELF%I_${v.name}$+SELF%NLEV+1)
   ELSE
     SELF%${v.name}$ => ZDUM${v.dim-1}$
+  ENDIF
+  IF (SELF%I_${v.name}$_F > 0) THEN
+    SELF%${v.name}$_F => SELF%ZVIEW (:, SELF%I_${v.name}$_F:SELF%I_${v.name}$_F+SELF%NLEV+1)
+  ELSE
+    SELF%${v.name}$_F => ZDUM${v.dim-1}$
   ENDIF
     #:endif
   #:endfor
@@ -556,8 +573,9 @@ ELSE
 #:if use_gfl
   #:for v in gfl.variables
     #:if v.array
-    #:elif v.dim == 2
-  SELF%${v.name}$ => ZDUM${v.dim}$
+    #:elif v.dim == 3
+  SELF%${v.name}$   => ZDUM${v.dim-1}$
+  SELF%${v.name}$_F => ZDUM${v.dim-1}$
     #:endif
   #:endfor
 #:endif

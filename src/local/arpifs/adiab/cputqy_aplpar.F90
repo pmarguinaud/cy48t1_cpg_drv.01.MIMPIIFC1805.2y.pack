@@ -214,8 +214,12 @@ ELSE
   ENDIF
 ENDIF  
 
-  WRITE (0, '(" ZTT1 = 0x",Z16.16," YDMF_PHYS_NEXT_STATE%T = 0x",Z16.16)') &
-       & LOC (ZTT1 (1, 1)), LOC (YDMF_PHYS_NEXT_STATE%T (1, 1))
+! WRITE (0, '(" ZUT1 = 0x",Z16.16," YDMF_PHYS_NEXT_STATE%U = 0x",Z16.16)') &
+!      & LOC (ZUT1 (1, 1)), LOC (YDMF_PHYS_NEXT_STATE%U (1, 2-YDMF_PHYS_NEXT_STATE%ILEV0))
+! WRITE (0, '(" ZVT1 = 0x",Z16.16," YDMF_PHYS_NEXT_STATE%V = 0x",Z16.16)') &
+!      & LOC (ZVT1 (1, 1)), LOC (YDMF_PHYS_NEXT_STATE%V (1, 2-YDMF_PHYS_NEXT_STATE%ILEV0))
+! WRITE (0, '(" ZTT1 = 0x",Z16.16," YDMF_PHYS_NEXT_STATE%T = 0x",Z16.16)') &
+!      & LOC (ZTT1 (1, 1)), LOC (YDMF_PHYS_NEXT_STATE%T (1, 2-YDMF_PHYS_NEXT_STATE%ILEV0))
 
 
 ! -------------------------------------------------------------------

@@ -15,7 +15,6 @@ TYPE ${name}$
   #:set ndim = 1 + len (vars[var][NDIMS])
   REAL (KIND=JPRB), POINTER, CONTIGUOUS :: ${var}$ (${", ".join ([":"] * ndim)}$) => NULL ()
   TYPE (FIELD_${ndim+1}$D), POINTER :: F_${var}$ => NULL ()
-  INTEGER (KIND=JPIM) :: I_${var}$ = -1_JPIM
 #:endfor
 
 CONTAINS
@@ -126,27 +125,8 @@ ENDIF
 SELF%F_DATA => CREATE_FIELD_WRAP ('${name}$', SELF%ZDATA, PERSISTENT=.NOT. SELF%LOWNED)
 
 #:for var in vars
-SELF%I_${var}$ = YD${type}$%${memb}$${var}$
+SELF%F_${var}$ => CREATE_FIELD_WRAP ('${var}$', SELF%ZDATA (:, :, YD${type}$%${memb}$${var}$, :), PERSISTENT=.NOT. SELF%LOWNED)
 #:endfor
-
-
-#! IF (PRESENT (P${type}$)) THEN
-#! 
-#! #:for var in vars
-#!  IF (YD${type}$%${memb}$${var}$ > 0) THEN
-#!    SELF%F_${var}$ => CREATE_FIELD_WRAP ('${var}$', P${type}$ (:, :, YD${type}$%${memb}$${var}$, :))
-#!  ENDIF
-#! #:endfor
-#! 
-#! ELSE
-#! 
-#! #:for var in vars
-#!  IF (YD${type}$%${memb}$${var}$ > 0) THEN
-#! $:temporary (var, vars[var][NDIMS], "    ", vars[var][NTYPE])
-#!  ENDIF
-#! #:endfor
-#!
-#! ENDIF
 
 END SUBROUTINE ${name}$_INIT
 
@@ -162,8 +142,8 @@ IF (ASSOCIATED (SELF%F_DATA)) THEN
 #:for var in vars
   #:set ss = pdim (vars[var][NDIMS])
   #:set ndim = 1 + len (vars[var][NDIMS])
-  IF (SELF%I_${var}$ > 0) THEN
-    SELF%${var}$ ${ss}$ => SELF%ZVIEW (:, :, SELF%I_${var}$)
+  IF (ASSOCIATED (SELF%F_${var}$)) THEN
+    SELF%${var}$ ${ss}$ => SELF%F_${var}$%GET_VIEW (BLOCK_INDEX)
   ELSE
     SELF%${var}$ ${ss}$ => ZDUM${ndim}$
   ENDIF
@@ -181,16 +161,6 @@ ELSE
 
 ENDIF
 
-#! #:for var in vars
-#!   #:set ss = pdim (vars[var][NDIMS])
-#!   #:set ndim = 1 + len (vars[var][NDIMS])
-#! IF (ASSOCIATED (SELF%F_${var}$)) THEN  
-#!   SELF%${var}$ ${ss}$ => SELF%F_${var}$%GET_VIEW (BLOCK_INDEX)
-#! ELSE
-#!   SELF%${var}$ ${ss}$ => ZDUM${ndim}$
-#! ENDIF
-#! #:endfor
-
 END SUBROUTINE ${name}$_UPDATE_VIEW
 
 SUBROUTINE ${name}$_FINAL (SELF)
@@ -207,6 +177,7 @@ ENDIF
 IF (ASSOCIATED (SELF%F_${var}$)) THEN
   CALL DELETE_TEMPORARY (SELF%F_${var}$) 
   SELF%F_${var}$ => NULL ()
+  SELF%${var}$ => NULL ()
 ENDIF
 #:endfor
 

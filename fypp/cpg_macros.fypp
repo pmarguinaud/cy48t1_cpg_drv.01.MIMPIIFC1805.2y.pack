@@ -9,6 +9,7 @@
 TYPE ${name}$
   LOGICAL :: LOWNED = .FALSE.
   REAL (KIND=JPRB), POINTER, CONTIGUOUS :: ZVIEW (:,:,:) => NULL ()
+  REAL (KIND=JPRB), POINTER, CONTIGUOUS :: ZDATA (:,:,:,:) => NULL ()
   TYPE (FIELD_4D), POINTER :: F_DATA => NULL ()
 #:for var in vars
   #:set ndim = 1 + len (vars[var][NDIMS])
@@ -103,6 +104,7 @@ $:s
 SUBROUTINE ${name}$_INIT (SELF, REGISTRY, NLEV, YD${type}$, PERSISTENT, P${type}$)
 
 USE ${modn}$, ONLY : ${type}$
+USE OML_MOD, ONLY: OML_MAX_THREADS
 
 CLASS (${name}$)                          :: SELF
 TYPE (FIELD_REGISTRY),              INTENT (INOUT) :: REGISTRY
@@ -112,16 +114,21 @@ LOGICAL, OPTIONAL,                  INTENT (IN)    :: PERSISTENT
 REAL (KIND=JPRB), OPTIONAL, TARGET, INTENT (IN)    :: P${type}$ (:, :, :, :)
 
 IF (PRESENT (P${type}$)) THEN
-  SELF%F_DATA => CREATE_FIELD_WRAP ('${name}$', P${type}$ (:, :, :, :))
+  SELF%ZDATA => P${type}$
+  SELF%LOWNED = .FALSE.
 ELSE
 #:set dim = vars[list(vars.keys())[0]][NDIMS]
 #:set s2 = gdim (dim[0])
-  SELF%F_DATA => CREATE_TEMPORARY ('${name}$', GEOM=REGISTRY%GEOM, NLEV=${s2}$, NDIM=YD${type}$%NDIM, PERSISTENT=PERSISTENT)
+  ALLOCATE (SELF%ZDATA (REGISTRY%GEOM%YRDIM%NPROMA, ${s2}$, YD${type}$%NDIM, OML_MAX_THREADS ()))
+  SELF%LOWNED = .TRUE.
 ENDIF
+
+SELF%F_DATA => CREATE_FIELD_WRAP ('${name}$', SELF%ZDATA, PERSISTENT=.NOT. SELF%LOWNED)
 
 #:for var in vars
 SELF%I_${var}$ = YD${type}$%${memb}$${var}$
 #:endfor
+
 
 #! IF (PRESENT (P${type}$)) THEN
 #! 
@@ -189,10 +196,18 @@ END SUBROUTINE ${name}$_UPDATE_VIEW
 SUBROUTINE ${name}$_FINAL (SELF)
 CLASS (${name}$)          :: SELF
 
-IF (ASSOCIATED (SELF%F_DATA)) CALL DELETE_TEMPORARY (SELF%F_DATA)
+IF (SELF%LOWNED) THEN
+  IF (ASSOCIATED (SELF%F_DATA)) CALL DELETE_TEMPORARY (SELF%F_DATA)
+  DEALLOCATE (SELF%ZDATA)
+  SELF%ZDATA => NULL ()
+  SELF%F_DATA => NULL ()
+ENDIF
 
 #:for var in vars
-IF (ASSOCIATED (SELF%F_${var}$)) CALL DELETE_TEMPORARY (SELF%F_${var}$) 
+IF (ASSOCIATED (SELF%F_${var}$)) THEN
+  CALL DELETE_TEMPORARY (SELF%F_${var}$) 
+  SELF%F_${var}$ => NULL ()
+ENDIF
 #:endfor
 
 END SUBROUTINE ${name}$_FINAL

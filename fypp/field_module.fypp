@@ -186,17 +186,29 @@ CONTAINS
 
 #:for dtype, suffix, rank, default in field_descriptors
 #:set field_type_name = 'FIELD_%s%sD' % (suffix, rank)
-  FUNCTION ${field_type_name}$_WRAP(NAME, DATA) RESULT(SELF)
+  FUNCTION ${field_type_name}$_WRAP(NAME, DATA, PERSISTENT) RESULT(SELF)
     ! Create FIELD object by wrapping existing data
     TYPE(${field_type_name}$) :: SELF
     CHARACTER(LEN=*), INTENT(IN) :: NAME
     ${dtype}$, TARGET, INTENT(IN) :: DATA(${shapes[rank]}$)
+    LOGICAL, INTENT(IN), OPTIONAL :: PERSISTENT
+    LOGICAL :: LLPERSISTENT
+
+    LLPERSISTENT = .TRUE.
+    IF (PRESENT (PERSISTENT)) LLPERSISTENT = PERSISTENT
 
     SELF%NAME = NAME
     SELF%DATA => DATA
     SELF%ACTIVE = .TRUE.
-    SELF%THREAD_BUFFER = .FALSE.
     SELF%OWNED = .FALSE.
+
+    SELF%THREAD_BUFFER = .NOT. LLPERSISTENT
+    IF (.NOT. LLPERSISTENT) THEN
+      IF (OML_MAX_THREADS() /= SIZE (DATA, ${rank}$)) THEN
+        CALL ABOR1 ('${field_type_name}$_WRAP: DIMENSION MISMATCH')
+      ENDIF
+    ENDIF
+
     SELF%NBLOCKS = SIZE(SELF%DATA, ${rank}$)
   END FUNCTION ${field_type_name}$_WRAP
 

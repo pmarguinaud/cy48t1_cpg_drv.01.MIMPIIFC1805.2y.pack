@@ -1,7 +1,7 @@
 SUBROUTINE CPUTQY_APLPAR(YDCPG_DIM, YDMF_PHYS_NEXT_STATE, YDVARS,YDDIMV,YDGMV, &
  & YGFL,YDPTRSLB1,YDPHY,KPROMA, KST, KPROF, KFLEV, PDT, KPGFL, &
  !  Pointeurs
- & KSLB1T9,KSLB1U9,KSLB1V9,KSLB1D9, KSLB1GFL9,&
+ & KSLB1GFL9,&
  !  Variables 2D Input
  & PTENDH, PTENDT, PTENDU, PTENDV, PTENDU_ZDEC, PTENDV_ZDEC, PTENDD, PTENDGFL,&
  & PTENDEFB1, PTENDEFB2, PTENDEFB3, PTENDG, PTENDICONV, PTENDI, PTENDLCONV, &
@@ -103,10 +103,6 @@ INTEGER(KIND=JPIM),INTENT(IN)    :: KFLEV
 INTEGER(KIND=JPIM),INTENT(IN)    :: KST
 INTEGER(KIND=JPIM),INTENT(IN)    :: KPROF 
 INTEGER(KIND=JPIM),INTENT(IN)    :: KPGFL(YGFL%NUMFLDS)
-INTEGER(KIND=JPIM),INTENT(IN)    :: KSLB1T9
-INTEGER(KIND=JPIM),INTENT(IN)    :: KSLB1U9
-INTEGER(KIND=JPIM),INTENT(IN)    :: KSLB1V9
-INTEGER(KIND=JPIM),INTENT(IN)    :: KSLB1D9
 INTEGER(KIND=JPIM),INTENT(IN)    :: KSLB1GFL9
 REAL(KIND=JPRB)   ,INTENT(IN)    :: PDT 
 REAL(KIND=JPRB)   ,INTENT(IN)    :: PTENDH(KPROMA,KFLEV) 
@@ -315,8 +311,6 @@ IF(LNHDYN) THEN
 ENDIF
 
 
-#ifndef UNDEF
-
 ! Incrementation of PB1 or PGFLT1 for GFL variables:
 ! Increment PGFLT1 for non-advected GFL, PB1 for advected GFL.
 
@@ -342,53 +336,6 @@ DO JGFL=1,NUMFLDS
     ENDIF
   ENDIF ! End of non-zero diabatic tendency for this GFL
 ENDDO
-
-#else
-
-!    Incrementation of PB1 or PGFLT1 for GFL variables:
-IF (LSLAG) THEN
-       ! Increment PGFLT1 for non-advected GFL, PB1 for advected GFL.
-  DO JGFL=1,NUMFLDS
-    IF (YCOMP(JGFL)%LT1) THEN
-      IF (YCOMP(JGFL)%LADV) THEN
-        IPGFL=KPGFL(YCOMP(JGFL)%MP1)
-        DO JLEV=1,KFLEV
-          DO JROF=KST,KPROF
-            PB1(JROF,KSLB1GFL9+IPGFL+JLEV-NFLSA)=&
-             & PB1(JROF,KSLB1GFL9+IPGFL+JLEV-NFLSA)&
-             & + PDT*PTENDGFL(JROF,JLEV,YCOMP(JGFL)%MP1)
-          ENDDO
-        ENDDO
-      ELSE
-        DO JLEV=1,KFLEV
-          DO JROF=KST,KPROF
-            PGFLT1(JROF,JLEV,YCOMP(JGFL)%MP1)=&
-             & PGFLT1(JROF,JLEV,YCOMP(JGFL)%MP1)&
-             & + PDT*PTENDGFL(JROF,JLEV,YCOMP(JGFL)%MP1)
-          ENDDO
-        ENDDO
-      ENDIF
-    ENDIF ! End of non-zero diabatic tendency for this GFL
-  ENDDO
-ELSE
-  ! Increment PGFLT1.
-  DO JGFL=1,NUMFLDS
-    IF (YCOMP(JGFL)%LT1) THEN
-      DO JLEV=1,KFLEV
-        DO JROF=KST,KPROF
-          PGFLT1(JROF,JLEV,YCOMP(JGFL)%MP1)=&
-           & PGFLT1(JROF,JLEV,YCOMP(JGFL)%MP1)&
-           & + PDT*PTENDGFL(JROF,JLEV,YCOMP(JGFL)%MP1)
-        ENDDO
-      ENDDO
-    ENDIF  ! End of non-zero diabatic tendency for this GFL
-  ENDDO
-ENDIF
-
-
-
-#endif
-
 
 !-----------------------------------------------------------------------
 

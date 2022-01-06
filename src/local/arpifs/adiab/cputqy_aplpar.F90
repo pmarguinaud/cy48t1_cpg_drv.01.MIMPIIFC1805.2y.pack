@@ -314,6 +314,37 @@ IF(LNHDYN) THEN
   ENDDO
 ENDIF
 
+
+#ifndef UNDEF
+
+! Incrementation of PB1 or PGFLT1 for GFL variables:
+! Increment PGFLT1 for non-advected GFL, PB1 for advected GFL.
+
+DO JGFL=1,NUMFLDS
+  IF (YCOMP(JGFL)%LT1) THEN
+    IF (LSLAG .AND. YCOMP(JGFL)%LADV) THEN
+      IPGFL=KPGFL(YCOMP(JGFL)%MP1)
+      DO JLEV=1,KFLEV
+        DO JROF=KST,KPROF
+          PB1(JROF,KSLB1GFL9+IPGFL+JLEV-NFLSA)=&
+           & PB1(JROF,KSLB1GFL9+IPGFL+JLEV-NFLSA)&
+           & + PDT*PTENDGFL(JROF,JLEV,YCOMP(JGFL)%MP1)
+        ENDDO
+      ENDDO
+    ELSE
+      DO JLEV=1,KFLEV
+        DO JROF=KST,KPROF
+          PGFLT1(JROF,JLEV,YCOMP(JGFL)%MP1)=&
+           & PGFLT1(JROF,JLEV,YCOMP(JGFL)%MP1)&
+           & + PDT*PTENDGFL(JROF,JLEV,YCOMP(JGFL)%MP1)
+        ENDDO
+      ENDDO
+    ENDIF
+  ENDIF ! End of non-zero diabatic tendency for this GFL
+ENDDO
+
+#else
+
 !    Incrementation of PB1 or PGFLT1 for GFL variables:
 IF (LSLAG) THEN
        ! Increment PGFLT1 for non-advected GFL, PB1 for advected GFL.
@@ -353,6 +384,10 @@ ELSE
     ENDIF  ! End of non-zero diabatic tendency for this GFL
   ENDDO
 ENDIF
+
+
+
+#endif
 
 
 !-----------------------------------------------------------------------

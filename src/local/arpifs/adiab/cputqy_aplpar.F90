@@ -150,7 +150,6 @@ REAL(KIND=JPRB) :: ZDTT1(KPROMA,KFLEV),ZTDCP(KPROMA,KFLEV),ZDEC(KPROMA,KFLEV),ZR
 REAL(KIND=JPRB) :: ZHOOK_HANDLE
 
 LOGICAL :: LLPREC, LLTKE
-LOGICAL :: LLDONE = .FALSE.
 
 !-----------------------------------------------------------------------
 
@@ -201,63 +200,6 @@ IF (YDVARS%ICONV%LT1) ZTDCP(KST:KPROF,:)=ZTDCP(KST:KPROF,:)+(YDVARS%ICONV%RCP-RC
 IF (YDVARS%RCONV%LT1) ZTDCP(KST:KPROF,:)=ZTDCP(KST:KPROF,:)+(YDVARS%RCONV%RCP-RCPD)*PTENDRCONV(KST:KPROF,:)
 IF (YDVARS%SCONV%LT1) ZTDCP(KST:KPROF,:)=ZTDCP(KST:KPROF,:)+(YDVARS%SCONV%RCP-RCPD)*PTENDSCONV(KST:KPROF,:)
 IF (YDVARS%Q%LT1)     ZTDCP(KST:KPROF,:)=ZTDCP(KST:KPROF,:)+(YDVARS%Q%RCP-RCPD)    *PTENDQ(KST:KPROF,:)
-
-! GMV                                      
-! PTENDD      : YD                         PTENDD
-! PTENDT      : YT                         PTENDT
-! PTENDU      : YU                         PTENDU
-! PTENDV      : YV                         PTENDV
-                    
-! GFL (sorted)
-! PTENDQL     : YL                         PTENDL
-! PTENDQI     : YI                         PTENDI
-! PTENDQS     : YS                         PTENDS
-! PTENDQR     : YR                         PTENDR
-!               YG                         PTENDG
-! PTENDTKE    : YTKE                       PTENDTKE
-!               YEFB1                      PTENDEFB1
-!               YEFB2                      PTENDEFB2
-!               YEFB3                      PTENDEFB3
-! PTENDQLCONV : YLCONV                     PTENDLCONV
-! PTENDQICONV : YICONV                     PTENDICONV
-! PTENDQRCONV : YRCONV                     PTENDRCONV
-! PTENDQSCONV : YSCONV                     PTENDSCONV
-! PTENDQ      : YQ                         PTENDQ
-
-!sugfl2.F90:     YL : LIQUID_WATER               1
-!sugfl2.F90:     YI : SOLID_WATER                2
-!sugfl2.F90:     YS : SNOW                       3
-!sugfl2.F90:     YR : RAIN                       4
-!sugfl2.F90:     YTKE : TKE                        5
-!sugfl2.F90:     YLCONV : QL_CONV                    8
-!sugfl2.F90:     YICONV : QI_CONV                    9
-!sugfl2.F90:     YRCONV : QR_CONV                   10
-!sugfl2.F90:     YSCONV : QS_CONV                   11
-!sugfl2.F90:     YQ : HUMI.SPECIFI              18
-
-! LACE                                  LWATER LT1
-! CPUTQY : LIQUID_WATER               1 T T
-! CPUTQY : SOLID_WATER                2 T T
-! CPUTQY : SNOW                       3 T T
-! CPUTQY : RAIN                       4 T T
-! CPUTQY : TKE                        5 F T
-! CPUTQY : CLOUD_FRACTI               6 F T
-! CPUTQY : CV_PREC_FLUX               7 F T
-! CPUTQY : ST_PREC_FLUX               8 F T
-! CPUTQY : QL_CONV                    9 T T
-! CPUTQY : QI_CONV                   10 T T
-! CPUTQY : QR_CONV                   11 T T
-! CPUTQY : QS_CONV                   12 T T
-! CPUTQY : RAD_LIQUID_WATER          13 F T
-! CPUTQY : RAD_SOLID_WATER           14 F T
-! CPUTQY : UD_OMEGA                  15 F T
-! CPUTQY : UD_MESH_FRAC              16 F T
-! CPUTQY : DD_OMEGA                  17 F T
-! CPUTQY : DD_MESH_FRAC              18 F T
-! CPUTQY : PSHI_CONV_CLOUD           19 F T
-! CPUTQY : HUMI.SPECIFI              20 T T
-
-
 
 DO JLEV=1,KFLEV
   DO JROF=KST,KPROF
@@ -312,88 +254,30 @@ IF(LNHDYN) THEN
   ENDDO
 ENDIF
 
-! Incrementation of PB1 or PGFLT1 for GFL variables:
-! Increment PGFLT1 for non-advected GFL, PB1 for advected GFL.
-
-! YA     : CLOUD_FRACTI    
-! YCPF   : CV_PREC_FLUX    
-! YDAL   : DD_MESH_FRAC    
-! YDOM   : DD_OMEGA        
-! YQ     : HUMI.SPECIFI    
-! YL     : LIQUID_WATER    
-! YUNEBH : PSHI_CONV_CLOUD 
-! YICONV : QI_CONV         
-! YLCONV : QL_CONV         
-! YRCONV : QR_CONV         
-! YSCONV : QS_CONV         
-! YLRAD  : RAD_LIQUID_WATER
-! YIRAD  : RAD_SOLID_WATER 
-! YR     : RAIN            
-! YS     : SNOW            
-! YI     : SOLID_WATER     
-! YSPF   : ST_PREC_FLUX    
-! YTKE   : TKE             
-! YUAL   : UD_MESH_FRAC    
-! YUOM   : UD_OMEGA        
-
-
-
-IF (.NOT. LLDONE) THEN
-WRITE (0, *) " CPUTQY : CLOUD_FRACTI     = ", YGFL%YA     %CNAME, YGFL%YA     %MP1 
-WRITE (0, *) " CPUTQY : CV_PREC_FLUX     = ", YGFL%YCPF   %CNAME, YGFL%YCPF   %MP1 
-WRITE (0, *) " CPUTQY : DD_MESH_FRAC     = ", YGFL%YDAL   %CNAME, YGFL%YDAL   %MP1 
-WRITE (0, *) " CPUTQY : DD_OMEGA         = ", YGFL%YDOM   %CNAME, YGFL%YDOM   %MP1 
-WRITE (0, *) " CPUTQY : HUMI.SPECIFI     = ", YGFL%YQ     %CNAME, YGFL%YQ     %MP1 
-WRITE (0, *) " CPUTQY : LIQUID_WATER     = ", YGFL%YL     %CNAME, YGFL%YL     %MP1 
-WRITE (0, *) " CPUTQY : PSHI_CONV_CLOUD  = ", YGFL%YUNEBH %CNAME, YGFL%YUNEBH %MP1 
-WRITE (0, *) " CPUTQY : QI_CONV          = ", YGFL%YICONV %CNAME, YGFL%YICONV %MP1 
-WRITE (0, *) " CPUTQY : QL_CONV          = ", YGFL%YLCONV %CNAME, YGFL%YLCONV %MP1 
-WRITE (0, *) " CPUTQY : QR_CONV          = ", YGFL%YRCONV %CNAME, YGFL%YRCONV %MP1 
-WRITE (0, *) " CPUTQY : QS_CONV          = ", YGFL%YSCONV %CNAME, YGFL%YSCONV %MP1 
-WRITE (0, *) " CPUTQY : RAD_LIQUID_WATER = ", YGFL%YLRAD  %CNAME, YGFL%YLRAD  %MP1 
-WRITE (0, *) " CPUTQY : RAD_SOLID_WATER  = ", YGFL%YIRAD  %CNAME, YGFL%YIRAD  %MP1 
-WRITE (0, *) " CPUTQY : RAIN             = ", YGFL%YR     %CNAME, YGFL%YR     %MP1 
-WRITE (0, *) " CPUTQY : SNOW             = ", YGFL%YS     %CNAME, YGFL%YS     %MP1 
-WRITE (0, *) " CPUTQY : SOLID_WATER      = ", YGFL%YI     %CNAME, YGFL%YI     %MP1 
-WRITE (0, *) " CPUTQY : ST_PREC_FLUX     = ", YGFL%YSPF   %CNAME, YGFL%YSPF   %MP1 
-WRITE (0, *) " CPUTQY : TKE              = ", YGFL%YTKE   %CNAME, YGFL%YTKE   %MP1 
-WRITE (0, *) " CPUTQY : UD_MESH_FRAC     = ", YGFL%YUAL   %CNAME, YGFL%YUAL   %MP1 
-WRITE (0, *) " CPUTQY : UD_OMEGA         = ", YGFL%YUOM   %CNAME, YGFL%YUOM   %MP1 
-ENDIF
-
+CALL CPUTQY0 (YDVARS%L%LT1,     YDMF_PHYS_NEXT_STATE%L,     PTENDL)
+CALL CPUTQY0 (YDVARS%I%LT1,     YDMF_PHYS_NEXT_STATE%I,     PTENDI)
+CALL CPUTQY0 (YDVARS%S%LT1,     YDMF_PHYS_NEXT_STATE%S,     PTENDS)
+CALL CPUTQY0 (YDVARS%R%LT1,     YDMF_PHYS_NEXT_STATE%R,     PTENDR)
+CALL CPUTQY0 (YDVARS%G%LT1,     YDMF_PHYS_NEXT_STATE%G,     PTENDG)
+CALL CPUTQY0 (YDVARS%TKE%LT1,   YDMF_PHYS_NEXT_STATE%TKE,   PTENDTKE)
+CALL CPUTQY0 (YDVARS%EFB1%LT1,  YDMF_PHYS_NEXT_STATE%EFB1,  PTENDEFB1)
+CALL CPUTQY0 (YDVARS%EFB2%LT1,  YDMF_PHYS_NEXT_STATE%EFB2,  PTENDEFB2)
+CALL CPUTQY0 (YDVARS%EFB3%LT1,  YDMF_PHYS_NEXT_STATE%EFB3,  PTENDEFB3)
+CALL CPUTQY0 (YDVARS%LCONV%LT1, YDMF_PHYS_NEXT_STATE%LCONV, PTENDLCONV)
+CALL CPUTQY0 (YDVARS%ICONV%LT1, YDMF_PHYS_NEXT_STATE%ICONV, PTENDICONV)
+CALL CPUTQY0 (YDVARS%RCONV%LT1, YDMF_PHYS_NEXT_STATE%RCONV, PTENDRCONV)
+CALL CPUTQY0 (YDVARS%SCONV%LT1, YDMF_PHYS_NEXT_STATE%SCONV, PTENDSCONV)
+CALL CPUTQY0 (YDVARS%Q%LT1,     YDMF_PHYS_NEXT_STATE%Q,     PTENDQ)
 
 IMP1EXPLICIT = [YGFL%YL%MP1, YGFL%YI%MP1, YGFL%YS%MP1, YGFL%YR%MP1, YGFL%YG%MP1, &
 & YGFL%YTKE%MP1, YGFL%YEFB1%MP1, YGFL%YEFB2%MP1, YGFL%YEFB3%MP1, YGFL%YLCONV%MP1, &
 & YGFL%YICONV%MP1, YGFL%YRCONV%MP1, YGFL%YSCONV%MP1, YGFL%YQ%MP1]
 
-! PTENDQL     : YL                         PTENDL
-! PTENDQI     : YI                         PTENDI
-! PTENDQS     : YS                         PTENDS
-! PTENDQR     : YR                         PTENDR
-!               YG                         PTENDG
-! PTENDTKE    : YTKE                       PTENDTKE
-!               YEFB1                      PTENDEFB1
-!               YEFB2                      PTENDEFB2
-!               YEFB3                      PTENDEFB3
-! PTENDQLCONV : YLCONV                     PTENDLCONV
-! PTENDQICONV : YICONV                     PTENDICONV
-! PTENDQRCONV : YRCONV                     PTENDRCONV
-! PTENDQSCONV : YSCONV                     PTENDSCONV
-! PTENDQ      : YQ                         PTENDQ
-
-
-
-
-
-
-
 DO JGFL=1,NUMFLDS
-  IF (.NOT. LLDONE) WRITE (0, *) " CPUTQY : ", YCOMP(JGFL)%CNAME, YCOMP(JGFL)%MP1
-! IF (ALL (IMP1EXPLICIT /= YCOMP(JGFL)%MP1)) THEN
+  IF (ALL (IMP1EXPLICIT /= YCOMP(JGFL)%MP1)) THEN
     CALL CPUTQY1
-! ENDIF
+  ENDIF
 ENDDO
-LLDONE = .TRUE.
 
 !-----------------------------------------------------------------------
 
@@ -402,6 +286,22 @@ END ASSOCIATE
 IF (LHOOK) CALL DR_HOOK('CPUTQY_APLPAR',1,ZHOOK_HANDLE)
 
 CONTAINS
+
+SUBROUTINE CPUTQY0 (LDT1, PVAR, PTND)
+
+LOGICAL,          INTENT (IN)    :: LDT1
+REAL (KIND=JPRB), INTENT (INOUT) :: PVAR (YDCPG_DIM%KLON,YDCPG_DIM%ILEVT1I:YDCPG_DIM%ILEVT1F)
+REAL (KIND=JPRB), INTENT (IN)    :: PTND (YDCPG_DIM%KLON,YDCPG_DIM%KFLEVG)
+
+IF (LDT1) THEN
+  DO JLEV = 1, KFLEV
+    DO JROF = KST, KPROF
+      PVAR (JROF, JLEV) = PVAR (JROF, JLEV) + PDT * PTND (JROF, JLEV)
+    ENDDO
+  ENDDO
+ENDIF
+
+END SUBROUTINE
 
 SUBROUTINE CPUTQY1 
 
@@ -426,7 +326,7 @@ IF (YCOMP(JGFL)%LT1) THEN
       ENDDO
     ENDDO
   ENDIF
-ENDIF ! End of non-zero diabatic tendency for this GFL
+ENDIF 
 
 END ASSOCIATE
 

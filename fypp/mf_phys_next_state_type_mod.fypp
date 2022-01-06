@@ -16,6 +16,7 @@ TYPE MF_PHYS_NEXT_STATE_TYPE
   REAL (KIND=JPRB), POINTER, CONTIGUOUS :: V (:, :) => NULL ()
   REAL (KIND=JPRB), POINTER, CONTIGUOUS :: T (:, :) => NULL ()
   REAL (KIND=JPRB), POINTER, CONTIGUOUS :: SVD (:, :) => NULL ()
+  REAL (KIND=JPRB), POINTER, CONTIGUOUS :: SP (:) => NULL ()
 
 #:for v in gfl.variables
   #:if v.array
@@ -83,6 +84,8 @@ IF (LSLAG) THEN
     ENDIF
   ENDIF
 
+  SELF%SP => YDCPG_SL1%SP9
+
   ! * GFL arrays
   IF (YDDYN%LSPLTHOIGFL.OR.(YDDYN%NSPLTHOI /= 0)) THEN
 #:for v in gfl.variables
@@ -114,6 +117,7 @@ ELSE
   SELF%V   => YDVARS%V%T1
   SELF%T   => YDVARS%T%T1
   SELF%SVD => YDVARS%SVD%T1
+  SELF%SP  => YDVARS%SP%T1
 
 #:for v in gfl.variables
   #:if v.array

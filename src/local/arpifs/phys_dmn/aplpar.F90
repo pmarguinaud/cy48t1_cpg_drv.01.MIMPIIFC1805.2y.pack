@@ -293,7 +293,6 @@ LOGICAL :: LL_SAVE_PHSURF
 LOGICAL :: LLXFUMSE
 
 INTEGER(KIND=JPIM) :: IFIELDSS
-INTEGER(KIND=JPIM) :: IPGFL(YDMODEL%YRML_GCONF%YGFL%NUMFLDS)
 
 INTEGER(KIND=JPIM) :: INSTEP_DEB,INSTEP_FIN
 INTEGER(KIND=JPIM) :: JROF
@@ -5055,17 +5054,6 @@ ENDIF
 !        2.9  Computation of evolution of T, u, v and Q.
 !             ------------------------------------------
 
-! * Calculation of IPGFL, since the old pointers
-!   MSLB1[X]9 (=MSLB1GFL9+IP[X]) do not exist any longer in PTRSLB1.
-
-! usefull pointer for new version of cputqy
-
-DO JGFL=1,NUMFLDS
-  IF ((YCOMP(JGFL)%MP1 > 0) .AND. (YCOMP(JGFL)%MP_SL1 > 0)) THEN
-     IPGFL(YCOMP(JGFL)%MP1) = (YCOMP(JGFL)%MP_SL1-1)*(YDCPG_DIM%KFLEVG+2*NFLSUL)
-  ENDIF   
-ENDDO  
-
 !  ALARO does not respect the coding rules, tendency of pseudo-TKE is computed in APLPAR and not
 !  in CPTEND_NEW. To use the new version of cputqy it is then necessary to write it in GFL tendencies array.
 ! This memory transfer is not necessary, please respect coding rules to avoid it.
@@ -5103,7 +5091,7 @@ CALL CPUTQY_APLPAR_EXPL(YDCPG_DIM, YLMF_PHYS_NEXT_STATE, YLMF_PHYS_BASE_STATE, Y
 & ZPTENDQ1, ZPTENDRCONV1, ZPTENDR1, ZPTENDSCONV1, ZPTENDS1, ZPTENDTKE1, YDMF_PHYS%OUT%FDIS)
 
 CALL CPUTQY_APLPAR_LOOP(YDMODEL%YRML_DYN%YRDYN, YDGEOMETRY%YRDIMV, YDGMV, YGFL, YDPTRSLB1, YDPHY, YDCPG_DIM%KLON, &
-& YDCPG_DIM%KIDIA, YDCPG_DIM%KFDIA, YDCPG_DIM%KFLEVG, PDTPHY, IPGFL, ZTENDGFL, YDCPG_SL1%ZVIEW, PGMVT1, PGFLT1)
+& YDCPG_DIM%KIDIA, YDCPG_DIM%KFDIA, YDCPG_DIM%KFLEVG, PDTPHY, ZTENDGFL, YDCPG_SL1%ZVIEW, PGMVT1, PGFLT1)
 
 CALL MF_PHYS_FPL_PART2 (YDCPG_DIM, YDAPLPAR_TMP, YDVARS, YDMODEL)
 

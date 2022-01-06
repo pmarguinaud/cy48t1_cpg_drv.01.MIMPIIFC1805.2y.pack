@@ -141,6 +141,7 @@ REAL(KIND=JPRB)   ,INTENT(INOUT) :: PGFLT1(KPROMA,KFLEV,YGFL%NDIM1)
 
 !-----------------------------------------------------------------------
 INTEGER(KIND=JPIM) :: JLEV, JROF, IPGFL, JGFL
+INTEGER(KIND=JPIM) :: IMP1EXPLICIT (14)
 
 !  Local pointers LTWOTL choice
 
@@ -149,6 +150,7 @@ REAL(KIND=JPRB) :: ZDTT1(KPROMA,KFLEV),ZTDCP(KPROMA,KFLEV),ZDEC(KPROMA,KFLEV),ZR
 REAL(KIND=JPRB) :: ZHOOK_HANDLE
 
 LOGICAL :: LLPREC, LLTKE
+LOGICAL :: LLDONE = .FALSE.
 
 !-----------------------------------------------------------------------
 
@@ -310,35 +312,124 @@ IF(LNHDYN) THEN
   ENDDO
 ENDIF
 
-
 ! Incrementation of PB1 or PGFLT1 for GFL variables:
 ! Increment PGFLT1 for non-advected GFL, PB1 for advected GFL.
 
+! YA     : CLOUD_FRACTI    
+! YCPF   : CV_PREC_FLUX    
+! YDAL   : DD_MESH_FRAC    
+! YDOM   : DD_OMEGA        
+! YQ     : HUMI.SPECIFI    
+! YL     : LIQUID_WATER    
+! YUNEBH : PSHI_CONV_CLOUD 
+! YICONV : QI_CONV         
+! YLCONV : QL_CONV         
+! YRCONV : QR_CONV         
+! YSCONV : QS_CONV         
+! YLRAD  : RAD_LIQUID_WATER
+! YIRAD  : RAD_SOLID_WATER 
+! YR     : RAIN            
+! YS     : SNOW            
+! YI     : SOLID_WATER     
+! YSPF   : ST_PREC_FLUX    
+! YTKE   : TKE             
+! YUAL   : UD_MESH_FRAC    
+! YUOM   : UD_OMEGA        
+
+
+
+IF (.NOT. LLDONE) THEN
+WRITE (0, *) " CPUTQY : CLOUD_FRACTI     = ", YGFL%YA     %CNAME, YGFL%YA     %MP1 
+WRITE (0, *) " CPUTQY : CV_PREC_FLUX     = ", YGFL%YCPF   %CNAME, YGFL%YCPF   %MP1 
+WRITE (0, *) " CPUTQY : DD_MESH_FRAC     = ", YGFL%YDAL   %CNAME, YGFL%YDAL   %MP1 
+WRITE (0, *) " CPUTQY : DD_OMEGA         = ", YGFL%YDOM   %CNAME, YGFL%YDOM   %MP1 
+WRITE (0, *) " CPUTQY : HUMI.SPECIFI     = ", YGFL%YQ     %CNAME, YGFL%YQ     %MP1 
+WRITE (0, *) " CPUTQY : LIQUID_WATER     = ", YGFL%YL     %CNAME, YGFL%YL     %MP1 
+WRITE (0, *) " CPUTQY : PSHI_CONV_CLOUD  = ", YGFL%YUNEBH %CNAME, YGFL%YUNEBH %MP1 
+WRITE (0, *) " CPUTQY : QI_CONV          = ", YGFL%YICONV %CNAME, YGFL%YICONV %MP1 
+WRITE (0, *) " CPUTQY : QL_CONV          = ", YGFL%YLCONV %CNAME, YGFL%YLCONV %MP1 
+WRITE (0, *) " CPUTQY : QR_CONV          = ", YGFL%YRCONV %CNAME, YGFL%YRCONV %MP1 
+WRITE (0, *) " CPUTQY : QS_CONV          = ", YGFL%YSCONV %CNAME, YGFL%YSCONV %MP1 
+WRITE (0, *) " CPUTQY : RAD_LIQUID_WATER = ", YGFL%YLRAD  %CNAME, YGFL%YLRAD  %MP1 
+WRITE (0, *) " CPUTQY : RAD_SOLID_WATER  = ", YGFL%YIRAD  %CNAME, YGFL%YIRAD  %MP1 
+WRITE (0, *) " CPUTQY : RAIN             = ", YGFL%YR     %CNAME, YGFL%YR     %MP1 
+WRITE (0, *) " CPUTQY : SNOW             = ", YGFL%YS     %CNAME, YGFL%YS     %MP1 
+WRITE (0, *) " CPUTQY : SOLID_WATER      = ", YGFL%YI     %CNAME, YGFL%YI     %MP1 
+WRITE (0, *) " CPUTQY : ST_PREC_FLUX     = ", YGFL%YSPF   %CNAME, YGFL%YSPF   %MP1 
+WRITE (0, *) " CPUTQY : TKE              = ", YGFL%YTKE   %CNAME, YGFL%YTKE   %MP1 
+WRITE (0, *) " CPUTQY : UD_MESH_FRAC     = ", YGFL%YUAL   %CNAME, YGFL%YUAL   %MP1 
+WRITE (0, *) " CPUTQY : UD_OMEGA         = ", YGFL%YUOM   %CNAME, YGFL%YUOM   %MP1 
+ENDIF
+
+
+IMP1EXPLICIT = [YGFL%YL%MP1, YGFL%YI%MP1, YGFL%YS%MP1, YGFL%YR%MP1, YGFL%YG%MP1, &
+& YGFL%YTKE%MP1, YGFL%YEFB1%MP1, YGFL%YEFB2%MP1, YGFL%YEFB3%MP1, YGFL%YLCONV%MP1, &
+& YGFL%YICONV%MP1, YGFL%YRCONV%MP1, YGFL%YSCONV%MP1, YGFL%YQ%MP1]
+
+! PTENDQL     : YL                         PTENDL
+! PTENDQI     : YI                         PTENDI
+! PTENDQS     : YS                         PTENDS
+! PTENDQR     : YR                         PTENDR
+!               YG                         PTENDG
+! PTENDTKE    : YTKE                       PTENDTKE
+!               YEFB1                      PTENDEFB1
+!               YEFB2                      PTENDEFB2
+!               YEFB3                      PTENDEFB3
+! PTENDQLCONV : YLCONV                     PTENDLCONV
+! PTENDQICONV : YICONV                     PTENDICONV
+! PTENDQRCONV : YRCONV                     PTENDRCONV
+! PTENDQSCONV : YSCONV                     PTENDSCONV
+! PTENDQ      : YQ                         PTENDQ
+
+
+
+
+
+
+
 DO JGFL=1,NUMFLDS
-  IF (YCOMP(JGFL)%LT1) THEN
-    IF (LSLAG .AND. YCOMP(JGFL)%LADV) THEN
-      IPGFL=KPGFL(YCOMP(JGFL)%MP1)
-      DO JLEV=1,KFLEV
-        DO JROF=KST,KPROF
-          PB1(JROF,KSLB1GFL9+IPGFL+JLEV-NFLSA)=&
-           & PB1(JROF,KSLB1GFL9+IPGFL+JLEV-NFLSA)&
-           & + PDT*PTENDGFL(JROF,JLEV,YCOMP(JGFL)%MP1)
-        ENDDO
-      ENDDO
-    ELSE
-      DO JLEV=1,KFLEV
-        DO JROF=KST,KPROF
-          PGFLT1(JROF,JLEV,YCOMP(JGFL)%MP1)=&
-           & PGFLT1(JROF,JLEV,YCOMP(JGFL)%MP1)&
-           & + PDT*PTENDGFL(JROF,JLEV,YCOMP(JGFL)%MP1)
-        ENDDO
-      ENDDO
-    ENDIF
-  ENDIF ! End of non-zero diabatic tendency for this GFL
+  IF (.NOT. LLDONE) WRITE (0, *) " CPUTQY : ", YCOMP(JGFL)%CNAME, YCOMP(JGFL)%MP1
+! IF (ALL (IMP1EXPLICIT /= YCOMP(JGFL)%MP1)) THEN
+    CALL CPUTQY1
+! ENDIF
 ENDDO
+LLDONE = .TRUE.
 
 !-----------------------------------------------------------------------
 
 END ASSOCIATE
+
 IF (LHOOK) CALL DR_HOOK('CPUTQY_APLPAR',1,ZHOOK_HANDLE)
+
+CONTAINS
+
+SUBROUTINE CPUTQY1 
+
+ASSOCIATE(YCOMP=>YGFL%YCOMP, NFLSA=>YDDIMV%NFLSA)
+
+IF (YCOMP(JGFL)%LT1) THEN
+  IF (LSLAG .AND. YCOMP(JGFL)%LADV) THEN
+    IPGFL=KPGFL(YCOMP(JGFL)%MP1)
+    DO JLEV=1,KFLEV
+      DO JROF=KST,KPROF
+        PB1(JROF,KSLB1GFL9+IPGFL+JLEV-NFLSA)=&
+         & PB1(JROF,KSLB1GFL9+IPGFL+JLEV-NFLSA)&
+         & + PDT*PTENDGFL(JROF,JLEV,YCOMP(JGFL)%MP1)
+      ENDDO
+    ENDDO
+  ELSE
+    DO JLEV=1,KFLEV
+      DO JROF=KST,KPROF
+        PGFLT1(JROF,JLEV,YCOMP(JGFL)%MP1)=&
+         & PGFLT1(JROF,JLEV,YCOMP(JGFL)%MP1)&
+         & + PDT*PTENDGFL(JROF,JLEV,YCOMP(JGFL)%MP1)
+      ENDDO
+    ENDDO
+  ENDIF
+ENDIF ! End of non-zero diabatic tendency for this GFL
+
+END ASSOCIATE
+
+END SUBROUTINE
+
 END SUBROUTINE CPUTQY_APLPAR

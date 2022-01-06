@@ -1,3 +1,9 @@
+#:mute
+#:set config_file = os.path.dirname(_THIS_FILE_) + '/field_config.yaml'
+#:set config = field_config.VariableConfiguration(config_file)
+#:set gfl = config.groups['GFL'] 
+
+#:endmute
 MODULE MF_PHYS_NEXT_STATE_TYPE_MOD
 
 USE PARKIND1, ONLY : JPIM, JPRB
@@ -10,6 +16,13 @@ TYPE MF_PHYS_NEXT_STATE_TYPE
   REAL (KIND=JPRB), POINTER, CONTIGUOUS :: V (:, :) => NULL ()
   REAL (KIND=JPRB), POINTER, CONTIGUOUS :: T (:, :) => NULL ()
   REAL (KIND=JPRB), POINTER, CONTIGUOUS :: SVD (:, :) => NULL ()
+
+#:for v in gfl.variables
+  #:if v.array
+  #:elif v.dim == 3
+  REAL (KIND=JPRB), POINTER, CONTIGUOUS :: ${v.name}$ (${', '.join ([':'] * (v.dim-1))}$) => NULL ()
+  #:endif
+#:endfor
 
 CONTAINS
 
@@ -69,11 +82,30 @@ IF (LSLAG) THEN
       SELF%SVD => YDCPG_SL1%VD9
     ENDIF
   ENDIF
+
   ! * GFL arrays
   IF (YDDYN%LSPLTHOIGFL.OR.(YDDYN%NSPLTHOI /= 0)) THEN
-  ! KSLB1GFL9= MSLB1GFLF9
+#:for v in gfl.variables
+  #:if v.array
+  #:elif v.dim == 3
+    IF (YDVARS%${v.name}$%LADV) THEN
+      SELF%${v.name}$ => YDCPG_SL1%${v.name}$_F
+    ELSE
+      SELF%${v.name}$ => YDVARS%${v.name}$%T1
+    ENDIF
+  #:endif
+#:endfor
   ELSE
-  ! KSLB1GFL9= MSLB1GFL9
+#:for v in gfl.variables
+  #:if v.array
+  #:elif v.dim == 3
+    IF (YDVARS%${v.name}$%LADV) THEN
+      SELF%${v.name}$ => YDCPG_SL1%${v.name}$
+    ELSE
+      SELF%${v.name}$ => YDVARS%${v.name}$%T1
+    ENDIF
+  #:endif
+#:endfor
   ENDIF  
 
 ELSE
@@ -82,6 +114,13 @@ ELSE
   SELF%V   => YDVARS%V%T1
   SELF%T   => YDVARS%T%T1
   SELF%SVD => YDVARS%SVD%T1
+
+#:for v in gfl.variables
+  #:if v.array
+  #:elif v.dim == 3
+  SELF%${v.name}$ => YDVARS%${v.name}$%T1
+  #:endif
+#:endfor
 
 ENDIF
 

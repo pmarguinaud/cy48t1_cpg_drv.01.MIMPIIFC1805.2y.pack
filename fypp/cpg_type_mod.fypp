@@ -547,13 +547,16 @@ INTEGER(KIND=JPIM), INTENT (IN)   :: BLOCK_INDEX
 IF (ASSOCIATED (SELF%F_DATA)) THEN
   SELF%ZVIEW => SELF%F_DATA%GET_VIEW (BLOCK_INDEX)
 #:for var in vars
-  IF (ASSOCIATED (SELF%F_${var}$)) THEN
-    SELF%${var}$ => SELF%F_${var}$%GET_VIEW (BLOCK_INDEX)
-  ELSE
   #:if vars[var][N3D]
+  IF (ASSOCIATED (SELF%F_${var}$)) THEN
+    SELF%${var}$ (1:, 0:) => SELF%F_${var}$%GET_VIEW (BLOCK_INDEX)
+  ELSE
     SELF%${var}$ => ZDUM2
   ENDIF
   #:else
+  IF (ASSOCIATED (SELF%F_${var}$)) THEN
+    SELF%${var}$ => SELF%F_${var}$%GET_VIEW (BLOCK_INDEX)
+  ELSE
     SELF%${var}$ => ZDUM1
   ENDIF
   #:endif
@@ -564,12 +567,12 @@ IF (ASSOCIATED (SELF%F_DATA)) THEN
     #:if v.array
     #:elif v.dim == 3
   IF (ASSOCIATED (SELF%F_${v.name}$)) THEN
-    SELF%${v.name}$ => SELF%F_${v.name}$%GET_VIEW (BLOCK_INDEX)
+    SELF%${v.name}$ (1:, 0:) => SELF%F_${v.name}$%GET_VIEW (BLOCK_INDEX)
   ELSE
     SELF%${v.name}$ => ZDUM${v.dim-1}$
   ENDIF
   IF (ASSOCIATED (SELF%F_${v.name}$_F)) THEN
-    SELF%${v.name}$_F => SELF%F_${v.name}$_F%GET_VIEW (BLOCK_INDEX)
+    SELF%${v.name}$_F (1:, 0:) => SELF%F_${v.name}$_F%GET_VIEW (BLOCK_INDEX)
   ELSE
     SELF%${v.name}$_F => ZDUM${v.dim-1}$
   ENDIF

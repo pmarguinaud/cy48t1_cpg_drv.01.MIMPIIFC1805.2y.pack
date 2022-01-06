@@ -312,16 +312,19 @@ END TYPE CPG_DDH_TYPE
 
 #:def pcpg_sl_type_definition (ind, vars, use_gfl=False)
 TYPE CPG_SL${ind}$_TYPE
+  LOGICAL :: LOWNED = .FALSE.
   INTEGER (KIND=JPIM) :: NLEV = -1
   REAL (KIND=JPRB), POINTER, CONTIGUOUS :: ZVIEW (:,:) => NULL ()
+  REAL (KIND=JPRB), POINTER, CONTIGUOUS :: ZDATA (:,:,:) => NULL ()
   TYPE (FIELD_3D), POINTER :: F_DATA => NULL ()
 #:for var in vars
   #:if vars[var][N3D]
   REAL (KIND=JPRB), POINTER, CONTIGUOUS :: ${var}$ (:,:) => NULL ()
+  TYPE (FIELD_3D), POINTER :: F_${var}$ => NULL ()
   #:else
   REAL (KIND=JPRB), POINTER, CONTIGUOUS :: ${var}$ (:) => NULL ()
+  TYPE (FIELD_2D), POINTER :: F_${var}$ => NULL ()
   #:endif
-  INTEGER (KIND=JPIM) :: I_${var}$
 #:endfor
 
 #:if use_gfl
@@ -467,6 +470,7 @@ SUBROUTINE CPG_SL${ind}$_TYPE_INIT (SELF, REGISTRY, NLEV, YDTPTRSLB${ind}$ &
                                 & , PERSISTENT, PB${ind}$)
 
 USE PTRSLB${ind}$, ONLY : TPTRSLB${ind}$
+USE OML_MOD, ONLY: OML_MAX_THREADS
 
 #:if use_gfl
 USE YOM_YGFL, ONLY: TYPE_GFLD
@@ -487,13 +491,23 @@ REAL (KIND=JPRB), OPTIONAL, TARGET, INTENT (IN)    :: PB${ind}$ (:, :, :)
 SELF%NLEV = NLEV
 
 IF (PRESENT (PB${ind}$)) THEN
-  SELF%F_DATA => CREATE_FIELD_WRAP ('PB${ind}$', PB${ind}$)
+  SELF%ZDATA => PB${ind}$
+  SELF%LOWNED = .FALSE.
 ELSE
-  SELF%F_DATA => CREATE_TEMPORARY ('PB${ind}$', GEOM=REGISTRY%GEOM, NLEV=YDTPTRSLB${ind}$%NFLDSLB${ind}$, PERSISTENT=PERSISTENT)
+  ALLOCATE (SELF%ZDATA (REGISTRY%GEOM%YRDIM%NPROMA, YDTPTRSLB${ind}$%NFLDSLB${ind}$, OML_MAX_THREADS ()))
+  SELF%LOWNED = .TRUE.
 ENDIF
 
+SELF%F_DATA => CREATE_FIELD_WRAP ('PB${ind}$', SELF%ZDATA, PERSISTENT=.NOT. SELF%LOWNED)
+
 #:for var in vars
-SELF%I_${var}$ = YDTPTRSLB${ind}$%MSLB${ind}$${var}$
+IF (YDTPTRSLB${ind}$%MSLB${ind}$${var}$ > 0) THEN
+  #:if vars[var][N3D]
+  SELF%F_${var}$ => CREATE_FIELD_WRAP ('${var}$', SELF%ZDATA (:, YDTPTRSLB${ind}$%MSLB${ind}$${var}$:YDTPTRSLB${ind}$%MSLB${ind}$${var}$+NLEV+1, :), PERSISTENT=.NOT. SELF%LOWNED)
+  #:else
+  SELF%F_${var}$ => CREATE_FIELD_WRAP ('${var}$', SELF%ZDATA (:, YDTPTRSLB${ind}$%MSLB${ind}$${var}$, :), PERSISTENT=.NOT. SELF%LOWNED)
+  #:endif
+ENDIF
 #:endfor
 
 #:if use_gfl
@@ -526,16 +540,13 @@ INTEGER(KIND=JPIM), INTENT (IN)   :: BLOCK_INDEX
 IF (ASSOCIATED (SELF%F_DATA)) THEN
   SELF%ZVIEW => SELF%F_DATA%GET_VIEW (BLOCK_INDEX)
 #:for var in vars
-  #:if vars[var][N3D]
-  IF (SELF%I_${var}$ > 0) THEN
-    SELF%${var}$ => SELF%ZVIEW (:, SELF%I_${var}$:SELF%I_${var}$+SELF%NLEV+1)
+  IF (ASSOCIATED (SELF%F_${var}$)) THEN
+    SELF%${var}$ => SELF%F_${var}$%GET_VIEW (BLOCK_INDEX)
   ELSE
+  #:if vars[var][N3D]
     SELF%${var}$ => ZDUM2
   ENDIF
   #:else
-  IF (SELF%I_${var}$ > 0) THEN
-    SELF%${var}$ => SELF%ZVIEW (:, SELF%I_${var}$)
-  ELSE
     SELF%${var}$ => ZDUM1
   ENDIF
   #:endif
@@ -587,9 +598,21 @@ END SUBROUTINE CPG_SL${ind}$_TYPE_UPDATE_VIEW
 SUBROUTINE CPG_SL${ind}$_TYPE_FINAL (SELF)
 CLASS (CPG_SL${ind}$_TYPE)          :: SELF
 
+IF (ASSOCIATED (SELF%F_DATA)) CALL DELETE_TEMPORARY (SELF%F_DATA)
+SELF%F_DATA => NULL ()
+
+IF (SELF%LOWNED) THEN
+  DEALLOCATE (SELF%ZDATA)
+ENDIF
+
+SELF%ZDATA => NULL ()
 SELF%ZVIEW => NULL ()
 
-IF (ASSOCIATED (SELF%F_DATA)) CALL DELETE_TEMPORARY (SELF%F_DATA)
+#:for var in vars
+  IF (ASSOCIATED (SELF%F_${var}$)) CALL DELETE_TEMPORARY (SELF%F_${var}$)
+  SELF%F_${var}$ => NULL ()
+  SELF%${var}$ => NULL ()
+#:endfor
 
 END SUBROUTINE CPG_SL${ind}$_TYPE_FINAL
 #:enddef

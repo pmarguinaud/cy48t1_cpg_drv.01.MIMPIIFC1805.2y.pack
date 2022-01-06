@@ -132,8 +132,8 @@ EOF
 
     my %N2M;
     
-    my %S = qw (Z P LL LD I K J K N K L LD YL YD);
-    my @S = qw (Z LL I J N L YL);
+    my %S = qw (Z P LL LD I K J K N K L LD YL YD R P);
+    my @S = qw (Z LL I J N L YL R);
 
     my %M;
 
@@ -152,6 +152,7 @@ EOF
     
     for my $N (@N)
       {
+print "N=$N\n";
         next if ($N2M{$N});
         for my $k (@S)
           {
@@ -164,6 +165,8 @@ EOF
                     $M .= '_';
                   }
                 $N2M{$N} = $M;
+print "$N -> $M\n";
+
                 last;
               }
           }
@@ -225,6 +228,10 @@ EOF
             elsif ($N =~ m/^L/o)
               {
                 $C2->parentNode->insertBefore (&Fxtran::fxtran (statement => "LOGICAL, INTENT (IN) :: $N2M{$N}"), $C2);
+              }
+            elsif ($N =~ m/^R/o)
+              {
+                $C2->parentNode->insertBefore (&Fxtran::fxtran (statement => "REAL (KIND=JPRB), INTENT (IN) :: $N2M{$N}"), $C2);
               }
             else
               {

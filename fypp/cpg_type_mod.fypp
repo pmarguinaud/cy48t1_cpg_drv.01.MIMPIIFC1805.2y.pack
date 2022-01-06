@@ -332,9 +332,9 @@ TYPE CPG_SL${ind}$_TYPE
     #:if v.array
     #:elif v.dim == 3
   REAL (KIND=JPRB), POINTER, CONTIGUOUS :: ${v.name}$   (${', '.join ([':'] * (v.dim-1))}$) => NULL ()
-  INTEGER (KIND=JPIM) :: I_${v.name}$
+  TYPE (FIELD_3D), POINTER :: F_${v.name}$ => NULL ()
   REAL (KIND=JPRB), POINTER, CONTIGUOUS :: ${v.name}$_F (${', '.join ([':'] * (v.dim-1))}$) => NULL ()
-  INTEGER (KIND=JPIM) :: I_${v.name}$_F
+  TYPE (FIELD_3D), POINTER :: F_${v.name}$_F => NULL ()
     #:endif
   #:endfor
 #:endif
@@ -488,6 +488,8 @@ TYPE (MODEL),                       INTENT (IN)    :: YDMODEL
 LOGICAL, OPTIONAL,                  INTENT (IN)    :: PERSISTENT
 REAL (KIND=JPRB), OPTIONAL, TARGET, INTENT (IN)    :: PB${ind}$ (:, :, :)
 
+INTEGER (KIND=JPIM) :: JFLD
+
 SELF%NLEV = NLEV
 
 IF (PRESENT (PB${ind}$)) THEN
@@ -502,11 +504,14 @@ SELF%F_DATA => CREATE_FIELD_WRAP ('PB${ind}$', SELF%ZDATA, PERSISTENT=.NOT. SELF
 
 #:for var in vars
 IF (YDTPTRSLB${ind}$%MSLB${ind}$${var}$ > 0) THEN
+  JFLD = YDTPTRSLB${ind}$%MSLB${ind}$${var}$
   #:if vars[var][N3D]
-  SELF%F_${var}$ => CREATE_FIELD_WRAP ('${var}$', SELF%ZDATA (:, YDTPTRSLB${ind}$%MSLB${ind}$${var}$:YDTPTRSLB${ind}$%MSLB${ind}$${var}$+NLEV+1, :), PERSISTENT=.NOT. SELF%LOWNED)
+  SELF%F_${var}$ => CREATE_FIELD_WRAP ('${var}$', SELF%ZDATA (:, JFLD:JFLD+NLEV+1, :), PERSISTENT=.NOT. SELF%LOWNED)
   #:else
-  SELF%F_${var}$ => CREATE_FIELD_WRAP ('${var}$', SELF%ZDATA (:, YDTPTRSLB${ind}$%MSLB${ind}$${var}$, :), PERSISTENT=.NOT. SELF%LOWNED)
+  SELF%F_${var}$ => CREATE_FIELD_WRAP ('${var}$', SELF%ZDATA (:, JFLD, :), PERSISTENT=.NOT. SELF%LOWNED)
   #:endif
+ELSE
+  SELF%F_${var}$ => NULL ()
 ENDIF
 #:endfor
 
@@ -515,15 +520,17 @@ ENDIF
     #:if v.array
     #:elif v.dim == 3
 IF (YGFL%Y${v.name}$%MP_SL1 > 0 .AND. YGFL%Y${v.name}$%MP1 > 0) THEN
-  SELF%I_${v.name}$   = YDTPTRSLB${ind}$%MSLB1GFL9  + (YGFL%Y${v.name}$%MP_SL1-1)*(NLEV+2)
+  JFLD = YDTPTRSLB${ind}$%MSLB1GFL9  + (YGFL%Y${v.name}$%MP_SL1-1)*(NLEV+2)
+  SELF%F_${v.name}$ => CREATE_FIELD_WRAP ('${v.name}$', SELF%ZDATA (:, JFLD:JFLD+NLEV+1, :), PERSISTENT=.NOT. SELF%LOWNED)
 ELSE
-  SELF%I_${v.name}$   = -1
+  SELF%F_${v.name}$ => NULL ()
 ENDIF
 IF (YDMODEL%YRML_DYN%YRDYN%LSPLTHOIGFL .OR. (YDMODEL%YRML_DYN%YRDYN%NSPLTHOI /= 0)) THEN
   IF (YGFL%Y${v.name}$%MP_SL1 > 0 .AND. YGFL%Y${v.name}$%MP1 > 0) THEN
-    SELF%I_${v.name}$_F = YDTPTRSLB${ind}$%MSLB1GFLF9 + (YGFL%Y${v.name}$%MP_SL1-1)*(NLEV+2)
+    JFLD = YDTPTRSLB${ind}$%MSLB1GFLF9 + (YGFL%Y${v.name}$%MP_SL1-1)*(NLEV+2)
+    SELF%F_${v.name}$_F => CREATE_FIELD_WRAP ('${v.name}$_F', SELF%ZDATA (:, JFLD:JFLD+NLEV+1, :), PERSISTENT=.NOT. SELF%LOWNED)
   ELSE
-    SELF%I_${v.name}$_F = -1
+    SELF%F_${v.name}$_F => NULL ()
   ENDIF
 ENDIF
     #:endif
@@ -556,13 +563,13 @@ IF (ASSOCIATED (SELF%F_DATA)) THEN
   #:for v in gfl.variables
     #:if v.array
     #:elif v.dim == 3
-  IF (SELF%I_${v.name}$ > 0) THEN
-    SELF%${v.name}$ => SELF%ZVIEW (:, SELF%I_${v.name}$:SELF%I_${v.name}$+SELF%NLEV+1)
+  IF (ASSOCIATED (SELF%F_${v.name}$)) THEN
+    SELF%${v.name}$ => SELF%F_${v.name}$%GET_VIEW (BLOCK_INDEX)
   ELSE
     SELF%${v.name}$ => ZDUM${v.dim-1}$
   ENDIF
-  IF (SELF%I_${v.name}$_F > 0) THEN
-    SELF%${v.name}$_F => SELF%ZVIEW (:, SELF%I_${v.name}$_F:SELF%I_${v.name}$_F+SELF%NLEV+1)
+  IF (ASSOCIATED (SELF%F_${v.name}$_F)) THEN
+    SELF%${v.name}$_F => SELF%F_${v.name}$_F%GET_VIEW (BLOCK_INDEX)
   ELSE
     SELF%${v.name}$_F => ZDUM${v.dim-1}$
   ENDIF
@@ -613,6 +620,20 @@ SELF%ZVIEW => NULL ()
   SELF%F_${var}$ => NULL ()
   SELF%${var}$ => NULL ()
 #:endfor
+
+#:if use_gfl
+  #:for v in gfl.variables
+    #:if v.array
+    #:elif v.dim == 3
+  IF (ASSOCIATED (SELF%F_${v.name}$)) CALL DELETE_TEMPORARY (SELF%F_${v.name}$)
+  SELF%F_${v.name}$ => NULL ()
+  SELF%${v.name}$ => NULL ()
+  IF (ASSOCIATED (SELF%F_${v.name}$_F)) CALL DELETE_TEMPORARY (SELF%F_${v.name}$_F)
+  SELF%F_${v.name}$_F => NULL ()
+  SELF%${v.name}$_F => NULL ()
+    #:endif
+  #:endfor
+#:endif
 
 END SUBROUTINE CPG_SL${ind}$_TYPE_FINAL
 #:enddef

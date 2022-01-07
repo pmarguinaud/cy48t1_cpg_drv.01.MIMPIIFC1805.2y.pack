@@ -10,8 +10,8 @@
 #:set AS_0_1             = [ [ '0', '1' ] ]
 #:set AS_YSP_SBD_NLEVS   = [ [ '1', 'YDCPG_DIM%KSBDLEV' ] ]
 #:set AS_NTSSG1          = [ [ '1', 'YDCPG_DIM%KTSSG+1' ] ]
-#:set AS_0_nflevg_2      = [ [ '1', 'NLEV' ], [ '1', '2' ] ]
-#:set AS_0_NSORAYFRm1    = [ [ '0', 'YDPHY%NSORAYFR-1' ] ]
+#:set AS_0_NFLEVG_2      = [ [ '1', 'YDCPG_DIM%KFLEVG' ], [ '1', '2' ] ]
+#:set AS_0_NSORAYFRm1    = [ [ '0', 'YDCPG_DIM%KSORAYFR-1' ] ]
 #:set AS_NGRAD_1_nflevg  = [ [ '1', 'YDARPHY%NGRADIENTS' ], [ '1', 'NLEV' ] ]
 #:set AS_1_NDTPREC       = [ [ '1', 'YDCPG_DIM%KDTPREC' ] ]
 #:set AS_1_NDTPREC2      = [ [ '1', 'YDCPG_DIM%KDTPREC2' ] ]
@@ -155,20 +155,20 @@
 & }
 
 #:set vars_mf_phys_opt = { &
-& "GDEOSI"         : [True,  False, AS_0_nflevg_2,      None,                 "LLMF_PHYS",        "DESCENDING INCREMENTAL OPTICAL DEPTHS, SOLAR"                                ], &
-& "GUEOSI"         : [True,  False, AS_0_nflevg_2,      None,                 "LLMF_PHYS",        "ASCENDING  INCREMENTAL OPTICAL DEPTHS, SOLAR"                                ], &
+& "GDEOSI"         : [True,  False, AS_0_NFLEVG_2,      None,                 "LLMF_PHYS",        "DESCENDING INCREMENTAL OPTICAL DEPTHS, SOLAR"                                ], &
+& "GUEOSI"         : [True,  False, AS_0_NFLEVG_2,      None,                 "LLMF_PHYS",        "ASCENDING  INCREMENTAL OPTICAL DEPTHS, SOLAR"                                ], &
 & "GMU0"           : [True,  False, AS_0_NSORAYFRm1,    None,                 "LLMF_PHYS",        "COSINE OF SOLAR ZENITH ANGLE, APPROXIMATE ACTUAL VALUE"                      ], &
 & "GMU0_MIN"       : [True,  False, AS_void,            None,                 "LLMF_PHYS",        "COSINE OF SOLAR ZENITH ANGLE, MIN VALUE"                                     ], &
 & "GMU0_MAX"       : [True,  False, AS_void,            None,                 "LLMF_PHYS",        "COSINE OF SOLAR ZENITH ANGLE, MAX VALUE"                                     ], &
-& "GDEOTI"         : [True,  False, AS_0_nflevg,        None,                 "LLMF_PHYS",        "descending incremental optical depths, dB/dT(T0) weights"                    ], &
-& "GDEOTI2"        : [True,  False, AS_0_nflevg,        None,                 "LLMF_PHYS",        "descending incremental optical depths, B weights with linear T_e correction" ], &
-& "GUEOTI"         : [True,  False, AS_0_nflevg,        None,                 "LLMF_PHYS",        "ascending incremental optical depths, dB/dT(T0) weights"                     ], &
-& "GUEOTI2"        : [True,  False, AS_0_nflevg,        None,                 "LLMF_PHYS",        "ascending incremental optical depths, B weights with linear T_e correction"  ], &
-& "GEOLT"          : [True,  False, AS_1_nflevg,        None,                 "LLMF_PHYS",        "local optical depths, dB/dT(T0) weights"                                     ], &
-& "GEOXT"          : [True,  False, AS_1_nflevg,        None,                 "LLMF_PHYS",        "maximum optical depths for EBL-EAL, dB/dT(T0) weights"                       ], &
-& "GRPROX"         : [True,  False, AS_0_nflevg,        None,                 "LLMF_PHYS",        "correction term for adjacent exchanges"                                      ], &
-& "GMIXP"          : [True,  False, AS_0_nflevg,        None,                 "LLMF_PHYS",        "non-statistical weights for bracketing"                                      ], &
-& "GFLUXC"         : [True,  False, AS_0_nflevg,        None,                 "LLMF_PHYS",        "out of bracket part of clearsky EBL, resp. EBL-EAL flux"                     ], &
+& "GDEOTI"         : [True,  False, AS_0_NFLEVG,        None,                 "LLMF_PHYS",        "descending incremental optical depths, dB/dT(T0) weights"                    ], &
+& "GDEOTI2"        : [True,  False, AS_0_NFLEVG,        None,                 "LLMF_PHYS",        "descending incremental optical depths, B weights with linear T_e correction" ], &
+& "GUEOTI"         : [True,  False, AS_0_NFLEVG,        None,                 "LLMF_PHYS",        "ascending incremental optical depths, dB/dT(T0) weights"                     ], &
+& "GUEOTI2"        : [True,  False, AS_0_NFLEVG,        None,                 "LLMF_PHYS",        "ascending incremental optical depths, B weights with linear T_e correction"  ], &
+& "GEOLT"          : [True,  False, AS_1_NFLEVG,        None,                 "LLMF_PHYS",        "local optical depths, dB/dT(T0) weights"                                     ], &
+& "GEOXT"          : [True,  False, AS_1_NFLEVG,        None,                 "LLMF_PHYS",        "maximum optical depths for EBL-EAL, dB/dT(T0) weights"                       ], &
+& "GRPROX"         : [True,  False, AS_0_NFLEVG,        None,                 "LLMF_PHYS",        "correction term for adjacent exchanges"                                      ], &
+& "GMIXP"          : [True,  False, AS_0_NFLEVG,        None,                 "LLMF_PHYS",        "non-statistical weights for bracketing"                                      ], &
+& "GFLUXC"         : [True,  False, AS_0_NFLEVG,        None,                 "LLMF_PHYS",        "out of bracket part of clearsky EBL, resp. EBL-EAL flux"                     ], &
 & "GRSURF"         : [True,  False, AS_void,            None,                 "LLMF_PHYS",        "corrective ratio for surface cts contribution"                               ], &
 & }
 

@@ -1839,7 +1839,7 @@ END SUBROUTINE MF_PHYS_OUT_TYPE_FINAL
 
 SUBROUTINE MF_PHYS_OPT_TYPE_INIT (SELF &
                                 & , REGISTRY &
-                                & , NLEV &
+                                & , YDCPG_DIM &
                                 & , PERSISTENT &
                                 & , LDMF_PHYS &
                            &, PGDEOSI &
@@ -1860,11 +1860,12 @@ SUBROUTINE MF_PHYS_OPT_TYPE_INIT (SELF &
                            &)
 
 
+USE CPG_DIM_TYPE_MOD, ONLY : CPG_DIM_TYPE
 
 
 CLASS (MF_PHYS_OPT_TYPE)                    :: SELF
 TYPE (FIELD_REGISTRY),        INTENT (INOUT) :: REGISTRY
-INTEGER (KIND=JPIM),          INTENT (IN)    :: NLEV
+TYPE (CPG_DIM_TYPE),          INTENT (IN)    :: YDCPG_DIM
 LOGICAL, OPTIONAL,            INTENT (IN)    :: PERSISTENT
 LOGICAL, OPTIONAL,            INTENT (IN)    :: LDMF_PHYS
 

@@ -191,7 +191,7 @@ END SUBROUTINE ${name}$_FINAL
 $:pcpg_struct_methods (name, vars, "T" + type, "INTDYN_MOD", "M_")
 #:enddef
 
-#:def pcpg_type_methods (name, vars, use_intdyn=False, use_cpg_dim=False)
+#:def pcpg_type_methods (name, vars, use_intdyn=False)
 
 #:set use_llt0      = False
 #:set use_llmf_phys = False
@@ -199,6 +199,7 @@ $:pcpg_struct_methods (name, vars, "T" + type, "INTDYN_MOD", "M_")
 #:set use_yddphy    = False
 #:set use_ydsurf    = False
 #:set use_ydmodel   = False
+#:set use_cpg_dim   = False
 #:for var in vars
   #:if vars[var][NCOND]
     #:set cond = vars[var][NCOND]
@@ -212,6 +213,7 @@ $:pcpg_struct_methods (name, vars, "T" + type, "INTDYN_MOD", "M_")
       #:set use_yddphy  = use_yddphy    or ("YDDPHY"    in x)
       #:set use_ydsurf  = use_ydsurf    or ("YDSURF"    in x)
       #:set use_ydmodel = use_ydmodel   or ("YDMODEL"   in x)
+      #:set use_cpg_dim = use_cpg_dim   or ("YDCPG_DIM" in x)
     #:endfor
   #:endfor
 #:endfor

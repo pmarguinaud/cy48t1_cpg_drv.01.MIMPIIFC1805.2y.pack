@@ -7,10 +7,10 @@
 #:set AS_void                 = []
 #:set AS_0_nflevg             = [ [ '0', 'NLEV' ] ]
 #:set AS_1_nflevg             = [ [ '1', 'NLEV' ] ]
+#:set AS_1_KFLEVG             = [ [ '1', 'YDCPG_DIM%KFLEVG' ] ]
 #:set AS_1_nflevg_2           = [ [ '1', 'NLEV' ], [ '1', '2' ] ]
-#:set AS_0_nflevg_6           = [ [ '0', 'NLEV' ], [ '1', '6' ] ]
-#:set AS_0_NSORAYFRm1         = [ [ '0', 'YDPHY%NSORAYFR-1' ] ]
-#:set AS_1_nflevg_NVCLIS      = [ [ '0', 'NLEV' ], [ '1', 'YDMODEL%YRML_PHY_G%YRDPHY%NVCLIS' ] ]
+#:set AS_0_KFLEVG_6           = [ [ '0', 'YDCPG_DIM%KFLEVG' ], [ '1', '6' ] ]
+#:set AS_1_KFLEVG_NVCLIS      = [ [ '0', 'YDCPG_DIM%KFLEVG' ], [ '1', 'YDCPG_DIM%KVCLIS' ] ]
 #:set AS_1_NGPARp1            = [ [ '1', 'YDMODEL%YRML_PHY_MF%YRPARAR%NGPAR+1' ] ]
 #:set AS_4D                   = [ [], [] ]
 
@@ -133,20 +133,20 @@
 & }
 
 #:set vars_cpg_misc = { &
-& "NEB"            : [False, False, AS_1_nflevg,        None,                 None                 ], &
-& "QLI"            : [False, False, AS_1_nflevg,        None,                 None                 ], &
-& "QICE"           : [False, False, AS_1_nflevg,        None,                 None                 ], &
-& "QRAIN"          : [False, False, AS_1_nflevg,        None,                 None                 ], &
-& "QSNOW"          : [False, False, AS_1_nflevg,        None,                 None                 ], &
-& "RH"             : [False, False, AS_1_nflevg,        None,                 None                 ], &
+& "NEB"            : [False, False, AS_1_KFLEVG,        None,                 None                 ], &
+& "QLI"            : [False, False, AS_1_KFLEVG,        None,                 None                 ], &
+& "QICE"           : [False, False, AS_1_KFLEVG,        None,                 None                 ], &
+& "QRAIN"          : [False, False, AS_1_KFLEVG,        None,                 None                 ], &
+& "QSNOW"          : [False, False, AS_1_KFLEVG,        None,                 None                 ], &
+& "RH"             : [False, False, AS_1_KFLEVG,        None,                 None                 ], &
 & "QS"             : [False, False, AS_void,            None,                 None                 ], &
 & "QSOL"           : [False, False, AS_void,            None,                 None                 ], &
 & "DHSF"           : [False, False, AS_void,            None,                 None                 ], &
 & "CLCT"           : [False, False, AS_void,            None,                 None                 ], &
 & "LSM"            : [False, False, AS_void,            None,                 None                 ], &
 & "TSOL"           : [False, False, AS_void,            None,                 None                 ], &
-& "FTCNS"          : [False, False, AS_0_nflevg_6,      None,                 None                 ], &
-& "KOZO"           : [False, False, AS_1_nflevg_NVCLIS, None,                 None                 ], &
+& "FTCNS"          : [False, False, AS_0_KFLEVG_6,      None,                 None                 ], &
+& "KOZO"           : [False, False, AS_1_KFLEVG_NVCLIS, None,                 None                 ], &
 & "GPAR"           : [False, False, AS_1_NGPARp1,       None,                 None                 ], &
 & }
 
@@ -225,13 +225,13 @@ $:pcpg_intdyn_definition ("CPG_CTY_TYPE"     ,vars_cpg_dyn_cty   )
 
 $:pcpg_intdyn_definition ("CPG_TND_TYPE"     ,vars_cpg_dyn_tnd   )
 
-$:pcpg_type_definition ("CPG_GP_T_TMP_TYPE" ,  vars_cpg_gp_t_tmp)
+$:pcpg_type_definition ("CPG_GP_T_TMP_TYPE" , vars_cpg_gp_t_tmp )
 
-$:pcpg_type_definition ("CPG_GP_TMP_TYPE"   ,  vars_cpg_gp_tmp  )
+$:pcpg_type_definition ("CPG_GP_TMP_TYPE"   , vars_cpg_gp_tmp   )
 
-$:pcpg_type_definition ("CPG_DYN_TYPE"      ,  vars_cpg_dyn     )
+$:pcpg_type_definition ("CPG_DYN_TYPE"      , vars_cpg_dyn      )
 
-$:pcpg_type_definition ("CPG_PHY_TYPE"      ,  vars_cpg_phy     )
+$:pcpg_type_definition ("CPG_PHY_TYPE"      , vars_cpg_phy      )
 
 $:pcpg_type_definition ("CPG_MISC_TYPE"     , vars_cpg_misc     )
 

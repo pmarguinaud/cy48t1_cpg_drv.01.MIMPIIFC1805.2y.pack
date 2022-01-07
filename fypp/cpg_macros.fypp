@@ -191,7 +191,7 @@ END SUBROUTINE ${name}$_FINAL
 $:pcpg_struct_methods (name, vars, "T" + type, "INTDYN_MOD", "M_")
 #:enddef
 
-#:def pcpg_type_methods (name, vars, use_intdyn=False)
+#:def pcpg_type_methods (name, vars, use_intdyn=False, use_cpg_dim=False)
 
 #:set use_llt0      = False
 #:set use_llmf_phys = False
@@ -223,7 +223,11 @@ SUBROUTINE ${name}$_INIT (SELF &
                                 & , KT  &
 #:endif
                                 & , REGISTRY &
+#:if use_cpg_dim
+                                & , YDCPG_DIM &
+#:else
                                 & , NLEV &
+#:endif
                                 & , PERSISTENT &
 #:if use_yddphy
                                 & , YDDPHY &
@@ -250,6 +254,13 @@ USE INTDYN_MOD, ONLY :          YYTRCP9, YYTHW9, YYTXYB9, YYTXYB9_PHY
 USE INTDYN_MOD, ONLY : TRCP, TCTY, THWIND, TXYB, TXYBDER
 #:endif
 
+#:if use_cpg_dim
+USE CPG_DIM_TYPE_MOD, ONLY : CPG_DIM_TYPE
+#:set nlev = "YDCPG_DIM%KFLEVG"
+#:else
+#:set nlev = "NLEV"
+#:endif
+
 #:if use_lnhdyn
 USE YOMCT0    , ONLY : LNHDYN, LNHEE, LNHQE
 #:endif
@@ -268,7 +279,11 @@ CLASS (${name}$)                    :: SELF
 INTEGER(KIND=JPIM),           INTENT (IN)    :: KT
 #:endif
 TYPE (FIELD_REGISTRY),        INTENT (INOUT) :: REGISTRY
+#:if use_cpg_dim
+TYPE (CPG_DIM_TYPE),          INTENT (IN)    :: YDCPG_DIM
+#:else
 INTEGER (KIND=JPIM),          INTENT (IN)    :: NLEV
+#:endif
 LOGICAL, OPTIONAL,            INTENT (IN)    :: PERSISTENT
 #:if use_ydmodel
 TYPE (MODEL),                 INTENT (IN)    :: YDMODEL
@@ -381,9 +396,9 @@ $:temporary (var, elt[NDIMS], ind + "", elt[NTYPE])
   #:elif (NDEFS < len (elt)) and (elt[NDEFS] is not None)
     #:set defs = elt[NDEFS]
     #:if elt[ISARG]
-${ind}$CALL SELF%${var}$%INIT (REGISTRY, NLEV, ${defs}$, PERSISTENT, ${argn (var)}$)
+${ind}$CALL SELF%${var}$%INIT (REGISTRY, ${nlev}$, ${defs}$, PERSISTENT, ${argn (var)}$)
     #:else
-${ind}$CALL SELF%${var}$%INIT (REGISTRY, NLEV, ${defs}$, PERSISTENT)
+${ind}$CALL SELF%${var}$%INIT (REGISTRY, ${nlev}$, ${defs}$, PERSISTENT)
     #:endif
   #:else
     #:if (var == "T0") or (var == "T9")
@@ -392,9 +407,9 @@ ${ind}$CALL SELF%${var}$%INIT (REGISTRY, NLEV, ${defs}$, PERSISTENT)
       #:set kt = ""
     #:endif
     #:if elt[ISARG]
-${ind}$CALL SELF%${var}$%INIT (${kt}$REGISTRY, NLEV, PERSISTENT, ${argn (var)}$)
+${ind}$CALL SELF%${var}$%INIT (${kt}$REGISTRY, ${nlev}$, PERSISTENT, ${argn (var)}$)
     #:else
-${ind}$CALL SELF%${var}$%INIT (${kt}$REGISTRY, NLEV, PERSISTENT)
+${ind}$CALL SELF%${var}$%INIT (${kt}$REGISTRY, ${nlev}$, PERSISTENT)
     #:endif
   #:endif
   #:if not elt[NCOND] is None

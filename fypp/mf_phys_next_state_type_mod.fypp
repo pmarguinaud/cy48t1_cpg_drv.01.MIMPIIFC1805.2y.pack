@@ -13,15 +13,21 @@ IMPLICIT NONE
 TYPE MF_PHYS_NEXT_STATE_TYPE
 
   REAL (KIND=JPRB), POINTER, CONTIGUOUS :: U (:, :) => NULL ()
+  TYPE (FIELD_3D), POINTER :: F_U => NULL ()
   REAL (KIND=JPRB), POINTER, CONTIGUOUS :: V (:, :) => NULL ()
+  TYPE (FIELD_3D), POINTER :: F_V => NULL ()
   REAL (KIND=JPRB), POINTER, CONTIGUOUS :: T (:, :) => NULL ()
+  TYPE (FIELD_3D), POINTER :: F_T => NULL ()
   REAL (KIND=JPRB), POINTER, CONTIGUOUS :: SVD (:, :) => NULL ()
+  TYPE (FIELD_3D), POINTER :: F_SVD => NULL ()
   REAL (KIND=JPRB), POINTER, CONTIGUOUS :: SP (:) => NULL ()
+  TYPE (FIELD_2D), POINTER :: F_SP => NULL ()
 
 #:for v in gfl.variables
   #:if v.array
   #:elif v.dim == 3
   REAL (KIND=JPRB), POINTER, CONTIGUOUS :: ${v.name}$ (${', '.join ([':'] * (v.dim-1))}$) => NULL ()
+  TYPE (FIELD_3D), POINTER :: F_${v.name}$ => NULL ()
   #:endif
 #:endfor
 
@@ -52,39 +58,52 @@ IF (LSLAG) THEN
   ! Taken from cp_ptrslb1.F90
   
   IF (YDDYN%NWLAG == 4) THEN
-    SELF%U => YDCPG_SL1%U0 
-    SELF%V => YDCPG_SL1%V0 
+    SELF%U   => YDCPG_SL1%U0 
+    SELF%F_U => YDCPG_SL1%F_U0
+    SELF%V   => YDCPG_SL1%V0 
+    SELF%F_V => YDCPG_SL1%F_V0
   ELSE
     IF (YDDYN%NSPLTHOI /= 0) THEN
-      SELF%U => YDCPG_SL1%UF9 
-      SELF%V => YDCPG_SL1%VF9 
+      SELF%U   => YDCPG_SL1%UF9 
+      SELF%F_U => YDCPG_SL1%F_UF9 
+      SELF%V   => YDCPG_SL1%VF9 
+      SELF%F_V => YDCPG_SL1%F_VF9 
     ELSE
-      SELF%U => YDCPG_SL1%U9 
-      SELF%V => YDCPG_SL1%V9 
+      SELF%U   => YDCPG_SL1%U9 
+      SELF%F_U => YDCPG_SL1%F_U9 
+      SELF%V   => YDCPG_SL1%V9 
+      SELF%F_V => YDCPG_SL1%F_V9 
     ENDIF
   ENDIF
   ! * temperature
   IF (YDDYN%NTLAG == 4) THEN
-    SELF%T => YDCPG_SL1%T0 
+    SELF%T   => YDCPG_SL1%T0 
+    SELF%F_T => YDCPG_SL1%F_T0 
   ELSE
     IF (YDDYN%NSPLTHOI /= 0) THEN
-      SELF%T => YDCPG_SL1%TF9 
+      SELF%T   => YDCPG_SL1%TF9 
+      SELF%F_T => YDCPG_SL1%F_TF9 
     ELSE
-      SELF%T => YDCPG_SL1%T9 
+      SELF%T   => YDCPG_SL1%T9 
+      SELF%F_T => YDCPG_SL1%F_T9 
     ENDIF
   ENDIF
   ! * vertical divergence
   IF (YDDYN%NSVDLAG == 4) THEN
-    SELF%SVD => YDCPG_SL1%VD0
+    SELF%SVD   => YDCPG_SL1%VD0
+    SELF%F_SVD => YDCPG_SL1%F_VD0
   ELSE
     IF (YDDYN%NSPLTHOI /= 0) THEN
-      SELF%SVD => YDCPG_SL1%VDF9
+      SELF%SVD   => YDCPG_SL1%VDF9
+      SELF%F_SVD => YDCPG_SL1%F_VDF9
     ELSE
-      SELF%SVD => YDCPG_SL1%VD9
+      SELF%SVD   => YDCPG_SL1%VD9
+      SELF%F_SVD => YDCPG_SL1%F_VD9
     ENDIF
   ENDIF
 
-  SELF%SP => YDCPG_SL1%SP9
+  SELF%SP   => YDCPG_SL1%SP9
+  SELF%F_SP => YDCPG_SL1%F_SP9
 
   ! * GFL arrays
   IF (YDDYN%LSPLTHOIGFL.OR.(YDDYN%NSPLTHOI /= 0)) THEN
@@ -92,9 +111,11 @@ IF (LSLAG) THEN
   #:if v.array
   #:elif v.dim == 3
     IF (YDVARS%${v.name}$%LADV) THEN
-      SELF%${v.name}$ => YDCPG_SL1%${v.name}$_F
+      SELF%${v.name}$   => YDCPG_SL1%${v.name}$_F
+      SELF%F_${v.name}$ => YDCPG_SL1%F_${v.name}$_F
     ELSE
-      SELF%${v.name}$ => YDVARS%${v.name}$%T1
+      SELF%${v.name}$   => YDVARS%${v.name}$%T1
+      SELF%F_${v.name}$ => YDVARS%${v.name}$%FT1
     ENDIF
   #:endif
 #:endfor
@@ -103,9 +124,11 @@ IF (LSLAG) THEN
   #:if v.array
   #:elif v.dim == 3
     IF (YDVARS%${v.name}$%LADV) THEN
-      SELF%${v.name}$ => YDCPG_SL1%${v.name}$
+      SELF%${v.name}$   => YDCPG_SL1%${v.name}$
+      SELF%F_${v.name}$ => YDCPG_SL1%F_${v.name}$
     ELSE
-      SELF%${v.name}$ => YDVARS%${v.name}$%T1
+      SELF%${v.name}$   => YDVARS%${v.name}$%T1
+      SELF%F_${v.name}$ => YDVARS%${v.name}$%FT1
     ENDIF
   #:endif
 #:endfor
@@ -113,16 +136,22 @@ IF (LSLAG) THEN
 
 ELSE
 
-  SELF%U   => YDVARS%U%T1
-  SELF%V   => YDVARS%V%T1
-  SELF%T   => YDVARS%T%T1
-  SELF%SVD => YDVARS%SVD%T1
-  SELF%SP  => YDVARS%SP%T1
+  SELF%U     => YDVARS%U%T1
+  SELF%F_U   => YDVARS%U%FT1
+  SELF%V     => YDVARS%V%T1
+  SELF%F_V   => YDVARS%V%FT1
+  SELF%T     => YDVARS%T%T1
+  SELF%F_T   => YDVARS%T%FT1
+  SELF%SVD   => YDVARS%SVD%T1
+  SELF%F_SVD => YDVARS%SVD%FT1
+  SELF%SP    => YDVARS%SP%T1
+  SELF%F_SP  => YDVARS%SP%FT1
 
 #:for v in gfl.variables
   #:if v.array
   #:elif v.dim == 3
-  SELF%${v.name}$ => YDVARS%${v.name}$%T1
+  SELF%${v.name}$   => YDVARS%${v.name}$%T1
+  SELF%F_${v.name}$ => YDVARS%${v.name}$%FT1
   #:endif
 #:endfor
 

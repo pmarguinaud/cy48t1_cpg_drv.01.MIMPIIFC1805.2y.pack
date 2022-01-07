@@ -982,11 +982,11 @@ REAL(KIND=JPRB) :: ZHOOK_HANDLE
 #include "wrphtrajtm_nl.intfb.h"
 #include "wrradcoef.intfb.h"
 #include "wrscmr.intfb.h"
+#include "aplpar_flexdia.intfb.h"
 
 !     ------------------------------------------------------------------
 
 #include "fcttrm.func.h"
-#include "aplpar_flexdia.intfb.h"
 
 !     ------------------------------------------------------------------
 IF (LHOOK) CALL DR_HOOK('APLPAR',0,ZHOOK_HANDLE)

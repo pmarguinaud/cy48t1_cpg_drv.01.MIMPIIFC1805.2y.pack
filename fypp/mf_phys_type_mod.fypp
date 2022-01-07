@@ -12,7 +12,7 @@
 #:set AS_NTSSG1          = [ [ '1', 'YDCPG_DIM%KTSSG+1' ] ]
 #:set AS_0_NFLEVG_2      = [ [ '1', 'YDCPG_DIM%KFLEVG' ], [ '1', '2' ] ]
 #:set AS_0_NSORAYFRm1    = [ [ '0', 'YDCPG_DIM%KSORAYFR-1' ] ]
-#:set AS_NGRAD_1_nflevg  = [ [ '1', 'YDARPHY%NGRADIENTS' ], [ '1', 'NLEV' ] ]
+#:set AS_NGRAD_1_NFLEVG  = [ [ '1', 'YDCPG_DIM%KGRADIENTS' ], [ '1', 'NLEV' ] ]
 #:set AS_1_NDTPREC       = [ [ '1', 'YDCPG_DIM%KDTPREC' ] ]
 #:set AS_1_NDTPREC2      = [ [ '1', 'YDCPG_DIM%KDTPREC2' ] ]
 
@@ -305,7 +305,7 @@
 & }
 
 #:set vars_mf_phys_gra = { &
-& "G"              : [True,  False, AS_NGRAD_1_nflevg,  None,                 "LLMF_PHYS"          ], &
+& "G"              : [True,  False, AS_NGRAD_1_NFLEVG,  None,                 "LLMF_PHYS"          ], &
 & }
 
 #:set vars_aplpar_rdt = { &

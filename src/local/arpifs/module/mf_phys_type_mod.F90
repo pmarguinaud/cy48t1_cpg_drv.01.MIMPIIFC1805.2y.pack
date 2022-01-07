@@ -2268,18 +2268,19 @@ END SUBROUTINE MF_PHYS_PRC_TYPE_FINAL
 
 SUBROUTINE MF_PHYS_GRA_TYPE_INIT (SELF &
                                 & , REGISTRY &
-                                & , NLEV &
+                                & , YDCPG_DIM &
                                 & , PERSISTENT &
                                 & , LDMF_PHYS &
                            &, PG &
                            &)
 
 
+USE CPG_DIM_TYPE_MOD, ONLY : CPG_DIM_TYPE
 
 
 CLASS (MF_PHYS_GRA_TYPE)                    :: SELF
 TYPE (FIELD_REGISTRY),        INTENT (INOUT) :: REGISTRY
-INTEGER (KIND=JPIM),          INTENT (IN)    :: NLEV
+TYPE (CPG_DIM_TYPE),          INTENT (IN)    :: YDCPG_DIM
 LOGICAL, OPTIONAL,            INTENT (IN)    :: PERSISTENT
 LOGICAL, OPTIONAL,            INTENT (IN)    :: LDMF_PHYS
 

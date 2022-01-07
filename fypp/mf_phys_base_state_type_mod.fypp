@@ -18,7 +18,7 @@ TYPE MF_PHYS_STATE_${name}$_TYPE
 #:set vars = defs[1]
 #:for var in vars
   REAL (KIND=JPRB), POINTER, CONTIGUOUS :: ${var}$ (${','.join ([':'] * ndim)}$) => NULL ()
-  TYPE (FIELD_${ndim+1}$D), POINTER :: F${var}$ => NULL ()
+  TYPE (FIELD_${ndim+1}$D), POINTER :: F_${var}$ => NULL ()
 #:endfor
 END TYPE MF_PHYS_STATE_${name}$_TYPE
 #:enddef
@@ -39,7 +39,7 @@ TYPE MF_PHYS_BASE_STATE_TYPE
   
 #:for var in vars_ydvars
   REAL (KIND=JPRB), POINTER, CONTIGUOUS :: ${var}$ (:,:) => NULL ()
-  TYPE (FIELD_3D), POINTER :: F${var}$ => NULL ()
+  TYPE (FIELD_3D), POINTER :: F_${var}$ => NULL ()
 #:endfor
 
 #:for grp in grp_surf
@@ -66,7 +66,7 @@ CONTAINS
 
 #:for var in vars_ydvars
   SELF%${var}$ (LBOUND (YDVARS%${var}$%T${t}$,1):, LBOUND (YDVARS%${var}$%T${t}$,2):) => YDVARS%${var}$%T${t}$
-  SELF%F${var}$ => YDVARS%${var}$%FT${t}$
+  SELF%F_${var}$ => YDVARS%${var}$%FT${t}$
 #:endfor
 
 #:for grp in grp_surf
@@ -78,7 +78,7 @@ CONTAINS
                      & ,LBOUND (YDMF_PHYS_SURF%${grp}$%P${var}$_T${t}$, ${d}$):  &
      #:endfor
                      &  ) => YDMF_PHYS_SURF%${grp}$%P${var}$_T${t}$
-  SELF%Y${grp}$%F${var}$ => YDMF_PHYS_SURF%${grp}$%F_${var}$_T${t}$
+  SELF%Y${grp}$%F_${var}$ => YDMF_PHYS_SURF%${grp}$%F_${var}$_T${t}$
 
   #:endfor
 #:endfor

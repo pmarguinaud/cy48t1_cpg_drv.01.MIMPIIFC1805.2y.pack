@@ -13,7 +13,6 @@
 #:set AS_0_nflevg_2      = [ [ '1', 'NLEV' ], [ '1', '2' ] ]
 #:set AS_0_NSORAYFRm1    = [ [ '0', 'YDPHY%NSORAYFR-1' ] ]
 #:set AS_NGRAD_1_nflevg  = [ [ '1', 'YDARPHY%NGRADIENTS' ], [ '1', 'NLEV' ] ]
-#:set AS_1_NTSSGp1       = [ [ '1', 'YDMODEL%YRML_PHY_G%YRDPHY%NTSSG+1' ] ]
 #:set AS_1_NDTPREC       = [ [ '1', 'YDCPG_DIM%KDTPREC' ] ]
 #:set AS_1_NDTPREC2      = [ [ '1', 'YDCPG_DIM%KDTPREC2' ] ]
 
@@ -216,10 +215,10 @@
 & "CDN"            : [False, False, AS_void,            None,                 "LLMF_PHYS",        "EXCHANGE COEFF. AT SURFACE LEVEL IN NEUTRAL CONDITIONS" ], & 
 & "CH"             : [False, False, AS_void,            None,                 "LLMF_PHYS",        "EXCHANGE COEFFICIENT AT SURFACE LEVEL FOR T AND Q"      ], & 
 & "EMIS"           : [False, False, AS_void,            None,                 "LLMF_PHYS",        "MODEL SURFACE LONGWAVE EMISSIVITY"                      ], & 
-& "FEVI"           : [False, False, AS_1_NTSSGp1,       None,                 "LLMF_PHYS",        "WATER VAPOUR FLUX OVER FROZEN SOIL"                     ], & 
+& "FEVI"           : [False, False, AS_NTSSG1,          None,                 "LLMF_PHYS",        "WATER VAPOUR FLUX OVER FROZEN SOIL"                     ], & 
 & "NEIJ"           : [False, False, AS_void,            None,                 "LLMF_PHYS",        "FRACTION OF SOIL COVERED BY SNOW"                       ], & 
 & "VEG"            : [False, False, AS_void,            None,                 "LLMF_PHYS",        "FRACTIONAL COVER BY APPARENT VEGETATION"                ], & 
-& "QSAT"           : [False, False, AS_1_nflevg,        None,                 "LLMF_PHYS",        "specific humidity at saturation"                        ], & 
+& "QSAT"           : [False, False, AS_1_NFLEVG,        None,                 "LLMF_PHYS",        "specific humidity at saturation"                        ], & 
 & "QSATS"          : [False, False, AS_void,            None,                 "LLMF_PHYS",        "SATURATED SPECIFIC HUMIDITY AT SURFACE LEVEL"           ], & 
 & "QS1"            : [False, False, AS_void,            None,                 "LLMF_PHYS",        ""                                                       ], & 
 & }
@@ -607,7 +606,7 @@ IF (LLMF_PHYS) THEN
   IF (YDMODEL%YRML_PHY_MF%YRARPHY%LMPA) THEN
   ELSE
     CALL SELF%MOC%INIT (REGISTRY, YDCPG_DIM%KFLEVG, PERSISTENT, LDMF_PHYS=LLMF_PHYS)
-    CALL SELF%FLU%INIT (REGISTRY, YDCPG_DIM%KFLEVG, PERSISTENT, LDMF_PHYS=LLMF_PHYS, YDMODEL=YDMODEL)
+    CALL SELF%FLU%INIT (REGISTRY, YDCPG_DIM,        PERSISTENT, LDMF_PHYS=LLMF_PHYS)
     CALL SELF%PFL%INIT (REGISTRY, YDCPG_DIM%KFLEVG, PERSISTENT, LDMF_PHYS=LLMF_PHYS)
     CALL SELF%MSC%INIT (REGISTRY, YDCPG_DIM%KFLEVG, PERSISTENT, LDMF_PHYS=LLMF_PHYS)
     CALL SELF%TDS%INIT (REGISTRY, YDCPG_DIM,        PERSISTENT, LDMF_PHYS=LLMF_PHYS)

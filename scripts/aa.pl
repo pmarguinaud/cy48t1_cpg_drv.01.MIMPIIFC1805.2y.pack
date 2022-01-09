@@ -75,7 +75,7 @@ my %ct;
 
 for my $expr (@expr)
   {
-    my @ct = &F ('.//R-LT/component-R/ct', $expr);
+    my @ct = &F ('./R-LT/component-R/ct', $expr);
     my $ct = join ('%', map { $_->textContent } @ct);
     $ct{$ct} = 1;
     for (@ct)

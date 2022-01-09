@@ -131,14 +131,6 @@ for my $ct (reverse (@ct))
 
 &removeListElement ($arg0);
 
-print $d0->textContent;
-print $d1->textContent;
-
-
-
-
-
-
-
-
+'FileHandle'->new (">$ARGV[0].new")->print ($d0->textContent);
+'FileHandle'->new (">$ARGV[1].new")->print ($d1->textContent);
 

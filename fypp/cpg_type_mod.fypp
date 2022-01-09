@@ -320,7 +320,7 @@ TYPE CPG_SL${ind}$_TYPE
 #:for var in vars
   #:if vars[var][N3D]
   REAL (KIND=JPRB), POINTER, CONTIGUOUS :: ${var}$ (:,:) => NULL ()
-!>REAL (KIND=JPRB)                      :: ${var}$ (NPROMA, YDCPG_DIM%ILEVT1I:YDCPG_DIM%ILEVT1F)
+!>REAL (KIND=JPRB)                      :: ${var}$ (NPROMA, 0:NLEV+1)
   TYPE (FIELD_3D), POINTER :: F_${var}$ => NULL ()
   #:else
   REAL (KIND=JPRB), POINTER, CONTIGUOUS :: ${var}$ (:) => NULL ()
@@ -334,10 +334,10 @@ TYPE CPG_SL${ind}$_TYPE
     #:if v.array
     #:elif v.dim == 3
   REAL (KIND=JPRB), POINTER, CONTIGUOUS :: ${v.name}$   (${', '.join ([':'] * (v.dim-1))}$) => NULL ()
-!>REAL (KIND=JPRB)                      :: ${v.name}$ (NPROMA, YDCPG_DIM%ILEVT1I:YDCPG_DIM%ILEVT1F)
+!>REAL (KIND=JPRB)                      :: ${v.name}$ (NPROMA, 0:NLEV+1)
   TYPE (FIELD_3D), POINTER :: F_${v.name}$ => NULL ()
   REAL (KIND=JPRB), POINTER, CONTIGUOUS :: ${v.name}$_F (${', '.join ([':'] * (v.dim-1))}$) => NULL ()
-!>REAL (KIND=JPRB)                      :: ${v.name}$_F (NPROMA, YDCPG_DIM%ILEVT1I:YDCPG_DIM%ILEVT1F)
+!>REAL (KIND=JPRB)                      :: ${v.name}$_F (NPROMA, 0:NLEV+1)
   TYPE (FIELD_3D), POINTER :: F_${v.name}$_F => NULL ()
     #:endif
   #:endfor

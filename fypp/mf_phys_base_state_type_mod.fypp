@@ -39,6 +39,7 @@ TYPE MF_PHYS_BASE_STATE_TYPE
   
 #:for var in vars_ydvars
   REAL (KIND=JPRB), POINTER, CONTIGUOUS :: ${var}$ (:,:) => NULL ()
+!>REAL (KIND=JPRB)                      :: ${var}$ (NPROMA,1:NLEV)
   TYPE (FIELD_3D), POINTER :: F_${var}$ => NULL ()
 #:endfor
 

@@ -13,20 +13,26 @@ IMPLICIT NONE
 TYPE MF_PHYS_NEXT_STATE_TYPE
 
   REAL (KIND=JPRB), POINTER, CONTIGUOUS :: U (:, :) => NULL ()
+!>REAL (KIND=JPRB)                      :: U (NPROMA,YDCPG_DIM%ILEVT1I:YDCPG_DIM%ILEVT1F)
   TYPE (FIELD_3D), POINTER :: F_U => NULL ()
   REAL (KIND=JPRB), POINTER, CONTIGUOUS :: V (:, :) => NULL ()
+!>REAL (KIND=JPRB)                      :: V (NPROMA,YDCPG_DIM%ILEVT1I:YDCPG_DIM%ILEVT1F)
   TYPE (FIELD_3D), POINTER :: F_V => NULL ()
   REAL (KIND=JPRB), POINTER, CONTIGUOUS :: T (:, :) => NULL ()
+!>REAL (KIND=JPRB)                      :: T (NPROMA,YDCPG_DIM%ILEVT1I:YDCPG_DIM%ILEVT1F)
   TYPE (FIELD_3D), POINTER :: F_T => NULL ()
   REAL (KIND=JPRB), POINTER, CONTIGUOUS :: SVD (:, :) => NULL ()
+!>REAL (KIND=JPRB)                      :: SVD (NPROMA,YDCPG_DIM%ILEVT1I:YDCPG_DIM%ILEVT1F)
   TYPE (FIELD_3D), POINTER :: F_SVD => NULL ()
   REAL (KIND=JPRB), POINTER, CONTIGUOUS :: SP (:) => NULL ()
+!>REAL (KIND=JPRB)                      :: SP (NPROMA)
   TYPE (FIELD_2D), POINTER :: F_SP => NULL ()
 
 #:for v in gfl.variables
   #:if v.array
   #:elif v.dim == 3
   REAL (KIND=JPRB), POINTER, CONTIGUOUS :: ${v.name}$ (${', '.join ([':'] * (v.dim-1))}$) => NULL ()
+!>REAL (KIND=JPRB), POINTER, CONTIGUOUS :: ${v.name}$ (NPROMA,YDCPG_DIM%ILEVT1I:YDCPG_DIM%ILEVT1F)
   TYPE (FIELD_3D), POINTER :: F_${v.name}$ => NULL ()
   #:endif
 #:endfor

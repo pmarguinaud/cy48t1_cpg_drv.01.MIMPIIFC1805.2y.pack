@@ -11,7 +11,6 @@
 #:set AS_1_nflevg_2           = [ [ '1', 'NLEV' ], [ '1', '2' ] ]
 #:set AS_0_KFLEVG_6           = [ [ '0', 'YDCPG_DIM%KFLEVG' ], [ '1', '6' ] ]
 #:set AS_1_KFLEVG_NVCLIS      = [ [ '0', 'YDCPG_DIM%KFLEVG' ], [ '1', 'YDCPG_DIM%KVCLIS' ] ]
-#:set AS_1_NGPARp1            = [ [ '1', 'YDMODEL%YRML_PHY_MF%YRPARAR%NGPAR+1' ] ]
 #:set AS_4D                   = [ [], [] ]
 #:set AS_1_NSW                = [ [ '1', 'YDCPG_DIM%KSW' ] ]
 
@@ -170,7 +169,6 @@
 & "TSOL"           : [False, False, AS_void,            None,                 None                 ], &
 & "FTCNS"          : [False, False, AS_0_KFLEVG_6,      None,                 None                 ], &
 & "KOZO"           : [False, False, AS_1_KFLEVG_NVCLIS, None,                 None                 ], &
-& "GPAR"           : [False, False, AS_1_NGPARp1,       None,                 None                 ], &
 & }
 
 

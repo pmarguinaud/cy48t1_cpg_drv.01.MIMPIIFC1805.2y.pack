@@ -13,6 +13,7 @@
 #:set AS_1_KFLEVG_NVCLIS      = [ [ '0', 'YDCPG_DIM%KFLEVG' ], [ '1', 'YDCPG_DIM%KVCLIS' ] ]
 #:set AS_1_NGPARp1            = [ [ '1', 'YDMODEL%YRML_PHY_MF%YRPARAR%NGPAR+1' ] ]
 #:set AS_4D                   = [ [], [] ]
+#:set AS_1_NSW                = [ [ '1', 'YDCPG_DIM%KSW' ] ]
 
 #:set vars_cpg_gp_t_tmp = { &
 & "GDW"            : [False, False, AS_1_nflevg,        None,                 "LNHDYN"                       ], &
@@ -132,6 +133,28 @@
 & "XYB"            : [False, False, AS_4D,              "CPG_XYB_TYPE",       "LLMF_PHYS"          , "YLTXYB_PHY" ], &
 & }
 
+#:set vars_cpg_gpar = { &
+& "INPRR"          : [False, False, AS_void,            None,                 None                 ], &
+& "INPRS"          : [False, False, AS_void,            None,                 None                 ], &
+& "INPRG"          : [False, False, AS_void,            None,                 None                 ], &
+& "ACPRR"          : [False, False, AS_void,            None,                 None                 ], &
+& "ACPRS"          : [False, False, AS_void,            None,                 None                 ], &
+& "ACPRG"          : [False, False, AS_void,            None,                 None                 ], &
+& "ALBDIR"         : [False, False, AS_1_NSW,           None,                 None                 ], &
+& "ALBSCA"         : [False, False, AS_1_NSW,           None,                 None                 ], &
+& "RAIN"           : [False, False, AS_void,            None,                 None                 ], &
+& "SNOW"           : [False, False, AS_void,            None,                 None                 ], &
+& "GZ0"            : [False, False, AS_void,            None,                 None                 ], &
+& "GZ0H"           : [False, False, AS_void,            None,                 None                 ], &
+& "VQS"            : [False, False, AS_void,            None,                 None                 ], &
+& "VTS"            : [False, False, AS_void,            None,                 None                 ], &
+& "VEMIS"          : [False, False, AS_void,            None,                 None                 ], &
+& "SWDIR"          : [False, False, AS_1_NSW,           None,                 None                 ], &
+& "SWDIF"          : [False, False, AS_1_NSW,           None,                 None                 ], &
+& "LSM"            : [False, False, AS_void,            None,                 None                 ], &
+& "CD"             : [False, False, AS_void,            None,                 None                 ], &
+& }
+
 #:set vars_cpg_misc = { &
 & "NEB"            : [False, False, AS_1_KFLEVG,        None,                 None                 ], &
 & "QLI"            : [False, False, AS_1_KFLEVG,        None,                 None                 ], &
@@ -225,6 +248,8 @@ $:pcpg_intdyn_definition ("CPG_CTY_TYPE"     ,vars_cpg_dyn_cty   )
 
 $:pcpg_intdyn_definition ("CPG_TND_TYPE"     ,vars_cpg_dyn_tnd   )
 
+$:pcpg_struct1_definition ("CPG_GPAR_TYPE"  , vars_cpg_gpar     )
+
 $:pcpg_type_definition ("CPG_GP_T_TMP_TYPE" , vars_cpg_gp_t_tmp )
 
 $:pcpg_type_definition ("CPG_GP_TMP_TYPE"   , vars_cpg_gp_tmp   )
@@ -232,6 +257,7 @@ $:pcpg_type_definition ("CPG_GP_TMP_TYPE"   , vars_cpg_gp_tmp   )
 $:pcpg_type_definition ("CPG_DYN_TYPE"      , vars_cpg_dyn      )
 
 $:pcpg_type_definition ("CPG_PHY_TYPE"      , vars_cpg_phy      )
+
 
 $:pcpg_type_definition ("CPG_MISC_TYPE"     , vars_cpg_misc     )
 
@@ -369,6 +395,8 @@ $:pcpg_intdyn_methods ("CPG_RCP_TYPE"     , vars_cpg_dyn_rcp   , "RCP"     )
 $:pcpg_intdyn_methods ("CPG_CTY_TYPE"     , vars_cpg_dyn_cty   , "CTY"     )
 
 $:pcpg_intdyn_methods ("CPG_TND_TYPE"     , vars_cpg_dyn_tnd   , "TND"     )
+
+$:pcpg_struct1_methods ("CPG_GPAR_TYPE"   , vars_cpg_gpar   , "TPARAR", "YOMPARAR", "M", "NGPAR")
 
 $:pcpg_type_methods ("CPG_GP_T_TMP_TYPE" , vars_cpg_gp_t_tmp, use_intdyn=True)
 

@@ -5,6 +5,26 @@
 #:set NCOND = 4
 #:set NDEFS = 5
 
+#:def pcpg_struct1_definition (name, vars)
+TYPE ${name}$
+  LOGICAL :: LOWNED = .FALSE.
+  REAL (KIND=JPRB), POINTER, CONTIGUOUS :: ZVIEW (:,:) => NULL ()
+  REAL (KIND=JPRB), POINTER, CONTIGUOUS :: ZDATA (:,:,:) => NULL ()
+  TYPE (FIELD_3D), POINTER :: F_DATA => NULL ()
+#:for var in vars
+  #:set ndim = 1 + len (vars[var][NDIMS])
+  REAL (KIND=JPRB), POINTER, CONTIGUOUS :: ${var}$ (${", ".join ([":"] * ndim)}$) => NULL ()
+!>REAL (KIND=JPRB)                      :: ${var}$ (${', '.join (['NPROMA'] + list (map (lambda d: d[0] + ':' + d[1], vars[var][NDIMS])))}$)
+  TYPE (FIELD_${ndim+1}$D), POINTER :: F_${var}$ => NULL ()
+#:endfor
+
+CONTAINS
+  PROCEDURE :: INIT => ${name}$_INIT
+  PROCEDURE :: UPDATE_VIEW => ${name}$_UPDATE_VIEW
+  PROCEDURE :: FINAL => ${name}$_FINAL
+END TYPE ${name}$
+#:enddef
+
 #:def pcpg_struct_definition (name, vars)
 TYPE ${name}$
   LOGICAL :: LOWNED = .FALSE.
@@ -101,6 +121,103 @@ $:a
   #:endif
 $:s
 #:enddef pdim
+
+#:def pcpg_struct1_methods (name, vars, type, modn, memb, ntot)
+SUBROUTINE ${name}$_INIT (SELF, YDCPG_DIM, REGISTRY, YD${type}$, PERSISTENT, P${type}$)
+
+USE ${modn}$, ONLY : ${type}$
+USE OML_MOD, ONLY: OML_MAX_THREADS
+USE CPG_DIM_TYPE_MOD, ONLY : CPG_DIM_TYPE
+
+CLASS (${name}$)                          :: SELF
+TYPE (CPG_DIM_TYPE),                INTENT (IN)    :: YDCPG_DIM
+TYPE (FIELD_REGISTRY),              INTENT (INOUT) :: REGISTRY
+TYPE (${type}$),                    INTENT (IN)    :: YD${type}$
+LOGICAL, OPTIONAL,                  INTENT (IN)    :: PERSISTENT
+REAL (KIND=JPRB), OPTIONAL, TARGET, INTENT (IN)    :: P${type}$ (:, :, :)
+
+IF (PRESENT (P${type}$)) THEN
+  SELF%ZDATA => P${type}$
+  SELF%LOWNED = .FALSE.
+ELSE
+  ALLOCATE (SELF%ZDATA (REGISTRY%GEOM%YRDIM%NPROMA, YD${type}$%${ntot}$, OML_MAX_THREADS ()))
+  SELF%LOWNED = .TRUE.
+ENDIF
+
+SELF%F_DATA => CREATE_FIELD_WRAP ('${name}$', SELF%ZDATA, PERSISTENT=.NOT. SELF%LOWNED)
+
+#:for var in vars
+IF (YD${type}$%${memb}$${var}$ > 0) THEN
+  #:if len (vars[var][NDIMS]) == 0
+  SELF%F_${var}$ => CREATE_FIELD_WRAP ('${var}$', SELF%ZDATA (:, YD${type}$%${memb}$${var}$, :), PERSISTENT=.NOT. SELF%LOWNED)
+  #:elif len (vars[var][NDIMS]) == 1
+    #:set di = "YD" + type + "%" + memb + var
+    #:set de = "YD" + type + "%" + memb + var + '+' + vars[var][NDIMS][0][1] + "-1"
+  SELF%F_${var}$ => CREATE_FIELD_WRAP ('${var}$', SELF%ZDATA (:, ${di}$:${de}$, :), PERSISTENT=.NOT. SELF%LOWNED)
+  #:endif
+ELSE
+  SELF%F_${var}$ => NULL ()
+ENDIF
+#:endfor
+
+END SUBROUTINE ${name}$_INIT
+
+SUBROUTINE ${name}$_UPDATE_VIEW (SELF, BLOCK_INDEX)
+
+CLASS (${name}$)         :: SELF
+INTEGER(KIND=JPIM), INTENT (IN)   :: BLOCK_INDEX
+
+IF (ASSOCIATED (SELF%F_DATA)) THEN
+
+  SELF%ZVIEW => SELF%F_DATA%GET_VIEW (BLOCK_INDEX)
+
+#:for var in vars
+  #:set ss = pdim (vars[var][NDIMS])
+  #:set ndim = 1 + len (vars[var][NDIMS])
+  IF (ASSOCIATED (SELF%F_${var}$)) THEN
+    SELF%${var}$ ${ss}$ => SELF%F_${var}$%GET_VIEW (BLOCK_INDEX)
+  ELSE
+    SELF%${var}$ ${ss}$ => ZDUM${ndim}$
+  ENDIF
+#:endfor
+
+ELSE
+
+  SELF%ZVIEW => ZDUM2
+
+#:for var in vars
+  #:set ss = pdim (vars[var][NDIMS])
+  #:set ndim = 1 + len (vars[var][NDIMS])
+  SELF%${var}$ ${ss}$ => ZDUM${ndim}$
+#:endfor
+
+ENDIF
+
+END SUBROUTINE ${name}$_UPDATE_VIEW
+
+SUBROUTINE ${name}$_FINAL (SELF)
+CLASS (${name}$)          :: SELF
+
+IF (ASSOCIATED (SELF%F_DATA)) CALL DELETE_TEMPORARY (SELF%F_DATA)
+SELF%F_DATA => NULL ()
+
+IF (SELF%LOWNED) THEN
+  DEALLOCATE (SELF%ZDATA)
+ENDIF
+
+SELF%ZDATA => NULL ()
+SELF%ZVIEW => NULL ()
+
+#:for var in vars
+IF (ASSOCIATED (SELF%F_${var}$)) THEN
+  CALL DELETE_TEMPORARY (SELF%F_${var}$) 
+  SELF%F_${var}$ => NULL ()
+  SELF%${var}$ => NULL ()
+ENDIF
+#:endfor
+
+END SUBROUTINE ${name}$_FINAL
+#:enddef
 
 #:def pcpg_struct_methods (name, vars, type, modn, memb)
 SUBROUTINE ${name}$_INIT (SELF, REGISTRY, NLEV, YD${type}$, PERSISTENT, P${type}$)

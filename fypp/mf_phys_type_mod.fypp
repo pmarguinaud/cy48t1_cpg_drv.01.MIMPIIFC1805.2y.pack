@@ -179,108 +179,6 @@
 & "RMOON"          : [True,  False, AS_void,            None,                 "LLMF_PHYS",        "Moon radiation"               ], &
 & }
 
-#! To save Tt for NHQE model
-#:set vars_mf_phys_nhq = { &
-& "TT0"            : [False, False, AS_1_NFLEVG,        None,                 None                 ], &
-& "TT9"            : [False, False, AS_1_NFLEVG,        None,                 None                 ], &
-& "TT0L"           : [False, False, AS_1_NFLEVG,        None,                 None                 ], &
-& "TT0M"           : [False, False, AS_1_NFLEVG,        None,                 None                 ], &
-& }
-
-#!     --- Buffers to save the initial value of   ---
-#!     --- some pseudo-historical surface buffers ---
-#:set vars_mf_phys_sav = { &
-& "UDOM"           : [False, False, AS_1_NFLEVG,        None,                 "LLMF_PHYS"          ], &
-& "UDAL"           : [False, False, AS_1_NFLEVG,        None,                 "LLMF_PHYS"          ], &
-& "DDOM"           : [False, False, AS_1_NFLEVG,        None,                 "LLMF_PHYS"          ], &
-& "DDAL"           : [False, False, AS_1_NFLEVG,        None,                 "LLMF_PHYS"          ], &
-& "UNEBH"          : [False, False, AS_1_NFLEVG,        None,                 "LLMF_PHYS"          ], &
-& "ENTCH"          : [False, False, AS_1_NFLEVG,        None,                 "LLMF_PHYS"          ], &
-& "HV"             : [False, False, AS_void,            None,                 "LLMF_PHYS"          ], &
-& "GZ0F"           : [False, False, AS_void,            None,                 "LLMF_PHYS"          ], &
-& "GZ0HF"          : [False, False, AS_void,            None,                 "LLMF_PHYS"          ], &
-& "PBLH"           : [False, False, AS_void,            None,                 "LLMF_PHYS"          ], &
-& "FHPS"           : [False, False, AS_void,            None,                 "LLMF_PHYS"          ], &
-& "QSH "           : [False, False, AS_void,            None,                 "LLMF_PHYS"          ], &
-& "UDGRO"          : [False, False, AS_void,            None,                 "LLMF_PHYS"          ], &
-& }
-
-#:set vars_aplpar_moc = { &
-& "CLPH"           : [False, False, AS_void,            "INTEGER",            "LLMF_PHYS"         ], &
-& }
-
-#:set vars_aplpar_flu = { &
-& "CD"             : [False, False, AS_void,            None,                 "LLMF_PHYS",        "EXCHANGE COEFFICIENT AT SURFACE LEVEL FOR U AND V"      ], &  
-& "CDN"            : [False, False, AS_void,            None,                 "LLMF_PHYS",        "EXCHANGE COEFF. AT SURFACE LEVEL IN NEUTRAL CONDITIONS" ], & 
-& "CH"             : [False, False, AS_void,            None,                 "LLMF_PHYS",        "EXCHANGE COEFFICIENT AT SURFACE LEVEL FOR T AND Q"      ], & 
-& "EMIS"           : [False, False, AS_void,            None,                 "LLMF_PHYS",        "MODEL SURFACE LONGWAVE EMISSIVITY"                      ], & 
-& "FEVI"           : [False, False, AS_NTSSG1,          None,                 "LLMF_PHYS",        "WATER VAPOUR FLUX OVER FROZEN SOIL"                     ], & 
-& "NEIJ"           : [False, False, AS_void,            None,                 "LLMF_PHYS",        "FRACTION OF SOIL COVERED BY SNOW"                       ], & 
-& "VEG"            : [False, False, AS_void,            None,                 "LLMF_PHYS",        "FRACTIONAL COVER BY APPARENT VEGETATION"                ], & 
-& "QSAT"           : [False, False, AS_1_NFLEVG,        None,                 "LLMF_PHYS",        "specific humidity at saturation"                        ], & 
-& "QSATS"          : [False, False, AS_void,            None,                 "LLMF_PHYS",        "SATURATED SPECIFIC HUMIDITY AT SURFACE LEVEL"           ], & 
-& "QS1"            : [False, False, AS_void,            None,                 "LLMF_PHYS",        ""                                                       ], & 
-& }
-
-#:set vars_aplpar_msc = { &
-& "FHP"            : [False, False, AS_0_NFLEVG,        None,                 "LLMF_PHYS",        "Total enthalpy flux + sensible heat flux"                                                                      ], &
-& "LSCPE"          : [False, False, AS_1_NFLEVG,        None,                 "LLMF_PHYS",        "EFFECTIVE RATIO OF L AND CP FOR CONDENSATION/EVAPORATION"                                                      ], &
-& "LH"             : [False, False, AS_1_NFLEVG,        None,                 "LLMF_PHYS",        "LATENT HEAT AT AIR TEMPERATURE"                                                                                ], &
-& "QW"             : [False, False, AS_1_NFLEVG,        None,                 "LLMF_PHYS",        "SPECIFIC HUMIDITY OF THE WET THERMOMETER"                                                                      ], &
-& "TW"             : [False, False, AS_1_NFLEVG,        None,                 "LLMF_PHYS",        "TEMPERATURE OF THE WET THERMOMETER"                                                                            ], &
-& "FRMQ"           : [False, False, AS_0_NFLEVG,        None,                 "LLMF_PHYS",        "cf. MESOSPHERIC humidity flux in APLPAR"                                                                       ], &
-& }
-
-#:set vars_aplpar_pfl = { &
-& "FP"             : [False, False, AS_0_NFLEVG,        None,                 "LLMF_PHYS",        "Total rainfall flux"                       ], &
-& "FPLCH"          : [False, False, AS_0_NFLEVG,        None,                 "LLMF_PHYS",        "convective precipitation flux"             ], &
-& "FPLSH"          : [False, False, AS_0_NFLEVG,        None,                 "LLMF_PHYS",        "stratiform precipitation flux"             ], &
-& "FPLSN"          : [False, False, AS_0_NFLEVG,        None,                 "LLMF_PHYS",        "all solid stratiform precipitation flux"   ], &
-& "FTKE"           : [False, False, AS_0_NFLEVG,        None,                 "LLMF_PHYS",        "TKE flux"                                  ], &
-& "FTKEI"          : [False, False, AS_0_NFLEVG,        None,                 "LLMF_PHYS",        "TKE flux"                                  ], &
-& "FEFB1"          : [False, False, AS_0_NFLEVG,        None,                 "LLMF_PHYS",        "EFB1 flux"                                 ], &
-& "FEFB2"          : [False, False, AS_0_NFLEVG,        None,                 "LLMF_PHYS",        "EFB2 flux"                                 ], &
-& "FEFB3"          : [False, False, AS_0_NFLEVG,        None,                 "LLMF_PHYS",        "EFB3 flux"                                 ], &
-& }
-
-#:set vars_aplpar_tds = { &
-& "TDTS"           : [False, False, AS_void,            None,                 "LLMF_PHYS",         "Surface temperature tendency"    ], &  
-& "TDTP"           : [False, False, AS_YSP_SBD_NLEVS,   None,                 "LLMF_PHYS",         "Deep temperature tendency"       ], &  
-& "TDWS"           : [False, False, AS_void,            None,                 "LLMF_PHYS",         "Surface water res. tendency"     ], &  
-& "TDWP"           : [False, False, AS_void,            None,                 "LLMF_PHYS",         "Deep water res. tendency"        ], &  
-& "TDWL"           : [False, False, AS_void,            None,                 "LLMF_PHYS",         "Interception water res. tendency"], &  
-& "TDSNS"          : [False, False, AS_void,            None,                 "LLMF_PHYS",         "Snow res. tendency"              ], &  
-& "TDWPI"          : [False, False, AS_void,            None,                 "LLMF_PHYS",         "Deep ice res. tendency"          ], &  
-& "TDWSI"          : [False, False, AS_void,            None,                 "LLMF_PHYS",         "Surface ice res. tendency"       ], &  
-& "TDALBNS"        : [False, False, AS_void,            None,                 "LLMF_PHYS",         "Snow albedo tendency"            ], &  
-& "TDRHONS"        : [False, False, AS_void,            None,                 "LLMF_PHYS",         "Snow density tendency"           ], &  
-& }
-
-#:set vars_aplpar_dsa = { &
-& "C1"             : [False, False, AS_void,            None,                 "LLMF_PHYS",         "HYDROLOGICAL COEFF. SHOWING THE CONTRIBUTION OF SURFACE FLUXES IN THE WS EVOLUTION"   ], &
-& "C2"             : [False, False, AS_void,            None,                 "LLMF_PHYS",         "HYDROLOGICAL COEFFICIENT SHOWING THE QUICKNESS OF WATER TRANSFERS BETWEEN BOTH TANKS" ], &
-& "CPS"            : [False, False, AS_void,            None,                 "LLMF_PHYS",         "CHALEUR MASSIQUE DE L'AIR EN SURFACE"                                                 ], &
-& "LHS"            : [False, False, AS_void,            None,                 "LLMF_PHYS",         "CHALEUR LATENTE EN SURFACE"                                                           ], &
-& "RS"             : [False, False, AS_void,            None,                 "LLMF_PHYS",         "CONSTANTE DES GAZ DE L'AIR EN SURFACE"                                                ], &
-& }
-
-#!     --- FOR BAYRAD ALLSKY FRAMEWORK ---
-#:set vars_aplpar_bay = { &
-& "QRCONV"         : [False, False, AS_1_NFLEVG,        None,                 "LLMF_PHYS"          ], &
-& "QSCONV"         : [False, False, AS_1_NFLEVG,        None,                 "LLMF_PHYS"          ], &
-& }
-
-#!  Horizontal exchange coefficients for 3D turbulence
-#:set vars_aplpar_kur = { &
-& "KUROV_H"        : [False, False, AS_1_NFLEVG,        None,                 "LLMF_PHYS"          ], &
-& "KTROV_H"        : [False, False, AS_1_NFLEVG,        None,                 "LLMF_PHYS"          ], &
-& }
-
-#:set vars_aplpar_adj = { &
-& "TAUX"           : [False, False, AS_1_NFLEVG,        None,                 "LLMF_PHYS"         ], &
-& "DTAJU"          : [False, False, AS_1_NFLEVG,        None,                 "LLMF_PHYS"         ], &
-& }
-
 #:set vars_mf_phys_for = { &
 & "U"              : [True,  False, AS_1_NFLEVG,        None,                 "LLMF_PHYS"          ], &
 & "V"              : [True,  False, AS_1_NFLEVG,        None,                 "LLMF_PHYS"          ], &
@@ -288,46 +186,9 @@
 & "Q"              : [True,  False, AS_1_NFLEVG,        None,                 "LLMF_PHYS"          ], &
 & }
 
-#:set vars_mf_phys_prc = { &
-& "DPRECIPS"       : [False, False, AS_1_NDTPREC,       None,                "LLMF_PHYS"           ], &
-& "DPRECIPS2"      : [False, False, AS_1_NDTPREC2,      None,                "LLMF_PHYS"           ], &
-& }
-
-#:set vars_mf_phys_rdg = { &
-& "MMU0"           : [False, False, AS_void,            None,                 "LLMF_PHYS",         "mean solar angle for given day for simpl. rad. scheme)"                      ], &
-& "MU0"            : [False, False, AS_void,            None,                 "LLMF_PHYS",         "local cosine of instantaneous solar zenith angle."                           ], &
-& "MU0LU"          : [False, False, AS_void,            None,                 "LLMF_PHYS",         "local cosine of instantaneous lunar angle."                                  ], &
-& "MU0M"           : [False, False, AS_void,            None,                 "LLMF_PHYS",         "local cosine of averaged solar zenith angle"                                 ], &
-& "MU0N"           : [False, False, AS_void,            None,                 "LLMF_PHYS",         "same as ZMU0 for next time step used for YDMODEL%YRML_PHY_MF%YRARPHY%LMSE)"  ], &
-& "CVGQ"           : [False, False, AS_1_NFLEVG,        None,                 "LLMF_PHYS",         "convergence of humidity 'Kuo' condition"                                                                       ], &
-& "LCVQ"           : [False, False, AS_1_NFLEVG,        None,                 "LLMF_PHYS",         "limited physical contribution to the diagnostic of moisture convergence (remove large scale precip. contrib.)" ], &
-& }
-
 #:set vars_mf_phys_gra = { &
 & "G"              : [True,  False, AS_NGRAD_1_NFLEVG,  None,                 "LLMF_PHYS"          ], &
 & }
-
-#:set vars_aplpar_rdt = { &
-& "COR"            : [False, False, AS_1_nflevg,   ], &
-& "RAB3C"          : [False, False, AS_1_nflevg,   ], &
-& "RAB3N"          : [False, False, AS_1_nflevg,   ], &
-& "RAB4C"          : [False, False, AS_1_nflevg,   ], &
-& "RAB4N"          : [False, False, AS_1_nflevg,   ], &
-& "RAB6C"          : [False, False, AS_1_nflevg,   ], &
-& "RAB6N"          : [False, False, AS_1_nflevg,   ], &
-& "RAT1C"          : [False, False, AS_1_nflevg,   ], &
-& "RAT1N"          : [False, False, AS_1_nflevg,   ], &
-& "RAT2C"          : [False, False, AS_1_nflevg,   ], &
-& "RAT2N"          : [False, False, AS_1_nflevg,   ], &
-& "RAT3C"          : [False, False, AS_1_nflevg,   ], &
-& "RAT3N"          : [False, False, AS_1_nflevg,   ], &
-& "RAT4C"          : [False, False, AS_1_nflevg,   ], &
-& "RAT4N"          : [False, False, AS_1_nflevg,   ], &
-& "RAT5C"          : [False, False, AS_1_nflevg,   ], &
-& "RAT5N"          : [False, False, AS_1_nflevg,   ], &
-& }
-
-
 
 #:endmute
 MODULE MF_PHYS_TYPE_MOD
@@ -341,52 +202,8 @@ IMPLICIT NONE
 $:pcpg_type_definition ("MF_PHYS_OUT_TYPE",  vars_mf_phys_out)
 $:pcpg_type_definition ("MF_PHYS_OPT_TYPE" , vars_mf_phys_opt)
 $:pcpg_type_definition ("MF_PHYS_FOR_TYPE" , vars_mf_phys_for)
-$:pcpg_type_definition ("MF_PHYS_PRC_TYPE" , vars_mf_phys_prc)
 $:pcpg_type_definition ("MF_PHYS_GRA_TYPE" , vars_mf_phys_gra)
 $:pcpg_type_definition ("MF_PHYS_RAD_TYPE" , vars_mf_phys_rad)
-$:pcpg_type_definition ("MF_PHYS_NHQ_TYPE" , vars_mf_phys_nhq)
-$:pcpg_type_definition ("MF_PHYS_SAV_TYPE" , vars_mf_phys_sav)
-$:pcpg_type_definition ("MF_PHYS_RDG_TYPE" , vars_mf_phys_rdg)
-
-$:pcpg_type_definition ("APLPAR_MOC_TYPE" , vars_aplpar_moc)
-$:pcpg_type_definition ("APLPAR_FLU_TYPE" , vars_aplpar_flu)
-$:pcpg_type_definition ("APLPAR_PFL_TYPE" , vars_aplpar_pfl)
-$:pcpg_type_definition ("APLPAR_MSC_TYPE" , vars_aplpar_msc)
-$:pcpg_type_definition ("APLPAR_TDS_TYPE" , vars_aplpar_tds)
-$:pcpg_type_definition ("APLPAR_DSA_TYPE" , vars_aplpar_dsa)
-$:pcpg_type_definition ("APLPAR_BAY_TYPE" , vars_aplpar_bay)
-$:pcpg_type_definition ("APLPAR_KUR_TYPE" , vars_aplpar_kur)
-$:pcpg_type_definition ("APLPAR_ADJ_TYPE" , vars_aplpar_adj)
-
-$:pcpg_struct_definition ("APLPAR_RDT_TYPE", vars_aplpar_rdt)
-
-TYPE APLPAR_TMP_TYPE
-  TYPE (APLPAR_MOC_TYPE) :: MOC
-  TYPE (APLPAR_FLU_TYPE) :: FLU
-  TYPE (APLPAR_PFL_TYPE) :: PFL
-  TYPE (APLPAR_MSC_TYPE) :: MSC
-  TYPE (APLPAR_TDS_TYPE) :: TDS
-  TYPE (APLPAR_DSA_TYPE) :: DSA
-  TYPE (APLPAR_BAY_TYPE) :: BAY
-  TYPE (APLPAR_KUR_TYPE) :: KUR
-  TYPE (APLPAR_ADJ_TYPE) :: ADJ
-  TYPE (APLPAR_RDT_TYPE) :: RDT
-CONTAINS
-  PROCEDURE :: INIT => APLPAR_TMP_TYPE_INIT
-  PROCEDURE :: FINAL => APLPAR_TMP_TYPE_FINAL
-  PROCEDURE :: UPDATE_VIEW => APLPAR_TMP_TYPE_UPDATE_VIEW
-END TYPE
-
-TYPE MF_PHYS_TMP_TYPE
-  TYPE (MF_PHYS_NHQ_TYPE) :: NHQ
-  TYPE (MF_PHYS_SAV_TYPE) :: SAV
-  TYPE (MF_PHYS_RDG_TYPE) :: RDG
-  TYPE (MF_PHYS_PRC_TYPE) :: PRC
-CONTAINS
-  PROCEDURE :: INIT => MF_PHYS_TMP_TYPE_INIT
-  PROCEDURE :: FINAL => MF_PHYS_TMP_TYPE_FINAL
-  PROCEDURE :: UPDATE_VIEW => MF_PHYS_TMP_TYPE_UPDATE_VIEW
-END TYPE MF_PHYS_TMP_TYPE
 
 TYPE MF_PHYS_TYPE
   TYPE (MF_PHYS_OUT_TYPE) :: OUT
@@ -410,38 +227,9 @@ $:pcpg_type_methods ("MF_PHYS_OPT_TYPE", vars_mf_phys_opt)
 
 $:pcpg_type_methods ("MF_PHYS_FOR_TYPE", vars_mf_phys_for)
 
-$:pcpg_type_methods ("MF_PHYS_PRC_TYPE", vars_mf_phys_prc)
-
 $:pcpg_type_methods ("MF_PHYS_GRA_TYPE", vars_mf_phys_gra)
 
 $:pcpg_type_methods ("MF_PHYS_RAD_TYPE", vars_mf_phys_rad)
-
-$:pcpg_type_methods ("MF_PHYS_NHQ_TYPE", vars_mf_phys_nhq)
-
-$:pcpg_type_methods ("MF_PHYS_SAV_TYPE", vars_mf_phys_sav)
-
-$:pcpg_type_methods ("MF_PHYS_RDG_TYPE", vars_mf_phys_rdg)
-
-$:pcpg_type_methods ("APLPAR_MOC_TYPE", vars_aplpar_moc)
-
-$:pcpg_type_methods ("APLPAR_FLU_TYPE", vars_aplpar_flu)
-
-$:pcpg_type_methods ("APLPAR_PFL_TYPE", vars_aplpar_pfl)
-
-$:pcpg_type_methods ("APLPAR_MSC_TYPE", vars_aplpar_msc)
-
-$:pcpg_type_methods ("APLPAR_TDS_TYPE", vars_aplpar_tds)
-
-$:pcpg_type_methods ("APLPAR_DSA_TYPE", vars_aplpar_dsa)
-
-$:pcpg_type_methods ("APLPAR_BAY_TYPE", vars_aplpar_bay)
-
-$:pcpg_type_methods ("APLPAR_KUR_TYPE", vars_aplpar_kur)
-
-$:pcpg_type_methods ("APLPAR_ADJ_TYPE", vars_aplpar_adj)
-
-$:pcpg_struct_methods ("APLPAR_RDT_TYPE", vars_aplpar_rdt, "TYPE_RADTC", "MODULE_RADTC_MIX", "M")
-
 
 SUBROUTINE MF_PHYS_TYPE_UPDATE_VIEW (SELF, BLOCK_INDEX)
 
@@ -456,36 +244,6 @@ CALL SELF%RAD%UPDATE_VIEW (BLOCK_INDEX)
 
 END SUBROUTINE MF_PHYS_TYPE_UPDATE_VIEW
 
-SUBROUTINE MF_PHYS_TMP_TYPE_UPDATE_VIEW (SELF, BLOCK_INDEX)
-
-CLASS (MF_PHYS_TMP_TYPE) :: SELF
-INTEGER(KIND=JPIM), INTENT (IN)   :: BLOCK_INDEX
-
-CALL SELF%NHQ%UPDATE_VIEW (BLOCK_INDEX)
-CALL SELF%SAV%UPDATE_VIEW (BLOCK_INDEX)
-CALL SELF%PRC%UPDATE_VIEW (BLOCK_INDEX)
-CALL SELF%RDG%UPDATE_VIEW (BLOCK_INDEX)
-
-END SUBROUTINE MF_PHYS_TMP_TYPE_UPDATE_VIEW
-
-SUBROUTINE APLPAR_TMP_TYPE_UPDATE_VIEW (SELF, BLOCK_INDEX)
-
-CLASS (APLPAR_TMP_TYPE) :: SELF
-INTEGER(KIND=JPIM), INTENT (IN)   :: BLOCK_INDEX
-
-CALL SELF%RDT%UPDATE_VIEW (BLOCK_INDEX)
-CALL SELF%MOC%UPDATE_VIEW (BLOCK_INDEX)
-CALL SELF%FLU%UPDATE_VIEW (BLOCK_INDEX)
-CALL SELF%PFL%UPDATE_VIEW (BLOCK_INDEX)
-CALL SELF%MSC%UPDATE_VIEW (BLOCK_INDEX)
-CALL SELF%TDS%UPDATE_VIEW (BLOCK_INDEX)
-CALL SELF%DSA%UPDATE_VIEW (BLOCK_INDEX)
-CALL SELF%BAY%UPDATE_VIEW (BLOCK_INDEX)
-CALL SELF%KUR%UPDATE_VIEW (BLOCK_INDEX)
-CALL SELF%ADJ%UPDATE_VIEW (BLOCK_INDEX)
-
-END SUBROUTINE
-
 SUBROUTINE MF_PHYS_TYPE_FINAL (SELF)
 
 CLASS (MF_PHYS_TYPE) :: SELF
@@ -497,107 +255,6 @@ CALL SELF%GRA%FINAL ()
 CALL SELF%RAD%FINAL ()
 
 END SUBROUTINE MF_PHYS_TYPE_FINAL
-
-SUBROUTINE MF_PHYS_TMP_TYPE_FINAL (SELF)
-
-CLASS (MF_PHYS_TMP_TYPE) :: SELF
-
-CALL SELF%NHQ%FINAL ()
-CALL SELF%SAV%FINAL ()
-CALL SELF%PRC%FINAL ()
-CALL SELF%RDG%FINAL ()
-
-END SUBROUTINE
-
-SUBROUTINE APLPAR_TMP_TYPE_FINAL (SELF)
-
-CLASS (APLPAR_TMP_TYPE) :: SELF
-
-CALL SELF%RDT%FINAL ()
-CALL SELF%MOC%FINAL ()
-CALL SELF%FLU%FINAL ()
-CALL SELF%PFL%FINAL ()
-CALL SELF%MSC%FINAL ()
-CALL SELF%TDS%FINAL ()
-CALL SELF%DSA%FINAL ()
-CALL SELF%BAY%FINAL ()
-CALL SELF%KUR%FINAL ()
-CALL SELF%ADJ%FINAL ()
-
-END SUBROUTINE
-
-SUBROUTINE MF_PHYS_TMP_TYPE_INIT (SELF, REGISTRY, YDCPG_DIM, PERSISTENT, LDMF_PHYS, LDCONFX)
-
-USE MODULE_RADTC_MIX   , ONLY : YM_RADTC
-USE YOMCT0             , ONLY : LNHQE
-USE CPG_DIM_TYPE_MOD   , ONLY : CPG_DIM_TYPE
-
-CLASS (MF_PHYS_TMP_TYPE) :: SELF
-TYPE (FIELD_REGISTRY),              INTENT (INOUT) :: REGISTRY 
-TYPE (CPG_DIM_TYPE),                INTENT (IN)    :: YDCPG_DIM
-LOGICAL, OPTIONAL,                  INTENT (IN)    :: PERSISTENT
-LOGICAL, OPTIONAL,                  INTENT (IN)    :: LDMF_PHYS
-LOGICAL, OPTIONAL,                  INTENT (IN)    :: LDCONFX
-
-LOGICAL :: LLMF_PHYS, LLCONFX
-
-LLMF_PHYS = .FALSE.
-IF (PRESENT (LDMF_PHYS)) LLMF_PHYS = LDMF_PHYS
-LLCONFX  = .FALSE.
-IF (PRESENT (LDCONFX))   LLCONFX   = LDCONFX
-
-IF (LLMF_PHYS) THEN
-  IF (LNHQE) &
-& CALL SELF%NHQ%INIT (REGISTRY, YDCPG_DIM, PERSISTENT)
-  IF (LLCONFX) &
-& CALL SELF%SAV%INIT (REGISTRY, YDCPG_DIM, PERSISTENT, LLMF_PHYS)
-  CALL SELF%PRC%INIT (REGISTRY, YDCPG_DIM, PERSISTENT, LDMF_PHYS=LLMF_PHYS)
-  CALL SELF%RDG%INIT (REGISTRY, YDCPG_DIM, PERSISTENT, LLMF_PHYS)
-
-ENDIF
-
-END SUBROUTINE MF_PHYS_TMP_TYPE_INIT
-
-SUBROUTINE APLPAR_TMP_TYPE_INIT (SELF, REGISTRY, YDCPG_DIM, PERSISTENT, LDMF_PHYS, LDCONFX, YDMODEL)
-
-USE MODULE_RADTC_MIX   , ONLY : YM_RADTC
-USE YOMCT0             , ONLY : LNHQE
-USE TYPE_MODEL         , ONLY : MODEL
-USE CPG_DIM_TYPE_MOD   , ONLY : CPG_DIM_TYPE
-
-CLASS (APLPAR_TMP_TYPE) :: SELF
-TYPE (FIELD_REGISTRY),              INTENT (INOUT) :: REGISTRY 
-TYPE (CPG_DIM_TYPE),                INTENT (IN)    :: YDCPG_DIM
-LOGICAL, OPTIONAL,                  INTENT (IN)    :: PERSISTENT
-LOGICAL, OPTIONAL,                  INTENT (IN)    :: LDMF_PHYS
-LOGICAL, OPTIONAL,                  INTENT (IN)    :: LDCONFX
-TYPE (MODEL),                       INTENT (IN)    :: YDMODEL
-
-LOGICAL :: LLMF_PHYS, LLCONFX
-
-LLMF_PHYS = .FALSE.
-IF (PRESENT (LDMF_PHYS)) LLMF_PHYS = LDMF_PHYS
-LLCONFX  = .FALSE.
-IF (PRESENT (LDCONFX))   LLCONFX   = LDCONFX
-
-IF (LLMF_PHYS) THEN
-  IF (YDMODEL%YRML_PHY_MF%YRARPHY%LMPA) THEN
-  ELSE
-    CALL SELF%MOC%INIT (REGISTRY, YDCPG_DIM%KFLEVG, PERSISTENT, LDMF_PHYS=LLMF_PHYS)
-    CALL SELF%FLU%INIT (REGISTRY, YDCPG_DIM, PERSISTENT, LDMF_PHYS=LLMF_PHYS)
-    CALL SELF%PFL%INIT (REGISTRY, YDCPG_DIM, PERSISTENT, LDMF_PHYS=LLMF_PHYS)
-    CALL SELF%MSC%INIT (REGISTRY, YDCPG_DIM, PERSISTENT, LDMF_PHYS=LLMF_PHYS)
-    CALL SELF%TDS%INIT (REGISTRY, YDCPG_DIM, PERSISTENT, LDMF_PHYS=LLMF_PHYS)
-    CALL SELF%DSA%INIT (REGISTRY, YDCPG_DIM%KFLEVG, PERSISTENT, LDMF_PHYS=LLMF_PHYS)
-    CALL SELF%BAY%INIT (REGISTRY, YDCPG_DIM, PERSISTENT, LDMF_PHYS=LLMF_PHYS)
-    CALL SELF%KUR%INIT (REGISTRY, YDCPG_DIM, PERSISTENT, LDMF_PHYS=LLMF_PHYS)
-    CALL SELF%ADJ%INIT (REGISTRY, YDCPG_DIM, PERSISTENT, LDMF_PHYS=LLMF_PHYS)
-    CALL SELF%RDT%INIT (REGISTRY, YDCPG_DIM%KFLEVG, YM_RADTC, PERSISTENT)
-  ENDIF
-  
-ENDIF
-
-END SUBROUTINE APLPAR_TMP_TYPE_INIT
 
 END MODULE MF_PHYS_TYPE_MOD
 

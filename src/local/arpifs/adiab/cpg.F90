@@ -329,30 +329,35 @@ ENDIF
 
 !*       4.4    MF-PHYSICS.
 
-IF( (LMPHYS.OR.LSIMPH) .AND. (NCURRENT_ITER == 0) ) THEN  
-  CALL MF_PHYS (YDGEOMETRY, YDCPG_DIM, YDCPG_MISC, YDCPG_GPAR, YDCPG_PHY0, YDCPG_PHY9, YDMF_PHYS, &
-              & YDCPG_DYN0, YDCPG_DYN9, YDMF_PHYS_SURF, YDCPG_SL1, YDCPG_SL2, YDVARS, YDMODEL, YDFIELDS,     &
-              & LDCONFX, PDTPHY, PGPSDT2D, PGFL, PGMVT1, PGFLT1, PTRAJ_PHYS, YDDDH)
-ENDIF
+IF (LMPHYS.OR.LSIMPH) THEN
 
-!*       4.4.2   Store phy. tends.
+  IF (NCURRENT_ITER == 0) THEN  
+    CALL MF_PHYS (YDGEOMETRY, YDCPG_DIM, YDCPG_MISC, YDCPG_GPAR, YDCPG_PHY0, YDCPG_PHY9, YDMF_PHYS,        &
+                & YDCPG_DYN0, YDCPG_DYN9, YDMF_PHYS_SURF, YDCPG_SL1, YDCPG_SL2, YDVARS, YDMODEL, YDFIELDS, &
+                & LDCONFX, PDTPHY, PGPSDT2D, PGFL, PGMVT1, PGFLT1, PTRAJ_PHYS, YDDDH)
+  ENDIF
+  
+  !*       4.4.2   Store phy. tends.
+  
+  IF (LPC_FULL.AND.(.NOT.LPC_CHEAP).AND.LSLAG) THEN
+  
+    CALL CP_PTRSLB1(YDDYN, YDPTRSLB1, ISLB1U9, ISLB1V9, ISLB1T9, ISLB1VD9, ISLB1GFL9)
+  
+! * currently valid only for SL2TL advection scheme.
+!   Remarks KY:
+!   - PC scheme with Eulerian scheme: physics is passed differently
+!     from predictor to corrector step, and no call of CPG_PT_ULP is done.
+!   - LPC_CHEAP: physics is passed differently from predictor to
+!     corrector step (in LAPINEB), and no call of CPG_PT_ULP is done.
+!   - pressure departure variable: its diabatic tendency is currently
+!     assumed to be zero and it is ignored.
 
-IF ( LPC_FULL.AND.(.NOT.LPC_CHEAP).AND.LSLAG.AND.(LMPHYS.OR.LSIMPH) ) THEN
-
-  CALL CP_PTRSLB1(YDDYN, YDPTRSLB1, ISLB1U9, ISLB1V9, ISLB1T9, ISLB1VD9, ISLB1GFL9)
-
-  ! * currently valid only for SL2TL advection scheme.
-  !   Remarks KY:
-  !   - PC scheme with Eulerian scheme: physics is passed differently
-  !     from predictor to corrector step, and no call of CPG_PT_ULP is done.
-  !   - LPC_CHEAP: physics is passed differently from predictor to
-  !     corrector step (in LAPINEB), and no call of CPG_PT_ULP is done.
-  !   - pressure departure variable: its diabatic tendency is currently
-  !     assumed to be zero and it is ignored.
-  CALL CPG_PT_ULP(YDGEOMETRY, YDFIELDS%YRGMV, YGFL, YDCPG_DIM%KIDIA, YDCPG_DIM%KFDIA, NCURRENT_ITER > 0, NFLSA,   &
-  & NFLEN, PTENDU=YDCPG_SL1%ZVIEW(:, ISLB1U9), PTENDV=YDCPG_SL1%ZVIEW(:, ISLB1V9), PTENDT=YDCPG_SL1%ZVIEW(:, ISLB1T9),  &
-  & PTENDVD=YDCPG_SL1%ZVIEW(:, ISLB1VD9), PTENDGFL=YDCPG_SL1%ZVIEW(:, ISLB1GFL9), PTENDSP=YDCPG_SL1%ZVIEW(:, MSLB1SP9), &
-  & PGFLPT=PGFLPT, PGFLT1=PGFLT1, PGFL=PGFL, PGMV=PGMV, PGMVS=PGMVS)
+    CALL CPG_PT_ULP(YDGEOMETRY, YDFIELDS%YRGMV, YGFL, YDCPG_DIM%KIDIA, YDCPG_DIM%KFDIA, NCURRENT_ITER > 0, NFLSA,   &
+    & NFLEN, PTENDU=YDCPG_SL1%ZVIEW(:, ISLB1U9), PTENDV=YDCPG_SL1%ZVIEW(:, ISLB1V9), PTENDT=YDCPG_SL1%ZVIEW(:, ISLB1T9),  &
+    & PTENDVD=YDCPG_SL1%ZVIEW(:, ISLB1VD9), PTENDGFL=YDCPG_SL1%ZVIEW(:, ISLB1GFL9), PTENDSP=YDCPG_SL1%ZVIEW(:, MSLB1SP9), &
+    & PGFLPT=PGFLPT, PGFLT1=PGFLT1, PGFL=PGFL, PGMV=PGMV, PGMVS=PGMVS)
+  
+  ENDIF
 
 ENDIF
 

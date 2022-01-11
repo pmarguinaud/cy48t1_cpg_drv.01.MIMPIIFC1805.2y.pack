@@ -144,6 +144,7 @@ IF (PRESENT (PERSISTENT)) LLPERSISTENT = PERSISTENT
 IF (PRESENT (P${type}$)) THEN
   SELF%ZDATA => P${type}$
   SELF%LOWNED = .FALSE.
+  LLPERSISTENT = .TRUE.
 ELSEIF (LLPERSISTENT) THEN
   ALLOCATE (SELF%ZDATA (REGISTRY%GEOM%YRDIM%NPROMA, YD${type}$%${ntot}$, REGISTRY%GEOM%YRDIM%NGPBLKS))
   SELF%LOWNED = .TRUE.
@@ -152,16 +153,16 @@ ELSE
   SELF%LOWNED = .TRUE.
 ENDIF
 
-SELF%F_DATA => CREATE_FIELD_WRAP ('${name}$', SELF%ZDATA, PERSISTENT=.NOT. SELF%LOWNED)
+SELF%F_DATA => CREATE_FIELD_WRAP ('${name}$', SELF%ZDATA, PERSISTENT=LLPERSISTENT)
 
 #:for var in vars
 IF (YD${type}$%${memb}$${var}$ > 0) THEN
   #:if len (vars[var][NDIMS]) == 0
-  SELF%F_${var}$ => CREATE_FIELD_WRAP ('${var}$', SELF%ZDATA (:, YD${type}$%${memb}$${var}$, :), PERSISTENT=.NOT. SELF%LOWNED)
+  SELF%F_${var}$ => CREATE_FIELD_WRAP ('${var}$', SELF%ZDATA (:, YD${type}$%${memb}$${var}$, :), PERSISTENT=LLPERSISTENT)
   #:elif len (vars[var][NDIMS]) == 1
     #:set di = "YD" + type + "%" + memb + var
     #:set de = "YD" + type + "%" + memb + var + '+' + vars[var][NDIMS][0][1] + "-1"
-  SELF%F_${var}$ => CREATE_FIELD_WRAP ('${var}$', SELF%ZDATA (:, ${di}$:${de}$, :), PERSISTENT=.NOT. SELF%LOWNED)
+  SELF%F_${var}$ => CREATE_FIELD_WRAP ('${var}$', SELF%ZDATA (:, ${di}$:${de}$, :), PERSISTENT=LLPERSISTENT)
   #:endif
 ELSE
   SELF%F_${var}$ => NULL ()
@@ -248,6 +249,7 @@ IF (PRESENT (PERSISTENT)) LLPERSISTENT = PERSISTENT
 IF (PRESENT (P${type}$)) THEN
   SELF%ZDATA => P${type}$
   SELF%LOWNED = .FALSE.
+  LLPERSISTENT = .TRUE.
 #:set dim = vars[list(vars.keys())[0]][NDIMS]
 #:set s2 = gdim (dim[0])
 ELSEIF (LLPERSISTENT) THEN
@@ -258,10 +260,10 @@ ELSE
   SELF%LOWNED = .TRUE.
 ENDIF
 
-SELF%F_DATA => CREATE_FIELD_WRAP ('${name}$', SELF%ZDATA, PERSISTENT=.NOT. SELF%LOWNED)
+SELF%F_DATA => CREATE_FIELD_WRAP ('${name}$', SELF%ZDATA, PERSISTENT=LLPERSISTENT)
 
 #:for var in vars
-SELF%F_${var}$ => CREATE_FIELD_WRAP ('${var}$', SELF%ZDATA (:, :, YD${type}$%${memb}$${var}$, :), PERSISTENT=.NOT. SELF%LOWNED)
+SELF%F_${var}$ => CREATE_FIELD_WRAP ('${var}$', SELF%ZDATA (:, :, YD${type}$%${memb}$${var}$, :), PERSISTENT=LLPERSISTENT)
 #:endfor
 
 END SUBROUTINE ${name}$_INIT

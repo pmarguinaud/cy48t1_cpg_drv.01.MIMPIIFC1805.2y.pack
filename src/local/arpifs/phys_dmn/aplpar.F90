@@ -235,7 +235,7 @@ USE CPG_TYPE_MOD       , ONLY : CPG_PHY_TYPE
 USE YOMGMV             , ONLY : TGMV
 USE SC2PRG_MOD         , ONLY : SC2PRG
 
-USE YOMCT0             , ONLY : LTWOTL, LNHDYN, LAROME, LNHQE,LCORWAT
+USE YOMCT0             , ONLY : LTWOTL, LNHDYN, LAROME, LCORWAT
 USE YOMCVER            , ONLY : LVERTFE  ,LVFE_GWMPA 
 USE YOMDYNA            , ONLY : LGWADV, L_RDRY_VD
 USE YOMNUD             , ONLY : NFNUDG   ,LNUDG 
@@ -1021,8 +1021,6 @@ REAL(KIND=JPRB) :: ZHOOK_HANDLE
 #include "mf_phys_fpl_part2.intfb.h"
 #include "mf_phys_init.intfb.h"
 #include "mf_phys_mocon.intfb.h"
-#include "mf_phys_nhqe_part1.intfb.h"
-#include "mf_phys_nhqe_part2.intfb.h"
 #include "mf_phys_precips.intfb.h"
 #include "mf_phys_save_phsurf_part1.intfb.h"
 #include "mf_phys_save_phsurf_part2.intfb.h"
@@ -1166,14 +1164,6 @@ IF ( YSPP_CONFIG%LSPP ) THEN
  DO JROF=1,YSPP%N2D
    ZGP2DSPP(:,JROF) = YSPP%GP_ARP(JROF)%GP2D(:,1,YDCPG_DIM%KBL)
  ENDDO
-ENDIF
-
-! In the NHQE model, APLPAR enters with Tt and grad(Tt), where Tt = T * exp(-(R/cp) log(pre/prehyd)).
-! But calculations of APLPAR must use T and grad(T).
-! So we do a conversion Tt -> T.
-IF (LNHQE) THEN
-  CALL MF_PHYS_NHQE_PART1 (YDGEOMETRY, YDCPG_DIM, YDMF_PHYS_TMP%NHQ%TT0, YDMF_PHYS_TMP%NHQ%TT0L, &
-                         & YDMF_PHYS_TMP%NHQ%TT0M, YDMF_PHYS_TMP%NHQ%TT9, YDVARS, YDMODEL, PGFL)
 ENDIF
 
 CALL CPPHINP(YDGEOMETRY, YDMODEL, YDCPG_DIM%KIDIA, YDCPG_DIM%KFDIA, YDGSGEOM%GEMU, YDGSGEOM%GELAM, YDVARS%U%T0, YDVARS%V% &
@@ -5115,12 +5105,6 @@ IF (LEDR) THEN
 ENDIF
 
 CALL MF_PHYS_PRECIPS (YDCPG_DIM, YDMF_PHYS_TMP%PRC%DPRECIPS, YDMF_PHYS_TMP%PRC%DPRECIPS2, YDMF_PHYS_SURF, YDMODEL)
-
-! Restore Tt and grad(Tt) for NHQE model.
-IF (LNHQE) THEN
-  CALL MF_PHYS_NHQE_PART2 (YDGEOMETRY, YDCPG_DIM, YDMF_PHYS_TMP%NHQ%TT0, YDMF_PHYS_TMP%NHQ%TT0L, &
-                         & YDMF_PHYS_TMP%NHQ%TT0M, YDMF_PHYS_TMP%NHQ%TT9, YDVARS)
-ENDIF
 
 !     ------------------------------------------------------------------
 

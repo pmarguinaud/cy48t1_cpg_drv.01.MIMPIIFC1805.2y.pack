@@ -75,7 +75,7 @@ USE PARKIND1           , ONLY : JPIM     ,JPRB
 USE YOMHOOK            , ONLY : LHOOK,   DR_HOOK
 USE SC2PRG_MOD         , ONLY : SC2PRG
 
-USE YOMCT0             , ONLY : LSLAG, LTWOTL, LNHDYN, LAROME, LSFORCS, LNHQE,LCORWAT
+USE YOMCT0             , ONLY : LSLAG, LTWOTL, LNHDYN, LAROME, LSFORCS, LCORWAT
 USE YOMCVER            , ONLY : LVERTFE  ,LVFE_GWMPA 
 USE YOMDYNA            , ONLY : LGWADV, L3DTURB, L_RDRY_VD
 USE YOMNUD             , ONLY : NFNUDG   ,LNUDG 
@@ -178,8 +178,6 @@ REAL(KIND=JPRB) :: ZHOOK_HANDLE
 #include "mf_phys_init.intfb.h"
 #include "rdradcoef.intfb.h"
 #include "wrphtrajm.intfb.h"
-#include "mf_phys_nhqe_part1.intfb.h"
-#include "mf_phys_nhqe_part2.intfb.h"
 #include "mf_phys_transfer.intfb.h"
 #include "mf_phys_precips.intfb.h"
 #include "mf_phys_cvv.intfb.h"
@@ -209,13 +207,6 @@ CALL YLMF_PHYS_NEXT_STATE%INIT (YDCPG_SL1, YDVARS, YDMODEL)
 !              for all types of physics.
 !              ------------------------------------
 
-
-! In the NHQE model, APLSIM enters with Tt and grad(Tt), where Tt = T * exp(-(R/cp) log(pre/prehyd)).
-! But calculations of APLSIM must use T and grad(T).
-! So we do a conversion Tt -> T.
-IF (LNHQE) THEN
-  CALL MF_PHYS_NHQE_PART1 (YDGEOMETRY, YDCPG_DIM, YDMF_PHYS_TMP%NHQ%TT0, YDMF_PHYS_TMP%NHQ%TT0L, YDMF_PHYS_TMP%NHQ%TT0M, YDMF_PHYS_TMP%NHQ%TT9, YDVARS, YDMODEL, PGFL)
-ENDIF
 
 INSTEP_DEB=1
 INSTEP_FIN=1
@@ -384,13 +375,6 @@ IF (LEDR) THEN
 ENDIF
 
 CALL MF_PHYS_PRECIPS (YDCPG_DIM, YDMF_PHYS_TMP%PRC%DPRECIPS, YDMF_PHYS_TMP%PRC%DPRECIPS2, YDMF_PHYS_SURF, YDMODEL)
-
-! Restore Tt and grad(Tt) for NHQE model.
-IF (LNHQE) THEN
-  CALL MF_PHYS_NHQE_PART2 (YDGEOMETRY, YDCPG_DIM, YDMF_PHYS_TMP%NHQ%TT0, YDMF_PHYS_TMP%NHQ%TT0L, YDMF_PHYS_TMP%NHQ%TT0M, YDMF_PHYS_TMP%NHQ%TT9, YDVARS)
-ENDIF
-
-!     ------------------------------------------------------------------
 
 END ASSOCIATE
 END ASSOCIATE

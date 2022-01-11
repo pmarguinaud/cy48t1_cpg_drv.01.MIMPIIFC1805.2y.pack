@@ -223,7 +223,7 @@ USE CPG_TYPE_MOD       , ONLY : CPG_DYN_TYPE, CPG_PHY_TYPE
 USE YOMGMV             , ONLY : TGMV
 USE SC2PRG_MOD         , ONLY : SC2PRG
 
-USE YOMCT0             , ONLY : LSLAG, LNHDYN, LAROME, LNHQE
+USE YOMCT0             , ONLY : LSLAG, LNHDYN, LAROME
 USE YOMCVER            , ONLY : LVERTFE  ,LVFE_GWMPA 
 USE YOMDYNA            , ONLY : LGWADV, L_RDRY_VD
 USE YOMSCM             , ONLY : LGSCM
@@ -719,8 +719,6 @@ REAL(KIND=JPRB) :: ZHOOK_HANDLE
 #include "gnhgw2svdarome.intfb.h"
 #include "mf_phys_init.intfb.h"
 #include "writephysio.intfb.h"
-#include "mf_phys_nhqe_part1.intfb.h"
-#include "mf_phys_nhqe_part2.intfb.h"
 #include "mf_phys_save_phsurf_part1.intfb.h"
 #include "mf_phys_save_phsurf_part2.intfb.h"
 #include "mf_phys_transfer.intfb.h"
@@ -852,13 +850,6 @@ ENDIF
 
 ! Complete physics is called.
 LLDIAB=(.NOT.LAGPHY)
-
-! In the NHQE model, APL_AROME enters with Tt and grad(Tt), where Tt = T * exp(-(R/cp) log(pre/prehyd)).
-! But calculations of APL_AROME must use T and grad(T).
-! So we do a conversion Tt -> T.
-IF (LNHQE) THEN
-  CALL MF_PHYS_NHQE_PART1 (YDGEOMETRY, YDCPG_DIM, YDMF_PHYS_TMP%NHQ%TT0, YDMF_PHYS_TMP%NHQ%TT0L, YDMF_PHYS_TMP%NHQ%TT0M, YDMF_PHYS_TMP%NHQ%TT9, YDVARS, YDMODEL, PGFL)
-ENDIF
 
 IF (LLDIAB) THEN
   CALL CPPHINP(YDGEOMETRY, YDMODEL, YDCPG_DIM%KIDIA, YDCPG_DIM%KFDIA, YDGSGEOM%GEMU, YDGSGEOM%GELAM,           &
@@ -3700,13 +3691,6 @@ IF (LEDR) THEN
 ENDIF
 
 CALL MF_PHYS_PRECIPS (YDCPG_DIM, YDMF_PHYS_TMP%PRC%DPRECIPS, YDMF_PHYS_TMP%PRC%DPRECIPS2, YDMF_PHYS_SURF, YDMODEL)
-
-! Restore Tt and grad(Tt) for NHQE model.
-IF (LNHQE) THEN
-  CALL MF_PHYS_NHQE_PART2 (YDGEOMETRY, YDCPG_DIM, YDMF_PHYS_TMP%NHQ%TT0, YDMF_PHYS_TMP%NHQ%TT0L, YDMF_PHYS_TMP%NHQ%TT0M, YDMF_PHYS_TMP%NHQ%TT9, YDVARS)
-ENDIF
-
-!     ------------------------------------------------------------------
 
 !       6. destructor for procset
 IF (LINTFLEX) CALL CLEANINTPROCSET(YLPROCSET)

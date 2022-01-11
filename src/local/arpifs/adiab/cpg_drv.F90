@@ -172,7 +172,7 @@ USE CPG_TYPE_MOD, ONLY : CPG_DYN_TYPE,  CPG_PHY_TYPE, CPG_TND_TYPE, &
                        & CPG_MISC_TYPE, CPG_TMP_TYPE, CPG_DDH_TYPE, &
                        & CPG_SL1_TYPE,  CPG_SL2_TYPE, CPG_GPAR_TYPE
 USE CPG_DIM_TYPE_MOD, ONLY : CPG_DIM_TYPE
-USE MF_PHYS_TYPE_MOD, ONLY : MF_PHYS_TYPE, MF_PHYS_TMP_TYPE
+USE MF_PHYS_TYPE_MOD, ONLY : MF_PHYS_TYPE
 !     ------------------------------------------------------------------
 
 IMPLICIT NONE

@@ -26,7 +26,7 @@ SUBROUTINE WRITEPHYSIO(YDGEOMETRY,&
 !   K. Yessad (July 2014): Move some variables.
 ! --------------------------------------------------------------
 
-USE MF_PHYS_TYPE_MOD   , ONLY : MF_PHYS_TYPE, MF_PHYS_TMP_TYPE
+USE MF_PHYS_TYPE_MOD   , ONLY : MF_PHYS_TYPE
 USE CPG_TYPE_MOD       , ONLY : CPG_DYN_TYPE, CPG_PHY_TYPE, &
                               & CPG_MISC_TYPE
 USE MF_PHYS_SURFACE_TYPE_MOD,ONLY : MF_PHYS_SURF_TYPE

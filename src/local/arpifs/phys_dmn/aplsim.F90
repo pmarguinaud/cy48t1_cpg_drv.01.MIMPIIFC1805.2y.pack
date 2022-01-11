@@ -1,10 +1,9 @@
 #ifdef RS6K
 @PROCESS NOCHECK
 #endif
-SUBROUTINE APLSIM(YDGEOMETRY, YDCPG_DIM, YDCPG_MISC, YDCPG_GPAR, YDCPG_PHY0, YDCPG_PHY9, YDMF_PHYS, YDMF_PHYS_TMP, &
-& YDCPG_DYN0, YDCPG_DYN9, YDMF_PHYS_SURF, YDVARS, YDGMV, YDSURF, YDCFU, YDXFU, &
-& YDMODEL, LDCONFX, PDTPHY, &
-& PGFL, PGP2DSDT, YDCPG_SL1, YDCPG_SL2, PGMVT1, PGFLT1, PTRAJ_PHYS, YDDDH)
+SUBROUTINE APLSIM(YDGEOMETRY, YDCPG_DIM, YDCPG_MISC, YDCPG_PHY0, YDCPG_PHY9, &
+& YDMF_PHYS, YDMF_PHYS_TMP, YDCPG_DYN0, YDCPG_DYN9, YDMF_PHYS_SURF, YDVARS, YDSURF, &
+& YDMODEL, PDTPHY, YDCPG_SL1, PTRAJ_PHYS)
 
 !**** *APLSIM* METEO-FRANCE PHYSICS.
 
@@ -21,48 +20,15 @@ SUBROUTINE APLSIM(YDGEOMETRY, YDCPG_DIM, YDCPG_MISC, YDCPG_GPAR, YDCPG_PHY0, YDC
 
 !     INPUT:
 !     ------
-!        KBL       : NPROMA-packets number
-!        KGPCOMP   : total number of grid points in the domain
-!        KST       : first element of work.
-!        KEND      : last element of work.
-!        KSTGLO    : global offset.
-!        LDCONFX   : (see in CPG)
 !        PDTPHY    : timestep used in the physics.
-!        KIBL      : index into YRCSGEOM/YRGSGEOM types in YDGEOMETRY
-!        POROGL,POROGM: components of grad(orography).
-!        PGFL      : GFL at time t and t-dt.
-!        PKOZO     : fields for photochemistery of ozon.
-!        PGP2DSDT  : stochastic physics random pattern.
-
-!     INPUT/OUTPUT:
-!     -------------
-!        PB1       : "SLB1"-buffer, used for interpolations in the SL scheme.
-!        PB2       : "SLB2"-buffer.
-!        PGFLT1    : GFL t+dt
-!        PGPAR     : surface fields for AROME.
-!        PGMU0     : COSINE OF SOLAR ZENITH ANGLE, APPROXIMATE ACTUAL VALUE
-!                    linear T_e correction
-!                    linear T_e correction
-
-!     OUTPUT:
-!     -------
-!        PDHSF     : distribution of horizontal mean weights used for
-!                    simplified radiation scheme.
-!        ---------------------- output of aplpar ------------------------------
-!        PFCQNG    : pseudo-flux of water to correct for Q<0.
-!        PDIFCQLC to PFCNEGQSC:
-!        ---------------------- end of output of aplpar -----------------------
-!        PTENDU    : "U"-wind tendency due to physics.
-!        PTENDV    : "V"-wind tendency due to physics.
-!        PDIAGH    : Add Hail diagnostic PDIAGH (AROME)
 
 ! End Modifications
 !-------------------------------------------------------------------------------
 
 USE GEOMETRY_MOD       , ONLY : GEOMETRY
 USE MF_PHYS_TYPE_MOD   , ONLY : MF_PHYS_TYPE, MF_PHYS_TMP_TYPE
-USE CPG_TYPE_MOD       , ONLY : CPG_DYN_TYPE, CPG_PHY_TYPE, CPG_GPAR_TYPE, &
-                              & CPG_MISC_TYPE, CPG_SL1_TYPE, CPG_SL2_TYPE
+USE CPG_TYPE_MOD       , ONLY : CPG_DYN_TYPE, CPG_PHY_TYPE, &
+                              & CPG_MISC_TYPE, CPG_SL1_TYPE
 USE CPG_DIM_TYPE_MOD   , ONLY : CPG_DIM_TYPE
 USE MF_PHYS_SURFACE_TYPE_MOD,ONLY : MF_PHYS_SURF_TYPE
 USE FIELD_VARIABLES_MOD, ONLY : FIELD_VARIABLES
@@ -103,7 +69,6 @@ IMPLICIT NONE
 TYPE(GEOMETRY)    ,INTENT(IN)    :: YDGEOMETRY
 TYPE(CPG_DIM_TYPE),INTENT(IN)    :: YDCPG_DIM
 TYPE(CPG_MISC_TYPE),INTENT(INOUT):: YDCPG_MISC
-TYPE(CPG_GPAR_TYPE),INTENT(INOUT):: YDCPG_GPAR
 TYPE(CPG_PHY_TYPE),INTENT(INOUT), TARGET :: YDCPG_PHY0
 TYPE(CPG_PHY_TYPE),INTENT(INOUT), TARGET :: YDCPG_PHY9
 TYPE(MF_PHYS_TYPE),INTENT(INOUT) :: YDMF_PHYS
@@ -112,24 +77,11 @@ TYPE(CPG_DYN_TYPE),INTENT(INOUT), TARGET :: YDCPG_DYN0
 TYPE(CPG_DYN_TYPE),INTENT(INOUT), TARGET :: YDCPG_DYN9
 TYPE(MF_PHYS_SURF_TYPE),INTENT(INOUT) :: YDMF_PHYS_SURF
 TYPE(FIELD_VARIABLES),INTENT(INOUT) :: YDVARS
-TYPE(TGMV)        ,INTENT(INOUT) :: YDGMV
 TYPE(TSURF)       ,INTENT(INOUT) :: YDSURF
-TYPE(TCFU)        ,INTENT(INOUT) :: YDCFU
-TYPE(TXFU)        ,INTENT(INOUT) :: YDXFU
 TYPE(MODEL)       ,INTENT(INOUT) :: YDMODEL
-LOGICAL           ,INTENT(IN)    :: LDCONFX
 REAL(KIND=JPRB)   ,INTENT(IN)    :: PDTPHY 
-REAL(KIND=JPRB)   ,INTENT(INOUT), TARGET :: PGFL(YDGEOMETRY%YRDIM%NPROMA,YDCPG_DIM%KFLEVG,YDMODEL%YRML_GCONF%YGFL%NDIM) 
- 
-REAL(KIND=JPRB)   ,INTENT(IN)    :: PGP2DSDT(YDGEOMETRY%YRDIM%NPROMA,YSPPT%YGPSDT(1)%NG2D)
 TYPE(CPG_SL1_TYPE),INTENT(INOUT) :: YDCPG_SL1
-TYPE(CPG_SL2_TYPE),INTENT(INOUT) :: YDCPG_SL2
-REAL(KIND=JPRB)   ,INTENT(INOUT) :: PGMVT1(YDGEOMETRY%YRDIM%NPROMA,YDCPG_DIM%KFLEVG,YDGMV%YT1%NDIM) 
-REAL(KIND=JPRB)   ,INTENT(INOUT) :: PGFLT1(YDGEOMETRY%YRDIM%NPROMA,YDCPG_DIM%KFLEVG,YDMODEL%YRML_GCONF%YGFL%NDIM1)
- 
-
 TYPE (TRAJ_PHYS_TYPE), INTENT(INOUT) :: PTRAJ_PHYS
-TYPE(TYP_DDH)     ,INTENT(INOUT) :: YDDDH
 
 !     ------------------------------------------------------------------
 INTEGER(KIND=JPIM) :: IFIELDSS
@@ -197,7 +149,7 @@ ASSOCIATE(TSPHY=>YDPHY2%TSPHY, NTSSG=>YDDPHY%NTSSG, YSP_SBD=>YDSURF%YSP_SBD, LTR
 & LTLADDIA=>YDRCOEF%LTLADDIA, NG3SR=>YDRCOEF%NG3SR)
 
 CALL YLMF_PHYS_BASE_STATE%INIT (LTWOTL, YDCPG_DYN0, YDCPG_DYN9, YDCPG_PHY0, YDCPG_PHY9, YDVARS, &
-& YDMF_PHYS_SURF, PGFL=PGFL, YDMODEL=YDMODEL)
+& YDMF_PHYS_SURF, YDMODEL=YDMODEL)
 
 CALL YLMF_PHYS_NEXT_STATE%INIT (YDCPG_SL1, YDVARS, YDMODEL)
 

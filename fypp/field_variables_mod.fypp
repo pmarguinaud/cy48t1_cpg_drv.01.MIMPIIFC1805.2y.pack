@@ -25,7 +25,8 @@ IMPLICIT NONE
 TYPE GEOMETRY_VARIABLES
 #:set geometry_variables = ['RCORI', 'RCORIC', 'GEMU', 'GSQM2', 'GELAM', 'GELAT', &
 & 'GECLO', 'GESLO', 'GM', 'GMAPPA', 'GOMVRL', 'GOMVRM', 'GNORDL', 'GNORDM', 'GNORDLCL', &
-& 'GNORDMCL', 'GNORDMCM', 'GAW', 'OROG', 'OROGL', 'OROGM']
+& 'GNORDMCL', 'GNORDMCM', 'GAW', 'OROG', 'OROGL', 'OROGM', 'RCOLON', 'RSILON', 'RINDX', &
+& 'RINDY', 'RATATH', 'RATATX']
 
   ! Variables for arrays specific to the geometry
 #:for var in geometry_variables

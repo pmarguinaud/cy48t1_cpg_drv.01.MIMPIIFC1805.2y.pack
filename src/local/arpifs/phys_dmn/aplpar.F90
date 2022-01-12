@@ -2191,7 +2191,7 @@ IF(LMPHYS) THEN
         & ZFLU_NEIJ, YDMF_PHYS%OUT%QCLS, YDCPG_MISC%QS, ZFLU_QSATS, YDMF_PHYS%OUT%RHCLS, ZDSA_RS,                                &
         & ZRTI, ZSTAB, YDMF_PHYS%OUT%TCLS, YDMF_PHYS%OUT%UCLS, YDMF_PHYS%OUT%VCLS, YDMF_PHYS%OUT%NUCLS,                          &
         & YDMF_PHYS%OUT%NVCLS, ZPCLS, ZFLU_VEG, ZXDROV, ZXHROV, YDMF_PHYS%OUT%UGST, YDMF_PHYS%OUT%VGST                           &
-        &                                                                                        )
+        &                                                                                                                     )
       ELSE
         CALL ACHMT ( YDCPG_DIM%KIDIA, YDCPG_DIM%KFDIA, YDCPG_DIM%KLON, YDCPG_DIM%KFLEVG, YDSURF%YSD_VVD%NUMFLDS>=8.AND.LSOLV,    &
         & YLMF_PHYS_BASE_STATE%YCPG_DYN%PHI, YLMF_PHYS_BASE_STATE%YCPG_DYN%PHIF, YLMF_PHYS_BASE_STATE%YCPG_PHY%PREHYD,           &
@@ -2205,7 +2205,7 @@ IF(LMPHYS) THEN
         & ZFLU_NEIJ, YDMF_PHYS%OUT%QCLS, YDCPG_MISC%QS, ZFLU_QSATS, YDMF_PHYS%OUT%RHCLS, ZDSA_RS,                                &
         & ZRTI, ZSTAB, YDMF_PHYS%OUT%TCLS, YDMF_PHYS%OUT%UCLS, YDMF_PHYS%OUT%VCLS, YDMF_PHYS%OUT%NUCLS,                          &
         & YDMF_PHYS%OUT%NVCLS, ZPCLS, ZFLU_VEG, ZXDROV, ZXHROV, YDMF_PHYS%OUT%UGST, YDMF_PHYS%OUT%VGST                           &
-        &                                                                                        )
+        &                                                                                                                     )
       ENDIF
     ENDIF
 
@@ -2298,7 +2298,7 @@ IF(LMPHYS) THEN
       ZBLH(YDCPG_DIM%KIDIA:YDCPG_DIM%KFDIA)=ZBLH(YDCPG_DIM%KIDIA:YDCPG_DIM%KFDIA)/XKLM
       CALL ACMIXLENTM ( YDPHY0, YDCPG_DIM%KIDIA, YDCPG_DIM%KFDIA, YDCPG_DIM%KLON, YDCPG_DIM%KFLEVG, YLMF_PHYS_BASE_STATE%YCPG_DYN%PHI, &
       & YLMF_PHYS_BASE_STATE%YCPG_DYN%PHIF, YDMF_PHYS%OUT%GZ0, YDMF_PHYS%OUT%GZ0H, ZBLH, ZZLMT, ZLMT                                   &
-      &                                                                                                                )
+      &                                                                                                                                                     )
 
     ELSEIF(TRIM(CGMIXLEN) == 'AY') THEN
       !     new Ayotte-Tudor ZBLH & mixing length
@@ -2549,7 +2549,7 @@ IF(LMPHYS) THEN
   & NSWB_MNH, YDCPG_DIM%KSTEP+1, ZZI_SVM(YDCPG_DIM%KIDIA:YDCPG_DIM%KFDIA, :, :, 1:NGFL_EXT), ZPIZA_DST(YDCPG_DIM%KIDIA:YDCPG_DIM%KFDIA, :, :), &
   & ZCGA_DST(YDCPG_DIM%KIDIA:YDCPG_DIM%KFDIA, :, :), ZTAUREL_DST(YDCPG_DIM%KIDIA:YDCPG_DIM%KFDIA, :, :),                                       &
   & ZAERD(YDCPG_DIM%KIDIA:YDCPG_DIM%KFDIA, :), NGFL_EZDIAG, ZZI_PEZDIAG(YDCPG_DIM%KIDIA:YDCPG_DIM%KFDIA, :, :)                                 &
-  &                                                                                                                                                        )
+  &                                                                                                                                                                                           )
 
   ZP1EZDIAG(YDCPG_DIM%KIDIA:YDCPG_DIM%KFDIA,:,:)=ZZI_PEZDIAG(YDCPG_DIM%KIDIA:YDCPG_DIM%KFDIA,:,:)
 
@@ -3282,7 +3282,7 @@ IF(LMPHYS) THEN
         & ZSFCO2(YDCPG_DIM%KIDIA:YDCPG_DIM%KFDIA), ZFMDU(YDCPG_DIM%KIDIA:YDCPG_DIM%KFDIA), ZFMDV(YDCPG_DIM%KIDIA:YDCPG_DIM%KFDIA),                                       &
         & ZALBP(YDCPG_DIM%KIDIA:YDCPG_DIM%KFDIA, 1:NSW), ZALBD(YDCPG_DIM%KIDIA:YDCPG_DIM%KFDIA, 1:NSW),                                                                  &
         & ZFLU_EMIS(YDCPG_DIM%KIDIA:YDCPG_DIM%KFDIA), ZTSN(YDCPG_DIM%KIDIA:YDCPG_DIM%KFDIA), YDMF_PHYS%OUT%FRTH(YDCPG_DIM%KIDIA:YDCPG_DIM%KFDIA, YDCPG_DIM%KFLEVG, 1)    &
-        &                   )               !orographic shadowing
+        &                         )               !orographic shadowing
 
 ! Opposite water vapor flux
         ZFEVS(:)=-ZFEV(:)
@@ -3637,7 +3637,7 @@ IF(LMPHYS) THEN
       & ZQV, YLMF_PHYS_BASE_STATE%T, YLMF_PHYS_BASE_STATE%U, YLMF_PHYS_BASE_STATE%V, YLMF_PHYS_BASE_STATE%YCPG_PHY%PREHYDF, &
       & YDMF_PHYS%OUT%STRTU, YDMF_PHYS%OUT%STRTV, ZPREN, YLMF_PHYS_BASE_STATE%YGSP_RR%T, YDCPG_MISC%QS,                     &
       & YDMF_PHYS%OUT%FCS, YDMF_PHYS%OUT%FCLL, YDMF_PHYS%OUT%FCLN, ZDSA_LHS, ZRTI, YDMF_PHYS_SURF%GSD_VH%PPBLH              &
-      &                                                                  )
+      &                                                                                  )
     ENDIF
     ! ------------------------------------------------------------------
     ! UPDATE PASSIFS SCALAIRS DUE TO THE TURBULENT DIFFUSION PROCESSES
@@ -4014,7 +4014,7 @@ IF(LMPHYS) THEN
       & ZSIGP, ZT, ZTW, ZU, ZV, YDCPG_DYN0%CTY%EVEL, ZOME, ZATSLC, ZGEOSLC, ZFHP, YDMF_PHYS%OUT%FPLSL,                     &
       & YDMF_PHYS%OUT%FPLSN, YDMF_PHYS%OUT%FPLSG, ZDIFCQD, ZDIFCQLD, ZDIFCQID, ZDIFCSD, YDMF_PHYS%OUT%FPEVPCL,             &
       & YDMF_PHYS%OUT%FPEVPCN, YDMF_PHYS%OUT%FPEVPCG, ZSTRCUD, ZSTRCVD, YDVARS%DAL%T0, YDVARS%DOM%T0                       &
-      &                                                                                                             )
+      &                                                                                                                                      )
     ENDIF
   !  ---------------------------------------------
   !  UPDATE VARIABLES  BY DOWNDRAUGHT CONTRIBUTION
@@ -4121,7 +4121,7 @@ IF(LMPHYS) THEN
     & YDMF_PHYS%OUT%DIFCQ, YDMF_PHYS%OUT%DIFCS, YDMF_PHYS%OUT%FCCQL, YDMF_PHYS%OUT%FCCQN, YDMF_PHYS%OUT%FPLCL,              &
     & YDMF_PHYS%OUT%FPLCN, YDMF_PHYS%OUT%FPFPCL, YDMF_PHYS%OUT%FPFPCN, YDMF_PHYS%OUT%FPEVPCL, YDMF_PHYS%OUT%FPEVPCN,        &
     & YDMF_PHYS%OUT%STRCU, YDMF_PHYS%OUT%STRCV, INLAB, INND, YDMF_PHYS%OUT%DIFTQ, YDMF_PHYS%OUT%DIFTS                       &
-    &                                                                                                  )
+    &                                                                                                                           )
 
   ELSEIF (LCVTDK) THEN     ! <== IFS deep convection scheme
 
@@ -4259,13 +4259,13 @@ IF(LMPHYS) THEN
         ENDDO
       ENDDO
       IF(LMUSCLFA) CALL WRSCMR(NMUSCLFA, 'PFPEVPSL0', YDMF_PHYS%OUT%FPEVPSL, YDCPG_DIM%KLON, YDCPG_DIM%KFLEVG+1&
-                   &         )
+                   &           )
       IF(LMUSCLFA) CALL WRSCMR(NMUSCLFA, 'PFPEVPSN0', YDMF_PHYS%OUT%FPEVPSN, YDCPG_DIM%KLON, YDCPG_DIM%KFLEVG+1&
-                   &         )
+                   &           )
       IF(LMUSCLFA) CALL WRSCMR(NMUSCLFA, 'PFPEVPCL0', YDMF_PHYS%OUT%FPEVPCL, YDCPG_DIM%KLON, YDCPG_DIM%KFLEVG+1&
-                   &         )
+                   &           )
       IF(LMUSCLFA) CALL WRSCMR(NMUSCLFA, 'PFPEVPCN0', YDMF_PHYS%OUT%FPEVPCN, YDCPG_DIM%KLON, YDCPG_DIM%KFLEVG+1&
-                   &         )
+                   &           )
     ENDIF
   ENDIF
 
@@ -4476,7 +4476,7 @@ IF(LMPHYS) THEN
     & YDCPG_DIM%KTDIA, YDCPG_DIM%KFLEVG, YLMF_PHYS_BASE_STATE%YCPG_PHY%PREHYDF, YLMF_PHYS_BASE_STATE%YCPG_PHY%XYB%DELP,          &
     & YDMF_PHYS%OUT%FPLCL, YDMF_PHYS%OUT%FPLSL, YDMF_PHYS%OUT%FRSO, ZKTROV, ZQO3(1, 1), YLMF_PHYS_BASE_STATE%YCPG_PHY%XYB%RDELP, &
     & YLMF_PHYS_BASE_STATE%T, ZXTROV, ZFLU_NEIJ, YDGSGEOM%GEMU, YDMF_PHYS_SURF%GSD_VV%PIVEG, YDMF_PHYS%OUT%FCHOZ                 &
-    &                                                                 )
+    &                                                                                    )
   ENDIF
 !*
 !     ------------------------------------------------------------------
@@ -4678,7 +4678,7 @@ ENDIF
 !                 &(PAPRS(KIDIA:KFDIA,KLEV)-PAPRSF(KIDIA:KFDIA,KLEV))
 CALL PPWETPOINT(YDPHY, YDCPG_DIM%KIDIA, YDCPG_DIM%KFDIA, YDCPG_DIM%KLON, ZPCLS, YDMF_PHYS%OUT%TCLS, YLMF_PHYS_BASE_STATE%Q(:, YDCPG_DIM%KFLEVG), &
 & YLMF_PHYS_BASE_STATE%L(:, YDCPG_DIM%KFLEVG), YLMF_PHYS_BASE_STATE%I(:, YDCPG_DIM%KFLEVG), YDMF_PHYS%OUT%TPWCLS                                 &
-&                                                                                                                                                  )
+&                                                                                                                                                                                     )
 
 
 IF (LDPRECIPS .OR. LDPRECIPS2) THEN
@@ -4779,7 +4779,8 @@ CALL MF_PHYS_MOCON (YDCPG_DIM, YDMF_PHYS%OUT%MOCON, ZRDG_LCVQ, IMOC_CLPH, YLMF_P
 ! Store surface water flux P and E for water conservation
 IF (LCORWAT) THEN
   CALL MF_PHYS_CORWAT (YDCPG_DIM, YDMF_PHYS%OUT%FEVL, YDMF_PHYS%OUT%FEVN, YDMF_PHYS%OUT%FPLCL, YDMF_PHYS%OUT%FPLCN, &
-  & YDMF_PHYS%OUT%FPLSL, YDMF_PHYS%OUT%FPLSN, YDMF_PHYS_SURF)
+  & YDMF_PHYS%OUT%FPLSL, YDMF_PHYS%OUT%FPLSN, YDMF_PHYS_SURF%GSD_VH%PEVA, YDMF_PHYS_SURF%GSD_VH%PPCL,               &
+  & YDMF_PHYS_SURF%GSD_VH%PPCN, YDMF_PHYS_SURF%GSD_VH%PPSL, YDMF_PHYS_SURF%GSD_VH%PPSN)
 ENDIF
 
 !        2.4  Stores radiation coefficients.
@@ -5010,7 +5011,7 @@ IF ((.NOT.LSFORCS)) THEN
     & YDMF_PHYS_SURF%GSD_VF%PLSM, YDMF_PHYS_SURF%GSD_VV%PIVEG, YDMF_PHYS_SURF%GSP_RR%PT_T1, YDMF_PHYS_SURF%GSP_SB%PT_T1,     &
     & YDMF_PHYS_SURF%GSP_RR%PW_T1, YDMF_PHYS_SURF%GSP_RR%PIC_T1, YDMF_PHYS_SURF%GSP_SB%PQ_T1, YDMF_PHYS_SURF%GSP_SB%PTL_T1,  &
     & YDMF_PHYS_SURF%GSP_RR%PFC_T1, YDMF_PHYS_SURF%GSP_SG%PF_T1, YDMF_PHYS_SURF%GSP_SG%PA_T1, YDMF_PHYS_SURF%GSP_SG%PR_T1    &
-    &                   )  
+    &                         )  
   ELSE
     IF (LLXFUMSE) THEN
       DO JROF=YDCPG_DIM%KIDIA,YDCPG_DIM%KFDIA
@@ -5029,7 +5030,7 @@ IF ((.NOT.LSFORCS)) THEN
     & YLMF_PHYS_NEXT_STATE%Q (:, 1:YDCPG_DIM%KFLEVG), YLMF_PHYS_NEXT_STATE%U (:, 1:YDCPG_DIM%KFLEVG),           &
     & YLMF_PHYS_NEXT_STATE%V (:, 1:YDCPG_DIM%KFLEVG), YLMF_PHYS_NEXT_STATE%SP, YDVARS%T%T0, YDVARS%Q%T0,        &
     & YDVARS%U%T0, YDVARS%V%T0, YDCPG_PHY0%PREHYD(:, YDCPG_DIM%KFLEVG), YDGSGEOM%GM, YDMF_PHYS_SURF%GSD_VF%PLSM &
-    &       )
+    &          )
   ENDIF
 ENDIF
 
@@ -5105,7 +5106,7 @@ IF (LEDR) THEN
   YDMF_PHYS_SURF%GSD_DI%PXEDR(:,:)=YDMF_PHYS%OUT%EDR(:,:)
 ENDIF
 
-CALL MF_PHYS_PRECIPS (YDCPG_DIM, ZPRC_DPRECIPS, ZPRC_DPRECIPS2, YDMF_PHYS_SURF, YDMODEL)
+CALL MF_PHYS_PRECIPS (YDCPG_DIM, ZPRC_DPRECIPS, ZPRC_DPRECIPS2, YDMF_PHYS_SURF%GSD_XP%PPRECIP, YDMF_PHYS_SURF%GSD_XP2%PPRECIP2, YDMODEL)
 
 !     ------------------------------------------------------------------
 

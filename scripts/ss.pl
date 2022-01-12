@@ -9,9 +9,13 @@ use List::MoreUtils qw (uniq);
 use lib $Bin;
 use Fxtran;
 
-my $F90 = shift;
 
-my $code = do { my $fh = 'FileHandle'->new ("<$F90"); local $/ = undef; <$fh> };
+my $code = '';
+
+for my $F90 (@ARGV)
+  {
+    $code .= do { my $fh = 'FileHandle'->new ("<$F90"); local $/ = undef; <$fh> };
+  }
 
 $code =~ s/^!>/  /goms;
 

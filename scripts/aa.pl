@@ -56,7 +56,7 @@ sub ct2a
 my $d0 = &Fxtran::fxtran (location => $ARGV[0], fopts => [qw (-line-length 400)]);
 my $d1 = &Fxtran::fxtran (location => $ARGV[1], fopts => [qw (-line-length 400)]);
 
-my $s = 'YDMF_PHYS';
+my $s = 'YDMF_PHYS_SURF';
 
 my %decl = %{ do ("./h.pl") };
 

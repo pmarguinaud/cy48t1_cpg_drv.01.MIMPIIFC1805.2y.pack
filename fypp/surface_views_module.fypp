@@ -43,6 +43,18 @@ TYPE SURFACE_VIEW_GROUP_${group.name}$
   REAL(KIND=JPRB), POINTER :: ${'P%s_T0(%s)' % (v.name, shape)}$   ! ${v.comment}$
   REAL(KIND=JPRB), POINTER :: ${'P%s_T1(%s)' % (v.name, shape)}$   ! ${v.comment}$
   REAL(KIND=JPRB), POINTER :: ${'P%s_T9(%s)' % (v.name, shape)}$   ! ${v.comment}$
+  #:if v.array
+  #:else
+    #:if group.dimension == 2
+!>REAL(KIND=JPRB)          :: P${v.name}$_T0 (YDCPG_DIM%KLON)
+!>REAL(KIND=JPRB)          :: P${v.name}$_T1 (YDCPG_DIM%KLON)
+!>REAL(KIND=JPRB)          :: P${v.name}$_T9 (YDCPG_DIM%KLON)
+    #:elif group.dimension == 3
+!>REAL(KIND=JPRB)          :: P${v.name}$_T0 (YDCPG_DIM%KLON, YDCPG_DIM%YRSURF%YSP_${group.short}$D%NLEVS)
+!>REAL(KIND=JPRB)          :: P${v.name}$_T1 (YDCPG_DIM%KLON, YDCPG_DIM%YRSURF%YSP_${group.short}$D%NLEVS)
+!>REAL(KIND=JPRB)          :: P${v.name}$_T9 (YDCPG_DIM%KLON, YDCPG_DIM%YRSURF%YSP_${group.short}$D%NLEVS)
+    #:endif
+  #:endif
 #:endfor
 #:set shape = shapes[group.dimension-1]
   REAL(KIND=JPRB), POINTER :: PGROUP(:,${shape}$)
@@ -74,6 +86,14 @@ TYPE SURFACE_VIEW_GROUP_${group.name}$
   TYPE(FIELD_${group.dimension}$D_VIEW)${array}$ :: ${'P%s' % v.name}$   ! ${v.comment}$
 #:else
   REAL(KIND=JPRB), POINTER :: ${'P%s(%s)' % (v.name, shape)}$   ! ${v.comment}$
+  #:if v.array
+  #:else
+    #:if group.dimension == 2
+!>REAL(KIND=JPRB)          :: P${v.name}$ (YDCPG_DIM%KLON)
+    #:elif group.dimension == 3
+!>REAL(KIND=JPRB)          :: P${v.name}$ (YDCPG_DIM%KLON, YDCPG_DIM%YRSURF%YSD_${group.short}$D%NLEVS)
+    #:endif
+  #:endif
 #:endif
 #:endfor
   REAL(KIND=JPRB), POINTER :: PGROUP(:,${shape}$)

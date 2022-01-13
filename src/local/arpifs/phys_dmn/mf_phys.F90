@@ -50,6 +50,7 @@ TYPE(TYP_DDH)        , INTENT(INOUT) :: YDDDH
 
 #include "apl_arome.intfb.h"
 #include "aplpar.intfb.h"
+#include "aplpar_new.intfb.h"
 #include "aplsim.intfb.h"
 #include "mf_phys_prep.intfb.h"
 #include "mf_phys_nhqe_part1.intfb.h"
@@ -98,6 +99,7 @@ ELSE
   LLNEW = (CLNEW /= '') .AND. (CLNEW /= '0')
 
   IF (LLNEW) THEN
+  CALL APLPAR_NEW 
   ELSE
   CALL APLPAR (YDGEOMETRY, YDCPG_DIM, YDCPG_MISC, YDCPG_GPAR, YDCPG_PHY0, YDCPG_PHY9, YDMF_PHYS,                &
   & YDCPG_DYN0, YDCPG_DYN9, YDMF_PHYS_SURF, YDCPG_SL1, YDCPG_SL2, YDVARS, YDFIELDS%YRGMV, YDFIELDS%YRSURF,      &

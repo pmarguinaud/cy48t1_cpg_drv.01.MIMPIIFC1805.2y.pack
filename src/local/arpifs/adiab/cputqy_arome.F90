@@ -89,6 +89,7 @@ REAL(KIND=JPRB),DIMENSION(:,:),    POINTER :: ZDT1
 INTEGER(KIND=JPIM) :: ISLB1U9  ,ISLB1V9  ,ISLB1T9  ,ISLB1GFL9, ISLB1VD9
 
 INTEGER(KIND=JPIM) :: JLEV, JROF, JGFL, IPGFL
+LOGICAL :: LLDONE = .TRUE.
 REAL(KIND=JPRB) :: ZHOOK_HANDLE
 
 ! ----------------------------------------------------------------------------
@@ -137,6 +138,20 @@ ENDDO
 !  ------------------------------------------------------------
 
 ! should be identical to what is in CPUTQY.
+
+
+IF (.NOT. LLDONE) THEN
+
+  DO JGFL=1,NUMFLDS
+    IF (YCOMP(JGFL)%LT1) THEN
+      IF (KPTR(YCOMP(JGFL)%MP1) > 0) THEN
+        WRITE (0, *) " CPUTQY ", JGFL, YCOMP(JGFL)%CNAME, KPTR(YCOMP(JGFL)%MP1)
+      ENDIF
+    ENDIF
+  ENDDO
+
+  LLDONE = .TRUE.
+ENDIF
 
 IF (LSLAG) THEN
   ! Increment PGFLT1 for non-advected GFL, PB1 for advected GFL.

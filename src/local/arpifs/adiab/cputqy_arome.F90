@@ -146,48 +146,29 @@ IF (.NOT. LLDONE) THEN
   LLDONE = .TRUE.
 ENDIF
 
-IF (LSLAG) THEN
-  ! Increment PGFLT1 for non-advected GFL, PB1 for advected GFL.
-  DO JGFL=1,NUMFLDS
-    IF (YCOMP(JGFL)%LT1) THEN
-      IF (KPTR(YCOMP(JGFL)%MP1) > 0) THEN
-        IF (YCOMP(JGFL)%LADV) THEN
-          IPGFL=KPGFL(YCOMP(JGFL)%MP1)
-          DO JLEV=1,YDCPG_DIM%KFLEVG
-            DO JROF=YDCPG_DIM%KIDIA,YDCPG_DIM%KFDIA
-              PB1(JROF,ISLB1GFL9+IPGFL+JLEV-NFLSA)=&
-               & PB1(JROF,ISLB1GFL9+IPGFL+JLEV-NFLSA)&
-               & + PDT*PTENDGFLR(JROF,JLEV,KPTR(YCOMP(JGFL)%MP1))
-            ENDDO
-          ENDDO
-        ELSE
-          DO JLEV=1,YDCPG_DIM%KFLEVG
-            DO JROF=YDCPG_DIM%KIDIA,YDCPG_DIM%KFDIA
-              PGFLT1(JROF,JLEV,YCOMP(JGFL)%MP1)=&
-               & PGFLT1(JROF,JLEV,YCOMP(JGFL)%MP1)&
-               & + PDT*PTENDGFLR(JROF,JLEV,KPTR(YCOMP(JGFL)%MP1))
-            ENDDO
-          ENDDO
-        ENDIF ! End of non-zero diabatic tendency for this GFL
-      ENDIF
-    ENDIF
-  ENDDO
-ELSE
-  ! Increment PGFLT1.
-  DO JGFL=1,NUMFLDS
-    IF (YCOMP(JGFL)%LT1) THEN
-      IF (KPTR(YCOMP(JGFL)%MP1) > 0) THEN
-        DO JLEV=1,YDCPG_DIM%KFLEVG
-          DO JROF=YDCPG_DIM%KIDIA,YDCPG_DIM%KFDIA
-            PGFLT1(JROF,JLEV,YCOMP(JGFL)%MP1)=&
-             & PGFLT1(JROF,JLEV,YCOMP(JGFL)%MP1)&
-             & + PDT*PTENDGFLR(JROF,JLEV,KPTR(YCOMP(JGFL)%MP1))
-          ENDDO
+! Increment PGFLT1 for non-advected GFL, PB1 for advected GFL.
+DO JGFL=1,NUMFLDS
+  IF (YCOMP(JGFL)%LT1 .AND. KPTR(YCOMP(JGFL)%MP1) > 0) THEN
+    IF (LSLAG .AND. YCOMP(JGFL)%LADV) THEN
+      IPGFL=KPGFL(YCOMP(JGFL)%MP1)
+      DO JLEV=1,YDCPG_DIM%KFLEVG
+        DO JROF=YDCPG_DIM%KIDIA,YDCPG_DIM%KFDIA
+          PB1(JROF,ISLB1GFL9+IPGFL+JLEV-NFLSA)=&
+           & PB1(JROF,ISLB1GFL9+IPGFL+JLEV-NFLSA)&
+           & + PDT*PTENDGFLR(JROF,JLEV,KPTR(YCOMP(JGFL)%MP1))
         ENDDO
-      ENDIF  ! End of non-zero diabatic tendency for this GFL
-    ENDIF
-  ENDDO
-ENDIF
+      ENDDO
+    ELSE
+      DO JLEV=1,YDCPG_DIM%KFLEVG
+        DO JROF=YDCPG_DIM%KIDIA,YDCPG_DIM%KFDIA
+          PGFLT1(JROF,JLEV,YCOMP(JGFL)%MP1)=&
+           & PGFLT1(JROF,JLEV,YCOMP(JGFL)%MP1)&
+           & + PDT*PTENDGFLR(JROF,JLEV,KPTR(YCOMP(JGFL)%MP1))
+        ENDDO
+      ENDDO
+    ENDIF ! End of non-zero diabatic tendency for this GFL
+  ENDIF
+ENDDO
 
 ! ----------------------------------------------------------------------------
 

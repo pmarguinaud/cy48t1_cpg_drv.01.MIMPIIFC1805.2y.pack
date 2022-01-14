@@ -749,7 +749,8 @@ REAL(KIND=JPRB) :: ZHOOK_HANDLE
 
 #include "cpphinp.intfb.h"
 #include "cptend_flex.intfb.h"
-#include "cputqy_arome.intfb.h"
+#include "cputqy_arome_expl.intfb.h"
+#include "cputqy_arome_loop.intfb.h"
 #include "cputqy.intfb.h"
 #include "cp_ptrslb1.intfb.h"
 #include "gnhgw2svdarome.intfb.h"
@@ -3709,7 +3710,11 @@ IF ( LINTFLEX ) THEN
 ELSE
 
   ! start ZTENDGFLR at 1 because it is dimensionned (:,:,0:n)
-  CALL CPUTQY_AROME (YLMF_PHYS_NEXT_STATE, YDVARS, YDMODEL, YDGEOMETRY%YRDIMV, YDGMV, YDCPG_DIM,  &
+  CALL CPUTQY_AROME_EXPL (YLMF_PHYS_NEXT_STATE, YDVARS, YDMODEL, YDGEOMETRY%YRDIMV, YDGMV, YDCPG_DIM,  &
+  & PDTPHY, IPGFL, IPTR, ZTEND_Q, ZTEND_L, ZTEND_R, ZTEND_I, ZTEND_S, ZTEND_G, ZTEND_H, ZTENDTKE, &
+  & ZTENDT, ZTENDGFLR(:, :, 1:), YDMF_PHYS%OUT%TENDU, YDMF_PHYS%OUT%TENDV, ZTENDD,       &
+  & YDCPG_SL1%ZVIEW, PGMVT1, PGFLT1)
+  CALL CPUTQY_AROME_LOOP (YLMF_PHYS_NEXT_STATE, YDVARS, YDMODEL, YDGEOMETRY%YRDIMV, YDGMV, YDCPG_DIM,  &
   & PDTPHY, IPGFL, IPTR, ZTEND_Q, ZTEND_L, ZTEND_R, ZTEND_I, ZTEND_S, ZTEND_G, ZTEND_H, ZTENDTKE, &
   & ZTENDT, ZTENDGFLR(:, :, 1:), YDMF_PHYS%OUT%TENDU, YDMF_PHYS%OUT%TENDV, ZTENDD,       &
   & YDCPG_SL1%ZVIEW, PGMVT1, PGFLT1)

@@ -88,7 +88,7 @@ REAL(KIND=JPRB)   ,TARGET, INTENT(INOUT) :: PGMVT1(YDCPG_DIM%KLON,YDCPG_DIM%KFLE
 REAL(KIND=JPRB)   ,INTENT(INOUT) :: PGFLT1(YDCPG_DIM%KLON,YDCPG_DIM%KFLEVG,YDMODEL%YRML_GCONF%YGFL%NDIM1)
 
 #include "cp_ptrslb1.intfb.h"
-!include "cputqy0.intfb.h"
+#include "cputqy0.intfb.h"
 
 ! ----------------------------------------------------------------------------
 !  Local pointers LSLAG choice
@@ -118,6 +118,8 @@ IF (LSLAG) CALL CP_PTRSLB1(YDMODEL%YRML_DYN%YRDYN,YDMODEL%YRML_DYN%YRPTRSLB1,ISL
 !   1. CALCUL DE L'EVOLUTION DES GMV (TEMPERATURE,VENT, et w)
 !  ------------------------------------------------------------
 
+#ifdef UNDEF
+
 ! -------------------------------------------------------------------
 ! Define local pointers LSLAG choice
 !  GMV variables
@@ -143,6 +145,16 @@ DO JLEV=1,YDCPG_DIM%KFLEVG
     ENDIF     
   ENDDO
 ENDDO
+
+#endif
+
+CALL CPUTQY0 (YDCPG_DIM, PDT, YDMF_PHYS_NEXT_STATE%U, PTENDU)
+CALL CPUTQY0 (YDCPG_DIM, PDT, YDMF_PHYS_NEXT_STATE%V, PTENDV)
+CALL CPUTQY0 (YDCPG_DIM, PDT, YDMF_PHYS_NEXT_STATE%T, PTENDT)
+
+IF (LNHDYN) THEN
+  CALL CPUTQY0 (YDCPG_DIM, PDT, YDMF_PHYS_NEXT_STATE%SVD, PTENDD)
+ENDIF
 
 !  ------------------------------------------------------------
 !   2. CALCUL DE L'EVOLUTION DES GFL ( HYDROMETEORES et EXTRA-GFL ) 

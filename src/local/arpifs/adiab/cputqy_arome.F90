@@ -89,7 +89,7 @@ REAL(KIND=JPRB),DIMENSION(:,:),    POINTER :: ZDT1
 INTEGER(KIND=JPIM) :: ISLB1U9  ,ISLB1V9  ,ISLB1T9  ,ISLB1GFL9, ISLB1VD9
 
 INTEGER(KIND=JPIM) :: JLEV, JROF, JGFL, IPGFL
-LOGICAL :: LLDONE = .TRUE.
+LOGICAL :: LLDONE = .FALSE.
 REAL(KIND=JPRB) :: ZHOOK_HANDLE
 
 ! ----------------------------------------------------------------------------

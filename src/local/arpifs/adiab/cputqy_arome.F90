@@ -93,19 +93,11 @@ REAL(KIND=JPRB)   ,INTENT(INOUT) :: PGFLT1(YDCPG_DIM%KLON,YDCPG_DIM%KFLEVG,YDMOD
 #include "cp_ptrslb1.intfb.h"
 #include "cputqy0.intfb.h"
 
-! ----------------------------------------------------------------------------
-!  Local pointers LSLAG choice
-REAL(KIND=JPRB),DIMENSION(:,:),    POINTER :: ZTT1
-REAL(KIND=JPRB),DIMENSION(:,:),    POINTER :: ZUT1
-REAL(KIND=JPRB),DIMENSION(:,:),    POINTER :: ZVT1
-REAL(KIND=JPRB),DIMENSION(:,:),    POINTER :: ZDT1
-
 INTEGER(KIND=JPIM) :: IMP1EXPLICIT (8)
 
 INTEGER(KIND=JPIM) :: ISLB1U9  ,ISLB1V9  ,ISLB1T9  ,ISLB1GFL9, ISLB1VD9
 
 INTEGER(KIND=JPIM) :: JLEV, JROF, JGFL, IPGFL
-LOGICAL :: LLDONE = .FALSE.
 REAL(KIND=JPRB) :: ZHOOK_HANDLE
 
 ! ----------------------------------------------------------------------------
@@ -144,19 +136,6 @@ IF (YDVARS%Q%LT1)     CALL CPUTQY0 (YDCPG_DIM, PDT, YDMF_PHYS_NEXT_STATE%Q,     
 
 ! should be identical to what is in CPUTQY.
 
-
-IF (.NOT. LLDONE) THEN
-
-  DO JGFL=1,NUMFLDS
-    IF (YCOMP(JGFL)%LT1) THEN
-      IF (KPTR(YCOMP(JGFL)%MP1) > 0) THEN
-        WRITE (0, *) " CPUTQY ", JGFL, YCOMP(JGFL)%CNAME, KPTR(YCOMP(JGFL)%MP1)
-      ENDIF
-    ENDIF
-  ENDDO
-
-  LLDONE = .TRUE.
-ENDIF
 
 IMP1EXPLICIT = [YGFL%YL%MP1, YGFL%YI%MP1, YGFL%YS%MP1, YGFL%YR%MP1, &
               & YGFL%YG%MP1, YGFL%YH%MP1, YGFL%YTKE%MP1, YGFL%YQ%MP1]

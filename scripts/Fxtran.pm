@@ -1375,11 +1375,14 @@ sub fxtran
       use File::stat;
       return unless (-f $f);
 
-      my @cmd = (qw (fxtran -construct-tag -no-include), @fopts, $f);
+      my $dir = $args{dir} || &dirname ($f);
+      my $xml = "$dir/" . &basename ($f) . '.xml';
+
+      my @cmd = (qw (fxtran -construct-tag -no-include), @fopts, -o => $xml, $f);
       system (@cmd)
         && die ("`@cmd' failed\n");
 
-      my $doc = 'XML::LibXML'->load_xml (location => $f . '.xml', @xopts);
+      my $doc = 'XML::LibXML'->load_xml (location => $xml, @xopts);
       return $doc;
     }
   die;

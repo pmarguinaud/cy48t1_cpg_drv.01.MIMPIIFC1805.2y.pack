@@ -16,7 +16,7 @@ SUBROUTINE CPG(YDGEOMETRY,YDCPG_DIM,YDTMP,YDCPG_TND,YDCPG_SL1,YDCPG_SL2,YDCPG_MI
  !---------------------------------------------------------------------
  ! - OUTPUT .
  & KSETTLOFF,PB1,PGMVT1,PGMVT1S,PGFLT1,PEXTRA,&
- & PGMVTNDSL_DDH,PGFLTNDSL_DDH,PTRAJ_PHYS,PTRAJ_SLAG,YDDDH)
+ & PGMVTNDSL_DDH,PGFLTNDSL_DDH,PTRAJ_PHYS,PTRAJ_SLAG,YDDDH,CDCONF)
 
 !**** *CPG* - Grid point calculations.
 
@@ -229,6 +229,8 @@ TYPE (TRAJ_PHYS_TYPE),INTENT(INOUT) :: PTRAJ_PHYS
 TYPE (TRAJ_SLAG_TYPE),INTENT(INOUT) :: PTRAJ_SLAG
 TYPE(TYP_DDH)        , INTENT(INOUT) :: YDDDH
 
+CHARACTER(LEN=*), INTENT(IN) :: CDCONF
+
 INTEGER(KIND=JPIM) :: JFLD
 INTEGER(KIND=JPIM) :: ISLB1GFL9,ISLB1T9,ISLB1V9,ISLB1U9,ISLB1VD9
 
@@ -266,165 +268,182 @@ ASSOCIATE(  NPROMA=>YDDIM%NPROMA, NFLEN=>YDDIMV%NFLEN, NFLEVG=>YDDIMV%NFLEVG, NF
 & )
 !     ------------------------------------------------------------------
 
-!*       3.    READ BUFFERS, COMPUTE AUXILIARY QUANTITIES.
-!              -------------------------------------------
+IF (CDCONF (1:1) == 'X') THEN
 
-YDCPG_GPAR%ZVIEW(:,:)=0.0_JPRB
-
-CALL CPG_GP(YDGEOMETRY, YDCPG_DIM, YDTMP%CPG_GP, YDCPG_TND, YDCPG_MISC, YDCPG_GPAR, YDCPG_DYN0, YDCPG_DYN9, &
-& YDMF_PHYS_SURF, YDVARS, YDMODEL, YDFIELDS, LD_DFISTEP, LDFSTEP, LDDIAB, PDT, PTE, PGFL,       &
-& PGMVTNDSL_DDH, PGFLTNDSL_DDH, YDCPG_SL2%ZVIEW, PGFLT1, YDCPG_MISC%KOZO, YDDDH)
-
-!     ------------------------------------------------------------------
-
-!*       4.    PHYSICS + DIAGNOSTICS
-!              ---------------------
-
-!*       4.2    Sets-up some quantities for DDH.
-!               A subset of these quantities may be modified by the MF-physics.
-
-IF (LSDDH) THEN
-  IF (NCURRENT_ITER == 0) CALL GPINIDDH(YDGEOMETRY, YDMDDH, YDCPG_DIM%KIDIA, YDCPG_DIM%KFDIA, YDCPG_DDH%DDHI, &
-                          & YDCPG_MISC%DHSF, YDCPG_DDH%DHCV, YDCPG_MISC%NEB, YDCPG_MISC%CLCT, YDCPG_DIM%KSTGLO&
-                          & )
-  IF (LFLEXDIA.AND.LDDH_OMP) THEN
-    CALL SETDDH(YDMDDH, YDDDH, YDCPG_DIM%KIDIA, YDCPG_DIM%KFDIA, NPROMA, NFLEVG, NCURRENT_ITER, YDCPG_MISC%DHSF, &
-    & YDCPG_DDH%DDHI, YDCPG_DDH%AUX3D, YDCPG_DDH%AUX2D, YDCPG_DDH%AUXSM)
-  ENDIF
-ENDIF
-
-!*       4.1    Fill ZSLBUF1AU.
-
-IF (LDUSEPB1) THEN
-  DO JFLD=1,NFLDSLB1
-    YDCPG_SL1%ZVIEW(1:YDCPG_DIM%KFDIA,JFLD)=0.0_JPRB
-  ENDDO
-ENDIF
-
-!     ------------------------------------------------------------------
-! -- need probably a test on LEPHYS here.
-
-!*       4.3    ECMWF-PHYSICS.
-
-!*       4.3.1   Call ECMWF unlagged physics.
-
-! CALL EC_PHYS(...) to plug here.
-
-!*       4.3.2   Call ECMWF split physics.
-
-!     ------------------------------------------------------------------
-
-IF (LDSLPHY.AND.((LPC_FULL.AND.(NCURRENT_ITER == NSITER)).OR.(.NOT.LPC_FULL))) THEN
-  CALL EC_PHYS_LSLPHY(  YDGEOMETRY, YDSLPHY, YDMODEL%YRML_GCONF, YDMODEL%YRML_PHY_MF%YRPHY2, YDCPG_DIM%KIDIA, &
-  & YDCPG_DIM%KFDIA, LDFSTEP, PDTPHY, YDCPG_SL1%ZVIEW(:, MSLB1UP9), YDCPG_SL1%ZVIEW(:, MSLB1VP9), YDCPG_SL1%ZVIEW(:, MSLB1TP9), &
-  & YDCPG_SL1%ZVIEW(:, MSLB1GFLP9), PSAVTEND, PGFLSLP)
-ENDIF
-
-IF (LCUCONV_CA) THEN
-! Quick fix. The arrays should rather be dimensionned with (nproma,ngpblks). REK
-  YDMF_PHYS%OUT%CUCONVCA(1:YDCPG_DIM%KFDIA)=RCUCONVCA(YDCPG_DIM%KSTGLO:YDCPG_DIM%KSTGLO+YDCPG_DIM%KFDIA-1)
-  YDMF_PHYS%OUT%NLCONVCA(1:YDCPG_DIM%KFDIA)=RNLCONVCA(YDCPG_DIM%KSTGLO:YDCPG_DIM%KSTGLO+YDCPG_DIM%KFDIA-1)
-ENDIF
-!     ------------------------------------------------------------------
-
-!*       4.4    MF-PHYSICS.
-
-IF (LMPHYS.OR.LSIMPH) THEN
-
-  IF (NCURRENT_ITER == 0) THEN  
-    CALL MF_PHYS (YDGEOMETRY, YDCPG_DIM, YDCPG_MISC, YDCPG_GPAR, YDCPG_PHY0, YDCPG_PHY9, YDMF_PHYS,        &
-                & YDCPG_DYN0, YDCPG_DYN9, YDMF_PHYS_SURF, YDCPG_SL1, YDCPG_SL2, YDVARS, YDMODEL, YDFIELDS, &
-                & LDCONFX, PDTPHY, PGPSDT2D, PGFL, PGMVT1, PGFLT1, PTRAJ_PHYS, YDDDH)
+  !*       3.    READ BUFFERS, COMPUTE AUXILIARY QUANTITIES.
+  !              -------------------------------------------
+  
+  YDCPG_GPAR%ZVIEW(:,:)=0.0_JPRB
+  
+  CALL CPG_GP(YDGEOMETRY, YDCPG_DIM, YDTMP%CPG_GP, YDCPG_TND, YDCPG_MISC, YDCPG_GPAR, YDCPG_DYN0, YDCPG_DYN9, &
+  & YDMF_PHYS_SURF, YDVARS, YDMODEL, YDFIELDS, LD_DFISTEP, LDFSTEP, LDDIAB, PDT, PTE, PGFL,       &
+  & PGMVTNDSL_DDH, PGFLTNDSL_DDH, YDCPG_SL2%ZVIEW, PGFLT1, YDCPG_MISC%KOZO, YDDDH)
+  
+  !     ------------------------------------------------------------------
+  
+  !*       4.    PHYSICS + DIAGNOSTICS
+  !              ---------------------
+  
+  !*       4.2    Sets-up some quantities for DDH.
+  !               A subset of these quantities may be modified by the MF-physics.
+  
+  IF (LSDDH) THEN
+    IF (NCURRENT_ITER == 0) CALL GPINIDDH(YDGEOMETRY, YDMDDH, YDCPG_DIM%KIDIA, YDCPG_DIM%KFDIA, YDCPG_DDH%DDHI, &
+                            & YDCPG_MISC%DHSF, YDCPG_DDH%DHCV, YDCPG_MISC%NEB, YDCPG_MISC%CLCT, YDCPG_DIM%KSTGLO&
+                            & )
+    IF (LFLEXDIA.AND.LDDH_OMP) THEN
+      CALL SETDDH(YDMDDH, YDDDH, YDCPG_DIM%KIDIA, YDCPG_DIM%KFDIA, NPROMA, NFLEVG, NCURRENT_ITER, YDCPG_MISC%DHSF, &
+      & YDCPG_DDH%DDHI, YDCPG_DDH%AUX3D, YDCPG_DDH%AUX2D, YDCPG_DDH%AUXSM)
+    ENDIF
   ENDIF
   
-  !*       4.4.2   Store phy. tends.
+  !*       4.1    Fill ZSLBUF1AU.
   
-  IF (LPC_FULL.AND.(.NOT.LPC_CHEAP).AND.LSLAG) THEN
+  IF (LDUSEPB1) THEN
+    DO JFLD=1,NFLDSLB1
+      YDCPG_SL1%ZVIEW(1:YDCPG_DIM%KFDIA,JFLD)=0.0_JPRB
+    ENDDO
+  ENDIF
   
-    CALL CP_PTRSLB1(YDDYN, YDPTRSLB1, ISLB1U9, ISLB1V9, ISLB1T9, ISLB1VD9, ISLB1GFL9)
+  !     ------------------------------------------------------------------
+  ! -- need probably a test on LEPHYS here.
   
-! * currently valid only for SL2TL advection scheme.
-!   Remarks KY:
-!   - PC scheme with Eulerian scheme: physics is passed differently
-!     from predictor to corrector step, and no call of CPG_PT_ULP is done.
-!   - LPC_CHEAP: physics is passed differently from predictor to
-!     corrector step (in LAPINEB), and no call of CPG_PT_ULP is done.
-!   - pressure departure variable: its diabatic tendency is currently
-!     assumed to be zero and it is ignored.
+  !*       4.3    ECMWF-PHYSICS.
+  
+  !*       4.3.1   Call ECMWF unlagged physics.
+  
+  ! CALL EC_PHYS(...) to plug here.
+  
+  !*       4.3.2   Call ECMWF split physics.
+  
+  !     ------------------------------------------------------------------
+  
+  IF (LDSLPHY.AND.((LPC_FULL.AND.(NCURRENT_ITER == NSITER)).OR.(.NOT.LPC_FULL))) THEN
+    CALL EC_PHYS_LSLPHY(  YDGEOMETRY, YDSLPHY, YDMODEL%YRML_GCONF, YDMODEL%YRML_PHY_MF%YRPHY2, YDCPG_DIM%KIDIA, &
+    & YDCPG_DIM%KFDIA, LDFSTEP, PDTPHY, YDCPG_SL1%ZVIEW(:, MSLB1UP9), YDCPG_SL1%ZVIEW(:, MSLB1VP9), YDCPG_SL1%ZVIEW(:, MSLB1TP9), &
+    & YDCPG_SL1%ZVIEW(:, MSLB1GFLP9), PSAVTEND, PGFLSLP)
+  ENDIF
+  
+  IF (LCUCONV_CA) THEN
+  ! Quick fix. The arrays should rather be dimensionned with (nproma,ngpblks). REK
+    YDMF_PHYS%OUT%CUCONVCA(1:YDCPG_DIM%KFDIA)=RCUCONVCA(YDCPG_DIM%KSTGLO:YDCPG_DIM%KSTGLO+YDCPG_DIM%KFDIA-1)
+    YDMF_PHYS%OUT%NLCONVCA(1:YDCPG_DIM%KFDIA)=RNLCONVCA(YDCPG_DIM%KSTGLO:YDCPG_DIM%KSTGLO+YDCPG_DIM%KFDIA-1)
+  ENDIF
+  !     ------------------------------------------------------------------
 
-    CALL CPG_PT_ULP(YDGEOMETRY, YDFIELDS%YRGMV, YGFL, YDCPG_DIM%KIDIA, YDCPG_DIM%KFDIA, NCURRENT_ITER > 0, NFLSA,   &
-    & NFLEN, PTENDU=YDCPG_SL1%ZVIEW(:, ISLB1U9), PTENDV=YDCPG_SL1%ZVIEW(:, ISLB1V9), PTENDT=YDCPG_SL1%ZVIEW(:, ISLB1T9),  &
-    & PTENDVD=YDCPG_SL1%ZVIEW(:, ISLB1VD9), PTENDGFL=YDCPG_SL1%ZVIEW(:, ISLB1GFL9), PTENDSP=YDCPG_SL1%ZVIEW(:, MSLB1SP9), &
-    & PGFLPT=PGFLPT, PGFLT1=PGFLT1, PGFL=PGFL, PGMV=PGMV, PGMVS=PGMVS)
+ENDIF
+  
+  
+IF (CDCONF (2:2) == 'X') THEN
+
+  !*       4.4    MF-PHYSICS.
+  
+  IF (LMPHYS.OR.LSIMPH) THEN
+  
+    IF (NCURRENT_ITER == 0) THEN  
+      CALL MF_PHYS (YDGEOMETRY, YDCPG_DIM, YDCPG_MISC, YDCPG_GPAR, YDCPG_PHY0, YDCPG_PHY9, YDMF_PHYS,        &
+                  & YDCPG_DYN0, YDCPG_DYN9, YDMF_PHYS_SURF, YDCPG_SL1, YDCPG_SL2, YDVARS, YDMODEL, YDFIELDS, &
+                  & LDCONFX, PDTPHY, PGPSDT2D, PGFL, PGMVT1, PGFLT1, PTRAJ_PHYS, YDDDH)
+    ENDIF
   
   ENDIF
 
 ENDIF
 
-!     ------------------------------------------------------------------
+IF (CDCONF (3:3) == 'X') THEN
+    
+  IF (LMPHYS.OR.LSIMPH) THEN
+  
+    !*       4.4.2   Store phy. tends.
+    
+    IF (LPC_FULL.AND.(.NOT.LPC_CHEAP).AND.LSLAG) THEN
+    
+      CALL CP_PTRSLB1(YDDYN, YDPTRSLB1, ISLB1U9, ISLB1V9, ISLB1T9, ISLB1VD9, ISLB1GFL9)
+    
+  ! * currently valid only for SL2TL advection scheme.
+  !   Remarks KY:
+  !   - PC scheme with Eulerian scheme: physics is passed differently
+  !     from predictor to corrector step, and no call of CPG_PT_ULP is done.
+  !   - LPC_CHEAP: physics is passed differently from predictor to
+  !     corrector step (in LAPINEB), and no call of CPG_PT_ULP is done.
+  !   - pressure departure variable: its diabatic tendency is currently
+  !     assumed to be zero and it is ignored.
+  
+      CALL CPG_PT_ULP(YDGEOMETRY, YDFIELDS%YRGMV, YGFL, YDCPG_DIM%KIDIA, YDCPG_DIM%KFDIA, NCURRENT_ITER > 0, NFLSA,   &
+      & NFLEN, PTENDU=YDCPG_SL1%ZVIEW(:, ISLB1U9), PTENDV=YDCPG_SL1%ZVIEW(:, ISLB1V9), PTENDT=YDCPG_SL1%ZVIEW(:, ISLB1T9),  &
+      & PTENDVD=YDCPG_SL1%ZVIEW(:, ISLB1VD9), PTENDGFL=YDCPG_SL1%ZVIEW(:, ISLB1GFL9), PTENDSP=YDCPG_SL1%ZVIEW(:, MSLB1SP9), &
+      & PGFLPT=PGFLPT, PGFLT1=PGFLT1, PGFL=PGFL, PGMV=PGMV, PGMVS=PGMVS)
+    
+    ENDIF
+  
+  ENDIF
+  
+  !     ------------------------------------------------------------------
+  
+  !*       4.5    DIAGNOSTICS.
+  !*              - for dynamics, uses outputs of CPG_GP (MF and ECMWF).
+  !*              - for physics, uses outputs of MF_PHYS (MF only).
+  
+  IF (NCURRENT_ITER == 0) THEN
+    CALL CPG_DIA(YDGEOMETRY, YDCPG_DIM, YDCPG_TND, YDCPG_MISC, YDCPG_GPAR, YDMF_PHYS, YDCPG_DYN0, YDMF_PHYS_SURF,   &
+    & YDVARS, YDFIELDS%YRGMV, YDFIELDS%YRSURF, YDFIELDS%YRCFU, YDFIELDS%YRXFU, YDMODEL, YDCPG_DDH%DDHI, &
+    & LDCONFX, LDDIAB, LDFSTEP, LD_DFISTEP, PGMV, PGFL, YDCPG_SL2%ZVIEW(:, MSLB2VVEL), PSD_XA, &
+    & PSD_PF, PGMVTNDSI_DDH, PGMVTNDHD_DDH, PGFLTNDHD_DDH, YDCPG_DDH%DHCV, YDDDH, YDCPG_MISC%FTCNS)
+  ENDIF
+  
+  IF (LSLDIA .AND. (NCURRENT_ITER == NSITER)) THEN
+    ! * Calculate and print SL dynamics diagnostics.
+    CALL CPDYSLDIA(YDGEOMETRY, YDDPHY, YDMODEL%YRML_GCONF, NPROMA, LDFSTEP, YDCPG_DIM%KIDIA, YDCPG_DIM%KFDIA, &
+    & NFLEVG, YDCPG_DIM%KBL, YDVARS%SP%T0, YDCPG_DYN0%XYB%DELP, YDCPG_DYN0%PREF, YDVARS%T%T0, PGFL,           &
+    & PEXTRA)
+  ENDIF
+  
+  !     ------------------------------------------------------------------
+  
+  !*       5.    DYNAMICS.
+  !              ---------
+  
+  !*       5.1   Call dynamics.
+  
+  IF (YSD_VF%YLSM%LSET) THEN
+    YDCPG_MISC%LSM(YDCPG_DIM%KIDIA:YDCPG_DIM%KFDIA)=YDMF_PHYS_SURF%GSD_VF%PLSM(YDCPG_DIM%KIDIA:YDCPG_DIM%KFDIA)
+  ELSE
+    YDCPG_MISC%LSM(YDCPG_DIM%KIDIA:YDCPG_DIM%KFDIA)=0.0_JPRB
+  ENDIF
+  IF (YSP_RR%YT%LSET) THEN
+    YDCPG_MISC%TSOL(YDCPG_DIM%KIDIA:YDCPG_DIM%KFDIA)=YDMF_PHYS_SURF%GSP_RR%PT_T0(YDCPG_DIM%KIDIA:YDCPG_DIM%KFDIA)
+  ELSE
+    YDCPG_MISC%TSOL(YDCPG_DIM%KIDIA:YDCPG_DIM%KFDIA)=YDVARS%T%T0(YDCPG_DIM%KIDIA:YDCPG_DIM%KFDIA,NFLEVG)
+  ENDIF
+  
+  CALL CPG_DYN(YDGEOMETRY, YDCPG_DIM, YDCPG_TND, YDCPG_MISC, YDCPG_DYN0, YDCPG_DYN9, YDVARS, YDFIELDS%YRGMV, &
+  & YDMODEL, PBETADT, PDT, SLHDA(YDCPG_DIM%KSTGLO), SLHDD0(YDCPG_DIM%KSTGLO), PGFL, KSETTLOFF, PGFLPC,       &
+  & PGMV, PGMVS, YDCPG_SL1%ZVIEW, YDCPG_SL2%ZVIEW, PGMVT1, PGMVT1S, PGFLT1, PGMVTNDSI_DDH, PTRAJ_SLAG)
+  
+  IF (LDUSEPB1) THEN
+    CALL CPG_PB1 (YDCPG_DIM, YDMODEL, YDSL, PB1, YDCPG_SL1%ZVIEW)
+  ENDIF
+  
+  !     ------------------------------------------------------------------
+  
+  !*       6.    FINAL PART OF NON-LAGGED GRID-POINT COMPUTATIONS.
+  !              -------------------------------------------------
+  
+  CALL CPG_END(YDGEOMETRY, YDCPG_DIM, YDFIELDS%YRGMV, YDFIELDS%YRSURF, YDMODEL%YRML_PHY_EC%YREPHY, YDMODEL%YRML_GCONF, &
+  & YDDYN, YDMODEL%YRML_PHY_MF, LDCONFX, LDDIAB, GM(1), YDCPG_MISC%QS, YDMF_PHYS_SURF%GSP_RR%PT_T9,                    &
+  & PGFL, YDCPG_GPAR%ZVIEW, PGMV, PGMVS, PTRAJ_PHYS)
+  
+  !     ------------------------------------------------------------------
+  
+  !     ------------------------------------------------------------------
+  
+  !*       7.    DDH CLEANING.
+  !              -------------------------------------------------
+  
+  IF (LSDDH.AND.LFLEXDIA.AND.LDDH_OMP) THEN
+      CALL CLEANDDH(YDMODEL%YRML_DIAG%YRTDDH, YDDDH, YDCPG_DIM%KSTGLO, NCURRENT_ITER)
+  ENDIF
 
-!*       4.5    DIAGNOSTICS.
-!*              - for dynamics, uses outputs of CPG_GP (MF and ECMWF).
-!*              - for physics, uses outputs of MF_PHYS (MF only).
-
-IF (NCURRENT_ITER == 0) THEN
-  CALL CPG_DIA(YDGEOMETRY, YDCPG_DIM, YDCPG_TND, YDCPG_MISC, YDCPG_GPAR, YDMF_PHYS, YDCPG_DYN0, YDMF_PHYS_SURF,   &
-  & YDVARS, YDFIELDS%YRGMV, YDFIELDS%YRSURF, YDFIELDS%YRCFU, YDFIELDS%YRXFU, YDMODEL, YDCPG_DDH%DDHI, &
-  & LDCONFX, LDDIAB, LDFSTEP, LD_DFISTEP, PGMV, PGFL, YDCPG_SL2%ZVIEW(:, MSLB2VVEL), PSD_XA, &
-  & PSD_PF, PGMVTNDSI_DDH, PGMVTNDHD_DDH, PGFLTNDHD_DDH, YDCPG_DDH%DHCV, YDDDH, YDCPG_MISC%FTCNS)
-ENDIF
-
-IF (LSLDIA .AND. (NCURRENT_ITER == NSITER)) THEN
-  ! * Calculate and print SL dynamics diagnostics.
-  CALL CPDYSLDIA(YDGEOMETRY, YDDPHY, YDMODEL%YRML_GCONF, NPROMA, LDFSTEP, YDCPG_DIM%KIDIA, YDCPG_DIM%KFDIA, &
-  & NFLEVG, YDCPG_DIM%KBL, YDVARS%SP%T0, YDCPG_DYN0%XYB%DELP, YDCPG_DYN0%PREF, YDVARS%T%T0, PGFL,           &
-  & PEXTRA)
-ENDIF
-
-!     ------------------------------------------------------------------
-
-!*       5.    DYNAMICS.
-!              ---------
-
-!*       5.1   Call dynamics.
-
-IF (YSD_VF%YLSM%LSET) THEN
-  YDCPG_MISC%LSM(YDCPG_DIM%KIDIA:YDCPG_DIM%KFDIA)=YDMF_PHYS_SURF%GSD_VF%PLSM(YDCPG_DIM%KIDIA:YDCPG_DIM%KFDIA)
-ELSE
-  YDCPG_MISC%LSM(YDCPG_DIM%KIDIA:YDCPG_DIM%KFDIA)=0.0_JPRB
-ENDIF
-IF (YSP_RR%YT%LSET) THEN
-  YDCPG_MISC%TSOL(YDCPG_DIM%KIDIA:YDCPG_DIM%KFDIA)=YDMF_PHYS_SURF%GSP_RR%PT_T0(YDCPG_DIM%KIDIA:YDCPG_DIM%KFDIA)
-ELSE
-  YDCPG_MISC%TSOL(YDCPG_DIM%KIDIA:YDCPG_DIM%KFDIA)=YDVARS%T%T0(YDCPG_DIM%KIDIA:YDCPG_DIM%KFDIA,NFLEVG)
-ENDIF
-
-CALL CPG_DYN(YDGEOMETRY, YDCPG_DIM, YDCPG_TND, YDCPG_MISC, YDCPG_DYN0, YDCPG_DYN9, YDVARS, YDFIELDS%YRGMV, &
-& YDMODEL, PBETADT, PDT, SLHDA(YDCPG_DIM%KSTGLO), SLHDD0(YDCPG_DIM%KSTGLO), PGFL, KSETTLOFF, PGFLPC,       &
-& PGMV, PGMVS, YDCPG_SL1%ZVIEW, YDCPG_SL2%ZVIEW, PGMVT1, PGMVT1S, PGFLT1, PGMVTNDSI_DDH, PTRAJ_SLAG)
-
-IF (LDUSEPB1) THEN
-  CALL CPG_PB1 (YDCPG_DIM, YDMODEL, YDSL, PB1, YDCPG_SL1%ZVIEW)
-ENDIF
-
-!     ------------------------------------------------------------------
-
-!*       6.    FINAL PART OF NON-LAGGED GRID-POINT COMPUTATIONS.
-!              -------------------------------------------------
-
-CALL CPG_END(YDGEOMETRY, YDCPG_DIM, YDFIELDS%YRGMV, YDFIELDS%YRSURF, YDMODEL%YRML_PHY_EC%YREPHY, YDMODEL%YRML_GCONF, &
-& YDDYN, YDMODEL%YRML_PHY_MF, LDCONFX, LDDIAB, GM(1), YDCPG_MISC%QS, YDMF_PHYS_SURF%GSP_RR%PT_T9,                    &
-& PGFL, YDCPG_GPAR%ZVIEW, PGMV, PGMVS, PTRAJ_PHYS)
-
-!     ------------------------------------------------------------------
-
-!     ------------------------------------------------------------------
-
-!*       7.    DDH CLEANING.
-!              -------------------------------------------------
-
-IF (LSDDH.AND.LFLEXDIA.AND.LDDH_OMP) THEN
-    CALL CLEANDDH(YDMODEL%YRML_DIAG%YRTDDH, YDDDH, YDCPG_DIM%KSTGLO, NCURRENT_ITER)
 ENDIF
 
 !     ------------------------------------------------------------------

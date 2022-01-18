@@ -1335,6 +1335,20 @@ sub fxtran
       my $doc = 'XML::LibXML'->load_xml (location => $fh->filename . '.xml', @xopts);
       return $doc;
     }
+  elsif ($args{fragment})
+    {
+      use File::Temp;
+      my $fh = 'File::Temp'->new (SUFFIX => '.F90');
+      $fh->print ($args{fragment});
+      $fh->print ("END\n");
+      $fh->flush ();
+      system (qw (fxtran -construct-tag -no-include), @fopts, $fh->filename)
+        && die ($args{string});
+      my $doc = 'XML::LibXML'->load_xml (location => $fh->filename . '.xml', @xopts);
+      $doc = $doc->lastChild->firstChild;
+      $doc->lastChild->unbindNode ();
+      return $doc->childNodes ();
+    }
   elsif ($args{statement})
     {
       use File::Temp;

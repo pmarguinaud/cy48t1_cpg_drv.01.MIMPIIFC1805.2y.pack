@@ -87,6 +87,9 @@ while (my ($k, $v) = each (%decl))
   }
 
 
+%h = (%{ -f 'h.pl' ? do ('./h.pl') : {} }, %h);
+
+local $Data::Dumper::Terse = 1;
 
 'FileHandle'->new ('>h.pl')->print (&Dumper (\%h));
 

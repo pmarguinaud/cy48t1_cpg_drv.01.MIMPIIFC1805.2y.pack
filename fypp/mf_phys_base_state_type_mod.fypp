@@ -18,6 +18,11 @@ TYPE MF_PHYS_STATE_${name}$_TYPE
 #:set vars = defs[1]
 #:for var in vars
   REAL (KIND=JPRB), POINTER, CONTIGUOUS :: ${var}$ (${','.join ([':'] * ndim)}$) => NULL ()
+#:if ndim == 1
+!>REAL (KIND=JPRB)                      :: ${var}$ (NPROMA)
+#:else
+!>REAL (KIND=JPRB)                      :: ${var}$ (NPROMA, YDCPG_DIM%YRSURF%YSP_${name}$)
+#:endif
   TYPE (FIELD_${ndim+1}$D), POINTER :: F_${var}$ => NULL ()
 #:endfor
 END TYPE MF_PHYS_STATE_${name}$_TYPE
@@ -30,7 +35,9 @@ $:gsp_type (grp, grp_surf[grp])
 
 TYPE MF_PHYS_BASE_STATE_TYPE
   TYPE (CPG_DYN_TYPE), POINTER :: YCPG_DYN    => NULL ()
+!>TYPE (CPG_DYN_TYPE)          :: YCPG_DYN
   TYPE (CPG_PHY_TYPE), POINTER :: YCPG_PHY    => NULL ()
+!>TYPE (CPG_PHY_TYPE)          :: YCPG_PHY    
   REAL (KIND=JPRB), POINTER, CONTIGUOUS :: P1EXT  (:,:,:) => NULL ()
   REAL (KIND=JPRB), POINTER, CONTIGUOUS :: P1CHEM (:,:,:) => NULL ()
   REAL (KIND=JPRB), POINTER, CONTIGUOUS :: P1NOGW (:,:)   => NULL ()

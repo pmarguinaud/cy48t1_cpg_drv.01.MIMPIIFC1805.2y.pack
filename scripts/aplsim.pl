@@ -9,8 +9,8 @@ use List::MoreUtils qw (uniq);
 use lib $Bin;
 use Fxtran;
 
-my @obj = qw (YDMF_PHYS_BASE_STATE YDMF_PHYS_NEXT_STATE YDCPG_MISC 
-              YDCPG_PHY0 YDMF_PHYS YDCPG_DYN0 YDMF_PHYS_SURF YDVARS);
+my @obj = qw (YDMF_PHYS_BASE_STATE YDMF_PHYS_NEXT_STATE YDCPG_MISC YDCPG_PHY9
+              YDCPG_PHY0 YDMF_PHYS YDCPG_DYN9 YDCPG_DYN0 YDMF_PHYS_SURF YDVARS);
 
 sub parseDirectives
 {
@@ -27,7 +27,7 @@ sub parseDirectives
       my @node;
       for (my $node = $C->nextSibling; ; $node = $node->nextSibling)
         {
-          $node or die;
+          $node or die $C->textContent;
           if (($node->nodeName eq 'C') && (index ($node->textContent, '!=') == 0))
             {
               my $C = shift (@C);
@@ -56,6 +56,11 @@ sub parseDirectives
       $C->replaceNode ($e);
 
     }
+}
+
+sub serial
+{
+  shift;
 }
 
 sub parallel
@@ -123,6 +128,8 @@ sub addBlkDimensionToLocals
 {
   my $doc = shift;
 
+  my @skip = qw (PGFL PGFLT1 PGMVT1);
+  my %skip = map { ($_, 1) } @skip;
 
   # Prepare (:,:,JBLK) references
 
@@ -141,6 +148,7 @@ sub addBlkDimensionToLocals
 
       my ($name) = &F ('./EN-N', $en_decl, 1);
      
+      next if ($skip{$name});
 
       my @par = &F (
                     './/parallel-directive[.//named-E[string(N)="?"]]|'
@@ -251,6 +259,8 @@ sub callOpenMPRoutines
 
   for my $call (@call)
     {
+      next if (&F ('.//procedure-designator/named-E/R-LT', $call)); # Skip objects calling methods
+      my ($proc) = &F ('./procedure-designator/named-E/N/n/text()', $call);
 
       my $par = &n ('<parallel-call-directive/>');
       $call->replaceNode ($par);
@@ -270,7 +280,6 @@ sub callOpenMPRoutines
 FOUND:
       
 
-      my ($proc) = &F ('./procedure-designator/named-E/N/n/text()', $call);
       $proc{$proc->textContent} = 1;
       $proc->setData ($proc->textContent . $suf);
     }
@@ -304,7 +313,7 @@ sub cleanInterfaces
 sub cleanParallelDirectives
 {
   my $doc = shift;
-  my @par = &F ('.//parallel-directive|.//parallel-call-directive', $doc);
+  my @par = &F ('.//parallel-directive|.//parallel-call-directive|.//serial-directive', $doc);
   for my $par (@par)
     {
       for my $n ($par->childNodes ())
@@ -413,10 +422,27 @@ sub addOpenMPDirectives
       my @prv = sort keys (%prv);
 
 
-      print join ('|', @prv), "\n";
-      print &Dumper ([\@prv]);
-      print $do->textContent, "\n" x 2;
-      print "\n\n", '-' x 80, "\n\n";
+#     print join ('|', @prv), "\n";
+#     print &Dumper ([\@prv]);
+#     print $do->textContent, "\n" x 2;
+#     print "\n\n", '-' x 80, "\n\n";
+    }
+}
+
+sub removeUnusedArrays
+{
+  my $doc = shift;
+  my @en_decl = &F ('.//T-decl-stmt[not(.//attribute[string(.)="INTENT"])]//EN-decl[.//shape-spec[string(.)="YDCPG_DIM%KLON"]]', $doc);
+
+return;
+
+  for my $en_decl (@en_decl)
+    {
+      my ($var) = &F ('./EN-N', $en_decl, 1);
+      my @expr = &F ('.//named-E[string(N)="?"]', $var, $doc);
+      next if (@expr);
+      my $stmt = &Fxtran::stmt ($en_decl);
+      $stmt->unbindNode ();
     }
 }
 
@@ -445,6 +471,8 @@ my $doc = &Fxtran::fxtran (location => $F90, fopts => [qw (-line-length 300)]);
 &reduceVariableScope ($doc);
 
 &cleanParallelDirectives ($doc);
+
+&removeUnusedArrays ($doc);
 
 $F90 =~ s/.F90$/_openmp.F90/o;
 

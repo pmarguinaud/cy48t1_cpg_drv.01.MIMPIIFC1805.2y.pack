@@ -59,7 +59,7 @@ TYPE(MF_PHYS_SURF_TYPE),        INTENT(INOUT) :: YDMF_PHYS_SURF
 TYPE(FIELD_VARIABLES),          INTENT(INOUT) :: YDVARS
 TYPE(MODEL),                    INTENT(INOUT) :: YDMODEL
 REAL(KIND=JPRB),                INTENT(IN)    :: PDTPHY 
-TYPE (TRAJ_PHYS_TYPE),          INTENT(INOUT) :: PTRAJ_PHYS
+TYPE (TRAJ_PHYS_TYPE),          INTENT(INOUT), OPTIONAL :: PTRAJ_PHYS
 
 !     ------------------------------------------------------------------
 INTEGER(KIND=JPIM) :: IFIELDSS

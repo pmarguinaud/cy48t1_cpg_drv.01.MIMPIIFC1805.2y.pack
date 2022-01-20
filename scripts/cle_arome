@@ -31,9 +31,7 @@
    LRNUEXP= FALSE
    LTWOTL= TRUE
    CMICRO=='ICE3'
-   LDXFUMSE=T au premier passage dans apl_arome uniquement, après, c'est F
    LHARATU=F
-   LFPREC3D=T en oper sur le reseau de prod uniquement, sinon F
    LKFBCONV=F
    LMICRO=T
    LTURB=T

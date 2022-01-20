@@ -5,7 +5,7 @@ use FindBin qw ($Bin);
 use Data::Dumper;
 use FileHandle;
 use File::Basename;
-use List::MoreUtils qw (uniq);
+use List::MoreUtils qw (uniq all);
 use lib $Bin;
 use Fxtran;
 
@@ -201,7 +201,11 @@ sub addBlkDimensionToObjects
 
   my @par = &F ('.//parallel-directive/do-construct', $doc);
 
-  my %lobj;
+  my $h = do ('./h.pl');
+
+  my %decl;
+
+  my %ptr;
 
   for my $par (@par)
     {
@@ -213,52 +217,122 @@ sub addBlkDimensionToObjects
 
       for my $obj (@obj)
         {
+
           my @expr = &F ('.//named-E[string(N)="?"]', $obj, $par);
           next unless (@expr);
          
-          (my $lobj = $obj) =~ s/^YD/YL/o;
+          my ($typ) = &F ('.//T-decl-stmt[.//EN-decl[string(EN-N)="?"]]/_T-spec_/derived-T-spec/T-N', $obj, $doc, 1);
 
-          $par->insertAfter (&Fxtran::fxtran (statement => "CALL $lobj%UPDATE_VIEW (JBLK)"), $do);
-          $par->insertAfter (&t ("\n" . (' ' x ($indent +2))), $do);
-
-          $par->insertAfter (&Fxtran::fxtran (statement => "$lobj = $obj"), $do);
-          $par->insertAfter (&t ("\n" . (' ' x ($indent +2))), $do) for (1 .. 2);
-
-          @expr = &F ('.//named-E/N/n[string(.)="?"]/text()', $obj, $par);
-          shift (@expr); # Skip first expression (YL = YD)
+          my %p;
 
           for my $expr (@expr)
             {
-              $expr->setData ($lobj);
+              my ($name) = &F ('./N/n/text()', $expr); 
+              my @ct = &F ('./R-LT/component-R/ct', $expr, 1);
+              my $e = $expr->cloneNode (1);
+              my @r = &F ('./R-LT/component-R', $expr);
+              $_->unbindNode for (@r);
+              my $ptr = join ('_', 'Z', $obj, @ct);
+              $name->setData ($ptr);
+              $p{$ptr} = {ctl => \@ct};
             }
 
-         $lobj{$obj} = $lobj;
+          for my $ptr (sort keys (%p))
+            {
+              $ptr{$ptr} = $p{$ptr};
+
+              my $ctl = $ptr{$ptr}{ctl};
+              my $key = join ('%', $typ, @$ctl);
+              $ptr{$ptr}{key} = $key;
+
+              my $decl;
+              unless ($decl = $decl{$key}) 
+                {
+                  ($decl = $h->{$key}) or die "$key";
+                  $decl{$key} = $decl = &Fxtran::fxtran (statement => $decl);
+                }
+
+              my @ss = &F ('.//shape-spec', $decl);
+              my @lb;
+              for my $ss (@ss)
+                {
+                  my ($lb) = &F ('./lower-bound', $ss);
+                  push @lb, $lb ? $lb->textContent : '1';
+                }
+
+              
+              my $stmt;
+
+              my @ctl = @$ctl;
+
+              if ($ctl[-1] =~ m/^(?:T[019]|(?:DM|DL)[019]?)$/o)
+                {
+                  $ctl[-1] = 'F' . $ctl[-1]; 
+                }
+              elsif ($obj eq 'YDMF_PHYS_SURF') 
+                {
+                  if ($ctl[-1] =~ m/^P(\w+)_T[019]$/o)
+                    {
+                      $ctl[-1] =~ s/^P/F_/o;
+                    }
+                  else
+                    {
+                      $ctl[-1] =~ s/^P/F_/o;
+                    }
+                }
+              else
+                {
+                  $ctl[-1] = 'F_' . $ctl[-1]; 
+                }
+
+              my $p = join ('%', $obj, @ctl);
+              my $d = (all { $_ eq '1' } @lb) ? '' : "(" . join (',', map { "$_:" } @lb) . ")";
+              $stmt = &Fxtran::fxtran (statement => "IF (ASSOCIATED ($p)) $ptr $d => $p%GET_VIEW (JBLK)", fopts => [qw (-line-length 300)]);
+
+              $par->insertAfter ($stmt, $do);
+              $par->insertAfter (&t ("\n" . (' ' x ($indent +2))), $do);
+            }
+
+          
 
        }
     }
- 
-  for my $obj (@obj)
+
+  my %dim;
+
+  for my $ptr (sort keys (%ptr))
     {
-      next unless (my $lobj = $lobj{$obj});
-
-      my ($decl) = &F ('.//T-decl-stmt[.//EN-N[string(.)="?"]]', $obj, $doc);
-      $decl = $decl->cloneNode (1);
-
-      for (&F ('.//attribute', $decl))
-        {
-          $_->unbindNode ();
-        }
-   
+      my $key = $ptr{$ptr}{key};
+      my $decl = $decl{$key}->cloneNode (1);
       my ($ts) = &F ('./_T-spec_', $decl);
-      while ($ts->nextSibling->textContent !~ m/::/o)
+
+      my @ss = &F ('.//shape-spec', $decl);
+      my ($name) = &F ('.//EN-N/N/n/text()', $decl);
+ 
+      $name->setData ($ptr);
+ 
+      for my $ss (@ss)
         {
-          $ts->nextSibling->unbindNode ();
+          $ss->replaceNode (&n ('<shape-spec>:</shape-spec>'));
         }
-      my ($n) = &F ('.//EN-N/N/n/text()', $decl); 
-      $n->setData ($lobj);
-   
+
+      for my $attr (qw (POINTER CONTIGUOUS))
+        {
+          $decl->insertAfter (&n ("<attribute><attribute-N>$attr</attribute-N></attribute>"), $ts);
+          $decl->insertAfter (&t (', '), $ts);
+        }
+      
       &addVariable ($doc, $decl);
-   
+
+      &addInit ($doc, "$ptr => ZDUM" . scalar (@ss));
+
+      $dim{scalar (@ss)} = 1;
+
+    }
+
+  for my $dim (sort keys (%dim))
+    {
+      &addVariable ($doc, "REAL (KIND=JPRB), SAVE, TARGET :: ZDUM$dim (" . join (',', ('1') x $dim) . ")");
     }
 
 }
@@ -365,23 +439,35 @@ sub cleanParallelDirectives
     }
 }
 
-sub addVariable
+sub addInit
 {
   my ($doc, $decl) = @_;
+  
+  my ($drhook_call) = &F ('.//call-stmt[string(.//procedure-designator)="DR_HOOK"]', $doc);
+
+  my $stmt = ref ($decl) ? $decl : &Fxtran::fxtran (statement => $decl);
+  
+  $drhook_call->parentNode->insertAfter ($stmt, $drhook_call);
+  $drhook_call->parentNode->insertAfter (&t ("\n"), $drhook_call);
+}
+
+sub addVariable
+{
+  my ($doc, $decl, $cr) = @_;
   my ($zhook_decl) = &F ('.//T-decl-stmt[string(.//EN-N)="ZHOOK_HANDLE"]', $doc);
 
   my $stmt = ref ($decl) ? $decl : &Fxtran::fxtran (statement => $decl);
 
   $zhook_decl->parentNode->insertBefore ($stmt, $zhook_decl);
   $zhook_decl->parentNode->insertBefore (&t ("\n"), $zhook_decl);
-  $zhook_decl->parentNode->insertBefore (&t ("\n"), $zhook_decl);
+  $zhook_decl->parentNode->insertBefore (&t ("\n"), $zhook_decl) if ($cr);
 }
 
 sub addVariables
 {
   my $doc = shift;
-  &addVariable ($doc, 'INTEGER(KIND=JPIM) :: JBLK');
-  &addVariable ($doc, 'TYPE(CPG_DIM_TYPE) :: YLCPG_DIM');
+  &addVariable ($doc, 'INTEGER(KIND=JPIM) :: JBLK', 1);
+  &addVariable ($doc, 'TYPE(CPG_DIM_TYPE) :: YLCPG_DIM', 1);
 }
 
 sub reduceVariableScope
@@ -521,9 +607,8 @@ my $doc = &Fxtran::fxtran (location => $F90, fopts => [qw (-line-length 300)]);
 
 &removeUnusedArrays ($doc);
 
+
 $F90 =~ s/.F90$/_openmp.F90/o;
 
 'FileHandle'->new (">$F90")->print ($doc->textContent);
 
-    
-    

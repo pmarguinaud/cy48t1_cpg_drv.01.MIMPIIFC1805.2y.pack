@@ -33,7 +33,7 @@ TYPE MF_PHYS_NEXT_STATE_TYPE
   #:if v.array
   #:elif v.dim == 3
   REAL (KIND=JPRB), POINTER, CONTIGUOUS :: ${v.name}$ (${', '.join ([':'] * (v.dim-1))}$) => NULL ()
-!>REAL (KIND=JPRB), POINTER, CONTIGUOUS :: ${v.name}$ (NPROMA,YDCPG_DIM%VARS%${v.name}$%ILEVT1I:YDCPG_DIM%VARS%${v.name}$%ILEVT1F)
+!>REAL (KIND=JPRB)                      :: ${v.name}$ (NPROMA,YDCPG_DIM%VARS%${v.name}$%ILEVT1I:YDCPG_DIM%VARS%${v.name}$%ILEVT1F)
   TYPE (FIELD_3D), POINTER :: F_${v.name}$ => NULL ()
   #:endif
 #:endfor

@@ -201,6 +201,8 @@ sub addBlkDimensionToObjects
 
   my @par = &F ('.//parallel-directive/do-construct', $doc);
 
+  my %lobj;
+
   for my $par (@par)
     {
       my ($do) = $par->firstChild;
@@ -214,10 +216,49 @@ sub addBlkDimensionToObjects
           my @expr = &F ('.//named-E[string(N)="?"]', $obj, $par);
           next unless (@expr);
          
-          $par->insertAfter (&Fxtran::fxtran (statement => "CALL $obj%UPDATE_VIEW (JBLK)"), $do);
+          (my $lobj = $obj) =~ s/^YD/YL/o;
+
+          $par->insertAfter (&Fxtran::fxtran (statement => "CALL $lobj%UPDATE_VIEW (JBLK)"), $do);
           $par->insertAfter (&t ("\n" . (' ' x ($indent +2))), $do);
 
+          $par->insertAfter (&Fxtran::fxtran (statement => "$lobj = $obj"), $do);
+          $par->insertAfter (&t ("\n" . (' ' x ($indent +2))), $do) for (1 .. 2);
+
+          @expr = &F ('.//named-E/N/n[string(.)="?"]/text()', $obj, $par);
+          shift (@expr); # Skip first expression (YL = YD)
+
+          for my $expr (@expr)
+            {
+              $expr->setData ($lobj);
+            }
+
+         $lobj{$obj} = $lobj;
+
+       }
+    }
+ 
+  for my $obj (@obj)
+    {
+      next unless (my $lobj = $lobj{$obj});
+
+      my ($decl) = &F ('.//T-decl-stmt[.//EN-N[string(.)="?"]]', $obj, $doc);
+      $decl = $decl->cloneNode (1);
+
+      for (&F ('.//attribute', $decl))
+        {
+          $_->unbindNode ();
         }
+   
+      my ($ts) = &F ('./_T-spec_', $decl);
+      while ($ts->nextSibling->textContent !~ m/::/o)
+        {
+          $ts->nextSibling->unbindNode ();
+        }
+      my ($n) = &F ('.//EN-N/N/n/text()', $decl); 
+      $n->setData ($lobj);
+   
+      &addVariable ($doc, $decl);
+   
     }
 
 }
@@ -324,17 +365,23 @@ sub cleanParallelDirectives
     }
 }
 
+sub addVariable
+{
+  my ($doc, $decl) = @_;
+  my ($zhook_decl) = &F ('.//T-decl-stmt[string(.//EN-N)="ZHOOK_HANDLE"]', $doc);
+
+  my $stmt = ref ($decl) ? $decl : &Fxtran::fxtran (statement => $decl);
+
+  $zhook_decl->parentNode->insertBefore ($stmt, $zhook_decl);
+  $zhook_decl->parentNode->insertBefore (&t ("\n"), $zhook_decl);
+  $zhook_decl->parentNode->insertBefore (&t ("\n"), $zhook_decl);
+}
+
 sub addVariables
 {
   my $doc = shift;
-  my ($zhook_decl) = &F ('.//T-decl-stmt[string(.//EN-N)="ZHOOK_HANDLE"]', $doc);
-  for my $decl ('INTEGER(KIND=JPIM) :: JBLK', 'TYPE(CPG_DIM_TYPE) :: YLCPG_DIM')
-    {
-      my $stmt = &Fxtran::fxtran (statement => $decl);
-      $zhook_decl->parentNode->insertBefore ($stmt, $zhook_decl);
-      $zhook_decl->parentNode->insertBefore (&t ("\n"), $zhook_decl);
-    }
-  $zhook_decl->parentNode->insertBefore (&t ("\n"), $zhook_decl);
+  &addVariable ($doc, 'INTEGER(KIND=JPIM) :: JBLK');
+  &addVariable ($doc, 'TYPE(CPG_DIM_TYPE) :: YLCPG_DIM');
 }
 
 sub reduceVariableScope

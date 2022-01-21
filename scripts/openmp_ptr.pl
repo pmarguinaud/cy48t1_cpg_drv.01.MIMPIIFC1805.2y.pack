@@ -203,6 +203,8 @@ sub addBlkDimensionToObjects
 
   my $h = do ('./h.pl');
 
+  my $H = 'XML::LibXML'->load_xml (location => 'h.xml');
+
   my %decl;
 
   my %ptr;
@@ -248,8 +250,8 @@ sub addBlkDimensionToObjects
               my $decl;
               unless ($decl = $decl{$key}) 
                 {
-                  ($decl = $h->{$key}) or die "$key";
-                  $decl{$key} = $decl = &Fxtran::fxtran (statement => $decl);
+                  ($decl) = &F ('./list/decl[@key="?"]/T-decl-stmt', $key, $H); 
+                  $decl{$key} = $decl;
                 }
 
               my @ss = &F ('.//shape-spec', $decl);

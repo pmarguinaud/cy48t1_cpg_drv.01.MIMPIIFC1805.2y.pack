@@ -132,12 +132,18 @@ sub walk
     }
 }
 
+my %P;
+
 sub preprocess
 {
   my $p = 'XML::XPath::Parser'->new ();
-  my $x = $p->parse ($_[0]);
-  &walk ($x);
-  return $x->as_string;
+  unless ($P{$_[0]})
+    {
+      my $x = $p->parse ($_[0]);
+      &walk ($x);
+      $P{$_[0]} = $x->as_string;
+    }
+  return $P{$_[0]};
 }
 
 
@@ -1317,6 +1323,10 @@ sub save_to_file
   'FileHandle'->new (">$file")->print ($data);
 } 
 
+use lib "/home/phi001/fxtran/master/perl/blib/lib"; 
+use lib "/home/phi001/fxtran/master/perl/blib/arch/auto/fxtran";
+use fxtran;
+
 sub fxtran
 {
   my %args = @_;
@@ -1337,52 +1347,41 @@ sub fxtran
     }
   elsif ($args{fragment})
     {
-      use File::Temp;
-      my $fh = 'File::Temp'->new (SUFFIX => '.F90');
-      $fh->print ($args{fragment});
-      $fh->print ("END\n");
-      $fh->flush ();
-      system (qw (fxtran -construct-tag -no-include), @fopts, $fh->filename)
-        && die ($args{string});
-      my $doc = 'XML::LibXML'->load_xml (location => $fh->filename . '.xml', @xopts);
+      chomp (my $fragment = $args{fragment});
+      my $program = << "EOF";
+$fragment
+END
+EOF
+      my $xml = &fxtran::run ('-construct-tag', '-no-include', @fopts, $program);
+      my $doc = 'XML::LibXML'->load_xml (string => $xml, @xopts);
       $doc = $doc->lastChild->firstChild;
-      $doc->lastChild->unbindNode ();
-      return $doc->childNodes ();
+
+      $doc->lastChild->unbindNode () for (1 .. 2);
+      my @c = $doc->childNodes ();
+
+      return @c;
     }
   elsif ($args{statement})
     {
-      use File::Temp;
-      my $fh = 'File::Temp'->new (SUFFIX => '.F90');
-      $fh->print ("PROGRAM MAIN\n");
-      $fh->print ($args{statement});
-      $fh->print ("\n") unless ($args{statement} =~ m/\n$/goms);
-      $fh->print ("END PROGRAM MAIN\n");
-      $fh->flush ();
-      system (qw (fxtran -construct-tag -no-include), @fopts, $fh->filename)
-        && die ($args{statement});
-      my $doc = 'XML::LibXML'->load_xml (location => $fh->filename . '.xml', @xopts);
-      my @n = &f ('.//f:program-unit/f:*', $doc);
-      pop (@n);
-      shift (@n);
-      return $n[0];
+      my $program = << "EOF";
+$args{statement}
+END 
+EOF
+      my $xml = &fxtran::run ('-line-length', 300, $program);
+      my $doc = 'XML::LibXML'->load_xml (string => $xml, @xopts);
+      my $n = $doc->documentElement->firstChild->firstChild;
+      return $n;
     }
   elsif ($args{expr})
     {
-      use File::Temp;
-      my $fh = 'File::Temp'->new (SUFFIX => '.F90');
-      $fh->print ("PROGRAM MAIN\n");
-      $fh->print ("X = $args{expr}\n");
-      $fh->print ("END PROGRAM MAIN\n");
-      $fh->flush ();
-      system (qw (fxtran -construct-tag -no-include), @fopts, $fh->filename)
-        && die ($args{statement});
-      my $doc = 'XML::LibXML'->load_xml (location => $fh->filename . '.xml', @xopts);
-      my @n = &f ('.//f:program-unit/f:*', $doc);
-      pop (@n);
-      shift (@n);
-      my ($stmt) = @n;
-      my ($expr) = &f ('.//f:E-2/f:*', $stmt);
-      return $expr;
+      my $program = << "EOF";
+$args{expr} = X
+END
+EOF
+      my $xml = &fxtran::run ('-line-length', 300, $program);
+      my $doc = 'XML::LibXML'->load_xml (string => $xml, @xopts);
+      my $n = $doc->documentElement->firstChild->firstChild->firstChild->firstChild;
+      return $n;
     }
   elsif (my $f = $args{location})
     {

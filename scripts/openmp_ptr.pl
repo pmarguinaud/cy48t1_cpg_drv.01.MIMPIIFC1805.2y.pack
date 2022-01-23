@@ -142,6 +142,8 @@ sub addBlkDimensionToLocals
       $ref[$i] = $r;
     }
   
+  my $ngpblks = '<named-E><N><n>YDCPG_DIM</n></N><R-LT><component-R>%<ct>KGPBLKS</ct></component-R></R-LT></named-E>';
+
   for my $en_decl (&F ('.//EN-decl[./array-spec/shape-spec-LT/shape-spec[string(.)="YDCPG_DIM%KLON"]]', $doc))
     {
       my $decl = &Fxtran::stmt ($en_decl);
@@ -160,7 +162,6 @@ sub addBlkDimensionToLocals
       next if ((! $intent) && scalar (@par) < 2);
 
       my ($ssl) = &F ('./array-spec/shape-spec-LT', $en_decl);
-      my ($ngpblks) = &Fxtran::fxtran (expr => 'YDCPG_DIM%KGPBLKS');
       $ssl->appendChild (&t (','));
       $ssl->appendChild (&n ('<shape-spec><upper-bound>' . $ngpblks . '</upper-bound></shape-spec>'));
   
@@ -208,6 +209,9 @@ sub addBlkDimensionToObjects
   my %decl;
 
   my %ptr;
+
+
+  my $if_assoc = &Fxtran::fxtran (statement => "IF (ASSOCIATED (FLD)) PTR => FLD%GET_VIEW (JBLK)");
 
   for my $par (@par)
     {
@@ -289,6 +293,7 @@ sub addBlkDimensionToObjects
 
               my $p = join ('%', $obj, @ctl);
               my $d = (all { $_ eq '1' } @lb) ? '' : "(" . join (',', map { "$_:" } @lb) . ")";
+
               $stmt = &Fxtran::fxtran (statement => "IF (ASSOCIATED ($p)) $ptr $d => $p%GET_VIEW (JBLK)", fopts => [qw (-line-length 300)]);
 
               $par->insertAfter ($stmt, $do);
@@ -301,6 +306,9 @@ sub addBlkDimensionToObjects
     }
 
   my %dim;
+
+  my @init;
+  my @vars;
 
   for my $ptr (sort keys (%ptr))
     {
@@ -324,19 +332,22 @@ sub addBlkDimensionToObjects
           $decl->insertAfter (&t (', '), $ts);
         }
       
-      &addVariable ($doc, $decl);
+      push @vars, $decl;
 
-      &addInit ($doc, "$ptr => ZDUM" . scalar (@ss));
+      push @init, "$ptr => ZDUM" . scalar (@ss);
 
       $dim{scalar (@ss)} = 1;
 
     }
 
+  &addInit ($doc, @init);
+
   for my $dim (sort keys (%dim))
     {
-      &addVariable ($doc, "REAL (KIND=JPRB), SAVE, TARGET :: ZDUM$dim (" . join (',', ('1') x $dim) . ")");
+      push @vars, "REAL (KIND=JPRB), SAVE, TARGET :: ZDUM$dim (" . join (',', ('1') x $dim) . ")";
     }
 
+  &addVariable ($doc, 0, @vars);
 }
 
 sub renameSubroutine
@@ -443,33 +454,38 @@ sub cleanParallelDirectives
 
 sub addInit
 {
-  my ($doc, $decl) = @_;
+  my ($doc, @decl) = @_;
   
   my ($drhook_call) = &F ('.//call-stmt[string(.//procedure-designator)="DR_HOOK"]', $doc);
 
-  my $stmt = ref ($decl) ? $decl : &Fxtran::fxtran (statement => $decl);
-  
-  $drhook_call->parentNode->insertAfter ($stmt, $drhook_call);
-  $drhook_call->parentNode->insertAfter (&t ("\n"), $drhook_call);
+  for my $decl (@decl)
+    {
+      my $stmt = ref ($decl) ? $decl : &Fxtran::fxtran (statement => $decl);
+      $drhook_call->parentNode->insertAfter ($stmt, $drhook_call);
+      $drhook_call->parentNode->insertAfter (&t ("\n"), $drhook_call);
+    }
 }
 
 sub addVariable
 {
-  my ($doc, $decl, $cr) = @_;
+  my ($doc, $cr, @decl) = @_;
   my ($zhook_decl) = &F ('.//T-decl-stmt[string(.//EN-N)="ZHOOK_HANDLE"]', $doc);
 
-  my $stmt = ref ($decl) ? $decl : &Fxtran::fxtran (statement => $decl);
-
-  $zhook_decl->parentNode->insertBefore ($stmt, $zhook_decl);
-  $zhook_decl->parentNode->insertBefore (&t ("\n"), $zhook_decl);
-  $zhook_decl->parentNode->insertBefore (&t ("\n"), $zhook_decl) if ($cr);
+  for my $decl (@decl)
+    {
+      my $stmt = ref ($decl) ? $decl : &Fxtran::fxtran (statement => $decl);
+      $zhook_decl->parentNode->insertBefore ($stmt, $zhook_decl);
+      $zhook_decl->parentNode->insertBefore (&t ("\n"), $zhook_decl);
+      $zhook_decl->parentNode->insertBefore (&t ("\n"), $zhook_decl) if ($cr);
+     }
 }
 
 sub addVariables
 {
   my $doc = shift;
-  &addVariable ($doc, 'INTEGER(KIND=JPIM) :: JBLK', 1);
-  &addVariable ($doc, 'TYPE(CPG_DIM_TYPE) :: YLCPG_DIM', 1);
+  &addVariable ($doc, 1, 
+                'INTEGER(KIND=JPIM) :: JBLK',
+                'TYPE(CPG_DIM_TYPE) :: YLCPG_DIM');
 }
 
 sub reduceVariableScope
@@ -523,6 +539,7 @@ sub reduceVariableScope
 
 sub addOpenMPDirectives
 {
+  return;
   my $doc = shift;
   my @do = &F ('.//parallel-directive/do-construct', $doc);
   

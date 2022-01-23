@@ -210,8 +210,13 @@ sub addBlkDimensionToObjects
 
   my %ptr;
 
+  my %typ;
 
-  my $if_assoc = &Fxtran::fxtran (statement => "IF (ASSOCIATED (FLD)) PTR => FLD%GET_VIEW (JBLK)");
+  for my $obj (@obj)
+    {
+      my ($typ) = &F ('.//T-decl-stmt[.//EN-decl[string(EN-N)="?"]]/_T-spec_/derived-T-spec/T-N', $obj, $doc, 1);
+      $typ{$obj} = $typ;
+    }
 
   for my $par (@par)
     {
@@ -219,15 +224,12 @@ sub addBlkDimensionToObjects
 
       my $indent = &Fxtran::getIndent ($do);
 
-      my @o;
-
       for my $obj (@obj)
         {
-
           my @expr = &F ('.//named-E[string(N)="?"]', $obj, $par);
           next unless (@expr);
          
-          my ($typ) = &F ('.//T-decl-stmt[.//EN-decl[string(EN-N)="?"]]/_T-spec_/derived-T-spec/T-N', $obj, $doc, 1);
+          my $typ = $typ{$obj};
 
           my %p;
 
@@ -258,7 +260,7 @@ sub addBlkDimensionToObjects
                   $decl{$key} = $decl;
                 }
 
-              my @ss = &F ('.//shape-spec', $decl);
+              my @ss = &F ('./EN-decl/array-spec/shape-spec-LT/shape-spec', $decl);
               my @lb;
               for my $ss (@ss)
                 {

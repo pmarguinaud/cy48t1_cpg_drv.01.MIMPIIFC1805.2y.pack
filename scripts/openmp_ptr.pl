@@ -204,8 +204,6 @@ sub addBlkDimensionToObjects
 
   my $h = do ('./h.pl');
 
-  my $H = 'XML::LibXML'->load_xml (location => 'h.xml');
-
   my %decl;
 
   my %ptr;
@@ -256,7 +254,7 @@ sub addBlkDimensionToObjects
               my $decl;
               unless ($decl = $decl{$key}) 
                 {
-                  ($decl) = &F ('./list/decl[@key="?"]/T-decl-stmt', $key, $H); 
+                  ($decl) = &Fxtran::fxtran (statement => $h->{$key});
                   $decl{$key} = $decl;
                 }
 
@@ -493,21 +491,23 @@ sub addVariables
 sub reduceVariableScope
 {
   my $doc = shift;
-  my @en_decl = &F ('.//T-decl-stmt[not(string(.//attribute-N)="INTENT")]//EN-decl'
-                  . '[.//shape-spec[string(.)="YDCPG_DIM%KGPBLKS"]]'
-                  , $doc);
-  
+  my @en_decl = &F ('.//T-decl-stmt[not(string(./attribute/attribute-N)="INTENT")]//EN-decl', $doc);
+
   for my $en_decl (@en_decl)
     {
-      my ($name) = &F ('./EN-N', $en_decl, 1);
+      my @ss = &F ('./array-spec/shape-spec-LT/shape-spec', $en_decl);
+      my @SS = map { $_->textContent } @ss;
 
+      next unless (@SS && ($SS[-1] eq 'YDCPG_DIM%KGPBLKS'));
+
+      my ($name) = &F ('./EN-N', $en_decl, 1);
       my ($stmt) = &Fxtran::stmt ($en_decl);
-      my @ss = &F ('.//shape-spec', $en_decl);
+
+
       my ($ts) = &F ('./_T-spec_', $stmt);
       $stmt->insertAfter (&n ('<attribute><attribute-N>ALLOCATABLE</attribute-N></attribute>'), $ts);
       $stmt->insertAfter (&t (', '), $ts);
 
-      my @SS = map { $_->textContent } @ss;
 
       for my $ss (@ss)
         {
@@ -586,15 +586,14 @@ sub addOpenMPDirectives
 sub removeUnusedArrays
 {
   my $doc = shift;
-  my @en_decl = &F ('.//T-decl-stmt[not(.//attribute[string(.)="INTENT"])]//EN-decl[.//shape-spec[string(.)="YDCPG_DIM%KLON"]]', $doc);
+  my @en_decl = &F ('.//T-decl-stmt[not(.//attribute[string(.)="INTENT"])]//EN-decl', $doc);
 
-return;
-
+  my @expr = &F ('.//named-E/N', $doc, 1);
   for my $en_decl (@en_decl)
     {
+      next unless (&F ('.//shape-spec[string(.)="YDCPG_DIM%KLON"]', $en_decl));
       my ($var) = &F ('./EN-N', $en_decl, 1);
-      my @expr = &F ('.//named-E[string(N)="?"]', $var, $doc);
-      next if (@expr);
+      next if (grep { $var eq $_ } @expr);
       my $stmt = &Fxtran::stmt ($en_decl);
       $stmt->unbindNode ();
     }

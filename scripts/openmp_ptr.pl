@@ -258,7 +258,7 @@ sub addBlkDimensionToObjects
                   $decl{$key} = $decl;
                 }
 
-              my @ss = &F ('./EN-decl/array-spec/shape-spec-LT/shape-spec', $decl);
+              my @ss = &F ('./EN-decl-LT/EN-decl/array-spec/shape-spec-LT/shape-spec', $decl);
               my @lb;
               for my $ss (@ss)
                 {
@@ -541,8 +541,6 @@ sub reduceVariableScope
 
 sub addOpenMPDirectives
 {
-  return;
-
   my $doc = shift;
 
   my @en_decl = &F ('.//EN-decl', $doc);

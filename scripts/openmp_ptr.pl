@@ -542,20 +542,37 @@ sub reduceVariableScope
 sub addOpenMPDirectives
 {
   return;
+
   my $doc = shift;
+
+  my @en_decl = &F ('.//EN-decl', $doc);
+
+  my %var2en_decl;
+  my %var2decl;
+
+  for my $en_decl (@en_decl)
+    {
+      my ($var) = &F ('./EN-N', $en_decl, 1);
+      $var2en_decl{$var} = $en_decl;
+      $var2decl{$var} = &Fxtran::stmt ($en_decl);
+    }
+
   my @do = &F ('.//parallel-directive/do-construct', $doc);
   
   my %obj = map { ($_, 1) } @obj;
 
   for my $do (@do)
     {
+      my $par = $do->parentNode;
+      my $indent = &Fxtran::getIndent ($par);
+
       my @var = &uniq (&F ('.//named-E/N', $do, 1));
 
       my %prv;
 
       for my $var (@var)
         {
-          my ($decl) = &F ('.//T-decl-stmt[.//EN-decl[string(EN-N)="?"]]', $var, $doc);
+          my $decl = $var2decl{$var};
           next unless ($decl);
 
           my ($arg) = &F ('.//attribute-N[string(.)="INTENT"]', $decl);
@@ -564,7 +581,7 @@ sub addOpenMPDirectives
           my ($lon) = $dim && &F ('.//shape-spec[string(.)="YDCPG_DIM%KLON"]', $dim);
           next if ($arg || $blk);
 
-          my ($stmt) = &F ('.//a-stmt[./E-1/named-E[string(N)="?"]]', $var, $do);
+          my ($stmt) = &F ('.//a-stmt[./E-1/named-E[string(N)="?"]]|.//pointer-a-stmt[./E-1/named-E[string(N)="?"]]', $var, $var, $do);
           my ($loop) = &F ('.//do-V/named-E[string(N)="?"]', $var, $do);
 
           next unless ($stmt || $loop || $lon);
@@ -575,24 +592,42 @@ sub addOpenMPDirectives
 
       my @prv = sort keys (%prv);
 
+      my $C = &n ('<C>!$OMP PARALLEL DO PRIVATE ( &amp;</C>');
+      $par->insertBefore ($C, $do);
+      $par->insertBefore (&n ("\n"), $do);
+      $par->insertBefore (&t (' ' x $indent), $do);
 
-#     print join ('|', @prv), "\n";
-#     print &Dumper ([\@prv]);
-#     print $do->textContent, "\n" x 2;
-#     print "\n\n", '-' x 80, "\n\n";
+      my ($l, @p) = (0);
+      while (my $p = shift (@prv))
+        {
+          push @p, $p;
+          $l += length ($p);
+          if (($l > 80) || (scalar (@prv) == 0))
+            {
+              my $C = &n ('<C>!$OMP &amp; ' . join (', ', @p, (@prv ? ('') : ())) . (@prv ? ' &amp; ' : ')') . ' </C>');
+              $par->insertBefore ($C, $do);
+              $par->insertBefore (&n ("\n"), $do);
+              $par->insertBefore (&t (' ' x $indent), $do);
+              $l = 0;
+              @p = ();
+            }
+        }
+
     }
+
+
 }
 
 sub removeUnusedArrays
 {
   my $doc = shift;
-  my @en_decl = &F ('.//T-decl-stmt[not(.//attribute[string(.)="INTENT"])]//EN-decl', $doc);
+  my @en_decl = &F ('.//T-decl-stmt[not(.//attribute-N[string(.)="INTENT"])]//EN-decl', $doc);
 
   my @expr = &F ('.//named-E/N', $doc, 1);
   for my $en_decl (@en_decl)
     {
-      next unless (&F ('.//shape-spec[string(.)="YDCPG_DIM%KLON"]', $en_decl));
       my ($var) = &F ('./EN-N', $en_decl, 1);
+      next unless (&F ('.//shape-spec[string(.)="YDCPG_DIM%KLON"]', $en_decl));
       next if (grep { $var eq $_ } @expr);
       my $stmt = &Fxtran::stmt ($en_decl);
       $stmt->unbindNode ();

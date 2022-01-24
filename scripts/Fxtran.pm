@@ -1323,8 +1323,8 @@ sub save_to_file
   'FileHandle'->new (">$file")->print ($data);
 } 
 
-use lib "/home/phi001/fxtran/master/perl/blib/lib"; 
-use lib "/home/phi001/fxtran/master/perl/blib/arch/auto/fxtran";
+use lib "/home/gmap/mrpm/marguina/fxtran/master/perl/blib/lib"; 
+use lib "/home/gmap/mrpm/marguina/fxtran/master/perl/blib/arch/auto/fxtran";
 use fxtran;
 
 sub fxtran
@@ -1398,7 +1398,7 @@ EOF
       my $doc = 'XML::LibXML'->load_xml (location => $xml, @xopts);
       return $doc;
     }
-  die;
+  die "@_";
 }
 
 sub add_used_vars

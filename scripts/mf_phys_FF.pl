@@ -39,7 +39,8 @@ for my $call (&F ('.//call-stmt[string(procedure-designator)="?"]', $name, $d1))
 #       next unless ($actual =~ m/^(?:YDCFU|YDCSGEOM|YDGSGEOM|YDOROG)%/goms);
 #       next unless ($actual =~ m/^(?:YLMF_PHYS_BASE_STATE)/goms);
 #       next unless ($actual =~ m/^(?:YDCPG_DYN|YDCPG_PHY|YDVARS)/goms);
-        next unless ($actual =~ m/^(?:YDCPG_DIM|YDMF_PHYS|YDCPG_MISC)/goms);
+#       next unless ($actual =~ m/^(?:YDCPG_DIM|YDMF_PHYS|YDCPG_MISC)/goms);
+        next unless ($actual =~ m/^(?:YDVARS)/goms);
         $actual =~ s/^YL/YD/o;
         $d2a{$dummy[$i]->textContent} = $actual;
         if ($actual[$i]->parentNode->nextSibling)

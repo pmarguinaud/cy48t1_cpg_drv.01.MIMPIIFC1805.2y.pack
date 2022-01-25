@@ -57,7 +57,7 @@ TYPE(MF_PHYS_TYPE),             INTENT(INOUT) :: YDMF_PHYS
 TYPE(CPG_DYN_TYPE),             INTENT(INOUT) :: YDCPG_DYN0
 TYPE(MF_PHYS_SURF_TYPE),        INTENT(INOUT) :: YDMF_PHYS_SURF
 TYPE(FIELD_VARIABLES),          INTENT(INOUT) :: YDVARS
-TYPE(MODEL),                    INTENT(INout) :: YDMODEL
+TYPE(MODEL),                    INTENT(IN)    :: YDMODEL
 REAL(KIND=JPRB),                INTENT(IN)    :: PDTPHY 
 TYPE (TRAJ_PHYS_TYPE),          INTENT(INOUT), OPTIONAL :: PTRAJ_PHYS
 
@@ -208,8 +208,6 @@ ENDIF
 !        3.2  Simplified physics.
 !             -------------------
 
-TSPHY = MAX(PDTPHY,1.0_JPRB)
-
 !=PARALLEL
 
 CALL APLPASSH (YDMODEL, YDCPG_DIM%KIDIA, YDCPG_DIM%KFDIA, YDCPG_DIM%KLON, YDCPG_DIM%KFLEVG,     &
@@ -263,8 +261,6 @@ ENDIF
 
 !        3.4  Computation of tendencies T,u,v and Q.
 !             --------------------------------------
-
-TSPHY = MAX(PDTPHY,1.0_JPRB)
 
 !=PARALLEL
 CALL CPTENDSM (YDPHY, YDCPG_DIM%KLON, YDCPG_DIM%KIDIA, YDCPG_DIM%KFDIA, YDCPG_DIM%KFLEVG, YDMF_PHYS%OUT%DIFCQ,          &

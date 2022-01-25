@@ -1226,8 +1226,6 @@ CALL APLPAR_INIT ( YGFL, YDCPG_DIM%KIDIA, YDCPG_DIM%KFDIA, YDCPG_DIM%KLON, YDCPG
 ! impossibility to take into account fluxes which are infinite for TSPHY=0
 ! (e.g.: mass flux due to oversaturation...).
 
-TSPHY = MAX(PDTPHY,1.0_JPRB)
-
 ! CALL PARAMETERISATIONS
 
 DO JROF=YDCPG_DIM%KIDIA,YDCPG_DIM%KFDIA

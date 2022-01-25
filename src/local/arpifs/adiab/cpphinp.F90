@@ -44,10 +44,11 @@ SUBROUTINE CPPHINP(YDGEOMETRY,YDMODEL,KST,KEND,&
 !      2011-05-10 E. Bazile: PMU0M=PMU0 for NRADFR=1
 !     ------------------------------------------------------------------
 
-USE TYPE_MODEL   , ONLY : MODEL
-USE GEOMETRY_MOD , ONLY : GEOMETRY
 USE PARKIND1 , ONLY : JPIM, JPRB
 USE YOMHOOK  , ONLY : LHOOK, DR_HOOK
+USE TYPE_MODEL   , ONLY : MODEL
+USE GEOMETRY_MOD , ONLY : GEOMETRY
+
 USE YOMCVER  , ONLY : LVERTFE
 
 !     ------------------------------------------------------------------

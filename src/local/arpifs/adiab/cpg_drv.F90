@@ -327,7 +327,7 @@ REAL(KIND=JPRB)    :: ZHOOK_HANDLE
 #include "cpg.intfb.h"
 #include "open_output_lfa.intfb.h"
 #include "monio_t.intfb.h"
-#include "mf_phys_openmp.intfb.h"
+!include "mf_phys_openmp.intfb.h"
 
 !     ------------------------------------------------------------------
 
@@ -598,9 +598,9 @@ DO ILPART = 1, INPART
 
   IF (INPART == 3 .AND. ILPART == 2 .AND.  YDMODEL%YRML_PHY_MF%YRSIMPHL%LSIMPH) THEN
 
-    CALL MF_PHYS_OPENMP (YDGEOMETRY, YLCPG_DIM, YLCPG_MISC, YLCPG_GPAR, YLCPG_PHY0, YLCPG_PHY9,  &
-      & YLMF_PHYS, YLCPG_DYN0, YLCPG_DYN9, YLMF_PHYS_SURF, YLCPG_SL1, YLCPG_SL2, YDVARS, YDMODEL, &
-      & YDFIELDS, LLCONFX, ZDTPHY)
+!   CALL MF_PHYS_OPENMP (YDGEOMETRY, YLCPG_DIM, YLCPG_MISC, YLCPG_GPAR, YLCPG_PHY0, YLCPG_PHY9,  &
+!     & YLMF_PHYS, YLCPG_DYN0, YLCPG_DYN9, YLMF_PHYS_SURF, YLCPG_SL1, YLCPG_SL2, YDVARS, YDMODEL, &
+!     & YDFIELDS, LLCONFX, ZDTPHY)
 
   ELSE
 

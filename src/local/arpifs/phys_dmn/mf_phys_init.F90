@@ -352,6 +352,8 @@ IF (LHOOK) CALL DR_HOOK('MF_PHYS_INIT',0,ZHOOK_HANDLE)
 
 ZEPS0=1.E-12_JPRB
 
+!=PARALLEL
+
 YDMF_PHYS%OUT%DIFCQ  (:,:) = 0.0_JPRB
 YDMF_PHYS%OUT%DIFCQN (:,:) = 0.0_JPRB
 YDMF_PHYS%OUT%DIFCQL (:,:) = 0.0_JPRB
@@ -481,6 +483,8 @@ YDMF_PHYS%OUT%FRTHC(:,:) = 0.0_JPRB
 YDMF_PHYS%OUT%FCHSP(:,:) = 0.0_JPRB
 
 YDMF_PHYS%OUT%MOCON(:)=0.0_JPRB
+
+!=END PARALLEL
 
 !     ------------------------------------------------------------------
 

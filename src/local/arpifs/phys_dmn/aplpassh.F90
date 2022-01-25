@@ -1,0 +1,192 @@
+!OPTIONS XOPT(NOEVAL)
+! -------------------------------------------------------------
+SUBROUTINE APLPASSH (YDMODEL,KIDIA,KFDIA,KLON,KLEV,&
+ ! -------------------------------------------------------------
+ ! - INPUT 
+ & PAPRS, PQ,&
+ & PSNS, PTS, PWS, PLSM, PVEG, &
+ ! - OUTPUT
+ & PQS)  
+
+!**** *APLPASSH* - COMPUTATION OF SURFACE SPECIFIC HUMIDITY
+
+!    Subject.
+!    --------
+!    - COMPUTATION OF SURFACE SPECIFIC HUMIDITY FOR SIMPLIFIED
+!      PHYSICAL PARAMETRIZATION
+
+!**  Interface.
+!    ----------
+!     *CALL APLPASSH*
+
+! --------------------------------------------------------------
+
+! -   INPUT ARGUMENTS.
+!     ----------------
+
+! - DIMENSIONAL PARAMETERS.
+
+! KIDIA,KFDIA : START/END OF HORIZONTAL LOOP (IST, IEND IN *CPG*).
+! KLON  : HORIZONTAL DIMENSION               (NPROMA IN *CPG*).
+
+! - THE NAMES OF THE PHYSICAL VARIABLES.
+
+! - 2D (0:KLEV)
+
+! PAPRS    : PRESSURE ON HALF-LEVELS.
+
+! - 2D (1:KLEV)
+
+! PQ       : SPECIFIC HUMIDITY OF WATER VAPOUR.
+
+! - 1D (PROGNOSTIC QUANTITIES).
+
+! PSNS       : MASS OF SNOW PER UNIT SURFACE.
+! PTS        : SURFACE LAYER TEMPERATURE.
+! PWS        : SURFACE LAYER WATER CONTENT.
+
+! - 1D (GEOGRAPHICAL DISTRIBUTION) .
+
+! PLSM       : LAND/SEA MASK.
+! PVEG       : FRACTIONAL COVER BY VEGETATION.
+
+!-----------------------------------------------------------------------
+
+! -  OUTPUT ARGUMENTS.
+!    -----------------
+
+! - 1D
+
+! PQS        : SURFACE SPECIFIC HUMIDITY
+
+!-----------------------------------------------------------------------
+
+! -   IMPLICIT ARGUMENTS.
+!     ---------------------
+
+! COMMON/YOMLUN /: UNITE NULOUT.
+! COMMON/YOMCST /: UNIVERSAL CONSTANTS.
+! COMDECK/FCTTRM/: THERMODYNAMICAL FUNCTIONS.
+! COMMON/YOMPHY /: LOGICAL INDICATORS.
+! COMMON/YOMPHY0, YOMPHY1, YOMPHY2, YOMPHY3/:
+!       PHYSICAL CONSTANTS   (USED WITHIN METEO-FRANCE PHYSICS)
+!       ( TEMPORARILY DIMENSIONLESS VERTICAL COORDINATE /YOMGEM/).
+
+!-----------------------------------------------------------------------
+
+!     Externes.
+!     ---------
+
+!     Methode.
+!     --------
+!     - SATURATION CALCULATION WITH CALL TO DEFINED FUNCTIONS.
+!     - COMPUTATIONS CONCERNING SURFACE HUMIDITY
+
+!     Author.
+!     -------
+!     96-01-18  - M. Janiskova
+
+!     Modifications.
+!     --------------
+!        M.Hamrud      01-Oct-2003 CY28 Cleaning
+
+!-----------------------------------------------------------------------
+
+USE PARKIND1  ,ONLY : JPIM     ,JPRB
+USE YOMHOOK   ,ONLY : LHOOK,   DR_HOOK
+USE TYPE_MODEL,ONLY : MODEL
+
+USE YOMCST   , ONLY : RPI      ,RV       ,RCPV     ,RETV     ,&
+ & RCW      ,RCS      ,RLVTT    ,RLSTT    ,RTT      ,&
+ & RALPW    ,RBETW    ,RGAMW    ,RALPS    ,RBETS    ,&
+ & RGAMS    ,RALPD    ,RBETD    ,RGAMD  
+
+IMPLICIT NONE
+
+TYPE(MODEL),       INTENT(IN)    :: YDMODEL
+INTEGER(KIND=JPIM),INTENT(IN)    :: KLON 
+INTEGER(KIND=JPIM),INTENT(IN)    :: KLEV 
+INTEGER(KIND=JPIM),INTENT(IN)    :: KIDIA 
+INTEGER(KIND=JPIM),INTENT(IN)    :: KFDIA 
+REAL(KIND=JPRB)   ,INTENT(IN)    :: PAPRS(KLON,0:KLEV) 
+REAL(KIND=JPRB)   ,INTENT(IN)    :: PQ(KLON,KLEV) 
+REAL(KIND=JPRB)   ,INTENT(IN)    :: PSNS(KLON) 
+REAL(KIND=JPRB)   ,INTENT(IN)    :: PTS(KLON) 
+REAL(KIND=JPRB)   ,INTENT(IN)    :: PWS(KLON) 
+REAL(KIND=JPRB)   ,INTENT(IN)    :: PLSM(KLON) 
+REAL(KIND=JPRB)   ,INTENT(IN)    :: PVEG(KLON) 
+REAL(KIND=JPRB)   ,INTENT(OUT)   :: PQS(KLON) 
+!     ------------------------------------------------------------------
+
+!*
+!     ------------------------------------------------------------------
+!     DECLARATION OF THE ARGUMENTS
+
+! - TEMPORARY 1D FIELD
+
+! ZDELT     : ONE FOR SATURATION CALCULATION FOR ICE, ZERO OTHERWISE.
+! ZESP      : SATURATION WATER VAPOUR PRESSURE OVER PRESSURE.
+! ZQSATS    : SPECIFIC HUMIDITY OF SATURATION AT THE SURFACE.
+! ZWSMX     : MAXIMUM CONTENT OF THE SURFACE RESERVOIR.
+
+REAL(KIND=JPRB) :: ZNEIJ(KLON), ZDELT(KLON), ZESP(KLON), ZQSATS(KLON),&
+ & ZHU(KLON) , ZHQ(KLON)  , ZWSMX(KLON)  
+
+INTEGER(KIND=JPIM) :: JLON
+
+REAL(KIND=JPRB) :: ZDEW, ZEW
+REAL(KIND=JPRB) :: ZHOOK_HANDLE
+
+!     ------------------------------------------------------------------
+#include "fcttrm.func.h"
+
+!     -------------------------------------------------------------------
+!      - COMPUTATION OF SURFACE SPECIFIC HUMIDITY
+!     -------------------------------------------------------------------
+IF (LHOOK) CALL DR_HOOK('APLPASSH',0,ZHOOK_HANDLE)
+ASSOCIATE(WCRIN=>YDMODEL%YRML_PHY_MF%YRPHY1%WCRIN, WSMX=>YDMODEL%YRML_PHY_MF%YRPHY1%WSMX, &
+ & LNEIGE=>YDMODEL%YRML_PHY_MF%YRPHY%LNEIGE)
+!DEC$ IVDEP
+DO JLON=KIDIA,KFDIA
+
+!     SETTING TO A CONSTANT VALUE THE MAXIMUM CONTENT OF THE
+!     SURFACE WATER RESERVOIR (HYPER-SIMPLIFIED SOIL PHYSICS).
+
+  ZWSMX(JLON)=WSMX
+
+!     COMPUTATIONS CONCERNING THE PRESENCE OR ABSENCE OF SNOW ON GROUND.
+
+  IF (LNEIGE) THEN
+    ZDELT(JLON)=MAX(0.0_JPRB,SIGN(1.0_JPRB,RTT-PTS(JLON)))
+    ZNEIJ(JLON)=PLSM(JLON)*PSNS(JLON)/(PSNS(JLON)+WCRIN)
+  ELSE
+    ZDELT(JLON)=0.0_JPRB
+    ZNEIJ(JLON)=0.0_JPRB
+  ENDIF
+
+!     SATURATION CALCULATION WITH CALL TO DEFINED FUNCTIONS.
+
+  ZEW= FOEW (PTS(JLON),ZDELT(JLON))
+  ZESP(JLON)=ZEW/PAPRS(JLON,KLEV)
+
+  ZQSATS(JLON)= FOQS (ZESP(JLON))
+
+!     COMPUTATIONS CONCERNING SURFACE HUMIDITY.
+
+  ZHU(JLON)=1.0_JPRB+PLSM(JLON)*(1.0_JPRB-ZNEIJ(JLON))*(0.5_JPRB*(1.0_JPRB-COS(RPI&
+   & *PWS(JLON)/ZWSMX(JLON)))-1.0_JPRB)  
+  ZHQ(JLON)=(1.0_JPRB-ZHU(JLON))*PVEG(JLON)
+
+  ZDEW=MAX(0.0_JPRB,SIGN(1.0_JPRB,PQ(JLON,KLEV)-ZQSATS(JLON)))
+
+  ZHU(JLON)=ZHU(JLON)+ZDEW*ZHQ(JLON)
+  ZHQ(JLON)=ZHQ(JLON)-ZDEW*ZHQ(JLON)
+  PQS(JLON)=ZHU(JLON)*ZQSATS(JLON)+ZHQ(JLON)*PQ(JLON,KLEV)
+
+ENDDO
+
+!*
+END ASSOCIATE
+IF (LHOOK) CALL DR_HOOK('APLPASSH',1,ZHOOK_HANDLE)
+END SUBROUTINE APLPASSH
+

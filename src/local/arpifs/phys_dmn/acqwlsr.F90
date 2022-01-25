@@ -1,0 +1,335 @@
+!OPTIONS XOPT(NOEVAL)
+SUBROUTINE ACQWLSR ( YDML_PHY_MF,KIDIA,KFDIA,KLON,KTDIA,KLEV,&
+ !-----------------------------------------------------------------------
+ ! - INPUT  2D .
+ & PQ,PT,PAPRSF,PDELP,&
+ ! - OUTPUT 2D .
+ & PFPLSL,PFPLSN)
+
+!**** *ACQWLSR * - COMPUTATION OF WET-BULB CHARACTERISTICS AND LSR.
+
+!     Subject.
+!     --------
+!     - COMPUTATION OF SATURATION POINT AND WET-BULB CHARACTERISTICS .
+!     - COMPUTATION OF STRATIFORM PRECIPITATION FLUXES
+!              (WATER AND SNOW) .
+
+!**   Interface.
+!     ----------
+!        *CALL* *ACQWLSR*
+
+!-----------------------------------------------------------------------
+
+! -   ARGUMENTS FOR INPUT
+!     -------------------
+
+! - DIMENSIONAL PARAMETERS OF PHYSICS.
+
+! KIDIA      : START OF HORIZONTAL LOOP (IST in CPG).
+! KFDIA      : END OF HORIZONTAL LOOP (IEND in CPG).
+! KLON       : HORIZONTAL DIMENSION.
+! KTDIA      : START OF THE VERTICAL LOOP IN THE PHYSICS (1 IN GENERAL).
+! KLEV       : END OF VERTICAL LOOP AND VERTICAL DIMENSION (NFLEVG in CPG).
+
+! - NOM DES VARIABLES DE LA PHYSIQUE (PAR ORDRE ALPHABETIQUE DANS CHAQUE
+!   CATEGORIE).
+
+! - 2D (1:KLEV) .
+
+! PAPRSF     : PRESSURE ON FULL LEVELS.
+! PQ         : SPECIFIC HUMIDITY OF WATER VAPOR.
+! PT         : TEMPERATURE.
+! PDELP      : LAYER THICKNESS IN PRESSURE UNITS.
+
+!-----------------------------------------------------------------------
+
+! -   ARGUMENTS FOR OUTPUT.
+!     ---------------------
+
+! - 2D (0:KLEV) .
+
+! PFPLSL     : STRATIFORM PRECIPITATION AS RAIN.
+! PFPLSN     : STRATIFORM PRECIPITATION AS SNOW.
+
+!-----------------------------------------------------------------------
+
+! -   IMPLICIT ARGUMENTS.
+!     ---------------------
+
+!-----------------------------------------------------------------------
+
+!     Externals.
+!     ----------
+
+!     Method.
+!     -------
+
+!     Author.
+!     -------
+!      95-05, M.Janiskova.
+
+!     Modifications.
+!     --------------
+!      03-06, move rnlcurv rnegat into yomphy0 (F. Bouyssel, C. Fischer)
+!      M.Hamrud      01-Oct-2003 CY28 Cleaning
+!      K. Yessad (Jul 2009): remove CDLOCK + some cleanings
+!-----------------------------------------------------------------------
+
+USE MODEL_PHYSICS_MF_MOD , ONLY : MODEL_PHYSICS_MF_TYPE
+USE PARKIND1  ,ONLY : JPIM     ,JPRB
+USE YOMHOOK   ,ONLY : LHOOK,   DR_HOOK
+
+USE YOMCST   , ONLY : RG       ,RV       ,RCPD     ,RCPV     ,&
+ & RETV     ,RCW      ,RCS      ,RLVTT    ,RLSTT    ,&
+ & RTT      ,RALPW    ,RBETW    ,RGAMW    ,RALPS    ,&
+ & RBETS    ,RGAMS    ,RALPD    ,RBETD    ,RGAMD  
+
+!-----------------------------------------------------------------------
+
+IMPLICIT NONE
+
+TYPE(MODEL_PHYSICS_MF_TYPE),INTENT(IN):: YDML_PHY_MF
+INTEGER(KIND=JPIM),INTENT(IN)    :: KLON 
+INTEGER(KIND=JPIM),INTENT(IN)    :: KLEV 
+INTEGER(KIND=JPIM),INTENT(IN)    :: KIDIA 
+INTEGER(KIND=JPIM),INTENT(IN)    :: KFDIA 
+INTEGER(KIND=JPIM),INTENT(IN)    :: KTDIA 
+REAL(KIND=JPRB)   ,INTENT(IN)    :: PQ(KLON,KLEV) 
+REAL(KIND=JPRB)   ,INTENT(IN)    :: PT(KLON,KLEV) 
+REAL(KIND=JPRB)   ,INTENT(IN)    :: PAPRSF(KLON,KLEV) 
+REAL(KIND=JPRB)   ,INTENT(IN)    :: PDELP(KLON,KLEV) 
+REAL(KIND=JPRB)   ,INTENT(OUT)   :: PFPLSL(KLON,0:KLEV) 
+REAL(KIND=JPRB)   ,INTENT(OUT)   :: PFPLSN(KLON,0:KLEV) 
+
+!-----------------------------------------------------------------------
+
+REAL(KIND=JPRB) :: ZCP(KLON),ZZLH(KLON),ZQWI(KLON)&
+ & ,ZLH(KLON,KLEV),ZQSAT(KLON,KLEV)&
+ & ,ZPQW(KLON,KLEV),ZTW(KLON,KLEV)  
+REAL(KIND=JPRB) :: ZPOID(KLON,KLEV),ZDQ(KLON),ZFPT(KLON,KLEV)
+
+INTEGER(KIND=JPIM) :: JIT, JLEV, JLON
+
+REAL(KIND=JPRB) :: ZABS, ZCPVMS, ZCPVMW, ZDCP, ZDELQ, ZDELT,&
+ & ZDELTA, ZDQW, ZESP, ZEW, ZGDTI, ZLOG2COSH, &
+ & ZNLMINQ, ZQ, ZQW  
+REAL(KIND=JPRB) :: ZHOOK_HANDLE
+
+!-----------------------------------------------------------------------
+
+#include "fcttrm.func.h"
+
+!-----------------------------------------------------------------------
+IF (LHOOK) CALL DR_HOOK('ACQWLSR',0,ZHOOK_HANDLE)
+ASSOCIATE(RNEGAT=>YDML_PHY_MF%YRPHY0%RNEGAT, RNLCURV=>YDML_PHY_MF%YRPHY0%RNLCURV, &
+ & TSPHY=>YDML_PHY_MF%YRPHY2%TSPHY, &
+ & LSMOOTHB=>YDML_PHY_MF%YRSIMPHL%LSMOOTHB, LSMOOTHD=>YDML_PHY_MF%YRSIMPHL%LSMOOTHD, &
+ & NBITER=>YDML_PHY_MF%YRPHY%NBITER, LNEIGE=>YDML_PHY_MF%YRPHY%LNEIGE)
+!-----------------------------------------------------------------------
+
+!*
+!     ------------------------------------------------------------------
+!     I - AUXILIARY CONSTANTS.
+
+ZCPVMW=RCPV-RCW
+ZCPVMS=RCPV-RCS
+
+!*
+!     ------------------------------------------------------------------
+!     II - PASSIVE LOOP ON VERTICAL LEVELS.
+
+DO JLEV=KTDIA,KLEV
+
+!*
+!     ------------------------------------------------------------------
+!     III - COMPUTATION OF THE LOCAL ATMOSPHERIC LATENT HEAT.
+
+  DO JLON=KIDIA,KFDIA
+
+!     SNOW OPTION DEPENDENT COMPUTATIONS.
+
+    IF (LNEIGE) THEN
+      ZDELTA=MAX(0.0_JPRB,SIGN(1.0_JPRB,RTT-PT(JLON,JLEV)))
+    ELSE
+      ZDELTA=0.0_JPRB
+    ENDIF
+
+!     CALL TO THE DEFINED FUNCTION TO COMPUTE LH.
+
+    ZLH(JLON,JLEV)= FOLH (PT(JLON,JLEV),ZDELTA)
+
+  ENDDO
+
+!*
+!     ------------------------------------------------------------------
+!     IV - INITIALIZATION OF THE VARIABLES IN THE NEWTON LOOP, THE
+!     TEMPORARY CP AND LH VALUES HAVING TO EVOLVE AT THE SAME TIME AS
+!     THE ITERATIVE TW AND QW.
+
+! - TEMPORARY 1D .
+
+! ZCP       : CURRENT VALUE OF ATMOSPHERIC CP DURING THE "NBITER" LOOP.
+! ZZLH     : AS ZCP BUT FOR THE LATENT HEAT.
+
+  DO JLON=KIDIA,KFDIA
+    ZPQW(JLON,JLEV)=PQ(JLON,JLEV)
+    ZCP(JLON)=RCPD*(1.0_JPRB-PQ(JLON,JLEV))+RCPV*PQ(JLON,JLEV)
+    ZTW(JLON,JLEV)=PT(JLON,JLEV)
+    ZZLH(JLON)=ZLH(JLON,JLEV)
+  ENDDO
+
+!*
+!     ------------------------------------------------------------------
+!     V - NEWTON LOOP FOR THE "WET BULB" POINT.
+
+  DO JIT=1,NBITER
+    DO JLON=KIDIA,KFDIA
+
+!     SNOW OPTION DEPENDENT COMPUTATIONS.
+
+      IF (LNEIGE) THEN
+        ZDELTA=MAX(0.0_JPRB,SIGN(1.0_JPRB,RTT-ZTW(JLON,JLEV)))
+      ELSE
+        ZDELTA=0.0_JPRB
+      ENDIF
+
+!     SATURATION CALCULATIONS USING THE DEFINED FUNCTIONS AND TEMPORARY
+!     STORAGE OF QSAT(TW).
+
+! - TEMPORARY 1D .
+
+! ZQWI      : CURRENT VALUE OF ZQW TO BE REUSED AS QSAT AT JIT=1.
+
+      ZEW= FOEW (ZTW(JLON,JLEV),ZDELTA)
+      ZESP=ZEW/PAPRSF(JLON,JLEV)
+      ZQW= FOQS (ZESP)
+      ZDQW= FODQS (ZQW,ZESP, FODLEW (ZTW(JLON,JLEV),ZDELTA))
+      ZQWI(JLON)=ZQW
+
+!     INCREMENTATIONS.
+
+      ZDCP=ZCPVMW+ZDELTA*(ZCPVMS-ZCPVMW)
+      ZDELQ=(ZQW-ZPQW(JLON,JLEV))*ZCP(JLON)/(ZCP(JLON)+ZZLH(JLON)*ZDQW)
+      ZCP(JLON)=ZCP(JLON)+ZDCP*ZDELQ
+      ZDELT=-ZDELQ*ZZLH(JLON)/ZCP(JLON)
+      ZZLH(JLON)=ZZLH(JLON)+ZDCP*ZDELT
+      ZPQW(JLON,JLEV)=ZPQW(JLON,JLEV)+ZDELQ
+      ZTW(JLON,JLEV)=ZTW(JLON,JLEV)+ZDELT
+    ENDDO
+
+!     SAVING THE SATURATION HUMIDITY AFTER THE FIRST ITERATION.
+
+    IF (JIT == 1) THEN
+      DO JLON=KIDIA,KFDIA
+        ZQSAT(JLON,JLEV)=ZQWI(JLON)
+      ENDDO
+    ENDIF
+
+  ENDDO
+
+!*
+!     ------------------------------------------------------------------
+
+!     VI - END OF THE VERTICAL LOOP.
+
+ENDDO
+
+!*
+!     ------------------------------------------------------------------
+!     VII - COMPUTATION OF DERIVED PARAMETERS
+!           (FOR THE PRECIPITATION FLUXES).
+
+ZGDTI=1.0_JPRB/(RG*TSPHY)
+
+!*
+!     ------------------------------------------------------------------
+
+!     VIII - INITIALIZATION OF THE FIELDS OF PRECIPITATION.
+
+! - TEMPORARY 2D .
+
+! ZFPT      : TOTAL PRECIPITATION FLUX AT THE LAYER.
+
+DO JLON=KIDIA,KFDIA
+  PFPLSL(JLON,KTDIA-1)=0.0_JPRB
+  PFPLSN(JLON,KTDIA-1)=0.0_JPRB
+  ZFPT(JLON,KTDIA)=0.0_JPRB
+ENDDO
+
+!*
+!     ------------------------------------------------------------------
+!     IX - EFFECTIVE CALCULATIONS IN A VERTICAL LOOP WHERE THE
+!     INFORMATION IS PASSED FROM LAYER TO LAYER.
+
+DO JLEV=KTDIA,KLEV
+
+!     PRELIMINARY COMPUTATIONS ("WET BULB" CORRECTION FOR Q AND INVERSE
+!     OF THE PRESSURE AT BOUNDARIES, THE LAYER'S PRESSURE THICKNESS
+!     DIVIDED BY G*DT FOR ALL LEVELS)  AND PROVISIONAL FLUX
+
+! - TEMPORARY 1D .
+
+! ZDQ        : CORRECTION OF Q TO REACH THE SATURATION BALANCE.
+
+! - TEMPORARY 2D (1:KLEV) .
+
+! ZPOID      : DP/(RG*DT) FOR A GIVEN LEVEL AND A GIVEN TIME STEP.
+
+  DO JLON=KIDIA,KFDIA
+    IF (JLEV == KTDIA) THEN
+      ZFPT(JLON,JLEV)=0.0_JPRB
+    ELSE
+      ZPOID(JLON,JLEV)=PDELP(JLON,JLEV)*ZGDTI
+      ZDQ(JLON)=ZPQW(JLON,JLEV)-PQ(JLON,JLEV)
+      IF (LSMOOTHB) THEN
+        ZFPT(JLON,JLEV)=ZFPT(JLON,JLEV-1)+&
+         & MAX(0.0_JPRB,-ZPOID(JLON,JLEV)*ZDQ(JLON))  
+      ELSE
+        ZFPT(JLON,JLEV)=&
+         & MAX(0.0_JPRB,ZFPT(JLON,JLEV-1)-ZPOID(JLON,JLEV)*ZDQ(JLON))  
+      ENDIF
+    ENDIF
+  ENDDO
+ENDDO
+
+DO JLEV=KTDIA,KLEV
+!DEC$ IVDEP
+  DO JLON=KIDIA,KFDIA
+
+!     SOME SMOOTHING IF IT IS REQUIRED (FOR TL AND AD VERSION)
+
+    IF (LSMOOTHD) THEN
+      IF (ZFPT(JLON,JLEV) > 0.0_JPRB)THEN
+        ZNLMINQ=0.0_JPRB
+
+        ZFPT(JLON,JLEV)=RNEGAT+ZFPT(JLON,JLEV)
+        ZQ=RNLCURV*(ZFPT(JLON,JLEV)-ZNLMINQ)
+        IF (ZQ > 17._JPRB) THEN
+          ZFPT(JLON,JLEV)=ZFPT(JLON,JLEV)
+        ELSEIF (ZQ < -17._JPRB) THEN
+          ZFPT(JLON,JLEV)=ZNLMINQ
+        ELSE
+          ZABS=ABS(ZQ)
+          ZLOG2COSH=ZABS+LOG(1.0_JPRB+EXP(-ZABS-ZABS))
+          ZFPT(JLON,JLEV)=0.5_JPRB*(ZLOG2COSH/RNLCURV+ZFPT(JLON,JLEV)+ZNLMINQ)
+        ENDIF
+      ENDIF
+    ENDIF
+
+!     SWAP AT THE END OF THE LAYER'S COMPUTATIONS AND FLUX VALUES.
+
+    IF (PT(JLON,JLEV) > RTT) THEN
+      PFPLSL(JLON,JLEV)=ZFPT(JLON,JLEV)
+      PFPLSN(JLON,JLEV)=0.0_JPRB
+    ELSE
+      PFPLSL(JLON,JLEV)=0.0_JPRB
+      PFPLSN(JLON,JLEV)=ZFPT(JLON,JLEV)
+    ENDIF
+
+  ENDDO
+ENDDO
+
+!-----------------------------------------------------------------------
+END ASSOCIATE
+IF (LHOOK) CALL DR_HOOK('ACQWLSR',1,ZHOOK_HANDLE)
+END SUBROUTINE ACQWLSR

@@ -1030,7 +1030,6 @@ REAL(KIND=JPRB) :: ZHOOK_HANDLE
 #include "mf_phys_cvv.intfb.h"
 #include "mf_phys_fpl_part1.intfb.h"
 #include "mf_phys_fpl_part2.intfb.h"
-#include "mf_phys_init.intfb.h"
 #include "mf_phys_mocon.intfb.h"
 #include "mf_phys_precips.intfb.h"
 #include "mf_phys_save_phsurf_part1.intfb.h"
@@ -1196,8 +1195,6 @@ IF (LL_SAVE_PHSURF) THEN
   & YDVARS%UEN%T0, YDVARS%UNEBH%T0, YDVARS%UOM%T0, YDSURF, YDMODEL)
 ENDIF
 
-
-CALL MF_PHYS_INIT (YDCPG_DIM, YDMF_PHYS, YDCPG_MISC)
 
 IF (LMDUST) THEN
   ZDIFEXT (:,:,:) = 0.0_JPRB

@@ -749,7 +749,6 @@ REAL(KIND=JPRB) :: ZHOOK_HANDLE
 #include "cputqy.intfb.h"
 #include "cp_ptrslb1.intfb.h"
 #include "gnhgw2svdarome.intfb.h"
-#include "mf_phys_init.intfb.h"
 #include "writephysio.intfb.h"
 #include "mf_phys_save_phsurf_part1.intfb.h"
 #include "mf_phys_save_phsurf_part2.intfb.h"
@@ -912,8 +911,6 @@ IF (LLDIAB) THEN
   ENDIF
 ENDIF
 
-
-CALL MF_PHYS_INIT (YDCPG_DIM, YDMF_PHYS, YDCPG_MISC)
 
 CALL APL_AROME_CALC_IPGFL (YDGEOMETRY, YDCPG_DIM, YDMODEL, IPGFL)
 

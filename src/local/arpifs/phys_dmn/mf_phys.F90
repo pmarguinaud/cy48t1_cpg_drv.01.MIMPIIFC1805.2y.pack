@@ -56,6 +56,7 @@ TYPE(TYP_DDH),          INTENT(INOUT), OPTIONAL :: YDDDH
 #include "aplpar_new.intfb.h"
 #include "aplsim.intfb.h"
 #include "mf_phys_prep.intfb.h"
+#include "mf_phys_init.intfb.h"
 #include "mf_phys_nhqe_part1.intfb.h"
 #include "mf_phys_nhqe_part2.intfb.h"
 
@@ -78,6 +79,8 @@ IF (LHOOK) CALL DR_HOOK('MF_PHYS', 0, ZHOOK_HANDLE)
 !*       4.4.1   Call MF unlagged physics (predictor only if PC scheme).
 
 CALL MF_PHYS_PREP (YDGEOMETRY, YDCPG_DIM, YDMODEL%YRML_PHY_MF%YRARPHY, YDCPG_DYN0, YDCPG_DYN9, YDCPG_PHY0, YDCPG_PHY9, YDVARS)
+
+CALL MF_PHYS_INIT (YDCPG_DIM, YDMF_PHYS, YDCPG_MISC)
 
 !=SKIP
 ! In the NHQE model, APLPAR enters with Tt and grad(Tt), where Tt = T * exp(-(R/cp) log(pre/prehyd)).

@@ -110,7 +110,6 @@ REAL(KIND=JPRB) :: ZHOOK_HANDLE
 #include "cppsolan.intfb.h"
 #include "cptendsm.intfb.h"
 #include "cputqys.intfb.h"
-#include "mf_phys_init.intfb.h"
 #include "rdradcoef.intfb.h"
 #include "wrphtrajm.intfb.h"
 #include "mf_phys_transfer.intfb.h"
@@ -168,8 +167,6 @@ CALL CPPHINP(YDGEOMETRY, YDMODEL, YDCPG_DIM%KIDIA, YDCPG_DIM%KFDIA, YDVARS%GEOME
 !   - PBLH (group VH): PBL height
 !   - SPSH (group VH):
 !   - QSH (group VH):
-
-CALL MF_PHYS_INIT (YDCPG_DIM, YDMF_PHYS, YDCPG_MISC)
 
 !        2.9  Computation of evolution of T, u, v and Q.
 !             ------------------------------------------

@@ -1,0 +1,117 @@
+SUBROUTINE WRPHTRAJTM_NL(YDGEOMETRY,YDSIMPHL,KSTA,KEND,PTRAJ_PHYS,&
+ & PKTROV,PKUROV,&
+ & PCDROV,PCHROV,PRAPGWD,&
+ & PQL,PQI,PQR,PQS,PLIQCVPPKF,PNEBCVPPKF)
+
+!     Purpose.  Write out the trajectory of phys.tendencies 
+!               to work file (from NL model)
+
+!**   Interface.
+!     ----------
+!        *CALL* *WRPHTRAJTM_NL(...)*
+
+!        Explicit arguments :  
+!        --------------------  KSTA    - start adress         (input)
+!                              KEND    - end adress           (input)
+!                              PTRAJ_PHYS - trajectory        (output)
+
+!        Implicit arguments :  None
+!        --------------------
+
+!     Method.
+!     -------
+
+!     Externals.
+!     ----------
+
+!     Reference.
+!     ----------
+
+!     Author.
+!     -------
+!      F. Bouyssel  *METEO-FRANCE*  2000-03-09
+
+!     Modifications.
+!     --------------
+!      Modified 01-08-30 by K. YESSAD: pruning and some other cleanings.
+!      M.Hamrud      01-Oct-2003 CY28 Cleaning
+!      M.Hamrud      10-Jan-2004 CY28R1 Cleaning
+!      O.Riviere  Oct 2009 Additional term for LGWDSPNL 
+!      O.Riviere  Feb 2011 Additional storage of tendencies for QL/QI
+!      R. El Khatib  21-Apr-2011 Use fillb3 for 3D fields
+!      O.Riviere June 2011 Additional storage of Ql/i/r/s if neeede 
+!      F. Vana  28-Nov-2013 : Redesigned trajectory handling
+!        ------------------------------------------------------------------
+
+USE GEOMETRY_MOD , ONLY : GEOMETRY
+USE PARKIND1 , ONLY : JPIM, JPRB
+USE YOMHOOK  , ONLY : LHOOK, DR_HOOK
+
+USE YOMSIMPHL, ONLY : TSIMPHL
+USE YOMTRAJ  , ONLY : TRAJ_PHYS_TYPE,  LPRTTRAJ
+USE YOMLUN   , ONLY : NULOUT
+
+!        ------------------------------------------------------------------
+
+IMPLICIT NONE
+
+TYPE(GEOMETRY)       ,INTENT(IN)    :: YDGEOMETRY
+TYPE(TSIMPHL)        ,INTENT(IN)    :: YDSIMPHL
+INTEGER(KIND=JPIM)   ,INTENT(IN)    :: KSTA 
+INTEGER(KIND=JPIM)   ,INTENT(IN)    :: KEND 
+TYPE (TRAJ_PHYS_TYPE),INTENT(INOUT) :: PTRAJ_PHYS
+REAL(KIND=JPRB)      ,INTENT(IN)    :: PKTROV(YDGEOMETRY%YRDIM%NPROMA,YDGEOMETRY%YRDIMV%NFLEVG+1) 
+REAL(KIND=JPRB)      ,INTENT(IN)    :: PKUROV(YDGEOMETRY%YRDIM%NPROMA,YDGEOMETRY%YRDIMV%NFLEVG+1) 
+REAL(KIND=JPRB)      ,INTENT(IN)    :: PRAPGWD(YDGEOMETRY%YRDIM%NPROMA,YDGEOMETRY%YRDIMV%NFLEVG+1) 
+REAL(KIND=JPRB)      ,INTENT(IN)    :: PQL(YDGEOMETRY%YRDIM%NPROMA,YDGEOMETRY%YRDIMV%NFLEVG)
+REAL(KIND=JPRB)      ,INTENT(IN)    :: PQI(YDGEOMETRY%YRDIM%NPROMA,YDGEOMETRY%YRDIMV%NFLEVG)
+REAL(KIND=JPRB)      ,INTENT(IN)    :: PQR(YDGEOMETRY%YRDIM%NPROMA,YDGEOMETRY%YRDIMV%NFLEVG)
+REAL(KIND=JPRB)      ,INTENT(IN)    :: PQS(YDGEOMETRY%YRDIM%NPROMA,YDGEOMETRY%YRDIMV%NFLEVG)
+REAL(KIND=JPRB)      ,INTENT(IN)    :: PLIQCVPPKF(YDGEOMETRY%YRDIM%NPROMA,YDGEOMETRY%YRDIMV%NFLEVG)
+REAL(KIND=JPRB)      ,INTENT(IN)    :: PNEBCVPPKF(YDGEOMETRY%YRDIM%NPROMA,YDGEOMETRY%YRDIMV%NFLEVG)
+REAL(KIND=JPRB)      ,INTENT(IN)    :: PCDROV(YDGEOMETRY%YRDIM%NPROMA) 
+REAL(KIND=JPRB)      ,INTENT(IN)    :: PCHROV(YDGEOMETRY%YRDIM%NPROMA) 
+
+!        ------------------------------------------------------------------
+
+REAL(KIND=JPRB) :: ZHOOK_HANDLE
+
+!        ------------------------------------------------------------------
+IF (LHOOK) CALL DR_HOOK('WRPHTRAJTM_NL',0,ZHOOK_HANDLE)
+ASSOCIATE(YDDIM=>YDGEOMETRY%YRDIM,YDDIMV=>YDGEOMETRY%YRDIMV,YDGEM=>YDGEOMETRY%YRGEM, YDMP=>YDGEOMETRY%YRMP)
+ASSOCIATE(LTRAJRAIN=>YDSIMPHL%LTRAJRAIN, LNEBCVPPKF=>YDSIMPHL%LNEBCVPPKF, &
+ & LTRAJCOND=>YDSIMPHL%LTRAJCOND)
+!        ------------------------------------------------------------------
+
+!*       1.    WRITE OUT GRIDPOINT ARRAY.
+!              --------------------------
+
+
+IF (LTRAJRAIN) THEN
+  PTRAJ_PHYS%PQRMF(KSTA:KEND,1:YDDIMV%NFLEVG)=PQR(KSTA:KEND,1:YDDIMV%NFLEVG)
+  PTRAJ_PHYS%PQSMF(KSTA:KEND,1:YDDIMV%NFLEVG)=PQS(KSTA:KEND,1:YDDIMV%NFLEVG)
+ENDIF
+IF (LTRAJCOND) THEN
+  PTRAJ_PHYS%PQLMF(KSTA:KEND,1:YDDIMV%NFLEVG)=PQL(KSTA:KEND,1:YDDIMV%NFLEVG)
+  PTRAJ_PHYS%PQIMF(KSTA:KEND,1:YDDIMV%NFLEVG)=PQI(KSTA:KEND,1:YDDIMV%NFLEVG)
+ENDIF
+IF (LNEBCVPPKF) THEN
+  PTRAJ_PHYS%PLIQCVPPKFMF(KSTA:KEND,1:YDDIMV%NFLEVG)=PLIQCVPPKF(KSTA:KEND,1:YDDIMV%NFLEVG)
+  PTRAJ_PHYS%PNEBCVPPKFMF(KSTA:KEND,1:YDDIMV%NFLEVG)=PNEBCVPPKF(KSTA:KEND,1:YDDIMV%NFLEVG)
+ENDIF
+
+PTRAJ_PHYS%PKTROVMF(KSTA:KEND,1:YDDIMV%NFLEVG+1)=PKTROV(KSTA:KEND,1:YDDIMV%NFLEVG+1)
+PTRAJ_PHYS%PKUROVMF(KSTA:KEND,1:YDDIMV%NFLEVG+1)=PKUROV(KSTA:KEND,1:YDDIMV%NFLEVG+1)
+PTRAJ_PHYS%PRAPGWDMF(KSTA:KEND,1:YDDIMV%NFLEVG+1)=PRAPGWD(KSTA:KEND,1:YDDIMV%NFLEVG+1)
+
+
+PTRAJ_PHYS%PCDROVMF(KSTA:KEND)=PCDROV(KSTA:KEND)
+PTRAJ_PHYS%PCHROVMF(KSTA:KEND)=PCHROV(KSTA:KEND)
+
+IF (LPRTTRAJ.AND.PTRAJ_PHYS%LASTCHUNK) WRITE(NULOUT,*)'GREPTRAJ STORED TRAJ_PHYS in WRPHTRAJTM_NL'
+!     ------------------------------------------------------------------
+
+END ASSOCIATE
+END ASSOCIATE
+IF (LHOOK) CALL DR_HOOK('WRPHTRAJTM_NL',1,ZHOOK_HANDLE)
+END SUBROUTINE WRPHTRAJTM_NL

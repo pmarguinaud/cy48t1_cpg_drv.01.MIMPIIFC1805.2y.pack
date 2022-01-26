@@ -1,7 +1,7 @@
 SUBROUTINE APLPAR_INIT &
  !---------------------------------------------------------------------
  ! - INPUT .
- & (YGFL,KIDIA , KFDIA  , KLON   , KLEV   , KSGST  , KCSS   ,&
+ & (KIDIA , KFDIA  , KLON   , KLEV   , KSGST  , KCSS   ,&
  & PVEG0  ,&
  !---------------------------------------------------------------------
  ! - OUTPUT .
@@ -20,7 +20,6 @@ USE PARKIND1  ,ONLY : JPIM     ,JPRB
 USE YOMHOOK   ,ONLY : LHOOK,   DR_HOOK
 USE YOMCT0    ,ONLY : LAROME
 USE YOMARPHY  ,ONLY : TARPHY
-USE YOM_YGFL  ,ONLY : TYPE_GFLD
 
 !**** *APLPAR_INIT*
 
@@ -353,7 +352,6 @@ USE YOM_YGFL  ,ONLY : TYPE_GFLD
 
 IMPLICIT NONE
 
-TYPE(TYPE_GFLD)   ,INTENT(INOUT) :: YGFL
 INTEGER(KIND=JPIM),INTENT(IN)    :: KLON
 INTEGER(KIND=JPIM),INTENT(IN)    :: KLEV
 INTEGER(KIND=JPIM),INTENT(IN)    :: KSGST

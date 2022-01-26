@@ -1,0 +1,335 @@
+!OPTIONS XOPT(NOEVAL)
+SUBROUTINE ACOZONE ( YDPHY2,YDTOPH,KIDIA,KFDIA,KLON,KTDIA,KLEV,KVCLIS,&
+ !-----------------------------------------------------------------------
+ ! - INPUT  2D .
+ & PAPRS,PAPRSF,PDELP,PKOZO,POZONE,PT,PMU0,&
+ ! - OUTPUT 2D .
+ & PFCHOZ)
+
+!**** *ACOZONE* FLUX PHOTOCHIMIQUE D'OZONE
+
+!     Sujet.
+!     ------
+!     - ROUTINE DE CALCUL ACTIF .
+!       CALCUL DU FLUX D'OZONE (EN RAPPORT DE MELANGE MASSIQUE)
+!       DU AUX PUITS ET SOURCES PHOTOCHIMIQUES.
+!     - CALCULATION OF OZONE FLUX (MIXING RATIO RELATIVE TO MASS)
+!       DUE TO PHOTOCHEMICAL SOURCES AND SINKS.
+
+!**   Interface.
+!     ----------
+!        *CALL* *AOZONE*
+
+!-----------------------------------------------------------------------
+! WARNING: THE ENGLISH VERSION OF VARIABLES' NAMES IS TO BE READ IN THE
+!          "APLPAR" CODE.
+!-----------------------------------------------------------------------
+
+! -   ARGUMENTS D ENTREE.
+!     -------------------
+
+! - NOM DES PARAMETRES DE DIMENSIONNEMENT DE LA PHYSIQUE.
+
+!       KIDIA     : INDICE DE DEPART DES BOUCLES VECTORISEES SUR L'HORIZONT..
+!       KFDIA     : INDICE DE FIN DES BOUCLES VECTORISEES SUR L'HORIZONTALE
+!       KLON      : DIMENSION HORIZONTALE
+!       KTDIA     : DEBUT BOUCLE VERTICALE
+!       KLEV      : FIN BOUCLE VERTICALE ET DIMENSION VERTICALE
+!       KVCLIS    : NOMBRE DE COEFFICIENTS PHOTOCHIMIQUES
+
+! - NOM DES VARIABLES DE LA PHYSIQUE (PAR ORDRE ALPHABETIQUE DANS CHAQUE
+!   CATEGORIE).
+
+! - 2D (0:KLEV) .
+
+!       PAPRS     : PRESSION DE L'INTER-COUCHE
+
+! - 2D (1:KLEV) .
+
+!       PAPRSF    : PRESSION DU MILIEU DE LA COUCHE
+!       PDELP     : EPAISSEUR EN PRESSION DE LA COUCHE
+!       PKOZO     : COEFFICIENTS CALCULES A L'AIDE DU MODELE
+!                   PHOTOCHIMIQUE 2D EN FONCTION DE LA SAISON
+!                   (AU NOMBRE DE NVCLIS = 7)
+!       POZONE    : RAPPORT DE MELANGE MASSIQUE D'OZONE
+!       PT        : TEMPERATURE
+
+! - 1D
+
+!       PMU0      : ANGLE SOLAIRE ZENITHAL (COSINUS)
+
+!-----------------------------------------------------------------------
+
+! -   ARGUMENTS DE SORTIE.
+!     --------------------
+
+! - NOM DES VARIABLES DE LA PHYSIQUE (PAR ORDRE ALPHABETIQUE DANS CHAQUE
+!   CATEGORIE).
+
+! - 2D (0:KLEV) .
+
+!       PFCHOZ    : FLUX PHOTOCHIMIQUE D'OZONE
+
+!-----------------------------------------------------------------------
+
+!     Externes.
+!     ---------
+
+!     Methode.
+!     --------
+
+!      L'equation sur la tendance d'ozone s'ecrit:
+
+!      D(POZONE) / DT = PKOZO2 + PKOZO3 * ( POZONE - PKOZO1 )
+!                              + PKOZO5 * ( PT     - PKOZO4 )
+!                              + PKOZO7 * (ZCOLO3  - ZCOLOZ )
+!                              + PKOZO6 *   POZONE
+
+!        Sa resolution peut etre implicite ou explicite en fonction de
+!        la valeur du parametre ZALPHA.
+
+!               ZALPHA = 1     :   Implicite
+!               ZALPHA = 0     :   Explicite
+
+!     Method.
+!     -------
+
+!      The equation for ozone evolution reads:
+
+!      D(POZONE) / DT = PKOZO2 + PKOZO3 * ( POZONE - PKOZO1 )
+!                              + PKOZO5 * ( PT     - PKOZO4 )
+!                              + PKOZO7 * (ZCOLO3  - ZCOLOZ )
+!                              + PKOZO6 *   POZONE
+
+!        Its solution may be implicit or explicit according to ZALPHA
+
+!               ZALPHA = 1     :   Implicit
+!               ZALPHA = 0     :   Explicit
+
+!     Reference.
+!    -----------
+!         CARIOLLE ET DEQUE, JGR,91,10.825,1986
+
+!     Auteur.
+!    --------
+!        91-04-15, A. Lasserre-Bigorry.
+
+!     Modifications :
+!    ----------------
+!        M.Hamrud      01-Oct-2003 CY28 Cleaning
+!        05-09   : A. Alias , GMGEC modifications introduced
+!                 P.Simon  - Colonne et rmm d'ozone MOBIDIC coherents
+!                          - Introduction chimie heterogene
+!                 M. Deque - Bugfix angle zenithal
+!        K. Yessad (Jul 2009): remove CDLOCK + some cleanings
+!-----------------------------------------------------------------------
+
+USE PARKIND1  ,ONLY : JPIM     ,JPRB
+USE YOMHOOK   ,ONLY : LHOOK,   DR_HOOK
+
+USE YOMCST   , ONLY : RG
+USE YOMPHY2  , ONLY : TPHY2
+
+USE YOMTOPH  , ONLY : TTOPH
+
+!-----------------------------------------------------------------------
+
+IMPLICIT NONE
+
+TYPE(TPHY2)       ,INTENT(IN)    :: YDPHY2
+TYPE(TTOPH)       ,INTENT(IN)    :: YDTOPH
+INTEGER(KIND=JPIM),INTENT(IN)    :: KLON 
+INTEGER(KIND=JPIM),INTENT(IN)    :: KLEV 
+INTEGER(KIND=JPIM),INTENT(IN)    :: KVCLIS 
+INTEGER(KIND=JPIM),INTENT(IN)    :: KIDIA 
+INTEGER(KIND=JPIM),INTENT(IN)    :: KFDIA 
+INTEGER(KIND=JPIM),INTENT(IN)    :: KTDIA 
+REAL(KIND=JPRB)   ,INTENT(IN)    :: PAPRS(KLON,0:KLEV) 
+REAL(KIND=JPRB)   ,INTENT(IN)    :: PAPRSF(KLON,KLEV) 
+REAL(KIND=JPRB)   ,INTENT(IN)    :: PDELP(KLON,KLEV) 
+REAL(KIND=JPRB)   ,INTENT(IN)    :: PKOZO(KLON,KLEV,KVCLIS) 
+REAL(KIND=JPRB)   ,INTENT(IN)    :: POZONE(KLON,KLEV) 
+REAL(KIND=JPRB)   ,INTENT(IN)    :: PT(KLON,KLEV) 
+REAL(KIND=JPRB)   ,INTENT(IN)    :: PMU0(KLON)
+REAL(KIND=JPRB)   ,INTENT(OUT)   :: PFCHOZ(KLON,0:KLEV) 
+
+!-----------------------------------------------------------------------
+
+REAL(KIND=JPRB) ::ZCOLOZ(KLON,KLEV)
+REAL(KIND=JPRB) :: ZCOLO3(KLON,KLEV),ZANEX(KLON,KLEV)&
+ & ,ZDELPI(KLON,KLEV),ZDELPS(KLON,KLEV)  
+
+INTEGER(KIND=JPIM) :: JLEV, JLON
+
+REAL(KIND=JPRB) :: ZALPHA, ZCOEF, ZEPS, ZGDT, ZGDTI,&
+ & ZINCO3, ZINCOZ, ZPCLD, ZRAPP, ZUNMAL, ZVALOZ
+REAL(KIND=JPRB) :: ZHOOK_HANDLE
+
+!-----------------------------------------------------------------------
+IF (LHOOK) CALL DR_HOOK('ACOZONE',0,ZHOOK_HANDLE)
+ASSOCIATE(TSPHY=>YDPHY2%TSPHY, &
+ & TPSCLIM=>YDTOPH%TPSCLIM, RCLX=>YDTOPH%RCLX)
+!-----------------------------------------------------------------------
+
+!*
+!     ------------------------------------------------------------------
+!     I - CALCULS PRELIMINAIRES ET DIVERSES INITIALISATIONS
+
+!         PRELIMINARY COMPUTATIONS AND VARIOUS INITIALIZATIONS
+
+!     1.1 CALCULS DE PARAMETRES DERIVES ET D'UNE CONSTANTE DE SECURITE
+!         SECONDARY PARAMETERS AND SECURITY CONSTANT
+
+ZGDT=RG*TSPHY
+ZGDTI=1.0_JPRB/ZGDT
+
+!      POUR UN SCHEMA IMPLICITE ZALPHA = 1, EXPLICITE ZALPHA = 0
+!      FOR AN IMPLICIT SCHEME ZALPHA = 1, EXPLICIT ZALPHA =0
+
+ZALPHA=1.0_JPRB
+ZUNMAL=1.0_JPRB-ZALPHA
+
+ZEPS=1.E-11_JPRB
+
+!     1.2 CALCUL DES EPAISSEURS DES DEUX DEMI-COUCHES
+!         SUR TOUTE LA HAUTEUR DE L'ATMOSPHERE
+!         COMPUTATION OF HALF-LAYER DEPTH FOR THE WHOLE ATMOSPHERIC COLUMN
+
+! - TEMPORAIRE(S) 2D (1:KLEV)
+
+!       ZDELPS   : EPAISSEUR EN PRESSION DE LA PARTIE
+!                   SUPERIEURE DE LA COUCHE
+!                   UPPER HALF-LAYER DEPTH
+!       ZDELPI   : EPAISSEUR EN PRESSION DE LA PARTIE
+!                   INFERIEURE DE LA COUCHE
+!                   LOWER HALF-LAYER DEPTH
+
+DO JLEV=1,KLEV
+  DO JLON=KIDIA,KFDIA
+    ZDELPS(JLON,JLEV)=PAPRSF(JLON,JLEV)-PAPRS (JLON,JLEV-1)
+    ZDELPI(JLON,JLEV)=PAPRS (JLON,JLEV)-PAPRSF(JLON,JLEV  )
+  ENDDO
+ENDDO
+
+!     1.3 MISE A ZERO DES FLUX
+!         FLUXES SET TO ZERO
+
+DO JLEV=KTDIA-1,KLEV
+  DO JLON=KIDIA,KFDIA
+    PFCHOZ(JLON,JLEV)=0.0_JPRB
+  ENDDO
+ENDDO
+
+!*
+!     ------------------------------------------------------------------
+!     II - CALCUL DU NOMBRE DE MOLECULES AU-DESSUS DU POINT CONSIDERE
+!        EN PARTANT DU SOMMET DE L'ATMOSPHERE
+
+!        COMPUTATION OF THE NUMBER OF MOLECULES ABOVE A GIVEN LOCATION
+!        BEGINNING AT THE TOP OF THE ATMOSPHERE
+
+!     2.1 PREMIERE DEMI-COUCHE
+!         FIRST HALF-LAYER
+
+! - TEMPORAIRE(S) 2D (1:KLEV)
+
+!       ZCOLO3   : NOMBRE CUMULE DE MOLECULES D'OZONE AU-DESSUS
+!                  DU POINT CONSIDERE
+!                  NUMBER OF OZONE MOLECULES ABOVE THE GIVEN LOCATION
+!       ZCOLOZ   : IDEM, CALCULE AVEC DE PKOZO1 (rmm de MOBIDIC)
+!                  SAME, USING PKOZO1 (mmr from MOBIDIC model)
+
+DO JLON=KIDIA,KFDIA
+  ZCOLO3(JLON,1)=ZDELPS(JLON,1)*MAX(ZEPS,POZONE(JLON,1))/RG
+  ZCOLOZ(JLON,1)=ZDELPS(JLON,1)*MAX(ZEPS,PKOZO (JLON,1,1))/RG
+ENDDO
+
+!     2.2 NIVEAUX STANDARDS
+!         STANDARD LEVELS
+
+DO JLEV=2,KLEV
+  DO JLON=KIDIA,KFDIA
+    ZINCO3=&
+     & (  ZDELPI(JLON,JLEV-1)*MAX(ZEPS,POZONE(JLON,JLEV-1))&
+     & +  ZDELPS(JLON,JLEV  )*MAX(ZEPS,POZONE(JLON,JLEV  )) )/RG  
+    ZCOLO3(JLON,JLEV)=ZCOLO3(JLON,JLEV-1)+ZINCO3
+    ZINCOZ=&
+     & (  ZDELPI(JLON,JLEV-1)*MAX(ZEPS,PKOZO(JLON,JLEV-1,1))&
+     & +  ZDELPS(JLON,JLEV  )*MAX(ZEPS,PKOZO(JLON,JLEV  ,1)) )/RG  
+    ZCOLOZ(JLON,JLEV)=ZCOLOZ(JLON,JLEV-1)+ZINCOZ
+  ENDDO
+ENDDO
+
+!*
+!     ------------------------------------------------------------------
+!     III - CALCUL DE LA TENDANCE PHOTOCHIMIQUE D'OZONE (DIVISEE PAR RG)
+!           COMPUTATION OF OZONE PHOTOCHEMICAL TREND (DIVIDED BY RG)
+
+!     3.1 CALCUL ANNEXE FONCTION DE RT ET DE ZCOLO3
+!         ADDITIONNAL COMPUTATION OF RT AND ZCOLO3
+
+! - TEMPORAIRE(S) 2D (1:KLEV)
+
+!       ZANEX    : TENDANCE D'OZONE
+!                   OZONE TREND
+
+IF(KVCLIS == 7)THEN
+  DO JLEV=KTDIA,KLEV
+    DO JLON=KIDIA,KFDIA
+      ZANEX(JLON,JLEV)=( PKOZO(JLON,JLEV,2)&
+       & + PKOZO(JLON,JLEV,5)*(PT(JLON,JLEV)-PKOZO(JLON,JLEV,4))&
+       & + PKOZO(JLON,JLEV,7)*(ZCOLO3(JLON,JLEV)-ZCOLOZ(JLON,JLEV))&
+       & - PKOZO(JLON,JLEV,1)*PKOZO(JLON,JLEV,3) )*TSPHY  
+    ENDDO
+  ENDDO
+ENDIF
+
+!     3.2 CALCUL DU RAPPORT DE MELANGE AU TEMPS T+DT (1)
+!         COMPUTATION OF MIXING RATIO AT TIME T+DT (1)
+
+!   ACTIVATION DU TERME DE DESTRUCTION PAR LA CHIMIE
+!   HETEROGENE UNIQUEMENT DE JOUR ET SI T < TPSCLIM
+!   HETEROGENEOUS CHEMISTRY OZONE LOSS ACTIVATED ONLY
+!   DURING DAYLIGHT AND IF T < TPSCLIM
+
+IF(KVCLIS == 7)THEN
+  DO JLEV=KTDIA,KLEV
+    DO JLON=KIDIA,KFDIA
+      ZPCLD=(0.5_JPRB+SIGN(0.5_JPRB,TPSCLIM-PT(JLON,JLEV)))&
+       & *(0.5_JPRB-SIGN(0.5_JPRB,-PMU0(JLON)))  
+      ZCOEF=PKOZO(JLON,JLEV,3)+PKOZO(JLON,JLEV,6)*RCLX*RCLX*ZPCLD
+      ZRAPP=1.0_JPRB-ZALPHA*TSPHY*ZCOEF
+      ZRAPP=MAX(ZRAPP,1.E-6_JPRB)
+      ZVALOZ=(ZUNMAL*TSPHY*ZCOEF+1.0_JPRB)*POZONE(JLON,JLEV)
+      ZANEX(JLON,JLEV)=(ZANEX(JLON,JLEV)+ZVALOZ)/ZRAPP
+    ENDDO
+  ENDDO
+ENDIF
+
+!     3.3 CALCUL DE LA TENDANCE PROPREMENT DITE DIVISEE PAR RG
+!         COMPUTATION OF THE ACTUAL TREND DIVIDED BY RG
+
+DO JLEV=KTDIA,KLEV
+  DO JLON=KIDIA,KFDIA
+    ZANEX(JLON,JLEV)=ZGDTI*(ZANEX(JLON,JLEV)-POZONE(JLON,JLEV))
+  ENDDO
+ENDDO
+
+!*
+!     ------------------------------------------------------------------
+!     IV - CALCUL DU FLUX, PAR INTEGRATION DE LA TENDANCE DE HAUT EN BAS
+!        LES FLUX SONT SUPPOSES NULS AU PREMIER NIVEAU (KTDIA) DE CALCUL
+
+!        THE FLUX IS CALCULATED BY VERTICAL INTEGRATION (FROM THE TOP) OF
+!        THE TREND. THE FLUX IS ASSUMED TO BE ZERO AT THE FIRST LEVEL (KTDIA)
+
+DO JLEV=KTDIA,KLEV
+  DO JLON=KIDIA,KFDIA
+    PFCHOZ(JLON,JLEV)=PFCHOZ(JLON,JLEV-1)- ZANEX(JLON,JLEV)*PDELP(JLON,JLEV)
+  ENDDO
+ENDDO
+
+!-----------------------------------------------------------------------
+END ASSOCIATE
+IF (LHOOK) CALL DR_HOOK('ACOZONE',1,ZHOOK_HANDLE)
+END SUBROUTINE ACOZONE

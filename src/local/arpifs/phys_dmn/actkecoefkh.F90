@@ -1,0 +1,343 @@
+!OPTIONS XOPT(NOEVAL)
+SUBROUTINE ACTKECOEFKH (YDRIP,YDML_PHY_MF,YDEGEO, KIDIA,KFDIA,KLON,KTDIA,KLEV,&
+ !-----------------------------------------------------------------------
+ ! - INPUT  2D .
+ & PTKE, PTENDPTKE, &
+ & PAPHI,PAPHIF,&
+ & PT,PU,PV,PALPH,&
+ & PDIV,PVOR,PUL,PVL,PWW,PWWL,PWWM,&
+ & PAPRS,PR,PLNPR,&
+ & PLML,PFHORM,PFHORH, PKUROV,&
+ !- INPUT 1D
+ & PRTI,PCD,PCDROV,&
+ ! - INPUT  LOGIQUE .
+ & LDTKE,&
+ ! - OUTPUT 2D
+ & PKUROV_H,PKTROV_H, PRHS)
+
+
+!**** *ACTKECOEFKH * - Computation of horizontal exchange coefficients
+!                      and source term for TKE solver ( for TOUCANS scheme )
+
+!     Sujet.
+!     ------
+!     - ROUTINE DE CALCUL COEFFICIENTS D'ECHANGE HORIZONTAL TURBULENT
+
+!**   Interface.
+!     ----------
+!        *CALL* *ACTKECOEFKH*
+
+!-----------------------------------------------------------------------
+! WARNING: THE ENGLISH VERSION OF VARIABLES' NAMES IS TO BE READ IN THE
+!          "APLPAR" CODE.
+!-----------------------------------------------------------------------
+
+! -   ARGUMENTS D'ENTREE.
+!     -------------------
+
+! - NOM DES PARAMETRES DE DIMENSIONNEMENT DE LA PHYSIQUE.
+
+! KIDIA      : INDICE DE DEPART DES BOUCLES VECTORISEES SUR L'HORIZONT..
+! KFDIA      : INDICE DE FIN DES BOUCLES VECTORISEES SUR L'HORIZONTALE.
+! KLON       : DIMENSION HORIZONTALE DES TABLEAUX.
+! KTDIA      : INDICE DE DEPART DES BOUCLES VERTICALES (1 EN GENERAL).
+! KLEV       : DIMENSION VERTICALE DES TABLEAUX "FULL LEVEL".
+
+! - NOM DES VARIABLES DE LA PHYSIQUE 
+! * INPUT
+! - 2D (1:KLEV) .
+! PAPHIF     : GEOPOTENTIEL AUX NIVEAUX DES COUCHES. 
+! PTKE       : TURBULENT KINETIC ENERGY
+! PTENDPTKE  : TKE INCREMENT (USED BY pTKE or TOUCANS schemes)
+
+! - 2D (1:KLEV) .
+! PT         : TEMPERATURE.
+! PU         : COMPOSANTE EN X DU VENT.
+! PV         : COMPOSANTE EN Y DU VENT.
+! PALPH      : LOG(PAPRS(JLEV)/PAPRSF(JLEV)) (FOR HYDROSTATICS).
+! PAPRS      : FULL LEVEL PRESSURE
+! PDIV       : HORIZONTAL DIVERGENCE
+! PVOR       : HORIZONTAL VORTICITY
+! PUL        : ZONAL DERIVATIVE OF X-COMPONENT OF WIND
+! PVL        : ZONAL DERIVATIVE OF Y-COMPONENT OF WIND
+! PWW        : Z-COMPONENT OF WIND
+! PWWL       : ZONAL DERIVATIVE OF Z-COMPONENT OF WIND
+! PWWM       : MERIDIONAL DERIVATIVE OF Z-COMPONENT OF WIND
+
+! - 2D (0:KLEV) .
+! PAPHI      : GEOPOTENTIEL AUX DEMI-NIVEAUX.
+! PMRIPP     : RICHARDSON NUMBER
+! PLML       : TKE MIX. LENGTH 
+! PFHORM     : CHI_H(Ri)
+! PFHORH     : PHI_H(Ri) * C3
+! PKUROV     : COEFFICIENT D'ECHANGE VERTICAL DE U ET V EN KG/(M*M*S).
+
+! - 2D (1:KLEV) .
+! PR         : CONSTANTE DES GAZ POUR L'AIR. 
+! PLNPR      : LOG(PAPRS(JLEV)/PAPRS(JLEV-1)) (FOR HYDROSTATICS).
+
+! - 1D (DIAGNOSTIQUE) .
+! PCD        : COEFFICIENT D'ECHANGE EN SURFACE POUR U ET V.
+! PCDROV     : PCD RENORME EN DENSITE FOIS VITESSE.
+! PRTI       : INVERSE DE R*T.
+! - LOGIQUES .
+
+! LDTKE      : .FALSE.:FIRST PART OF COMPUTATION - SOURCE TERM FOR TKE
+! LDTKE      : .TRUE. :SECOND PART OF COMPUTATION - EXCH. COEFFICIENTS
+
+! * OUTPUT ARGUMENTS
+! - 2D (1:KLEV) .
+! PKUROV_H    : HORIZONTAL EXCHANGE COEFFICIENT FOR MOMENTUM
+! PKTROV_H    : HORIZONTAL EXCHANGE COEFFICIENT FOR HEAT
+! PRHS        : CORRECTION TERM FOR TKE SOLVER
+!-----------------------------------------------------------------------
+!     Auteur.
+!     -------
+!        2011-11, F. Vana
+
+!     Modifications.
+!     --------------
+!       F. Vana  27-Jan-2012  Phased to CY38
+!       2012-07, I. Bastak -Duran: Whole computation of both horizintal 
+!                                  coefficients
+!                                  + computation of source term for TKE solver
+!                                  + stab. function, mix.length at input
+!       K. Yessad (July 2014): Move some variables.
+!-----------------------------------------------------------------------
+
+USE MODEL_PHYSICS_MF_MOD , ONLY : MODEL_PHYSICS_MF_TYPE
+USE PARKIND1  ,ONLY : JPIM     ,JPRB
+USE YOMHOOK   ,ONLY : LHOOK,   DR_HOOK
+
+USE YOMCST   , ONLY : RG    
+USE YEMGEO   , ONLY : TEGEO
+USE YOMCT0   , ONLY : LRPLANE, LTWOTL, LNHDYN
+USE YOMRIP   , ONLY : TRIP
+
+!-----------------------------------------------------------------------
+
+IMPLICIT NONE
+
+TYPE(MODEL_PHYSICS_MF_TYPE),INTENT(IN):: YDML_PHY_MF
+TYPE(TRIP)  ,INTENT(IN)          :: YDRIP
+TYPE(TEGEO), INTENT(IN)          :: YDEGEO
+INTEGER(KIND=JPIM),INTENT(IN)    :: KLON 
+INTEGER(KIND=JPIM),INTENT(IN)    :: KLEV 
+INTEGER(KIND=JPIM),INTENT(IN)    :: KIDIA 
+INTEGER(KIND=JPIM),INTENT(IN)    :: KFDIA 
+INTEGER(KIND=JPIM),INTENT(IN)    :: KTDIA 
+
+REAL(KIND=JPRB)   ,INTENT(IN)    :: PTKE(KLON,KLEV)
+REAL(KIND=JPRB)   ,INTENT(IN)    :: PTENDPTKE(KLON,KLEV)
+REAL(KIND=JPRB)   ,INTENT(IN)    :: PAPHI(KLON,0:KLEV)
+REAL(KIND=JPRB)   ,INTENT(IN)    :: PAPHIF(KLON,KLEV)  
+REAL(KIND=JPRB)   ,INTENT(IN)    :: PT(KLON,KLEV)
+REAL(KIND=JPRB)   ,INTENT(IN)    :: PU(KLON,KLEV) 
+REAL(KIND=JPRB)   ,INTENT(IN)    :: PV(KLON,KLEV) 
+REAL(KIND=JPRB)   ,INTENT(IN)    :: PALPH(KLON,KLEV) 
+REAL(KIND=JPRB)   ,INTENT(IN)    :: PDIV(KLON,KLEV) 
+REAL(KIND=JPRB)   ,INTENT(IN)    :: PVOR(KLON,KLEV) 
+REAL(KIND=JPRB)   ,INTENT(IN)    :: PUL(KLON,KLEV) 
+REAL(KIND=JPRB)   ,INTENT(IN)    :: PVL(KLON,KLEV) 
+REAL(KIND=JPRB)   ,INTENT(IN)    :: PWW(KLON,KLEV) 
+REAL(KIND=JPRB)   ,INTENT(IN)    :: PWWL(KLON,KLEV) 
+REAL(KIND=JPRB)   ,INTENT(IN)    :: PWWM(KLON,KLEV) 
+REAL(KIND=JPRB)   ,INTENT(IN)    :: PLNPR(KLON,KLEV)
+REAL(KIND=JPRB)   ,INTENT(IN)    :: PAPRS(KLON,0:KLEV)
+REAL(KIND=JPRB)   ,INTENT(IN)    :: PLML(KLON,0:KLEV) 
+REAL(KIND=JPRB)   ,INTENT(IN)    :: PKUROV(KLON,0:KLEV) 
+REAL(KIND=JPRB)   ,INTENT(IN)    :: PFHORM(KLON,0:KLEV)
+REAL(KIND=JPRB)   ,INTENT(IN)    :: PFHORH(KLON,0:KLEV)
+REAL(KIND=JPRB)   ,INTENT(IN)    :: PR(KLON,KLEV) 
+REAL(KIND=JPRB)   ,INTENT(IN)    :: PRTI(KLON)
+REAL(KIND=JPRB)   ,INTENT(IN)    :: PCD(KLON) 
+REAL(KIND=JPRB)   ,INTENT(IN)    :: PCDROV(KLON) 
+LOGICAL           ,INTENT(IN)    :: LDTKE
+
+REAL(KIND=JPRB)   ,INTENT(OUT)   :: PKUROV_H(KLON,KLEV)
+REAL(KIND=JPRB)   ,INTENT(OUT)   :: PKTROV_H(KLON,KLEV)
+REAL(KIND=JPRB)   ,INTENT(OUT)   :: PRHS(KLON,KLEV)
+
+!     ------------------------------------------------------------------
+
+INTEGER(KIND=JPIM) :: JLEV, JLON
+
+REAL(KIND=JPRB) :: ZFHORM(KLON,0:KLEV), ZFHORH(KLON,0:KLEV)
+REAL(KIND=JPRB) :: Z_KM(KLON,0:KLEV), Z_KMH(KLON,0:KLEV)
+REAL(KIND=JPRB) :: ZDUDZ(KLON,0:KLEV), ZDVDZ(KLON,0:KLEV)
+REAL(KIND=JPRB) :: ZDWDZ(KLON,0:KLEV)
+REAL(KIND=JPRB) :: ZUM(KLON,KLEV),ZVM(KLON,KLEV)
+REAL(KIND=JPRB) :: ZUP(KLON,KLEV),ZDN(KLON,KLEV)
+REAL(KIND=JPRB) :: ZDPHI(0:KLEV)
+REAL(KIND=JPRB) :: ZTKESUR(KLON)
+
+REAL(KIND=JPRB) :: ZDZ,ZRTI,ZTRDXY2, ZTKE, ZCK, ZDXY,ZSQRTH,ZALTKE
+
+REAL(KIND=JPRB) :: ZHOOK_HANDLE
+
+!     ------------------------------------------------------------------
+IF (LHOOK) CALL DR_HOOK('ACTKECOEFKH',0,ZHOOK_HANDLE)
+ASSOCIATE(NUPTKE=>YDML_PHY_MF%YRPHY0%NUPTKE, C_EPSILON=>YDML_PHY_MF%YRPHY0%C_EPSILON, &
+ & TSPHY=>YDML_PHY_MF%YRPHY2%TSPHY, &
+ & EDELY=>YDEGEO%EDELY, EDELX=>YDEGEO%EDELX, &
+ & CGTURS=>YDML_PHY_MF%YRPHY%CGTURS, TDT=>YDRIP%TDT)
+!     ------------------------------------------------------------------
+
+! * Initialization of constants
+ZCK = NUPTKE*4/C_EPSILON
+ZALTKE=1.0_JPRB/(NUPTKE*NUPTKE)
+ZSQRTH=SQRT(0.5_JPRB)
+
+! to be moved into setup...
+!! ky: that could become:
+!!     ZDXY=YRGEM%RDELXM
+!!     ZTRDXY2=TSPHY/(ZDXY*ZDXY) 
+IF (LRPLANE) THEN
+  ZDXY= SQRT(EDELX*EDELY)   !! ky: new attribute RDELXM to add?
+  ZTRDXY2=TDT/(EDELX*EDELY) !! ky: why not using TSPHY there?
+ELSE
+  !! ky: formula for ZDXY would be (2.0_JPRB*RPI*RA)/REAL(NDLON,JPRB), identical to YRGEM%RDELXN,
+  !!     at least for unstretched global model.
+  CALL ABOR1('3D Turbulence is not yet coded for global geometry')
+ENDIF
+
+IF(.NOT.LDTKE) THEN
+!*
+!     -----------------------------------------------------------------
+!     COMPUTATION OF VALUES USED BY "3D-1D" SHEAR TERM
+
+PRHS(:,:)=0.0_JPRB
+
+IF (LNHDYN.AND.LTWOTL) THEN
+
+  ! half level quantities pre-computation
+!cdir unroll=8
+  DO JLEV=KTDIA,KLEV-1
+    DO JLON=KIDIA,KFDIA
+      ! following two lines are duplicated from previous loop (2B optimized)
+      ZRTI=2._JPRB/(PR(JLON,JLEV)*PT(JLON,JLEV)+PR(JLON,JLEV+1)*PT(JLON,JLEV+1))
+      ZDZ=RG/(PAPHIF(JLON,JLEV)-PAPHIF(JLON,JLEV+1))
+
+      Z_KM (JLON,JLEV)= PKUROV(JLON,JLEV)/(PAPRS(JLON,JLEV)*ZRTI*ZDZ)
+      Z_KMH(JLON,JLEV)= MIN(PLML(JLON,JLEV),ZDXY)*ZCK*PFHORM(JLON,JLEV)&
+        &  *ZSQRTH*SQRT(PTKE(JLON,JLEV)+PTKE(JLON,JLEV+1))
+
+      ZDUDZ(JLON,JLEV)= (PU(JLON,JLEV)-PU(JLON,JLEV+1))*ZDZ
+      ZDVDZ(JLON,JLEV)= (PV(JLON,JLEV)-PV(JLON,JLEV+1))*ZDZ
+      ZDWDZ(JLON,JLEV)= (PWW(JLON,JLEV)-PWW(JLON,JLEV+1))*ZDZ
+    ENDDO
+  ENDDO
+  ! upper and lower bounds
+  ZDPHI(KIDIA:KFDIA)=PAPHIF(KIDIA:KFDIA,KLEV)-PAPHI(KIDIA:KFDIA,KLEV)
+
+  Z_KM (KIDIA:KFDIA,KTDIA-1)= Z_KM (KIDIA:KFDIA,KTDIA)
+  ZTKESUR(KIDIA:KFDIA)=&
+    & SQRT(ZALTKE*PCD(KIDIA:KFDIA)*(PU(KIDIA:KFDIA,KLEV)**2&
+    &      +PV(KIDIA:KFDIA,KLEV)**2))
+  Z_KM (KIDIA:KFDIA,KLEV)   = PCDROV(KIDIA:KFDIA)*&
+   & ZDPHI(KIDIA:KFDIA)/RG/&
+   & (PAPRS(KIDIA:KFDIA,KLEV)*PRTI(KIDIA:KFDIA))
+  Z_KMH(KIDIA:KFDIA,KTDIA-1)= Z_KMH(KIDIA:KFDIA,KTDIA)
+  Z_KMH(KIDIA:KFDIA,KLEV)= MIN(PLML(KIDIA:KFDIA,KLEV),ZDXY)&
+    & *ZCK*PFHORM(KIDIA:KFDIA,KLEV)&
+    & *ZTKESUR(KIDIA:KFDIA)
+  ZDUDZ(KIDIA:KFDIA,KTDIA-1)= 0.0_JPRB
+  ZDVDZ(KIDIA:KFDIA,KTDIA-1)= 0.0_JPRB
+  ZDWDZ(KIDIA:KFDIA,KTDIA-1)= 0.0_JPRB
+  ZDUDZ(KIDIA:KFDIA,KLEV)= 0.0_JPRB
+  ZDVDZ(KIDIA:KFDIA,KLEV)= 0.0_JPRB
+  ZDWDZ(KIDIA:KFDIA,KLEV)= 0.0_JPRB
+
+  ! full level quantities pre-computation
+!cdir unroll=8
+  DO JLEV=KTDIA,KLEV
+    DO JLON=KIDIA,KFDIA
+      ZUM(JLON,JLEV)=PVL(JLON,JLEV)-PVOR(JLON,JLEV)
+      ZVM(JLON,JLEV)=PDIV(JLON,JLEV)-PUL(JLON,JLEV)
+      ZUP(JLON,JLEV)=PALPH(JLON,JLEV)/PLNPR(JLON,JLEV)
+      ZDN(JLON,JLEV)=1.0_JPRB-PALPH(JLON,JLEV)/PLNPR(JLON,JLEV)
+    ENDDO
+  ENDDO
+
+  ! filling the correction field
+  DO JLEV=KTDIA,KLEV
+    DO JLON=KIDIA,KFDIA
+      PRHS(JLON,JLEV)=PWWM(JLON,JLEV)*PWWM(JLON,JLEV)&
+       & +PWWL(JLON,JLEV)*PWWL(JLON,JLEV)&
+       & +2._JPRB*(ZUP(JLON,JLEV)*ZDWDZ(JLON,JLEV-1)*ZDWDZ(JLON,JLEV-1)&
+       & +ZDN(JLON,JLEV)*ZDWDZ(JLON,JLEV)*ZDWDZ(JLON,JLEV))&
+       & +2._JPRB*PWWM(JLON,JLEV)*(ZUP(JLON,JLEV)*ZDVDZ(JLON,JLEV-1)&
+       & +ZDN(JLON,JLEV)*ZDVDZ(JLON,JLEV))&
+       & +2._JPRB*PVL(JLON,JLEV)*(ZUP(JLON,JLEV)*ZDUDZ(JLON,JLEV-1)&
+       & +ZDN(JLON,JLEV)*ZDUDZ(JLON,JLEV)) 
+      PRHS(JLON,JLEV)=PRHS(JLON,JLEV)*(ZUP(JLON,JLEV)*Z_KM(JLON,JLEV-1)&
+       & +ZDN(JLON,JLEV)*Z_KM(JLON,JLEV))
+      PRHS(JLON,JLEV)=PRHS(JLON,JLEV)+ (ZUP(JLON,JLEV)*Z_KMH(JLON,JLEV-1)&
+       & +ZDN(JLON,JLEV)*Z_KMH(JLON,JLEV))* (&
+       & 2.0_JPRB*ZVM(JLON,JLEV)*ZVM(JLON,JLEV)+PVL(JLON,JLEV)*PVL(JLON,JLEV)&
+       & +2.0_JPRB*ZUM(JLON,JLEV)*PVL(JLON,JLEV)+ZUM(JLON,JLEV)*ZUM(JLON,JLEV)&
+       & +2.0_JPRB*PUL(JLON,JLEV)*PUL(JLON,JLEV) )
+    ENDDO
+  ENDDO
+ELSE
+  CALL ABOR1('3D Turbulence is coded only for LNHDYN.AND.LTWOTL=.T.')
+ENDIF
+
+ELSE
+
+!     ------------------------------------------------------------------
+
+!*
+!  Exchange coefficients for 3D turbulence (on full levels)
+IF (TRIM(CGTURS) == 'QNSE') THEN
+
+  !  First the half levels quantities are collected
+!cdir unroll=8
+  DO JLEV=KTDIA-1,KLEV
+    DO JLON=KIDIA,KFDIA
+      ZFHORM(JLON,JLEV)= MIN(PLML(JLON,JLEV),ZDXY)*ZCK*PFHORM(JLON,JLEV)
+      ZFHORH(JLON,JLEV)= MIN(PLML(JLON,JLEV),ZDXY)*ZCK*PFHORH(JLON,JLEV)
+    ENDDO
+  ENDDO
+
+  !  Second they are converted in full levels to be completed after
+  !  the TKE+ is eventually also contributed by TOMs
+!cdir unroll=8
+  DO JLEV=KTDIA,KLEV
+    DO JLON=KIDIA,KFDIA
+      PKUROV_H(JLON,JLEV)=&
+       &  PALPH(JLON,JLEV)/PLNPR(JLON,JLEV)*ZFHORM(JLON,JLEV)&
+       & +(1.0_JPRB-PALPH(JLON,JLEV)/PLNPR(JLON,JLEV))*ZFHORM(JLON,JLEV-1)
+      PKTROV_H(JLON,JLEV)=&
+       &  PALPH(JLON,JLEV)/PLNPR(JLON,JLEV)*ZFHORH(JLON,JLEV)&
+       & +(1.0_JPRB-PALPH(JLON,JLEV)/PLNPR(JLON,JLEV))*ZFHORH(JLON,JLEV-1)
+    ENDDO
+  ENDDO
+ELSE
+  CALL ABOR1('3D Turbulence is coded only for QNSE scheme')
+ENDIF
+
+
+!   Complete the computation of exchange coefficients by:
+!      - multiplication by sqrt(TKE+) containing the TOMs contributions
+!      - normalization by dt/dx^2 (dt must be relevant to timestep of dynamics!)
+!      - truncate them with respect to stability limits for an explicit
+!                             diffusion
+
+!cdir unroll=8
+DO JLEV=KTDIA,KLEV
+  DO JLON=KIDIA,KFDIA
+    ZTKE= SQRT(TSPHY*PTENDPTKE(JLON,JLEV)+PTKE(JLON,JLEV))
+    PKTROV_H(JLON,JLEV)= ZTKE*PKTROV_H(JLON,JLEV)
+    PKTROV_H(JLON,JLEV)= MIN(PKTROV_H(JLON,JLEV)*ZTRDXY2,0.5_JPRB)
+    PKUROV_H(JLON,JLEV)= ZTKE*PKUROV_H(JLON,JLEV)
+    PKUROV_H(JLON,JLEV)= MIN(PKUROV_H(JLON,JLEV)*ZTRDXY2,0.5_JPRB)
+  ENDDO
+ENDDO
+
+ENDIF
+
+!     -----------------------------------------------------------------
+END ASSOCIATE
+IF (LHOOK) CALL DR_HOOK('ACTKECOEFKH',1,ZHOOK_HANDLE)
+END SUBROUTINE ACTKECOEFKH

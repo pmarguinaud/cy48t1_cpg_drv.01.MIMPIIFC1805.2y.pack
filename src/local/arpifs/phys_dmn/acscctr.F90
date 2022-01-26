@@ -1,0 +1,421 @@
+SUBROUTINE ACSCCTR ( YDPHY,YDPHY0,KIDIA,KFDIA,KLON,KTDIA,KLEV,&
+!-----------------------------------------------------------------------
+! - INPUT  2D .
+                    &PALPH,PAPHIF,PAPRSF,&
+                    &PLNPR,&
+                    &PQ,PQI,PQL,PQSAT,PQW,&
+                    &PT,PTW,PTKE,PTTE,&
+! - INPUT 1D .
+                    &PNTOP, &
+! - OUTPUT 2D .
+                    &PQLDN,PQUDEF) 
+
+!**** *ASCCCTR * - MASS FLUX TYPE UPDRAUGHT FOR SHALLOW CONVECTION
+!     AFTER ACCVUD                                                    
+
+!     Sujet.
+!     ------
+!     - SHALLOW CONVECTION SCHEME - UPDRAFT PROFILE               
+
+!**   Interface.
+!     ----------
+!        *CALL* *ACSCCTR*
+!-----------------------------------------------------------------------
+! -   INPUT ARGUMENTS.
+!     ----------------
+
+! - PHYSICS DIMENSIONNING PARAMETERS
+
+! KIDIA      : INDICE DE DEPART DES BOUCLES VECTORISEES SUR L'HORIZONT..
+! KFDIA      : INDICE DE FIN DES BOUCLES VECTORISEES SUR L'HORIZONTALE.
+! KLON       : DIMENSION HORIZONTALE DES TABLEAUX.
+! KTDIA      : INDICE DE DEPART DES BOUCLES VERTICALES (1 EN GENERAL).
+! KLEV       : DIMENSION VERTICALE DES TABLEAUX "FULL LEVEL".
+
+! - PHYSICS VARIABLES (ALPHABETICALLY IN EACH CATEGORY)
+
+! - 2D (1:KLEV) .
+
+! PALPH      : LOG(PAPRS(JLEV)/PAPRSF(JLEV)) (FOR HYDROSTATIC MODEL).
+! PAPHIF     : FULL LEVEL GEOPOTENTIAL
+! PAPRSF     : FULL LEVEL PRESSURE
+! PLNPR      : LOG(PAPRS(JLEV)/PAPRS(JLEV-1)) (POUR L'HYDROSTATIQUE).
+! PQ         : MICROPHYSICAL WATER VAPOUR SPECIFIC HUMIDITY
+! PQI        : MICROPHYSICAL RESOLVED CLOUD ICE SPECIFIC CONTENTS
+! PQL        : MICROPHYSICAL RESOLVED CLOUD LIQUID SPECIFIC CONTENTS
+! PQW        : WET BULB SPECIFIC MOISTURE
+! PQSAT      : SATURATION SPECIFIC MOISTURE
+! PT         : TEMPERATURE.
+! PTW        : WET BULB TEMPERATURE.
+! PTKE       : TURBULENT KINETIC ENERGY.
+! PTTE       : MOIST TURBULENT TOTAL ENERGY.
+
+! - 2D (0:KLEV) .
+
+! - 1D (PROGNOSTIC) .
+
+! PNTOP      : TOP OF THE UNSTABLE LAYER.
+
+
+!-----------------------------------------------------------------------
+
+! -   OUTPUT ARGUMENTS
+!     ----------------
+
+
+! - 2D (1:KLEV) .
+
+! PQUUDEF    : DEFICIT TO SATURATION IN UPDRAFT.
+
+! - 1D (DIAGNOSTIQUE) .
+
+
+!-----------------------------------------------------------------------
+
+! -   INPUT/OUTPUT ARGUMENTS 
+!     ----------------------
+
+! - 2D (0:KLEV) .
+
+! - 2D (1:KLEV) .
+
+!-----------------------------------------------------------------------
+
+! -   IMPLICIT ARGUMENTS 
+!     ------------------
+
+! COMMON/YOMPHY /
+! COMMON/YOMCST /
+! COMMON/YOMPHY0/
+! COMMON/FCTTRM /
+
+!-----------------------------------------------------------------------
+
+!     Externes.
+!     ---------
+
+!     None
+
+!     Methode.
+!     --------
+!     Base: ACCVUD, version CY38T1 2015.
+
+!     Auteur.
+!     -------
+!        05/2015 - R. Brozkova.
+
+!     Modifications.
+!     --------------
+!      R. Brozkova, May-2018: corrections to compute net condensation and 
+!                             cleaner return to blue point following the 
+!                             proposal of L. Gerard. Removal of TKE/TTE based
+!                             limit to abort the cloud.
+!-----------------------------------------------------------------------
+
+USE PARKIND1, ONLY: JPIM, JPRB
+USE YOMHOOK   ,ONLY : LHOOK,   DR_HOOK
+
+USE YOMPHY   , ONLY : TPHY
+USE YOMCST   , ONLY : RG       ,RD       ,RV       ,RCPD     ,RDT     ,&
+            &RCPV     ,RETV     ,RCW      ,RCS      ,RLVTT    ,&
+            &RLSTT    ,RTT      ,RALPW    ,RBETW    ,RGAMW    ,&
+            &RALPS    ,RBETS    ,RGAMS    ,RALPD    ,RBETD    ,&
+            &RGAMD
+USE YOMPHY0  , ONLY : TPHY0
+
+!-----------------------------------------------------------------------
+
+IMPLICIT NONE
+
+TYPE(TPHY)        ,INTENT(IN)    :: YDPHY
+TYPE(TPHY0)       ,INTENT(IN)    :: YDPHY0
+INTEGER(KIND=JPIM),INTENT(IN)    :: KFDIA
+INTEGER(KIND=JPIM),INTENT(IN)    :: KIDIA
+INTEGER(KIND=JPIM),INTENT(IN)    :: KLEV
+INTEGER(KIND=JPIM),INTENT(IN)    :: KLON
+INTEGER(KIND=JPIM),INTENT(IN)    :: KTDIA
+REAL(KIND=JPRB)   ,INTENT(IN)    :: PALPH(KLON,KLEV) 
+REAL(KIND=JPRB)   ,INTENT(IN)    :: PAPHIF(KLON,KLEV) 
+REAL(KIND=JPRB)   ,INTENT(IN)    :: PAPRSF(KLON,KLEV)
+REAL(KIND=JPRB)   ,INTENT(IN)    :: PLNPR(KLON,KLEV)
+REAL(KIND=JPRB)   ,INTENT(IN)    :: PQ(KLON,KLEV) 
+REAL(KIND=JPRB)   ,INTENT(IN)    :: PQI(KLON,KLEV) 
+REAL(KIND=JPRB)   ,INTENT(IN)    :: PQL(KLON,KLEV)  
+REAL(KIND=JPRB)   ,INTENT(IN)    :: PQSAT(KLON,KLEV)
+REAL(KIND=JPRB)   ,INTENT(IN)    :: PQW(KLON,KLEV)
+REAL(KIND=JPRB)   ,INTENT(IN)    :: PT(KLON,KLEV)
+REAL(KIND=JPRB)   ,INTENT(IN)    :: PTW(KLON,KLEV)
+REAL(KIND=JPRB)   ,INTENT(IN)    :: PTKE(KLON,KLEV)
+REAL(KIND=JPRB)   ,INTENT(IN)    :: PTTE(KLON,KLEV)
+REAL(KIND=JPRB)   ,INTENT(IN)    :: PNTOP(KLON) 
+REAL(KIND=JPRB)   ,INTENT(OUT)   :: PQLDN(KLON,KLEV)
+REAL(KIND=JPRB)   ,INTENT(OUT)   :: PQUDEF(KLON,KLEV)
+
+!-----------------------------------------------------------------------
+
+REAL(KIND=JPRB) :: ZTU(KLON,KLEV),ZQU(KLON,KLEV),ZLDN(KLON,KLEV)&
+    &,ZQC(KLON,KLEV),ZRMIX(KLON,KLEV)&
+    &,ZDELNL(KLON)
+
+REAL(KIND=JPRB) :: ZCP(KLON)&
+    &,ZLB(KLON),ZLH(KLON)&
+    &,ZQB(KLON),ZLCL(KLON)&
+    &,ZRBB(KLON),ZRBH(KLON),ZRVH(KLON)&
+    &,ZTB(KLON)
+
+INTEGER(KIND=JPIM) :: JIT, JLEV, JLON
+
+REAL(KIND=JPRB) :: ZBLUE, ZSIG, &
+  &ZCPSMD, ZCPVMD, ZCPVMS, ZCPVMW, ZCPWMD, ZRVMD, &
+  &ZDCP, ZDELQ, ZDELT, ZDELTA, ZDQW, ZNBLU, &
+  &ZENTR, ZMIX, ZQT, ZQTU, &
+  &ZESP, ZEW, ZQW, &
+  &ZLWE, ZQWE, ZTWE
+
+REAL(KIND=JPRB) :: ZHOOK_HANDLE
+
+!-----------------------------------------------------------------------
+
+#include "fcttrm.func.h"
+#include "fctdoi.func.h"
+
+!-----------------------------------------------------------------------
+IF (LHOOK) CALL DR_HOOK('ACSCCTR',0,ZHOOK_HANDLE)
+ASSOCIATE(NBITER=>YDPHY%NBITER, ETKE_ENTRX=>YDPHY0%ETKE_ENTRX, RDTFAC=>YDPHY0%RDTFAC)
+!-----------------------------------------------------------------------
+
+!*
+!     ---------------------------
+!     I - AUXILIARY CONSTANTS.
+
+ZRVMD=RV-RD
+ZCPVMD=RCPV-RCPD
+ZCPVMW=RCPV-RCW
+ZCPVMS=RCPV-RCS
+ZCPWMD=RCW-RCPD
+ZCPSMD=RCS-RCPD
+
+!*
+!     ------------------------------------------------------------------
+!     III - CALCULS PRELIMINAIRES
+!           PRELIMINARY CALCULATIONS
+!     ------------------------------------------------------------------
+
+!  ZQC guaranteed >=0 from APLPAR.
+DO JLEV=KTDIA,KLEV
+  DO JLON=KIDIA,KFDIA
+     ZQC(JLON,JLEV)=PQI(JLON,JLEV)+PQL(JLON,JLEV)
+  ENDDO
+ENDDO
+
+!*
+!     ------------------------------------------------------------------
+!     IV - INITIALISATION AT THE BOTTOM LAYER TO START THE CLOUD PROFILE 
+
+! - TEMPORAIRE(S) 2D (0:KLEV) .
+
+DO JLON=KIDIA,KFDIA
+
+!     THERMODYNAMIC CHARACTERISTICS OF THE CLOUD.
+
+! ZTU        : TEMPERATURE OF THE CLOUDY ASCENT.
+! ZQU        : WATER VAPOUR SPECIFIC HUMIDITY OF THE CLOUDY ASCENT.
+! ZLDN       : CONDENSED SPECIFIC HUMIDITY OF THE CLOUDY ASCENT.
+
+  ZTU(JLON,KLEV)=PTW(JLON,KLEV)
+  ZQU(JLON,KLEV)=PQW(JLON,KLEV)
+  ZLCL(JLON)=PQSAT(JLON,KLEV)-PQ(JLON,KLEV)
+  ZLDN(JLON,KLEV)=ZQC(JLON,KLEV)
+
+  PQUDEF(JLON,KTDIA)=0._JPRB
+  PQUDEF(JLON,KLEV)=0._JPRB
+  PQLDN(JLON,KLEV)=0._JPRB
+
+! INITIALISATION for VERTICAL MOTION EQUATION:
+
+! Other additions at KLEV:
+
+  ZRMIX(JLON,KLEV)=0.0_JPRB
+  ZTB(JLON)=0.0_JPRB
+
+ENDDO
+
+!*
+!     ------------------------------------------------------------------
+!     V - FIRST VERTICAL LOOP (UPWARDS) INCLUDING THE SATURATED
+!     ADIABATIC TYPE CALCULATION OF THE CLOUD PROFILE.
+
+DO JLEV=KLEV-1,KTDIA,-1
+
+!     SATURATED ADIABAT WITH ENTRAINMENT AND LIQUID (OR ICE) WATER
+!     SUSTENTATION.
+
+  DO JLON=KIDIA,KFDIA
+
+!     ENTRAINMENT at Starting level JLEV+1
+
+! ZTB       : "ZTU" AT THE BOTTOM OF THE SLAB WITH ENTRAINMENT "IN".
+! ZQB       : "ZQU" AT THE BOTTOM OF THE SLAB WITH ENTRAINMENT "IN".
+! ZLB       : "ZLDN" AT THE BOTTOM OF THE SLAB WITH ENTRAINMENT "IN".
+
+    ZSIG=MAX(0._JPRB,SIGN(1._JPRB,PNTOP(JLON)-JLEV))
+    ZENTR=ETKE_ENTRX*ZSIG
+
+    ZMIX=ZENTR*(PAPHIF(JLON,JLEV)-PAPHIF(JLON,JLEV+1))
+    ZMIX=ZMIX/(1.0_JPRB+ZMIX)
+    ZRMIX(JLON,JLEV)=ZMIX
+
+! environment
+    ZLWE=ZQC(JLON,JLEV+1)
+    ZQWE=PQ(JLON,JLEV+1)
+    ZTWE=PT(JLON,JLEV+1)
+
+
+! bottom of the slab
+    ZTB(JLON)=ZTU(JLON,JLEV+1) +ZMIX*(ZTWE-ZTU(JLON,JLEV+1))
+    ZQB(JLON)=ZQU(JLON,JLEV+1) +ZMIX*(ZQWE-ZQU(JLON,JLEV+1))
+    ZLB(JLON)=ZLDN(JLON,JLEV+1) +ZMIX*(ZLWE-ZLDN(JLON,JLEV+1)) 
+
+!     HYDROSTATIC COEFFICIENTS FOR THE CLOUD PROFILE.
+
+! - TEMPORAIRE(S) 1D .
+
+! ZRBB      : WEIGHT OF "ZTB" IN THE GEOPOTENTIAL THICKNESS.
+! ZRBH      : WEIGHT OF "ZTU" AT "ZQU=ZQB" IN THE SAME THICKNESS.
+! ZRVH      : FOR THE Q DEPENDENT CORRECTION OF ZRBH.
+
+    ZRBB(JLON)=(PLNPR(JLON,JLEV+1)-PALPH(JLON,JLEV+1))*(RD*(1.0_JPRB&
+     &-ZLB(JLON))+ZRVMD*ZQB(JLON))
+    ZRBH(JLON)=PALPH(JLON,JLEV)*(RD*(1.0_JPRB-ZLB(JLON))+ZRVMD*ZQB(JLON))
+    ZRVH(JLON)=PALPH(JLON,JLEV)*RV
+
+!     SNOW OPTION DEPENDENT CALCULATIONS.
+! Diagnostic ice fraction 
+    ZDELTA=MAX(0.0_JPRB,SIGN(1.0_JPRB,RTT-ZTB(JLON)))
+    ZDELNL(JLON)=ZDELTA
+
+!     CALL TO THE DEFINED FUNCTION FOR THE COMPUTATION OF THE PSEUDO
+!     LATENT HEAT AT THE BOTTOM (AMONG THREE CHARACTERISTIC PARAMETERS).
+
+! ZLH       : RUNNING VALUE OF THE PSEUDO LH DURING NEWTON'S LOOP.
+! ZCP       : AS ZLH BUT FOR THE SPECIFIC HEAT CP.
+
+    ZLH(JLON)=FOLH(ZTB(JLON),ZDELTA)+ZRVH(JLON)*ZTB(JLON)
+    ZCP(JLON)=RCPD+ZCPVMD*ZQB(JLON)+(ZCPWMD+ZDELTA*(ZCPSMD-&
+     &ZCPWMD))*ZLB(JLON)+ZRBH(JLON)
+    ZDCP=ZRVH(JLON)+ZCPVMW+ZDELTA*(ZCPVMS-ZCPVMW)
+
+!               CHANGE OF LEVEL TO OBTAIN A 
+!     FIRST GUESS AS STARTING POINT FOR THE NEWTON LOOP.
+
+    ZDELT=PT(JLON,JLEV)-PT(JLON,JLEV+1)
+    ZLH(JLON)=ZLH(JLON)+ZDCP*ZDELT
+    ZDELQ=-((ZRBB(JLON)+ZRBH(JLON))*ZTB(JLON)+ZCP(JLON)*ZDELT)/ZLH(JLON)
+    ZCP(JLON)=ZCP(JLON)+ZDCP*ZDELQ
+    ZTU(JLON,JLEV)=ZTB(JLON)+ZDELT
+    ZQU(JLON,JLEV)=ZQB(JLON)+ZDELQ
+  ENDDO
+
+
+!     NEWTON LOOP.
+
+  DO JIT=1,NBITER
+    DO JLON=KIDIA,KFDIA
+
+!     SNOW OPTION DEPENDENT COMPUTATIONS.
+!        Diagnostic ice fraction
+      ZDELTA=ZDELNL(JLON)
+
+!     SATURATION CALCULATIONS USING DEFINED FUNCTIONS.
+
+      ZEW= FOEW (ZTU(JLON,JLEV),ZDELTA)
+      ZESP=ZEW/PAPRSF(JLON,JLEV)
+      ZQW= FOQS (ZESP)
+      ZDQW= FODQS (ZQW,ZESP, FODLEW (ZTU(JLON,JLEV),ZDELTA))
+
+!     INCREMENTATIONS.
+
+      ZDCP=ZRVH(JLON)+ZCPVMW+ZDELTA*(ZCPVMS-ZCPVMW)
+      ZDELQ=(ZQW-ZQU(JLON,JLEV))&
+        &*ZCP(JLON)/(ZCP(JLON)+ZLH(JLON)*ZDQW)
+      ZCP(JLON)=ZCP(JLON)+ZDCP*ZDELQ
+      ZDELT=-ZDELQ*ZLH(JLON)/ZCP(JLON)
+      ZLH(JLON)=ZLH(JLON)+ZDCP*ZDELT
+      ZQU(JLON,JLEV)=ZQU(JLON,JLEV)+ZDELQ
+      ZTU(JLON,JLEV)=ZTU(JLON,JLEV)+ZDELT
+    ENDDO
+
+  ENDDO
+
+  DO JLON=KIDIA,KFDIA
+
+!   no detrainment
+
+!   net condensate - could be negative if started from unsaturated state
+    ZLDN(JLON,JLEV)=ZLB(JLON)+ZQB(JLON)-ZQU(JLON,JLEV)
+
+!   before negative values of ZLDN were clipped to zero. Now we return to zero
+!   buoyancy
+
+    ZBLUE=MAX(0._JPRB, SIGN(1._JPRB, -ZLDN(JLON,JLEV) &
+         &))
+    ZNBLU=1._JPRB-ZBLUE
+
+    ZLDN(JLON,JLEV)=ZNBLU*ZLDN(JLON,JLEV)+ZBLUE*ZQC(JLON,JLEV)
+    ZQU(JLON,JLEV)=ZNBLU*ZQU(JLON,JLEV)+ZBLUE*PQW(JLON,JLEV)
+    ZTU(JLON,JLEV)=ZNBLU*ZTU(JLON,JLEV)+ZBLUE*PTW(JLON,JLEV)
+
+!   ZLCL is diagnosed Before "cold cloud" adaptation 
+
+    ZLCL(JLON)=MIN(ZLCL(JLON),PQSAT(JLON,JLEV)&
+              & -ZQU(JLON,JLEV)-ZLDN(JLON,JLEV))
+
+    ZSIG=MAX(0._JPRB,SIGN(1._JPRB,-ZLCL(JLON)))
+
+! ZBLUE=1 if back to blue point
+
+    ZBLUE=MAX(0.0_JPRB,SIGN(1.0_JPRB,(PTW(JLON,JLEV)-ZTU(JLON,JLEV))))
+
+!---------------------------------
+! if ZBLUE=1 then back to environment conditions
+! This also implies zero buoyancy and would prevent detecting the inversion
+! Then q_u -> q_we and q_c -> q_ce simply
+
+    ZLDN(JLON,JLEV)=ZLDN(JLON,JLEV)*ZSIG
+! First store activity indicator in pqudef
+    ZNBLU=1._JPRB-ZBLUE
+    PQUDEF(JLON,JLEV)=ZNBLU
+    ZLDN(JLON,JLEV)=ZBLUE*ZQC(JLON,JLEV)+ZNBLU*ZLDN(JLON,JLEV)
+    ZQU(JLON,JLEV)=ZNBLU*ZQU(JLON,JLEV)+ZBLUE*PQW(JLON,JLEV)
+    ZTU(JLON,JLEV)=ZNBLU*ZTU(JLON,JLEV)+ZBLUE*PTW(JLON,JLEV)
+
+    PQLDN(JLON,JLEV)=ZLDN(JLON,JLEV)
+
+!---------------------
+
+  ENDDO
+
+ENDDO
+
+DO JLON=KIDIA,KFDIA
+   PQUDEF(JLON,KLEV)=0._JPRB
+ENDDO
+DO JLEV=KLEV-1,KTDIA,-1
+  DO JLON=KIDIA,KFDIA
+! Output total Water difference at half level
+    ZQT=PQ(JLON,JLEV)+ZQC(JLON,JLEV)
+    ZQTU=ZLDN(JLON,JLEV)+ZQU(JLON,JLEV)
+! Saturation deficit/excess at full level
+    ZDELTA=FONICE(ZTU(JLON,JLEV),YDPHY0%RDTFAC)
+    ZEW= FOEW (ZTU(JLON,JLEV),ZDELTA)
+    ZESP=ZEW/PAPRSF(JLON,JLEV)
+    ZQW= FOQS (ZESP)
+! ABOVE CLOUD TOP SET PQUDEF=ZQBOXDEF to get Rhat=0
+    PQUDEF(JLON,JLEV)=PQUDEF(JLON,JLEV)*(ZQTU-ZQW)&
+      &+(1._JPRB-PQUDEF(JLON,JLEV))*(ZQT-PQSAT(JLON,JLEV))
+  ENDDO
+ENDDO
+
+END ASSOCIATE
+IF (LHOOK) CALL DR_HOOK('ACSCCTR',1,ZHOOK_HANDLE)
+END SUBROUTINE ACSCCTR

@@ -263,7 +263,7 @@ TYPE(TGMV),                     INTENT(INOUT) :: YDGMV
 TYPE(TSURF),                    INTENT(INOUT) :: YDSURF
 TYPE(TCFU),                     INTENT(INOUT) :: YDCFU
 TYPE(TXFU),                     INTENT(INOUT) :: YDXFU
-TYPE(MODEL),                    INTENT(INOUT) :: YDMODEL
+TYPE(MODEL),                    INTENT(IN)    :: YDMODEL
 LOGICAL,                        INTENT(IN)    :: LDCONFX
 REAL(KIND=JPRB),                INTENT(IN)    :: PDTPHY 
 REAL(KIND=JPRB),                INTENT(INOUT) :: PGFL(YDCPG_DIM%KLON,YDCPG_DIM%KFLEVG,YDMODEL%YRML_GCONF%YGFL%NDIM) 

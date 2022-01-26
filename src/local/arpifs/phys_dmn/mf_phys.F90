@@ -53,7 +53,7 @@ TYPE(TYP_DDH),          INTENT(INOUT), OPTIONAL :: YDDDH
 
 #include "apl_arome.intfb.h"
 #include "aplpar.intfb.h"
-#include "aplpar_new.intfb.h"
+#include "apl_arpege.intfb.h"
 #include "aplsim.intfb.h"
 #include "mf_phys_prep.intfb.h"
 #include "mf_phys_init.intfb.h"
@@ -119,7 +119,10 @@ ELSE
   LLNEW = (CLNEW /= '') .AND. (CLNEW /= '0')
 
   IF (LLNEW) THEN
-  CALL APLPAR_NEW 
+  CALL APL_ARPEGE (YLMF_PHYS_BASE_STATE, YLMF_PHYS_NEXT_STATE, YDGEOMETRY, YDCPG_DIM, YDCPG_MISC,                &
+  & YDCPG_GPAR, YDCPG_PHY0, YDMF_PHYS, YDCPG_DYN0, YDMF_PHYS_SURF, YDCPG_SL1, YDCPG_SL2, YDVARS, YDFIELDS%YRGMV, &
+  & YDFIELDS%YRSURF, YDFIELDS%YRCFU, YDFIELDS%YRXFU, YDMODEL, LDCONFX, PDTPHY, PGFL, PGMVT1, PGFLT1,             &
+  & PTRAJ_PHYS, YDDDH)
   ELSE
   CALL APLPAR (YLMF_PHYS_BASE_STATE, YLMF_PHYS_NEXT_STATE, YDGEOMETRY, YDCPG_DIM, YDCPG_MISC,                    &
   & YDCPG_GPAR, YDCPG_PHY0, YDMF_PHYS, YDCPG_DYN0, YDMF_PHYS_SURF, YDCPG_SL1, YDCPG_SL2, YDVARS, YDFIELDS%YRGMV, &

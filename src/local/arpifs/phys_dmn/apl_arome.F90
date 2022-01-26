@@ -255,7 +255,7 @@ TYPE(TGMV),                     INTENT(IN)    :: YDGMV
 TYPE(TSURF),                    INTENT(IN)    :: YDSURF
 TYPE(TCFU),                     INTENT(IN)    :: YDCFU
 TYPE(TXFU),                     INTENT(IN)    :: YDXFU
-TYPE(MODEL),                    INTENT(INOUT) :: YDMODEL
+TYPE(MODEL),                    INTENT(IN)    :: YDMODEL
 LOGICAL,                        INTENT(IN)    :: LDCONFX
 REAL(KIND=JPRB),                INTENT(IN)    :: PDTPHY 
 REAL(KIND=JPRB),                INTENT(INOUT) :: PGFL(YDCPG_DIM%KLON,YDCPG_DIM%KFLEVG,YDMODEL%YRML_GCONF%YGFL%NDIM) 
@@ -981,7 +981,7 @@ ELSE
   ZEPSNEB=1.E-06
 ENDIF
 
-NSV=0
+! NSV=0
 
 !         1.3 time step initialisation
 !             the mesoNH physics (turb and microphysics) is written 
@@ -3522,7 +3522,6 @@ IF (LDPRECIPS.OR.LDPRECIPS2) THEN
   IF (LDPRECIPS) THEN
    ! Defined precipitation type 
    !
-   NDTPRECCUR=INT(MOD(ZSTATI/TSTEP,REAL(NDTPREC)))+1_JPIM
    !PDPRECIPS(:,NDTPRECCUR)=HUGE(1._JPRB)
    ZPRC_DPRECIPS(:,NDTPRECCUR)=0._JPRB
 
@@ -3536,7 +3535,6 @@ IF (LDPRECIPS.OR.LDPRECIPS2) THEN
   IF (LDPRECIPS2) THEN
 
    !Idem for an other time step and an other period
-   NDTPRECCUR2=INT(MOD(ZSTATI/TSTEP,REAL(NDTPREC2)))+1_JPIM
    ZPRC_DPRECIPS2(:,NDTPRECCUR2)=0._JPRB
 
    CALL DPRECIPS(YDPRECIPS, YDCPG_DIM%KIDIA, YDCPG_DIM%KFDIA, YDCPG_DIM%KLON, YDCPG_DIM%KFLEVG, YDVARS%GEOMETRY%OROG%T0,                               &

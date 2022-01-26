@@ -1,0 +1,250 @@
+SUBROUTINE APL_AROME2INTFLEX(YGFL,YDPARAR,YDPHY,KPROMA, KST, KEND, KFLEV, PDT, &
+ & PRDELP, PU, PV, PT, PTS, PCP, &
+ ! precipitation fluxes
+ & PFPR, &
+ ! radiative fluxes
+ & LDRAD, PFRTH, PFRSO, &
+ ! momentum and temperature tendencies
+ & PTENDU, PTENDV, PTENDT, &
+ ! water tendencies
+ & PTENDR, PTENDTKE, PTENDEXT, &
+ & YDPROCSET)
+
+! APL_AROME2INTFLEX
+! 
+! Convert output of APL_AROME into INTFLEX structure
+! 
+! Method:
+!   1. calculation of local water tendencies by subtracting contribution of precipitation from the total.
+!      The local vapor tendency is minus the sum of other local tendencies
+!      The diffusive vapor flux is obtained by subtracting local tendency from total tendency
+!   2. calculation of enthalpy fluxes. The diffusive flux is obtained by subtracting
+!         - radiative enthalpy tendency
+!         - enthalpy tendency due to phase changes
+!         - enthalpy tendency due to precipitation (depending on LENTHPREC)
+!       from the change in (cpT+E+e)
+!   3. extra gfl variables
+!   4. momentum
+!
+! Author: 2013-11, D. Degrauwe
+! 
+! 
+
+USE PARKIND1   , ONLY : JPRB, JPIM
+USE YOM_YGFL   , ONLY : TYPE_GFLD
+USE YOMCST     , ONLY : RG, RCPD
+USE YOMPHY     , ONLY : TPHY
+USE YOMPARAR   , ONLY : TPARAR
+USE INTFLEX_MOD, ONLY : TYPE_INTPROCSET, TYPE_INTPROC, NEWINTFIELD, NEWINTPROC, LENTHPREC
+
+USE YOMHOOK    , ONLY : LHOOK,   DR_HOOK
+
+IMPLICIT NONE
+
+TYPE(TPARAR)       ,INTENT(IN):: YDPARAR
+TYPE(TPHY)         ,INTENT(IN):: YDPHY
+TYPE(TYPE_GFLD)    ,INTENT(IN), TARGET:: YGFL !! TARGET : nasty side effect of passing this by argument
+INTEGER(KIND=JPIM), INTENT(IN) :: KPROMA, KST, KEND, KFLEV
+REAL(KIND=JPRB), INTENT(IN) :: PDT
+REAL(KIND=JPRB), INTENT(IN) :: PRDELP(KPROMA,KFLEV)
+REAL(KIND=JPRB), INTENT(IN) :: PU(KPROMA,KFLEV)
+REAL(KIND=JPRB), INTENT(IN) :: PV(KPROMA,KFLEV)
+REAL(KIND=JPRB), INTENT(IN) :: PT(KPROMA,KFLEV)
+REAL(KIND=JPRB), INTENT(IN) :: PTS(KPROMA)
+REAL(KIND=JPRB), INTENT(IN) :: PCP(KPROMA,KFLEV)
+REAL(KIND=JPRB), INTENT(IN) :: PFPR(KPROMA,0:KFLEV,YDPARAR%NRR)
+
+LOGICAL,         INTENT(IN) :: LDRAD
+REAL(KIND=JPRB), INTENT(IN) :: PFRTH(KPROMA,0:KFLEV)
+REAL(KIND=JPRB), INTENT(IN) :: PFRSO(KPROMA,0:KFLEV)
+
+REAL(KIND=JPRB), INTENT(IN) :: PTENDU(KPROMA,KFLEV)
+REAL(KIND=JPRB), INTENT(IN) :: PTENDV(KPROMA,KFLEV)
+REAL(KIND=JPRB), INTENT(IN) :: PTENDT(KPROMA,KFLEV)
+REAL(KIND=JPRB), INTENT(IN) :: PTENDR(KPROMA,KFLEV,YDPARAR%NRR)
+REAL(KIND=JPRB), INTENT(IN) :: PTENDTKE(KPROMA,KFLEV)
+REAL(KIND=JPRB), INTENT(IN) :: PTENDEXT(KPROMA,KFLEV,YGFL%NGFL_EXT)
+TYPE(TYPE_INTPROCSET), INTENT(INOUT) :: YDPROCSET
+
+! local variables
+TYPE(TYPE_INTPROC), POINTER :: YLPROC
+
+REAL(KIND=JPRB) :: ZGSDP(KPROMA,KFLEV)   ! conversion between fluxes and tendencies
+REAL(KIND=JPRB) :: ZTHD(KPROMA,KFLEV)    ! diffusive enthalpy tendency
+REAL(KIND=JPRB) :: ZFHD(KPROMA,0:KFLEV)   ! diffusive enthalpy flux
+REAL(KIND=JPRB) :: ZTCP(KPROMA,KFLEV)    ! tendency of cp
+REAL(KIND=JPRB) :: ZTI(KPROMA,0:KFLEV)   ! temperature at intermediate levels
+
+INTEGER(KIND=JPIM) :: JROF, JLEV, JRR
+INTEGER(KIND=JPIM) :: JGFL, JGFLRR(YDPARAR%NRR), JGFLEXT, JGFLTKE
+CHARACTER(LEN=2)   :: CLRRNAME(7) = (/'QV','QL','QR','QI','QS','QG','QH'/)
+
+REAL(KIND=JPRB), POINTER :: ZAUX(:,:), ZQVL(:,:)
+
+REAL(KIND=JPRB) :: ZHOOK_HANDLE
+
+IF (LHOOK) CALL DR_HOOK('APL_AROME2INTFLEX',0,ZHOOK_HANDLE)
+ASSOCIATE(NRR=>YDPARAR%NRR, &
+ & YCOMP=>YGFL%YCOMP, NGFL_EXT=>YGFL%NGFL_EXT, &
+ & LPHSPSH=>YDPHY%LPHSPSH, NUMFLDS=>YGFL%NUMFLDS)
+!----------------------------------------
+! 0. Preparations
+!----------------------------------------
+
+! setup new process
+YLPROC => NEWINTPROC(YDPROCSET,'complete AROME physics')
+
+! get indices of gfl variables in YGFL%YCOMP array
+DO JGFL=1,NUMFLDS
+  IF (ASSOCIATED(YGFL%YQ,YGFL%YCOMP(JGFL))) JGFLRR(1) = JGFL
+  IF (ASSOCIATED(YGFL%YL,YGFL%YCOMP(JGFL))) JGFLRR(2) = JGFL
+  IF (ASSOCIATED(YGFL%YR,YGFL%YCOMP(JGFL))) JGFLRR(3) = JGFL
+  IF (ASSOCIATED(YGFL%YI,YGFL%YCOMP(JGFL))) JGFLRR(4) = JGFL
+  IF (ASSOCIATED(YGFL%YS,YGFL%YCOMP(JGFL))) JGFLRR(5) = JGFL
+  IF (ASSOCIATED(YGFL%YG,YGFL%YCOMP(JGFL))) JGFLRR(6) = JGFL
+  IF (ASSOCIATED(YGFL%YH,YGFL%YCOMP(JGFL))) JGFLRR(7) = JGFL
+  IF (ASSOCIATED(YGFL%YTKE,YGFL%YCOMP(JGFL))) JGFLTKE = JGFL
+  IF (ASSOCIATED(YGFL%YEXT,YGFL%YCOMP(JGFL:JGFL+NGFL_EXT-1))) JGFLEXT = JGFL
+ENDDO
+
+! calculate conversions factor between fluxes and tendencies
+DO JLEV = 1, KFLEV
+  DO JROF = KST, KEND
+    ZGSDP(JROF,JLEV)=RG*PRDELP(JROF,JLEV)
+  ENDDO
+ENDDO
+
+! initialize enthalpy tendency to zero
+ZTHD=0.
+ZFHD=0.
+
+! calculate halflevel temperatures (only required if not LENTHPREC)
+IF (.NOT.LENTHPREC) THEN
+  IF (LPHSPSH) THEN
+    DO JROF = KST, KEND
+      ZTI(JROF,0)=PT(JROF,1)
+      ZTI(JROF,KFLEV)=PT(JROF,KFLEV)
+    ENDDO
+  ELSE
+    DO JROF = KST, KEND
+      ZTI(JROF,0)=PT(JROF,1)
+      ZTI(JROF,KFLEV)=PTS(JROF)
+    ENDDO
+  ENDIF
+  DO JLEV= 1, KFLEV-1
+    DO JROF = KST, KEND
+      ZTI(JROF,JLEV)=(PT(JROF,JLEV)+PT(JROF,JLEV+1))*0.5_JPRB
+    ENDDO
+  ENDDO
+ENDIF
+
+!-------------------------------------------
+! 1. local phase changes for hydrometeors
+!-------------------------------------------
+
+! add precipitation fluxes
+DO JRR=2,NRR
+  ZAUX => NEWINTFIELD(YLPROC,KPROMA,KFLEV,'prec'//CLRRNAME(JRR),'G','P',KGFL=JGFLRR(JRR))
+  ZAUX(KST:KEND,:)=PFPR(KST:KEND,:,JRR)
+  ! enthalpy effect
+  IF (LENTHPREC) THEN
+    ZTHD(KST:KEND,:)=ZTHD(KST:KEND,:)+ZGSDP(KST:KEND,:)*PT(KST:KEND,:)&
+     & * (YCOMP(JGFLRR(JRR))%RCP-RCPD)&
+     & * (ZAUX(KST:KEND,1:KFLEV)-ZAUX(KST:KEND,0:KFLEV-1))
+  ELSE
+    ZFHD(KST:KEND,:)=ZFHD(KST:KEND,:)-&
+     & (YCOMP(JGFLRR(JRR))%RCP-RCPD)*ZAUX(KST:KEND,:)*ZTI(KST:KEND,:)
+  ENDIF
+ENDDO
+
+! add local phase changes
+ZQVL => NEWINTFIELD(YLPROC,KPROMA,KFLEV, 'loc'//CLRRNAME(JRR),'G','T',KGFL=JGFLRR(1))
+ZQVL=0.
+DO JRR=2,NRR
+  ZAUX => NEWINTFIELD(YLPROC,KPROMA,KFLEV, 'loc'//CLRRNAME(JRR),'G','T',KGFL=JGFLRR(JRR))
+  ! subtract precipitation
+  ZAUX(KST:KEND,:)=PTENDR(KST:KEND,:,JRR)+ZGSDP(KST:KEND,:)*(&
+   & PFPR(KST:KEND,1:KFLEV,JRR)-PFPR(KST:KEND,0:KFLEV-1,JRR))
+  ! enthalpy effect
+  ZTHD(KST:KEND,:)=ZTHD(KST:KEND,:)-YCOMP(JGFLRR(JRR))%RLZER*ZAUX(KST:KEND,:)
+  ! local vapor tendency
+  ZQVL(KST:KEND,:)=ZQVL(KST:KEND,:)-ZAUX(KST:KEND,:)
+ENDDO
+
+! diffusive vapor flux
+ZAUX => NEWINTFIELD(YLPROC,KPROMA,KFLEV,'diff'//CLRRNAME(1),'G','D',KGFL=JGFLRR(1))
+ZAUX(KST:KEND,0)=0.
+DO JLEV=1,KFLEV
+  ZAUX(KST:KEND,JLEV)=ZAUX(KST:KEND,JLEV-1)-(PTENDR(KST:KEND,JLEV,1)-ZQVL(KST:KEND,JLEV))/ZGSDP(KST:KEND,JLEV)
+ENDDO
+
+
+!-------------------------------------------
+! 2. enthalpy fluxes
+!-------------------------------------------
+
+IF (LDRAD) THEN
+  ! radiation
+  ZAUX => NEWINTFIELD(YLPROC,KPROMA,KFLEV, 'radL',       'H','F')
+  ZAUX(KST:KEND,:)=PFRTH(KST:KEND,:)
+  ZFHD(KST:KEND,:)=ZFHD(KST:KEND,:)-ZAUX(KST:KEND,:)
+
+  ZAUX => NEWINTFIELD(YLPROC,KPROMA,KFLEV, 'radS',      'H','F')
+  ZAUX(KST:KEND,:)=PFRSO(KST:KEND,:)
+  ZFHD(KST:KEND,:)=ZFHD(KST:KEND,:)-ZAUX(KST:KEND,:)
+ENDIF
+
+! tendency of cp
+ZTCP=0.
+DO JRR=1,NRR
+  ZTCP(KST:KEND,:)=ZTCP(KST:KEND,:)&
+   & +(YCOMP(JGFLRR(JRR))%RCP-RCPD)*PTENDR(KST:KEND,:,JRR)
+ENDDO
+
+! tendency of cpT+E+e
+ZTHD(KST:KEND,:)=ZTHD(KST:KEND,:)&
+ & +((PCP(KST:KEND,:)+PDT*ZTCP(KST:KEND,:))*(PT(KST:KEND,:)+PDT*PTENDT(KST:KEND,:))&
+ & + 0.5*((PU(KST:KEND,:)+PDT*PTENDU(KST:KEND,:))**2+(PV(KST:KEND,:)+PDT*PTENDV(KST:KEND,:))**2)&
+ & -PCP(KST:KEND,:)*PT(KST:KEND,:)-0.5*(PU(KST:KEND,:)**2+PV(KST:KEND,:)**2))/PDT
+IF (YGFL%YTKE%LT1) THEN
+  ZTHD(KST:KEND,:)=ZTHD(KST:KEND,:)+PTENDTKE(KST:KEND,:)
+ENDIF
+
+! diffusion
+ZAUX => NEWINTFIELD(YLPROC,KPROMA,KFLEV,'diffH','H','F')
+ZAUX(KST:KEND,0)=0.
+DO JLEV=1,KFLEV
+  ZAUX(KST:KEND,JLEV)=ZAUX(KST:KEND,JLEV-1)-ZTHD(KST:KEND,JLEV)/ZGSDP(KST:KEND,JLEV)
+ENDDO
+ZAUX(KST:KEND,:)=ZAUX(KST:KEND,:)+ZFHD(KST:KEND,:)
+
+!-------------------------------------------
+! 3. non-water GFL variables
+!-------------------------------------------
+
+IF (NGFL_EXT>0) THEN
+  DO JGFL=1,NGFL_EXT
+    ZAUX => NEWINTFIELD(YLPROC,KPROMA,KFLEV, 'tendency', 'G','T',KGFL=JGFLEXT+JGFL-1)
+    ZAUX(KST:KEND,:)=PTENDEXT(KST:KEND,:,JGFL)
+  ENDDO
+ENDIF
+
+IF (YGFL%YTKE%LT1) THEN
+    ZAUX => NEWINTFIELD(YLPROC,KPROMA,KFLEV, 'tendency', 'G','T',KGFL=JGFLTKE)
+    ZAUX(KST:KEND,:)=PTENDTKE(KST:KEND,:)
+ENDIF
+
+!-------------------------------------------
+! 4. momentum
+!-------------------------------------------
+
+ZAUX => NEWINTFIELD(YLPROC,KPROMA,KFLEV,'momU','U','T')
+ZAUX(KST:KEND,:)=PTENDU(KST:KEND,:)
+
+ZAUX => NEWINTFIELD(YLPROC,KPROMA,KFLEV,'momV','V','T')
+ZAUX(KST:KEND,:)=PTENDV(KST:KEND,:)
+
+
+END ASSOCIATE
+IF (LHOOK) CALL DR_HOOK('APL_AROME2INTFLEX',1,ZHOOK_HANDLE)
+END SUBROUTINE APL_AROME2INTFLEX

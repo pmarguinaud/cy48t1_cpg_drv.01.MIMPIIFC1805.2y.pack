@@ -2,8 +2,8 @@
 @PROCESS NOCHECK
 #endif
 SUBROUTINE APL_ARPEGE(YDMF_PHYS_BASE_STATE, YDMF_PHYS_NEXT_STATE, YDGEOMETRY, YDCPG_DIM, YDCPG_MISC, &
-& YDCPG_GPAR, YDCPG_PHY0, YDMF_PHYS, YDCPG_DYN0, YDMF_PHYS_SURF, YDCPG_SL1, YDCPG_SL2, YDVARS, &
-& YDGMV, YDSURF, YDCFU, YDXFU, YDMODEL, LDCONFX, PDTPHY, PGFL, PGMVT1, PGFLT1, PTRAJ_PHYS, YDDDH)
+& YDCPG_GPAR, YDCPG_PHY0, YDMF_PHYS, YDCPG_DYN0, YDMF_PHYS_SURF, YDCPG_SL2, YDVARS, YDSURF, YDCFU,   &
+& YDXFU, YDMODEL, LDCONFX, PDTPHY, PTRAJ_PHYS, YDDDH)
 
 !**** *APLPAR * - APPEL DES PARAMETRISATIONS PHYSIQUES.
 
@@ -21,7 +21,6 @@ SUBROUTINE APL_ARPEGE(YDMF_PHYS_BASE_STATE, YDMF_PHYS_NEXT_STATE, YDGEOMETRY, YD
 
 ! - 2D (1:KLEV) .
 
-! PGFL       : GFL FIELDS
 ! PKOZO      : CHAMPS POUR LA PHOTOCHIMIE DE L'OZONE (KVCLIS CHAMPS).
 ! PKOZO      : FIELDS FOR PHOTOCHEMISTERY OF OZONE   (KVCLIS FIELDS).
 
@@ -252,23 +251,18 @@ TYPE(GEOMETRY),                 INTENT(IN)    :: YDGEOMETRY
 TYPE(CPG_DIM_TYPE),             INTENT(IN)    :: YDCPG_DIM
 TYPE(CPG_MISC_TYPE),            INTENT(INOUT) :: YDCPG_MISC
 TYPE(CPG_GPAR_TYPE),            INTENT(INOUT) :: YDCPG_GPAR
-TYPE(CPG_PHY_TYPE),             INTENT(INOUT) :: YDCPG_PHY0
+TYPE(CPG_PHY_TYPE),             INTENT(IN)    :: YDCPG_PHY0
 TYPE(MF_PHYS_TYPE),             INTENT(INOUT) :: YDMF_PHYS
-TYPE(CPG_DYN_TYPE),             INTENT(INOUT) :: YDCPG_DYN0
+TYPE(CPG_DYN_TYPE),             INTENT(IN)    :: YDCPG_DYN0
 TYPE(MF_PHYS_SURF_TYPE),        INTENT(INOUT) :: YDMF_PHYS_SURF
-TYPE(CPG_SL1_TYPE),             INTENT(INOUT) :: YDCPG_SL1
 TYPE(CPG_SL2_TYPE),             INTENT(INOUT) :: YDCPG_SL2
 TYPE(FIELD_VARIABLES),          INTENT(INOUT) :: YDVARS
-TYPE(TGMV),                     INTENT(INOUT) :: YDGMV
-TYPE(TSURF),                    INTENT(INOUT) :: YDSURF
-TYPE(TCFU),                     INTENT(INOUT) :: YDCFU
-TYPE(TXFU),                     INTENT(INOUT) :: YDXFU
-TYPE(MODEL),                    INTENT(INOUT) :: YDMODEL
+TYPE(TSURF),                    INTENT(IN)    :: YDSURF
+TYPE(TCFU),                     INTENT(IN)    :: YDCFU
+TYPE(TXFU),                     INTENT(IN)    :: YDXFU
+TYPE(MODEL),                    INTENT(IN)    :: YDMODEL
 LOGICAL,                        INTENT(IN)    :: LDCONFX
 REAL(KIND=JPRB),                INTENT(IN)    :: PDTPHY 
-REAL(KIND=JPRB),                INTENT(INOUT) :: PGFL(YDCPG_DIM%KLON,YDCPG_DIM%KFLEVG,YDMODEL%YRML_GCONF%YGFL%NDIM) 
-REAL(KIND=JPRB),                INTENT(INOUT) :: PGMVT1(YDCPG_DIM%KLON,YDCPG_DIM%KFLEVG,YDGMV%YT1%NDIM) 
-REAL(KIND=JPRB),                INTENT(INOUT) :: PGFLT1(YDCPG_DIM%KLON,YDCPG_DIM%KFLEVG,YDMODEL%YRML_GCONF%YGFL%NDIM1)
  
 
 TYPE (TRAJ_PHYS_TYPE), INTENT(INOUT) :: PTRAJ_PHYS
@@ -276,7 +270,6 @@ TYPE(TYP_DDH)     ,INTENT(INOUT) :: YDDDH
 
 !     ------------------------------------------------------------------
 LOGICAL :: LL_SAVE_PHSURF
-LOGICAL :: LLXFUMSE
 
 
 
@@ -303,25 +296,13 @@ REAL(KIND=JPRB) :: ZDIFEXT(YDCPG_DIM%KLON,0:YDCPG_DIM%KFLEVG,YDMODEL%YRML_GCONF%
 REAL(KIND=JPRB) :: ZTENDU (YDCPG_DIM%KLON,YDCPG_DIM%KFLEVG)    ! U tendency without deep convection contribution
 REAL(KIND=JPRB) :: ZTENDV (YDCPG_DIM%KLON,YDCPG_DIM%KFLEVG)    ! V tendency without deep convection contribution
 
-!     --- RADIATION COEFFICIENTS FOR SIMPLIFIED PHYSICS IN GRID-POINT ---
-   ! Curtis matrix.
-           ! horizontally-constant field for ZAC.
-
-
-
-! required for INTFLEX
-
-
 ! SPP
 REAL(KIND=JPRB) :: ZGP2DSPP(YDCPG_DIM%KLON,YSPP%N2D)
-
-
 REAL(KIND=JPRB), POINTER :: ZPTENDEFB11(:,:), ZPTENDEFB21(:,:)
 REAL(KIND=JPRB), POINTER :: ZPTENDEFB31(:,:)
 REAL(KIND=JPRB), POINTER :: ZPTENDG1(:,:)
 REAL(KIND=JPRB), POINTER :: ZPTENDICONV1(:,:), ZPTENDI1(:,:)
 REAL(KIND=JPRB), POINTER :: ZPTENDLCONV1(:,:)
-REAL(KIND=JPRB), POINTER :: ZP1EZDIAG(:,:,:)
 REAL(KIND=JPRB), POINTER :: ZPTENDQ1(:,:)
 REAL(KIND=JPRB), POINTER :: ZPTENDRCONV1(:,:)
 REAL(KIND=JPRB), POINTER :: ZPTENDR1(:,:)
@@ -704,8 +685,6 @@ REAL(KIND=JPRB) :: ZCFBSV(YDCPG_DIM%KLON,YDCPG_DIM%KFLEVG,1:YDMODEL%YRML_GCONF%Y
  ! SCOND MEMBRE POUR LES SCALAIRES PASSIFS
 REAL(KIND=JPRB) :: ZINVG
 
-
-
 REAL(KIND=JPRB), DIMENSION (:,:,:), ALLOCATABLE  :: ZSVM, ZPSV
 REAL(KIND=JPRB), DIMENSION (:,:),   ALLOCATABLE  :: ZSFSV  ! passifs scalaires surf flux
 ! TRAITEMENT DES SCALAIRES PASSIFS
@@ -725,7 +704,6 @@ REAL(KIND=JPRB), DIMENSION(YDCPG_DIM%KLON,YDCPG_DIM%KFLEVG,YDCPG_DIM%KSW):: ZTAU
 !-------------------------------------------
 REAL(KIND=JPRB) :: ZCE(YDCPG_DIM%KLON), ZCEROV(YDCPG_DIM%KLON), ZCRTI(YDCPG_DIM%KLON)
 
-
 !        New ACDIFV1 local variable
 !--------------------------------------------
 REAL(KIND=JPRB)   :: ZXURO(YDCPG_DIM%KLON,0:YDCPG_DIM%KFLEVG)
@@ -735,11 +713,6 @@ REAL(KIND=JPRB)   :: ZXTRO(YDCPG_DIM%KLON,0:YDCPG_DIM%KFLEVG)
 !        New ACNORGWD local variables
 !--------------------------------------------
 
- 
- 
-
-
-  
 REAL(KIND=JPRB) :: ZFLX_LOTT_GWU(YDCPG_DIM%KLON,0:YDCPG_DIM%KFLEVG), ZFLX_LOTT_GWV(YDCPG_DIM%KLON,0:YDCPG_DIM%KFLEVG)
 
 
@@ -872,22 +845,6 @@ REAL (KIND=JPRB)     :: ZPFL_FP (YDCPG_DIM%KLON, 0:YDCPG_DIM%KFLEVG)
 REAL (KIND=JPRB)     :: ZPFL_FTKEI (YDCPG_DIM%KLON, 0:YDCPG_DIM%KFLEVG)
 REAL (KIND=JPRB)     :: ZPFL_FTKE (YDCPG_DIM%KLON, 0:YDCPG_DIM%KFLEVG)
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 REAL (KIND=JPRB)     :: ZTDS_TDALBNS (YDCPG_DIM%KLON)
 REAL (KIND=JPRB)     :: ZTDS_TDRHONS (YDCPG_DIM%KLON)
 REAL (KIND=JPRB)     :: ZTDS_TDSNS (YDCPG_DIM%KLON)
@@ -928,24 +885,12 @@ REAL(KIND=JPRB) :: ZHOOK_HANDLE
 
 #include "abor1.intfb.h"
 #include "acaa1.intfb.h"
-
-
 #include "accldia.intfb.h"
 #include "acclph.intfb.h"
-
-
-
-
-
-
 #include "acdayd.intfb.h"
-
-
 #include "acdifv1.intfb.h"
 #include "acdifv2.intfb.h"
-
 #include "acdnshf.intfb.h"
-
 #include "acdrag.intfb.h"
 #include "acdrme.intfb.h"
 #include "acdrov.intfb.h"
@@ -953,74 +898,38 @@ REAL(KIND=JPRB) :: ZHOOK_HANDLE
 #include "acfluso.intfb.h"
 #include "achmt.intfb.h"
 #include "achmtls.intfb.h"
-
-
-
-
-
-
-
-
 #include "acnebcond.intfb.h"
 #include "acnebn.intfb.h"
-
-
 #include "acnpart.intfb.h"
-
-
-
-
-
-
 #include "acpluis.intfb.h"
 #include "acpluiz.intfb.h"
-
-
-
-
 #include "acrso.intfb.h"
 #include "acsol.intfb.h"
-
-
-
 #include "actke.intfb.h"
-
 #include "actqsat.intfb.h"
-
-
-
 #include "acuptq.intfb.h"
-
 #include "acveg.intfb.h"
 #include "acvisih.intfb.h"
 #include "acvppkf.intfb.h"
-
-
 #include "aplpar_init.intfb.h"
 #include "aro_ground_diag_2isba.h"
 #include "aro_ground_diag.h"
 #include "aro_ground_diag_z0.h"
 #include "aro_ground_param.h"
-
 #include "arp_ground_param.intfb.h"
 #include "checkmv.intfb.h"
-!include "chem_main.intfb.h"
 #include "cpchet.intfb.h"
 #include "cpmvvps.intfb.h"
 #include "cpnudg.intfb.h"
-
 #include "cpphinp.intfb.h"
 #include "cpqsol.intfb.h"
-
 #include "cptend_new.intfb.h"
 #include "cptends.intfb.h"
 #include "cputqy_aplpar_expl.intfb.h"
-#include "cputqy_aplpar_loop.intfb.h"
 #include "cpwts.intfb.h"
 #include "cucalln_mf.intfb.h"
 #include "culight.intfb.h"
 #include "dprecips.intfb.h"
-
 #include "mf_phys_bayrad.intfb.h"
 #include "mf_phys_corwat.intfb.h"
 #include "mf_phys_cvv.intfb.h"
@@ -1039,12 +948,6 @@ REAL(KIND=JPRB) :: ZHOOK_HANDLE
 #include "radozcmf.intfb.h"
 #include "recmwf.intfb.h"
 #include "suozon.intfb.h"
-
-
-
-
-
-
 #include "aplpar_flexdia.intfb.h"
 
 !     ------------------------------------------------------------------
@@ -1052,7 +955,7 @@ REAL(KIND=JPRB) :: ZHOOK_HANDLE
 #include "fcttrm.func.h"
 
 !     ------------------------------------------------------------------
-IF (LHOOK) CALL DR_HOOK('APLPAR', 0, ZHOOK_HANDLE)
+IF (LHOOK) CALL DR_HOOK('APL_ARPEGE', 0, ZHOOK_HANDLE)
 ASSOCIATE(YDDIM=>YDGEOMETRY%YRDIM, YDDIMV=>YDGEOMETRY%YRDIMV, YDVAB=>YDGEOMETRY%YRVAB, YDPHY=>YDMODEL%YRML_PHY_MF%YRPHY,              &
 & YDPTRSLB1=>YDMODEL%YRML_DYN%YRPTRSLB1, YDPTRSLB2=>YDMODEL%YRML_DYN%YRPTRSLB2, YDTOPH=>YDMODEL%YRML_PHY_MF%YRTOPH,                   &
 & YDSIMPHL=>YDMODEL%YRML_PHY_MF%YRSIMPHL, YDRIP=>YDMODEL%YRML_GCONF%YRRIP, YDMDDH=>YDMODEL%YRML_DIAG%YRMDDH,                          &
@@ -1131,8 +1034,6 @@ CALL SC2PRG(YSCONV%MP1, ZTENDGFL, ZPTENDSCONV1)
 CALL SC2PRG(YS%MP1, ZTENDGFL, ZPTENDS1)
 CALL SC2PRG(YTKE%MP1, ZTENDGFL, ZPTENDTKE1)
 
-CALL SC2PRG(1, YEZDIAG(:)%MP, YDMODEL%YRML_GCONF%YGFL%NGFL_EZDIAG, PGFL, ZP1EZDIAG)
-
 !     ------------------------------------------------------------------
 
 !        0.    constructor for procset
@@ -1145,12 +1046,6 @@ CALL SC2PRG(1, YEZDIAG(:)%MP, YDMODEL%YRML_GCONF%YGFL%NGFL_EZDIAG, PGFL, ZP1EZDI
 
 INSTEP_DEB=1
 INSTEP_FIN=1
-
-! initialisation for surfex if XFU
-LLXFUMSE=.FALSE.
-IF (LDCONFX) THEN
-  LLXFUMSE=.TRUE.
-ENDIF
 
 ! SPP 
 IF ( YSPP_CONFIG%LSPP ) THEN
@@ -1250,12 +1145,12 @@ IF(LGCHECKMV) CALL CHECKMV(YDRIP, YDPHY0, YDPHY2, YDCPG_DIM%KIDIA, YDCPG_DIM%KFD
 LLREDPR=.FALSE.
 ZRVMD=RV-RD
 ! SURFEX  and passive scalar
-IF (LLXFUMSE) THEN
+IF (LDCONFX) THEN
   ZDTMSE=0.01_JPRB
-  ZSTATI=REAL(RSTATI,JPRB)-ZDTMSE/2._JPRB
+  ZSTATI=RSTATI-ZDTMSE/2._JPRB
 ELSE
   ZDTMSE=TSPHY
-  ZSTATI=REAL(RSTATI,JPRB)
+  ZSTATI=RSTATI
 ENDIF
 ZRHGMT=REAL(RHGMT,JPRB)
 ZAIPCMT(:)=0._JPRB
@@ -1574,8 +1469,6 @@ ZQG    (:,:)  = 0.0_JPRB
 !  Correction of negative advected humidity and precipitation values
 !  ---------------------------------------------------------------------
 
-
-  
     
       DO JLEV = 1, YDCPG_DIM%KFLEVG
         DO JLON = YDCPG_DIM%KIDIA,YDCPG_DIM%KFDIA
@@ -1849,15 +1742,8 @@ ENDIF
         &                                                                                                                     )
       
     ENDIF
-
-    
-    
-
     
       ZCP(YDCPG_DIM%KIDIA:YDCPG_DIM%KFDIA,1:YDCPG_DIM%KFLEVG) = YDMF_PHYS_BASE_STATE%YCPG_DYN%RCP%CP(YDCPG_DIM%KIDIA:YDCPG_DIM%KFDIA,1:YDCPG_DIM%KFLEVG)
-    
-
-    
 
     ! COMPUTATION OF mixing lengths from  Ri*,Ri** - FIRST GUES for moist AF
 
@@ -1924,9 +1810,6 @@ ENDIF
 !     6.- TURBULENCE: COEFFICIENTS D'ECHANGE
 !     ------------------------------------------------------------------
 
-  
-
-  
     CALL ACVPPKF( YDMODEL%YRML_PHY_MF, YDCPG_DIM%KIDIA, YDCPG_DIM%KFDIA, YDCPG_DIM%KLON, NTCVIM, YDCPG_DIM%KFLEVG,        &
     & YDMF_PHYS_BASE_STATE%YCPG_PHY%PREHYDF, YDMF_PHYS_BASE_STATE%YCPG_DYN%PHIF, YDMF_PHYS_BASE_STATE%YCPG_PHY%XYB%DELP,  &
     & YDMF_PHYS_BASE_STATE%YCPG_DYN%RCP%R, YDMF_PHYS_BASE_STATE%T, ZQV, ZQL, ZQI, YDMF_PHYS_BASE_STATE%U,                 &
@@ -1939,15 +1822,11 @@ ENDIF
      !  Call to EDKF
      !-------------------------------------------------
   
-
-  
     
        YDCPG_MISC%QICE(:,:)= ZQI(:,:)
        YDCPG_MISC%QLI(:,:) = ZQL(:,:)
-    
 
 ! Computation of the 2 znlab used in acbl89
-    
     
        ZNLABCVP(:,:) = 1.0_JPRB
     
@@ -1977,7 +1856,6 @@ ENDIF
     YDMF_PHYS%OUT%CLPH(YDCPG_DIM%KIDIA:YDCPG_DIM%KFDIA)=MIN(XMAXLM,MAX(XMINLM,YDMF_PHYS%OUT%CLPH(YDCPG_DIM%KIDIA:YDCPG_DIM%KFDIA)))
   
 
-
      !-------------------------------------------------
      ! Store diffusion coefficients in trajectory in temporary variables
      ! before final writing.
@@ -2002,13 +1880,9 @@ ENDIF
   IF (.NOT.LMSE) THEN
 !DEC$ IVDEP
     DO JLON=YDCPG_DIM%KIDIA,YDCPG_DIM%KFDIA
-      
-        
           YDMF_PHYS%OUT%ALB(JLON)=YDMF_PHYS_SURF%GSD_VF%PALBF(JLON)-ZFLU_NEIJ(JLON)*(YDMF_PHYS_SURF%GSD_VF%PALBF(JLON)&
            & -MAX(YDMF_PHYS_SURF%GSD_VF%PALBF(JLON),ALCRIN))
           ZFLU_EMIS(JLON)=YDMF_PHYS_SURF%GSD_VF%PEMISF(JLON)-ZFLU_NEIJ(JLON)*(YDMF_PHYS_SURF%GSD_VF%PEMISF(JLON)-EMCRIN)
-        
-      
     ENDDO
 
     
@@ -2030,16 +1904,12 @@ ENDIF
              & MAX(0.037_JPRB/(1.1_JPRB*ZRDG_MU0(JLON)**1.4_JPRB+0.15_JPRB),ZEPS0)
           ENDDO
         ENDDO
-      
-    
 
   ENDIF  ! .NOT.LMSE
 
   ! Appel de la routine d'aerosols
 
   LLAERO=LAEROSEA.AND.LAEROLAN.AND.LAEROSOO.AND.LAERODES
-
-  
 
   IF    (   ((MOD(YDCPG_DIM%KSTEP,NRADFR) == 0)) ) THEN
 
@@ -2095,20 +1965,12 @@ ENDIF
 
    !  (LCVPGY)
 
-  
-
-    
-
     CALL ACNEBCOND ( YDRIP, YDMODEL%YRML_PHY_MF, YDCPG_DIM%KIDIA, YDCPG_DIM%KFDIA, YDCPG_DIM%KLON,                            &
     & NTPLUI, YDCPG_DIM%KFLEVG, LLREDPR, ZHUC, ZVETAF, YDMF_PHYS_BASE_STATE%YCPG_DYN%PHI, YDMF_PHYS_BASE_STATE%YCPG_DYN%PHIF, &
     & YDMF_PHYS_BASE_STATE%YCPG_PHY%PREHYDF, YDMF_PHYS_BASE_STATE%YCPG_DYN%RCP%CP, YDMF_PHYS_BASE_STATE%YCPG_DYN%RCP%R,       &
     & YDMF_PHYS_BASE_STATE%YCPG_PHY%XYB%DELP, YDCPG_MISC%RH, ZBLH, ZQV, ZQI, ZQL, ZMSC_QW, YDMF_PHYS_BASE_STATE%T,            &
     & ZNEBCH, YDVARS%GEOMETRY%GM%T0, YDMF_PHYS_BASE_STATE%YGSP_RR%T, ZQLIS, ZNEBS, ZRHCRI, ZRH, ZQSATS,                                 &
     & ZICEFR1, ZQLIS0, ZNEBS0)
-     
-     
-    
-    
 
     IF(LRKCDEV) THEN
 ! Rash-Kristiansson cloud water scheme - second part.
@@ -2145,22 +2007,11 @@ ENDIF
     ENDDO
   ENDIF
 
-  
-
 !         Diagnostique de nebulosite partielle.
   CALL ACNPART(YDMODEL%YRML_PHY_MF, YDCPG_DIM%KIDIA, YDCPG_DIM%KFDIA, YDCPG_DIM%KLON, NTNEBU, YDCPG_DIM%KFLEVG,   &
   & YDMF_PHYS_BASE_STATE%YCPG_DYN%PHI, YDMF_PHYS_BASE_STATE%YCPG_DYN%PHIF, YDMF_PHYS_BASE_STATE%YCPG_PHY%PREHYDF, &
   & ZDECRD, YDCPG_MISC%NEB, YDMF_PHYS%OUT%CLCH, YDMF_PHYS%OUT%CLCM, YDMF_PHYS%OUT%CLCL, YDCPG_MISC%CLCT,          &
   & ZCLCT_RAD, PCLCC=YDMF_PHYS%OUT%CLCC, PNEBC=ZNEBC0, PTOPC=YDMF_PHYS%OUT%CTOP)
-
-!     7.3.5 Computation of the equivalent coefficients for simplified
-!           radiation scheme
-
-  
-
-!     7.3.6 Module chimique - Chemistry module
-
-  
 
   
 !      7.4 Rayonnement Geleyn
@@ -2183,7 +2034,7 @@ ENDIF
       & YDMF_PHYS%RAD%TRSW, YDMF_PHYS%OUT%FRTHC, YDMF_PHYS%OUT%FRTH, YDMF_PHYS%OUT%FRSOC, YDMF_PHYS%OUT%FRSO,          &
       & ZSFSWDIR, ZSFSWDIF, ZFSDNN, ZFSDNV, ZCTRSO, ZCEMTR, ZTRSOD, ZTRSODIR, ZTRSODIF, ZPIZA_DST,                     &
       & ZCGA_DST, ZTAUREL_DST, ZAERINDS, YDVARS%GEOMETRY%GELAM%T0, YDVARS%GEOMETRY%GEMU%T0, YDCPG_GPAR%SWDIR, YDCPG_GPAR%SWDIF,            &
-      & ZRDG_MU0LU, YDMF_PHYS%OUT%ALB, YDMF_PHYS%RAD%RMOON, ZGP2DSPP, ZP1EZDIAG)
+      & ZRDG_MU0LU, YDMF_PHYS%OUT%ALB, YDMF_PHYS%RAD%RMOON)
     ELSE
       IF (LMSE) THEN
       DO JSG=1,NSW
@@ -2232,10 +2083,6 @@ ENDIF
       ENDIF
     ENDDO
 
-  
-
-  
-
     ! Direct normal irradiance with securities
     DO JLON = YDCPG_DIM%KIDIA, YDCPG_DIM%KFDIA
       YDMF_PHYS%OUT%FRSDNI(JLON)=YDMF_PHYS%OUT%FRSOPS(JLON)
@@ -2245,9 +2092,6 @@ ENDIF
       YDMF_PHYS%OUT%FRSDNI(JLON)=MAX(0.0_JPRB,YDMF_PHYS%OUT%FRSDNI(JLON))
     ENDDO
   
-
-  
-
     ! global normal irradiance
     DO JLON=YDCPG_DIM%KIDIA,YDCPG_DIM%KFDIA
       YDMF_PHYS%OUT%FRSGNI(JLON)=YDMF_PHYS%OUT%FRSDNI(JLON)+0.5_JPRB*(                         &
@@ -2256,9 +2100,6 @@ ENDIF
     ENDDO
 
     ! mean radiant temperature
-    
-
-  
 
 !*
 !     ------------------------------------------------------------------
@@ -2286,9 +2127,6 @@ ENDIF
 
 !   Sauvegarde temporaire de l'ancien acdifus pour les besoins du Climat
     
-
-      
-
       CALL ACDIFV1 ( YGFL, YDMODEL%YRML_PHY_MF, YDCPG_DIM%KIDIA, YDCPG_DIM%KFDIA, YDCPG_DIM%KLON, YDCPG_DIM%KTDIA,                   &
       & YDCPG_DIM%KFLEVG, YDMF_PHYS_BASE_STATE%YCPG_DYN%PHIF, YDMF_PHYS_BASE_STATE%YCPG_PHY%PREHYDF,                                 &
       & ZCP, YDMF_PHYS_BASE_STATE%YCPG_PHY%XYB%DELP, ZKTROV, ZKQROV, ZKUROV, ZQV, ZQL, ZQI, YDMF_PHYS_BASE_STATE%YCPG_PHY%XYB%RDELP, &
@@ -2298,11 +2136,7 @@ ENDIF
         
 
       IF ( LMSE.AND.LCALLSFX ) THEN
-
-        
           ZCARDI=RCARDI
-        
-
         DO JLON=YDCPG_DIM%KIDIA,YDCPG_DIM%KFDIA
           ZRHODREFM(JLON)=YDMF_PHYS_BASE_STATE%YCPG_PHY%PREHYDF(JLON,YDCPG_DIM%KFLEVG)/(YDMF_PHYS_BASE_STATE%T(JLON,YDCPG_DIM%KFLEVG)*YDMF_PHYS_BASE_STATE%YCPG_DYN%RCP%R(JLON,YDCPG_DIM%KFLEVG))
           ZDEPTH_HEIGHT(JLON,:)=(YDMF_PHYS_BASE_STATE%YCPG_DYN%PHIF(JLON,:)-YDMF_PHYS_BASE_STATE%YCPG_DYN%PHI(JLON,YDCPG_DIM%KFLEVG))/RG
@@ -2313,7 +2147,7 @@ ENDIF
 
         CALL ARO_GROUND_PARAM( YDCPG_DIM%KBL, YDCPG_DIM%KGPCOMP, YDCPG_DIM%KFDIA-YDCPG_DIM%KIDIA+1, YDCPG_DIM%KIDIA,                                                     &
         & YDCPG_DIM%KFDIA, YDCPG_DIM%KSTEP, IRR, NSW, NGFL_EXT, NDGUNG, NDGUXG, NDLUNG, NDLUXG,                                                                          &
-        & LSURFEX_KFROM, LMPA, CCOUPLING, LLXFUMSE, NINDAT, ZRHGMT, ZSTATI, RSOVR, RCODEC, RSIDEC, YDVARS%GEOMETRY%RINDX%T0(YDCPG_DIM%KIDIA:YDCPG_DIM%KFDIA),                      &
+        & LSURFEX_KFROM, LMPA, CCOUPLING, LDCONFX, NINDAT, ZRHGMT, ZSTATI, RSOVR, RCODEC, RSIDEC, YDVARS%GEOMETRY%RINDX%T0(YDCPG_DIM%KIDIA:YDCPG_DIM%KFDIA),                      &
         & YDVARS%GEOMETRY%RINDY%T0(YDCPG_DIM%KIDIA:YDCPG_DIM%KFDIA), YDMF_PHYS_BASE_STATE%U(YDCPG_DIM%KIDIA:YDCPG_DIM%KFDIA, YDCPG_DIM%KFLEVG:YDCPG_DIM%KFLEVG),                   &
         & YDMF_PHYS_BASE_STATE%V(YDCPG_DIM%KIDIA:YDCPG_DIM%KFDIA, YDCPG_DIM%KFLEVG:YDCPG_DIM%KFLEVG),                                                                    &
         & YDMF_PHYS_BASE_STATE%T(YDCPG_DIM%KIDIA:YDCPG_DIM%KFDIA, YDCPG_DIM%KFLEVG:YDCPG_DIM%KFLEVG),                                                                    &
@@ -2409,7 +2243,6 @@ ENDIF
           ZNEBDIFF(:,:)=ZNEBS(:,:)+(1.0_JPRB-ZNEBS(:,:))*ZNEBCH(:,:)
         ENDIF
 
-        
              
           CALL ARP_GROUND_PARAM ( YDMCC, YDMODEL%YRML_PHY_MF, YDCPG_DIM%KIDIA, YDCPG_DIM%KFDIA, YDCPG_DIM%KLON,        &
           & YDCPG_DIM%KTDIA, YDCPG_DIM%KFLEVG, YSP_SBD%NLEVS, YDMF_PHYS_BASE_STATE%YCPG_DYN%PHI, ZCP,                  &
@@ -2430,7 +2263,6 @@ ENDIF
             YDMF_PHYS%OUT%DIFTQ(JLON,YDCPG_DIM%KFLEVG)=ZDIFWQ(JLON)
             YDMF_PHYS%OUT%DIFTS(JLON,YDCPG_DIM%KFLEVG)=ZDIFWS(JLON)
           ENDDO
-
              
 
            ! <== LSFORCS
@@ -2677,10 +2509,6 @@ ENDIF
     & YDMF_PHYS%OUT%FPFPSL, YDMF_PHYS%OUT%FPFPSN, ZSEDIQL, ZSEDIQI )
 
     
-  
-
-  
-  
 
   ZFLX_LOTT_GWU(:, :) = 0.0_JPRB
   ZFLX_LOTT_GWV(:, :) = 0.0_JPRB
@@ -2693,13 +2521,11 @@ ENDIF
 
   IF(LNEBN.OR.LRRGUST) THEN
     
-      
         DO JLEV=YDCPG_DIM%KTDIA-1,YDCPG_DIM%KFLEVG
           DO JLON=YDCPG_DIM%KIDIA,YDCPG_DIM%KFDIA
             ZPFL_FPLCH(JLON,JLEV)=ZFPCOR(JLON,JLEV)
           ENDDO
         ENDDO
-      
     
   ENDIF
 
@@ -2935,32 +2761,18 @@ CALL PPWETPOINT(YDPHY, YDCPG_DIM%KIDIA, YDCPG_DIM%KFDIA, YDCPG_DIM%KLON, ZPCLS, 
 
   
 
-   NDTPRECCUR=INT(MOD(ZSTATI/TSTEP,REAL(NDTPREC)))+1_JPIM
-
    CALL DPRECIPS (YDPHY%YRDPRECIPS, YDCPG_DIM%KIDIA, YDCPG_DIM%KFDIA, YDCPG_DIM%KLON, YDCPG_DIM%KFLEVG,                      &
-   & YDVARS%GEOMETRY%OROG%T0, YDMF_PHYS%OUT%TPWCLS, YDMF_PHYS%OUT%DIAGH, YDMF_PHYS_BASE_STATE%YCPG_DYN%PHIF,                             &
+   & YDVARS%GEOMETRY%OROG%T0, YDMF_PHYS%OUT%TPWCLS, YDMF_PHYS%OUT%DIAGH, YDMF_PHYS_BASE_STATE%YCPG_DYN%PHIF,                 &
    & ZDZZ, ZTW, YDMF_PHYS_BASE_STATE%L, ZFPLC(:, YDCPG_DIM%KFLEVG), ZFPLS(:, YDCPG_DIM%KFLEVG), ZFPLSG(:, YDCPG_DIM%KFLEVG), &
    & ZPRC_DPRECIPS(:, NDTPRECCUR))
-
-  ! WRITE(20,*)'sous aplpar ZDPRECIPS ', ZDPRECIPS(KIDIA:KFDIA,NDTPRECCUR),NDTPRECCUR
-
-  
-
   
 
  !Idem for an other time step and an other period
-   NDTPRECCUR2=INT(MOD(ZSTATI/TSTEP,REAL(NDTPREC2)))+1_JPIM
 
    CALL DPRECIPS(YDPHY%YRDPRECIPS, YDCPG_DIM%KIDIA, YDCPG_DIM%KFDIA, YDCPG_DIM%KLON, YDCPG_DIM%KFLEVG,                       &
-   & YDVARS%GEOMETRY%OROG%T0, YDMF_PHYS%OUT%TPWCLS, YDMF_PHYS%OUT%DIAGH, YDMF_PHYS_BASE_STATE%YCPG_DYN%PHIF,                             &
+   & YDVARS%GEOMETRY%OROG%T0, YDMF_PHYS%OUT%TPWCLS, YDMF_PHYS%OUT%DIAGH, YDMF_PHYS_BASE_STATE%YCPG_DYN%PHIF,                 &
    & ZDZZ, ZTW, YDMF_PHYS_BASE_STATE%L, ZFPLC(:, YDCPG_DIM%KFLEVG), ZFPLS(:, YDCPG_DIM%KFLEVG), ZFPLSG(:, YDCPG_DIM%KFLEVG), &
    & ZPRC_DPRECIPS2(:, NDTPRECCUR2))
-
-  ! WRITE(20,*)'sous aplpar ZDPRECIPS2',ZDPRECIPS2(KIDIA:KFDIA,NDTPRECCUR2),NDTPRECCUR2
-
-  
-  
-
 
 
 !    convert to flexible interface structure
@@ -2977,20 +2789,6 @@ IF (LCORWAT) THEN
   & YDMF_PHYS_SURF%GSD_VH%PPCN, YDMF_PHYS_SURF%GSD_VH%PPSL, YDMF_PHYS_SURF%GSD_VH%PPSN)
 ENDIF
 
-!        2.4  Stores radiation coefficients.
-!             ------------------------------
-
-! * writes grid-point transmission coefficients for simplified physics.
-
-
-
-
-!       2.5   Ozone
-!             -----
-
-
-
-  
 !        2.5.1 Chemical species   
 !              ----------------
    
@@ -3010,8 +2808,6 @@ ENDIF
 ! Set GFL tendencies to 0
 
 ZTENDGFL(:,:,:) = 0.0_JPRB
-
-TSPHY = MAX(PDTPHY,1.0_JPRB)
 
 ! * CPTEND+CPUTQY = Old( CPATY + CPDUP + CPDTHP )
 ! Calcul des tendances de T , U et de Q et modifications
@@ -3121,10 +2917,6 @@ CALL CPUTQY_APLPAR_EXPL(YDCPG_DIM, YDMF_PHYS_NEXT_STATE, YDMF_PHYS_BASE_STATE, Y
 & ZPTENDEFB21, ZPTENDEFB31, ZPTENDG1, ZPTENDICONV1, ZPTENDI1, ZPTENDLCONV1, ZPTENDL1, ZPTENDQ1,       &
 & ZPTENDRCONV1, ZPTENDR1, ZPTENDSCONV1, ZPTENDS1, ZPTENDTKE1, YDMF_PHYS%OUT%FDIS)
 
-CALL CPUTQY_APLPAR_LOOP(YDMODEL%YRML_DYN%YRDYN, YDGEOMETRY%YRDIMV, YDGMV, YGFL, YDPTRSLB1, YDPHY, YDCPG_DIM%KLON, &
-& YDCPG_DIM%KIDIA, YDCPG_DIM%KFDIA, YDCPG_DIM%KFLEVG, PDTPHY, ZTENDGFL, YDCPG_SL1%ZVIEW, PGMVT1,                  &
-& PGFLT1)
-
 CALL MF_PHYS_FPL_PART2 (YDCPG_DIM, ZPFL_FPLCH, ZPFL_FPLSH, YDVARS%CPF%T1, YDVARS%SPF%T1, YDMODEL)
 
 !       2.9b Prognostic convection etc.
@@ -3162,7 +2954,7 @@ CALL MF_PHYS_TRANSFER (YDCPG_DIM, YDVARS, YDMODEL)
     & YDMF_PHYS_SURF%GSP_RR%PFC_T1, YDMF_PHYS_SURF%GSP_SG%PF_T1, YDMF_PHYS_SURF%GSP_SG%PA_T1, YDMF_PHYS_SURF%GSP_SG%PR_T1    &
     &                         )  
   ELSE
-    IF (LLXFUMSE) THEN
+    IF (LDCONFX) THEN
       DO JROF=YDCPG_DIM%KIDIA,YDCPG_DIM%KFDIA
         YDMF_PHYS_SURF%GSP_RR%PT_T0(JROF)=YDCPG_GPAR%VTS(JROF)
       ENDDO
@@ -3234,5 +3026,5 @@ CALL MF_PHYS_PRECIPS (YDCPG_DIM, ZPRC_DPRECIPS, ZPRC_DPRECIPS2, YDMF_PHYS_SURF%G
 
 END ASSOCIATE
 END ASSOCIATE
-IF (LHOOK) CALL DR_HOOK('APLPAR', 1, ZHOOK_HANDLE)
+IF (LHOOK) CALL DR_HOOK('APL_ARPEGE', 1, ZHOOK_HANDLE)
 END SUBROUTINE APL_ARPEGE

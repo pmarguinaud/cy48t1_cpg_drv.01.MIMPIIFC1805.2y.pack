@@ -981,8 +981,6 @@ ELSE
   ZEPSNEB=1.E-06
 ENDIF
 
-! NSV=0
-
 !         1.3 time step initialisation
 !             the mesoNH physics (turb and microphysics) is written 
 !             for leap frog scheme

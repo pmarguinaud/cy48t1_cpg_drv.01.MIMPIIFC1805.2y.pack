@@ -21,7 +21,6 @@ TYPE FIELD_2D
   ! A FIELD encapsulates a single multi-dimensional array and can
   ! provide block-indexed "views" of the data for automating the
   ! allocation and parallel iterration of NPROMA blocks.
-  CHARACTER(:), ALLOCATABLE :: NAME
 
   ! The data view to be used in thread-parallel sections
   !
@@ -38,7 +37,20 @@ TYPE FIELD_2D
   ! The underlying storage pointer has the rank as the dimension,
   ! where the innermost dimension represents the horizontal and
   ! the outermost one is the block index.
-  REAL(KIND=JPRB), POINTER :: DATA(:,:) => NULL()
+  REAL(KIND=JPRB), POINTER :: PTR(:,:) => NULL()
+  REAL(KIND=JPRB), ALLOCATABLE :: DATA(:,:)
+
+  ! For wrapping discontiguous fields in co-allocated storage
+  ! arrays (eg. GFL/GMV) also store a CONTIGUOUS base pointer
+  ! and integer index, to allow block pointer extraction that
+  ! conforms with CUDA device pointers in PGI.
+  REAL(KIND=JPRB), POINTER, CONTIGUOUS :: BASE_PTR(:,:,:) => NULL()
+  INTEGER(KIND=JPIM) :: FIDX
+
+  ! A separate data pointer that can be used to create
+  ! a contiguous chunk of host memory to cleanly map to
+  ! device, should the %DATA pointer be discontiguous.
+  REAL(KIND=JPRB), POINTER, CONTIGUOUS :: DEVPTR(:,:) => NULL()
 
   ! Number of blocks used in the data layout
   INTEGER :: NBLOCKS
@@ -58,13 +70,17 @@ CONTAINS
   PROCEDURE :: GET_VIEW => FIELD_2D_GET_VIEW
   PROCEDURE :: FINAL => FIELD_2D_FINAL
 
+  ! GPU-specific device data transfer API
+  PROCEDURE :: CREATE_DEVICE => FIELD_2D_CREATE_DEVICE
+  PROCEDURE :: UPDATE_DEVICE => FIELD_2D_UPDATE_DEVICE
+  PROCEDURE :: UPDATE_HOST => FIELD_2D_UPDATE_HOST
+  PROCEDURE :: DELETE_DEVICE => FIELD_2D_DELETE_DEVICE
 END TYPE FIELD_2D
 
 TYPE FIELD_3D
   ! A FIELD encapsulates a single multi-dimensional array and can
   ! provide block-indexed "views" of the data for automating the
   ! allocation and parallel iterration of NPROMA blocks.
-  CHARACTER(:), ALLOCATABLE :: NAME
 
   ! The data view to be used in thread-parallel sections
   !
@@ -81,7 +97,20 @@ TYPE FIELD_3D
   ! The underlying storage pointer has the rank as the dimension,
   ! where the innermost dimension represents the horizontal and
   ! the outermost one is the block index.
-  REAL(KIND=JPRB), POINTER :: DATA(:,:,:) => NULL()
+  REAL(KIND=JPRB), POINTER :: PTR(:,:,:) => NULL()
+  REAL(KIND=JPRB), ALLOCATABLE :: DATA(:,:,:)
+
+  ! For wrapping discontiguous fields in co-allocated storage
+  ! arrays (eg. GFL/GMV) also store a CONTIGUOUS base pointer
+  ! and integer index, to allow block pointer extraction that
+  ! conforms with CUDA device pointers in PGI.
+  REAL(KIND=JPRB), POINTER, CONTIGUOUS :: BASE_PTR(:,:,:,:) => NULL()
+  INTEGER(KIND=JPIM) :: FIDX
+
+  ! A separate data pointer that can be used to create
+  ! a contiguous chunk of host memory to cleanly map to
+  ! device, should the %DATA pointer be discontiguous.
+  REAL(KIND=JPRB), POINTER, CONTIGUOUS :: DEVPTR(:,:,:) => NULL()
 
   ! Number of blocks used in the data layout
   INTEGER :: NBLOCKS
@@ -101,13 +130,17 @@ CONTAINS
   PROCEDURE :: GET_VIEW => FIELD_3D_GET_VIEW
   PROCEDURE :: FINAL => FIELD_3D_FINAL
 
+  ! GPU-specific device data transfer API
+  PROCEDURE :: CREATE_DEVICE => FIELD_3D_CREATE_DEVICE
+  PROCEDURE :: UPDATE_DEVICE => FIELD_3D_UPDATE_DEVICE
+  PROCEDURE :: UPDATE_HOST => FIELD_3D_UPDATE_HOST
+  PROCEDURE :: DELETE_DEVICE => FIELD_3D_DELETE_DEVICE
 END TYPE FIELD_3D
 
 TYPE FIELD_4D
   ! A FIELD encapsulates a single multi-dimensional array and can
   ! provide block-indexed "views" of the data for automating the
   ! allocation and parallel iterration of NPROMA blocks.
-  CHARACTER(:), ALLOCATABLE :: NAME
 
   ! The data view to be used in thread-parallel sections
   !
@@ -124,7 +157,20 @@ TYPE FIELD_4D
   ! The underlying storage pointer has the rank as the dimension,
   ! where the innermost dimension represents the horizontal and
   ! the outermost one is the block index.
-  REAL(KIND=JPRB), POINTER :: DATA(:,:,:,:) => NULL()
+  REAL(KIND=JPRB), POINTER :: PTR(:,:,:,:) => NULL()
+  REAL(KIND=JPRB), ALLOCATABLE :: DATA(:,:,:,:)
+
+  ! For wrapping discontiguous fields in co-allocated storage
+  ! arrays (eg. GFL/GMV) also store a CONTIGUOUS base pointer
+  ! and integer index, to allow block pointer extraction that
+  ! conforms with CUDA device pointers in PGI.
+  REAL(KIND=JPRB), POINTER, CONTIGUOUS :: BASE_PTR(:,:,:,:,:) => NULL()
+  INTEGER(KIND=JPIM) :: FIDX
+
+  ! A separate data pointer that can be used to create
+  ! a contiguous chunk of host memory to cleanly map to
+  ! device, should the %DATA pointer be discontiguous.
+  REAL(KIND=JPRB), POINTER, CONTIGUOUS :: DEVPTR(:,:,:,:) => NULL()
 
   ! Number of blocks used in the data layout
   INTEGER :: NBLOCKS
@@ -144,13 +190,17 @@ CONTAINS
   PROCEDURE :: GET_VIEW => FIELD_4D_GET_VIEW
   PROCEDURE :: FINAL => FIELD_4D_FINAL
 
+  ! GPU-specific device data transfer API
+  PROCEDURE :: CREATE_DEVICE => FIELD_4D_CREATE_DEVICE
+  PROCEDURE :: UPDATE_DEVICE => FIELD_4D_UPDATE_DEVICE
+  PROCEDURE :: UPDATE_HOST => FIELD_4D_UPDATE_HOST
+  PROCEDURE :: DELETE_DEVICE => FIELD_4D_DELETE_DEVICE
 END TYPE FIELD_4D
 
 TYPE FIELD_5D
   ! A FIELD encapsulates a single multi-dimensional array and can
   ! provide block-indexed "views" of the data for automating the
   ! allocation and parallel iterration of NPROMA blocks.
-  CHARACTER(:), ALLOCATABLE :: NAME
 
   ! The data view to be used in thread-parallel sections
   !
@@ -167,7 +217,20 @@ TYPE FIELD_5D
   ! The underlying storage pointer has the rank as the dimension,
   ! where the innermost dimension represents the horizontal and
   ! the outermost one is the block index.
-  REAL(KIND=JPRB), POINTER :: DATA(:,:,:,:,:) => NULL()
+  REAL(KIND=JPRB), POINTER :: PTR(:,:,:,:,:) => NULL()
+  REAL(KIND=JPRB), ALLOCATABLE :: DATA(:,:,:,:,:)
+
+  ! For wrapping discontiguous fields in co-allocated storage
+  ! arrays (eg. GFL/GMV) also store a CONTIGUOUS base pointer
+  ! and integer index, to allow block pointer extraction that
+  ! conforms with CUDA device pointers in PGI.
+  REAL(KIND=JPRB), POINTER, CONTIGUOUS :: BASE_PTR(:,:,:,:,:,:) => NULL()
+  INTEGER(KIND=JPIM) :: FIDX
+
+  ! A separate data pointer that can be used to create
+  ! a contiguous chunk of host memory to cleanly map to
+  ! device, should the %DATA pointer be discontiguous.
+  REAL(KIND=JPRB), POINTER, CONTIGUOUS :: DEVPTR(:,:,:,:,:) => NULL()
 
   ! Number of blocks used in the data layout
   INTEGER :: NBLOCKS
@@ -187,13 +250,17 @@ CONTAINS
   PROCEDURE :: GET_VIEW => FIELD_5D_GET_VIEW
   PROCEDURE :: FINAL => FIELD_5D_FINAL
 
+  ! GPU-specific device data transfer API
+  PROCEDURE :: CREATE_DEVICE => FIELD_5D_CREATE_DEVICE
+  PROCEDURE :: UPDATE_DEVICE => FIELD_5D_UPDATE_DEVICE
+  PROCEDURE :: UPDATE_HOST => FIELD_5D_UPDATE_HOST
+  PROCEDURE :: DELETE_DEVICE => FIELD_5D_DELETE_DEVICE
 END TYPE FIELD_5D
 
 TYPE FIELD_INT2D
   ! A FIELD encapsulates a single multi-dimensional array and can
   ! provide block-indexed "views" of the data for automating the
   ! allocation and parallel iterration of NPROMA blocks.
-  CHARACTER(:), ALLOCATABLE :: NAME
 
   ! The data view to be used in thread-parallel sections
   !
@@ -210,7 +277,20 @@ TYPE FIELD_INT2D
   ! The underlying storage pointer has the rank as the dimension,
   ! where the innermost dimension represents the horizontal and
   ! the outermost one is the block index.
-  INTEGER(KIND=JPIM), POINTER :: DATA(:,:) => NULL()
+  INTEGER(KIND=JPIM), POINTER :: PTR(:,:) => NULL()
+  INTEGER(KIND=JPIM), ALLOCATABLE :: DATA(:,:)
+
+  ! For wrapping discontiguous fields in co-allocated storage
+  ! arrays (eg. GFL/GMV) also store a CONTIGUOUS base pointer
+  ! and integer index, to allow block pointer extraction that
+  ! conforms with CUDA device pointers in PGI.
+  INTEGER(KIND=JPIM), POINTER, CONTIGUOUS :: BASE_PTR(:,:,:) => NULL()
+  INTEGER(KIND=JPIM) :: FIDX
+
+  ! A separate data pointer that can be used to create
+  ! a contiguous chunk of host memory to cleanly map to
+  ! device, should the %DATA pointer be discontiguous.
+  INTEGER(KIND=JPIM), POINTER, CONTIGUOUS :: DEVPTR(:,:) => NULL()
 
   ! Number of blocks used in the data layout
   INTEGER :: NBLOCKS
@@ -230,13 +310,17 @@ CONTAINS
   PROCEDURE :: GET_VIEW => FIELD_INT2D_GET_VIEW
   PROCEDURE :: FINAL => FIELD_INT2D_FINAL
 
+  ! GPU-specific device data transfer API
+  PROCEDURE :: CREATE_DEVICE => FIELD_INT2D_CREATE_DEVICE
+  PROCEDURE :: UPDATE_DEVICE => FIELD_INT2D_UPDATE_DEVICE
+  PROCEDURE :: UPDATE_HOST => FIELD_INT2D_UPDATE_HOST
+  PROCEDURE :: DELETE_DEVICE => FIELD_INT2D_DELETE_DEVICE
 END TYPE FIELD_INT2D
 
 TYPE FIELD_INT3D
   ! A FIELD encapsulates a single multi-dimensional array and can
   ! provide block-indexed "views" of the data for automating the
   ! allocation and parallel iterration of NPROMA blocks.
-  CHARACTER(:), ALLOCATABLE :: NAME
 
   ! The data view to be used in thread-parallel sections
   !
@@ -253,7 +337,20 @@ TYPE FIELD_INT3D
   ! The underlying storage pointer has the rank as the dimension,
   ! where the innermost dimension represents the horizontal and
   ! the outermost one is the block index.
-  INTEGER(KIND=JPIM), POINTER :: DATA(:,:,:) => NULL()
+  INTEGER(KIND=JPIM), POINTER :: PTR(:,:,:) => NULL()
+  INTEGER(KIND=JPIM), ALLOCATABLE :: DATA(:,:,:)
+
+  ! For wrapping discontiguous fields in co-allocated storage
+  ! arrays (eg. GFL/GMV) also store a CONTIGUOUS base pointer
+  ! and integer index, to allow block pointer extraction that
+  ! conforms with CUDA device pointers in PGI.
+  INTEGER(KIND=JPIM), POINTER, CONTIGUOUS :: BASE_PTR(:,:,:,:) => NULL()
+  INTEGER(KIND=JPIM) :: FIDX
+
+  ! A separate data pointer that can be used to create
+  ! a contiguous chunk of host memory to cleanly map to
+  ! device, should the %DATA pointer be discontiguous.
+  INTEGER(KIND=JPIM), POINTER, CONTIGUOUS :: DEVPTR(:,:,:) => NULL()
 
   ! Number of blocks used in the data layout
   INTEGER :: NBLOCKS
@@ -273,13 +370,17 @@ CONTAINS
   PROCEDURE :: GET_VIEW => FIELD_INT3D_GET_VIEW
   PROCEDURE :: FINAL => FIELD_INT3D_FINAL
 
+  ! GPU-specific device data transfer API
+  PROCEDURE :: CREATE_DEVICE => FIELD_INT3D_CREATE_DEVICE
+  PROCEDURE :: UPDATE_DEVICE => FIELD_INT3D_UPDATE_DEVICE
+  PROCEDURE :: UPDATE_HOST => FIELD_INT3D_UPDATE_HOST
+  PROCEDURE :: DELETE_DEVICE => FIELD_INT3D_DELETE_DEVICE
 END TYPE FIELD_INT3D
 
 TYPE FIELD_INT4D
   ! A FIELD encapsulates a single multi-dimensional array and can
   ! provide block-indexed "views" of the data for automating the
   ! allocation and parallel iterration of NPROMA blocks.
-  CHARACTER(:), ALLOCATABLE :: NAME
 
   ! The data view to be used in thread-parallel sections
   !
@@ -296,7 +397,20 @@ TYPE FIELD_INT4D
   ! The underlying storage pointer has the rank as the dimension,
   ! where the innermost dimension represents the horizontal and
   ! the outermost one is the block index.
-  INTEGER(KIND=JPIM), POINTER :: DATA(:,:,:,:) => NULL()
+  INTEGER(KIND=JPIM), POINTER :: PTR(:,:,:,:) => NULL()
+  INTEGER(KIND=JPIM), ALLOCATABLE :: DATA(:,:,:,:)
+
+  ! For wrapping discontiguous fields in co-allocated storage
+  ! arrays (eg. GFL/GMV) also store a CONTIGUOUS base pointer
+  ! and integer index, to allow block pointer extraction that
+  ! conforms with CUDA device pointers in PGI.
+  INTEGER(KIND=JPIM), POINTER, CONTIGUOUS :: BASE_PTR(:,:,:,:,:) => NULL()
+  INTEGER(KIND=JPIM) :: FIDX
+
+  ! A separate data pointer that can be used to create
+  ! a contiguous chunk of host memory to cleanly map to
+  ! device, should the %DATA pointer be discontiguous.
+  INTEGER(KIND=JPIM), POINTER, CONTIGUOUS :: DEVPTR(:,:,:,:) => NULL()
 
   ! Number of blocks used in the data layout
   INTEGER :: NBLOCKS
@@ -316,13 +430,17 @@ CONTAINS
   PROCEDURE :: GET_VIEW => FIELD_INT4D_GET_VIEW
   PROCEDURE :: FINAL => FIELD_INT4D_FINAL
 
+  ! GPU-specific device data transfer API
+  PROCEDURE :: CREATE_DEVICE => FIELD_INT4D_CREATE_DEVICE
+  PROCEDURE :: UPDATE_DEVICE => FIELD_INT4D_UPDATE_DEVICE
+  PROCEDURE :: UPDATE_HOST => FIELD_INT4D_UPDATE_HOST
+  PROCEDURE :: DELETE_DEVICE => FIELD_INT4D_DELETE_DEVICE
 END TYPE FIELD_INT4D
 
 TYPE FIELD_INT5D
   ! A FIELD encapsulates a single multi-dimensional array and can
   ! provide block-indexed "views" of the data for automating the
   ! allocation and parallel iterration of NPROMA blocks.
-  CHARACTER(:), ALLOCATABLE :: NAME
 
   ! The data view to be used in thread-parallel sections
   !
@@ -339,7 +457,20 @@ TYPE FIELD_INT5D
   ! The underlying storage pointer has the rank as the dimension,
   ! where the innermost dimension represents the horizontal and
   ! the outermost one is the block index.
-  INTEGER(KIND=JPIM), POINTER :: DATA(:,:,:,:,:) => NULL()
+  INTEGER(KIND=JPIM), POINTER :: PTR(:,:,:,:,:) => NULL()
+  INTEGER(KIND=JPIM), ALLOCATABLE :: DATA(:,:,:,:,:)
+
+  ! For wrapping discontiguous fields in co-allocated storage
+  ! arrays (eg. GFL/GMV) also store a CONTIGUOUS base pointer
+  ! and integer index, to allow block pointer extraction that
+  ! conforms with CUDA device pointers in PGI.
+  INTEGER(KIND=JPIM), POINTER, CONTIGUOUS :: BASE_PTR(:,:,:,:,:,:) => NULL()
+  INTEGER(KIND=JPIM) :: FIDX
+
+  ! A separate data pointer that can be used to create
+  ! a contiguous chunk of host memory to cleanly map to
+  ! device, should the %DATA pointer be discontiguous.
+  INTEGER(KIND=JPIM), POINTER, CONTIGUOUS :: DEVPTR(:,:,:,:,:) => NULL()
 
   ! Number of blocks used in the data layout
   INTEGER :: NBLOCKS
@@ -359,13 +490,17 @@ CONTAINS
   PROCEDURE :: GET_VIEW => FIELD_INT5D_GET_VIEW
   PROCEDURE :: FINAL => FIELD_INT5D_FINAL
 
+  ! GPU-specific device data transfer API
+  PROCEDURE :: CREATE_DEVICE => FIELD_INT5D_CREATE_DEVICE
+  PROCEDURE :: UPDATE_DEVICE => FIELD_INT5D_UPDATE_DEVICE
+  PROCEDURE :: UPDATE_HOST => FIELD_INT5D_UPDATE_HOST
+  PROCEDURE :: DELETE_DEVICE => FIELD_INT5D_DELETE_DEVICE
 END TYPE FIELD_INT5D
 
 TYPE FIELD_LOG2D
   ! A FIELD encapsulates a single multi-dimensional array and can
   ! provide block-indexed "views" of the data for automating the
   ! allocation and parallel iterration of NPROMA blocks.
-  CHARACTER(:), ALLOCATABLE :: NAME
 
   ! The data view to be used in thread-parallel sections
   !
@@ -382,7 +517,20 @@ TYPE FIELD_LOG2D
   ! The underlying storage pointer has the rank as the dimension,
   ! where the innermost dimension represents the horizontal and
   ! the outermost one is the block index.
-  LOGICAL, POINTER :: DATA(:,:) => NULL()
+  LOGICAL, POINTER :: PTR(:,:) => NULL()
+  LOGICAL, ALLOCATABLE :: DATA(:,:)
+
+  ! For wrapping discontiguous fields in co-allocated storage
+  ! arrays (eg. GFL/GMV) also store a CONTIGUOUS base pointer
+  ! and integer index, to allow block pointer extraction that
+  ! conforms with CUDA device pointers in PGI.
+  LOGICAL, POINTER, CONTIGUOUS :: BASE_PTR(:,:,:) => NULL()
+  INTEGER(KIND=JPIM) :: FIDX
+
+  ! A separate data pointer that can be used to create
+  ! a contiguous chunk of host memory to cleanly map to
+  ! device, should the %DATA pointer be discontiguous.
+  LOGICAL, POINTER, CONTIGUOUS :: DEVPTR(:,:) => NULL()
 
   ! Number of blocks used in the data layout
   INTEGER :: NBLOCKS
@@ -402,13 +550,17 @@ CONTAINS
   PROCEDURE :: GET_VIEW => FIELD_LOG2D_GET_VIEW
   PROCEDURE :: FINAL => FIELD_LOG2D_FINAL
 
+  ! GPU-specific device data transfer API
+  PROCEDURE :: CREATE_DEVICE => FIELD_LOG2D_CREATE_DEVICE
+  PROCEDURE :: UPDATE_DEVICE => FIELD_LOG2D_UPDATE_DEVICE
+  PROCEDURE :: UPDATE_HOST => FIELD_LOG2D_UPDATE_HOST
+  PROCEDURE :: DELETE_DEVICE => FIELD_LOG2D_DELETE_DEVICE
 END TYPE FIELD_LOG2D
 
 TYPE FIELD_LOG3D
   ! A FIELD encapsulates a single multi-dimensional array and can
   ! provide block-indexed "views" of the data for automating the
   ! allocation and parallel iterration of NPROMA blocks.
-  CHARACTER(:), ALLOCATABLE :: NAME
 
   ! The data view to be used in thread-parallel sections
   !
@@ -425,7 +577,20 @@ TYPE FIELD_LOG3D
   ! The underlying storage pointer has the rank as the dimension,
   ! where the innermost dimension represents the horizontal and
   ! the outermost one is the block index.
-  LOGICAL, POINTER :: DATA(:,:,:) => NULL()
+  LOGICAL, POINTER :: PTR(:,:,:) => NULL()
+  LOGICAL, ALLOCATABLE :: DATA(:,:,:)
+
+  ! For wrapping discontiguous fields in co-allocated storage
+  ! arrays (eg. GFL/GMV) also store a CONTIGUOUS base pointer
+  ! and integer index, to allow block pointer extraction that
+  ! conforms with CUDA device pointers in PGI.
+  LOGICAL, POINTER, CONTIGUOUS :: BASE_PTR(:,:,:,:) => NULL()
+  INTEGER(KIND=JPIM) :: FIDX
+
+  ! A separate data pointer that can be used to create
+  ! a contiguous chunk of host memory to cleanly map to
+  ! device, should the %DATA pointer be discontiguous.
+  LOGICAL, POINTER, CONTIGUOUS :: DEVPTR(:,:,:) => NULL()
 
   ! Number of blocks used in the data layout
   INTEGER :: NBLOCKS
@@ -445,13 +610,17 @@ CONTAINS
   PROCEDURE :: GET_VIEW => FIELD_LOG3D_GET_VIEW
   PROCEDURE :: FINAL => FIELD_LOG3D_FINAL
 
+  ! GPU-specific device data transfer API
+  PROCEDURE :: CREATE_DEVICE => FIELD_LOG3D_CREATE_DEVICE
+  PROCEDURE :: UPDATE_DEVICE => FIELD_LOG3D_UPDATE_DEVICE
+  PROCEDURE :: UPDATE_HOST => FIELD_LOG3D_UPDATE_HOST
+  PROCEDURE :: DELETE_DEVICE => FIELD_LOG3D_DELETE_DEVICE
 END TYPE FIELD_LOG3D
 
 TYPE FIELD_LOG4D
   ! A FIELD encapsulates a single multi-dimensional array and can
   ! provide block-indexed "views" of the data for automating the
   ! allocation and parallel iterration of NPROMA blocks.
-  CHARACTER(:), ALLOCATABLE :: NAME
 
   ! The data view to be used in thread-parallel sections
   !
@@ -468,7 +637,20 @@ TYPE FIELD_LOG4D
   ! The underlying storage pointer has the rank as the dimension,
   ! where the innermost dimension represents the horizontal and
   ! the outermost one is the block index.
-  LOGICAL, POINTER :: DATA(:,:,:,:) => NULL()
+  LOGICAL, POINTER :: PTR(:,:,:,:) => NULL()
+  LOGICAL, ALLOCATABLE :: DATA(:,:,:,:)
+
+  ! For wrapping discontiguous fields in co-allocated storage
+  ! arrays (eg. GFL/GMV) also store a CONTIGUOUS base pointer
+  ! and integer index, to allow block pointer extraction that
+  ! conforms with CUDA device pointers in PGI.
+  LOGICAL, POINTER, CONTIGUOUS :: BASE_PTR(:,:,:,:,:) => NULL()
+  INTEGER(KIND=JPIM) :: FIDX
+
+  ! A separate data pointer that can be used to create
+  ! a contiguous chunk of host memory to cleanly map to
+  ! device, should the %DATA pointer be discontiguous.
+  LOGICAL, POINTER, CONTIGUOUS :: DEVPTR(:,:,:,:) => NULL()
 
   ! Number of blocks used in the data layout
   INTEGER :: NBLOCKS
@@ -488,13 +670,17 @@ CONTAINS
   PROCEDURE :: GET_VIEW => FIELD_LOG4D_GET_VIEW
   PROCEDURE :: FINAL => FIELD_LOG4D_FINAL
 
+  ! GPU-specific device data transfer API
+  PROCEDURE :: CREATE_DEVICE => FIELD_LOG4D_CREATE_DEVICE
+  PROCEDURE :: UPDATE_DEVICE => FIELD_LOG4D_UPDATE_DEVICE
+  PROCEDURE :: UPDATE_HOST => FIELD_LOG4D_UPDATE_HOST
+  PROCEDURE :: DELETE_DEVICE => FIELD_LOG4D_DELETE_DEVICE
 END TYPE FIELD_LOG4D
 
 TYPE FIELD_LOG5D
   ! A FIELD encapsulates a single multi-dimensional array and can
   ! provide block-indexed "views" of the data for automating the
   ! allocation and parallel iterration of NPROMA blocks.
-  CHARACTER(:), ALLOCATABLE :: NAME
 
   ! The data view to be used in thread-parallel sections
   !
@@ -511,7 +697,20 @@ TYPE FIELD_LOG5D
   ! The underlying storage pointer has the rank as the dimension,
   ! where the innermost dimension represents the horizontal and
   ! the outermost one is the block index.
-  LOGICAL, POINTER :: DATA(:,:,:,:,:) => NULL()
+  LOGICAL, POINTER :: PTR(:,:,:,:,:) => NULL()
+  LOGICAL, ALLOCATABLE :: DATA(:,:,:,:,:)
+
+  ! For wrapping discontiguous fields in co-allocated storage
+  ! arrays (eg. GFL/GMV) also store a CONTIGUOUS base pointer
+  ! and integer index, to allow block pointer extraction that
+  ! conforms with CUDA device pointers in PGI.
+  LOGICAL, POINTER, CONTIGUOUS :: BASE_PTR(:,:,:,:,:,:) => NULL()
+  INTEGER(KIND=JPIM) :: FIDX
+
+  ! A separate data pointer that can be used to create
+  ! a contiguous chunk of host memory to cleanly map to
+  ! device, should the %DATA pointer be discontiguous.
+  LOGICAL, POINTER, CONTIGUOUS :: DEVPTR(:,:,:,:,:) => NULL()
 
   ! Number of blocks used in the data layout
   INTEGER :: NBLOCKS
@@ -531,6 +730,11 @@ CONTAINS
   PROCEDURE :: GET_VIEW => FIELD_LOG5D_GET_VIEW
   PROCEDURE :: FINAL => FIELD_LOG5D_FINAL
 
+  ! GPU-specific device data transfer API
+  PROCEDURE :: CREATE_DEVICE => FIELD_LOG5D_CREATE_DEVICE
+  PROCEDURE :: UPDATE_DEVICE => FIELD_LOG5D_UPDATE_DEVICE
+  PROCEDURE :: UPDATE_HOST => FIELD_LOG5D_UPDATE_HOST
+  PROCEDURE :: DELETE_DEVICE => FIELD_LOG5D_DELETE_DEVICE
 END TYPE FIELD_LOG5D
 
 
@@ -577,82 +781,174 @@ END TYPE FIELD_5D_VIEW
 
 INTERFACE FIELD_2D
   MODULE PROCEDURE :: FIELD_2D_WRAP
+  MODULE PROCEDURE :: FIELD_2D_WRAP_PACKED
   ! MODULE PROCEDURE :: FIELD_2D_EMPTY
   MODULE PROCEDURE :: FIELD_2D_ALLOCATE
 END INTERFACE
 
 INTERFACE FIELD_3D
   MODULE PROCEDURE :: FIELD_3D_WRAP
+  MODULE PROCEDURE :: FIELD_3D_WRAP_PACKED
   ! MODULE PROCEDURE :: FIELD_3D_EMPTY
   MODULE PROCEDURE :: FIELD_3D_ALLOCATE
 END INTERFACE
 
 INTERFACE FIELD_4D
   MODULE PROCEDURE :: FIELD_4D_WRAP
+  MODULE PROCEDURE :: FIELD_4D_WRAP_PACKED
   ! MODULE PROCEDURE :: FIELD_4D_EMPTY
   MODULE PROCEDURE :: FIELD_4D_ALLOCATE
 END INTERFACE
 
 INTERFACE FIELD_5D
   MODULE PROCEDURE :: FIELD_5D_WRAP
+  MODULE PROCEDURE :: FIELD_5D_WRAP_PACKED
   ! MODULE PROCEDURE :: FIELD_5D_EMPTY
   MODULE PROCEDURE :: FIELD_5D_ALLOCATE
 END INTERFACE
 
 INTERFACE FIELD_INT2D
   MODULE PROCEDURE :: FIELD_INT2D_WRAP
+  MODULE PROCEDURE :: FIELD_INT2D_WRAP_PACKED
   ! MODULE PROCEDURE :: FIELD_INT2D_EMPTY
   MODULE PROCEDURE :: FIELD_INT2D_ALLOCATE
 END INTERFACE
 
 INTERFACE FIELD_INT3D
   MODULE PROCEDURE :: FIELD_INT3D_WRAP
+  MODULE PROCEDURE :: FIELD_INT3D_WRAP_PACKED
   ! MODULE PROCEDURE :: FIELD_INT3D_EMPTY
   MODULE PROCEDURE :: FIELD_INT3D_ALLOCATE
 END INTERFACE
 
 INTERFACE FIELD_INT4D
   MODULE PROCEDURE :: FIELD_INT4D_WRAP
+  MODULE PROCEDURE :: FIELD_INT4D_WRAP_PACKED
   ! MODULE PROCEDURE :: FIELD_INT4D_EMPTY
   MODULE PROCEDURE :: FIELD_INT4D_ALLOCATE
 END INTERFACE
 
 INTERFACE FIELD_INT5D
   MODULE PROCEDURE :: FIELD_INT5D_WRAP
+  MODULE PROCEDURE :: FIELD_INT5D_WRAP_PACKED
   ! MODULE PROCEDURE :: FIELD_INT5D_EMPTY
   MODULE PROCEDURE :: FIELD_INT5D_ALLOCATE
 END INTERFACE
 
 INTERFACE FIELD_LOG2D
   MODULE PROCEDURE :: FIELD_LOG2D_WRAP
+  MODULE PROCEDURE :: FIELD_LOG2D_WRAP_PACKED
   ! MODULE PROCEDURE :: FIELD_LOG2D_EMPTY
   MODULE PROCEDURE :: FIELD_LOG2D_ALLOCATE
 END INTERFACE
 
 INTERFACE FIELD_LOG3D
   MODULE PROCEDURE :: FIELD_LOG3D_WRAP
+  MODULE PROCEDURE :: FIELD_LOG3D_WRAP_PACKED
   ! MODULE PROCEDURE :: FIELD_LOG3D_EMPTY
   MODULE PROCEDURE :: FIELD_LOG3D_ALLOCATE
 END INTERFACE
 
 INTERFACE FIELD_LOG4D
   MODULE PROCEDURE :: FIELD_LOG4D_WRAP
+  MODULE PROCEDURE :: FIELD_LOG4D_WRAP_PACKED
   ! MODULE PROCEDURE :: FIELD_LOG4D_EMPTY
   MODULE PROCEDURE :: FIELD_LOG4D_ALLOCATE
 END INTERFACE
 
 INTERFACE FIELD_LOG5D
   MODULE PROCEDURE :: FIELD_LOG5D_WRAP
+  MODULE PROCEDURE :: FIELD_LOG5D_WRAP_PACKED
   ! MODULE PROCEDURE :: FIELD_LOG5D_EMPTY
   MODULE PROCEDURE :: FIELD_LOG5D_ALLOCATE
 END INTERFACE
 
 
 INTERFACE FILL_BUFFER
-  MODULE PROCEDURE :: FILL_BUFFER_2D, FILL_BUFFER_3D, FILL_BUFFER_4D, FILL_BUFFER_5D
-  MODULE PROCEDURE :: FILL_BUFFER_INT2D, FILL_BUFFER_INT3D, FILL_BUFFER_INT4D, FILL_BUFFER_INT5D
-  MODULE PROCEDURE :: FILL_BUFFER_LOG2D, FILL_BUFFER_LOG3D, FILL_BUFFER_LOG4D, FILL_BUFFER_LOG5D
+  MODULE PROCEDURE :: FILL_BUFFER_2D, FILL_BUFFER_3D
+  MODULE PROCEDURE :: FILL_BUFFER_4D, FILL_BUFFER_5D
+  MODULE PROCEDURE :: FILL_BUFFER_INT2D, FILL_BUFFER_INT3D
+  MODULE PROCEDURE :: FILL_BUFFER_INT4D, FILL_BUFFER_INT5D
+  MODULE PROCEDURE :: FILL_BUFFER_LOG2D, FILL_BUFFER_LOG3D
+  MODULE PROCEDURE :: FILL_BUFFER_LOG4D, FILL_BUFFER_LOG5D
 END INTERFACE FILL_BUFFER
+
+
+INTERFACE FIELD_CREATE_DEVICE
+  MODULE PROCEDURE :: FIELD_2D_CREATE_DEVICE
+  MODULE PROCEDURE :: FIELD_3D_CREATE_DEVICE
+  MODULE PROCEDURE :: FIELD_4D_CREATE_DEVICE
+  MODULE PROCEDURE :: FIELD_5D_CREATE_DEVICE
+  MODULE PROCEDURE :: FIELD_INT2D_CREATE_DEVICE
+  MODULE PROCEDURE :: FIELD_INT3D_CREATE_DEVICE
+  MODULE PROCEDURE :: FIELD_INT4D_CREATE_DEVICE
+  MODULE PROCEDURE :: FIELD_INT5D_CREATE_DEVICE
+  MODULE PROCEDURE :: FIELD_LOG2D_CREATE_DEVICE
+  MODULE PROCEDURE :: FIELD_LOG3D_CREATE_DEVICE
+  MODULE PROCEDURE :: FIELD_LOG4D_CREATE_DEVICE
+  MODULE PROCEDURE :: FIELD_LOG5D_CREATE_DEVICE
+END INTERFACE FIELD_CREATE_DEVICE
+
+INTERFACE FIELD_UPDATE_DEVICE
+  MODULE PROCEDURE :: FIELD_2D_UPDATE_DEVICE
+  MODULE PROCEDURE :: FIELD_3D_UPDATE_DEVICE
+  MODULE PROCEDURE :: FIELD_4D_UPDATE_DEVICE
+  MODULE PROCEDURE :: FIELD_5D_UPDATE_DEVICE
+  MODULE PROCEDURE :: FIELD_INT2D_UPDATE_DEVICE
+  MODULE PROCEDURE :: FIELD_INT3D_UPDATE_DEVICE
+  MODULE PROCEDURE :: FIELD_INT4D_UPDATE_DEVICE
+  MODULE PROCEDURE :: FIELD_INT5D_UPDATE_DEVICE
+  MODULE PROCEDURE :: FIELD_LOG2D_UPDATE_DEVICE
+  MODULE PROCEDURE :: FIELD_LOG3D_UPDATE_DEVICE
+  MODULE PROCEDURE :: FIELD_LOG4D_UPDATE_DEVICE
+  MODULE PROCEDURE :: FIELD_LOG5D_UPDATE_DEVICE
+END INTERFACE FIELD_UPDATE_DEVICE
+
+INTERFACE FIELD_UPDATE_HOST
+  MODULE PROCEDURE :: FIELD_2D_UPDATE_HOST
+  MODULE PROCEDURE :: FIELD_3D_UPDATE_HOST
+  MODULE PROCEDURE :: FIELD_4D_UPDATE_HOST
+  MODULE PROCEDURE :: FIELD_5D_UPDATE_HOST
+  MODULE PROCEDURE :: FIELD_INT2D_UPDATE_HOST
+  MODULE PROCEDURE :: FIELD_INT3D_UPDATE_HOST
+  MODULE PROCEDURE :: FIELD_INT4D_UPDATE_HOST
+  MODULE PROCEDURE :: FIELD_INT5D_UPDATE_HOST
+  MODULE PROCEDURE :: FIELD_LOG2D_UPDATE_HOST
+  MODULE PROCEDURE :: FIELD_LOG3D_UPDATE_HOST
+  MODULE PROCEDURE :: FIELD_LOG4D_UPDATE_HOST
+  MODULE PROCEDURE :: FIELD_LOG5D_UPDATE_HOST
+END INTERFACE FIELD_UPDATE_HOST
+
+INTERFACE FIELD_DELETE_DEVICE
+  MODULE PROCEDURE :: FIELD_2D_DELETE_DEVICE
+  MODULE PROCEDURE :: FIELD_3D_DELETE_DEVICE
+  MODULE PROCEDURE :: FIELD_4D_DELETE_DEVICE
+  MODULE PROCEDURE :: FIELD_5D_DELETE_DEVICE
+  MODULE PROCEDURE :: FIELD_INT2D_DELETE_DEVICE
+  MODULE PROCEDURE :: FIELD_INT3D_DELETE_DEVICE
+  MODULE PROCEDURE :: FIELD_INT4D_DELETE_DEVICE
+  MODULE PROCEDURE :: FIELD_INT5D_DELETE_DEVICE
+  MODULE PROCEDURE :: FIELD_LOG2D_DELETE_DEVICE
+  MODULE PROCEDURE :: FIELD_LOG3D_DELETE_DEVICE
+  MODULE PROCEDURE :: FIELD_LOG4D_DELETE_DEVICE
+  MODULE PROCEDURE :: FIELD_LOG5D_DELETE_DEVICE
+END INTERFACE FIELD_DELETE_DEVICE
+
+INTERFACE GET_DEVICE_DATA
+  MODULE PROCEDURE :: FIELD_2D_GET_DEVICE_DATA
+  MODULE PROCEDURE :: FIELD_3D_GET_DEVICE_DATA
+  MODULE PROCEDURE :: FIELD_4D_GET_DEVICE_DATA
+  MODULE PROCEDURE :: FIELD_5D_GET_DEVICE_DATA
+  MODULE PROCEDURE :: FIELD_INT2D_GET_DEVICE_DATA
+  MODULE PROCEDURE :: FIELD_INT3D_GET_DEVICE_DATA
+  MODULE PROCEDURE :: FIELD_INT4D_GET_DEVICE_DATA
+  MODULE PROCEDURE :: FIELD_INT5D_GET_DEVICE_DATA
+  MODULE PROCEDURE :: FIELD_LOG2D_GET_DEVICE_DATA
+  MODULE PROCEDURE :: FIELD_LOG3D_GET_DEVICE_DATA
+  MODULE PROCEDURE :: FIELD_LOG4D_GET_DEVICE_DATA
+  MODULE PROCEDURE :: FIELD_LOG5D_GET_DEVICE_DATA
+END INTERFACE GET_DEVICE_DATA
+
 
 CONTAINS
 
@@ -813,7 +1109,7 @@ CONTAINS
   END SUBROUTINE FILL_BUFFER_LOG5D
 
 
-  FUNCTION FIELD_2D_EMPTY(NAME, SHAPE) RESULT(SELF)
+  FUNCTION FIELD_2D_EMPTY(SHAPE) RESULT(SELF)
     ! Create FIELD object by wrapping existing data
     !
     ! If a SHAPE is provided, a single empty buffer block-sized buffer
@@ -821,11 +1117,9 @@ CONTAINS
     ! thread-parallel region to avoid segfault when dereferencing NULL
     ! pointers. Otherwise %DATA and %VIEW will always be unassociated.
     TYPE(FIELD_2D) :: SELF
-    CHARACTER(LEN=*), INTENT(IN) :: NAME
     INTEGER(KIND=JPIM), OPTIONAL, INTENT(IN) :: SHAPE(1)
 
-    SELF%NAME = NAME
-    SELF%DATA => NULL()
+    SELF%PTR => NULL()
     IF (PRESENT(SHAPE)) THEN
       ALLOCATE(SELF%VIEW(SHAPE(1)))
     END IF
@@ -833,9 +1127,11 @@ CONTAINS
     SELF%THREAD_BUFFER = .FALSE.
     SELF%OWNED = .FALSE.
     SELF%NBLOCKS = 0
+    SELF%BASE_PTR => NULL()
+    SELF%FIDX = -1
   END FUNCTION FIELD_2D_EMPTY
 
-  FUNCTION FIELD_3D_EMPTY(NAME, SHAPE) RESULT(SELF)
+  FUNCTION FIELD_3D_EMPTY(SHAPE) RESULT(SELF)
     ! Create FIELD object by wrapping existing data
     !
     ! If a SHAPE is provided, a single empty buffer block-sized buffer
@@ -843,11 +1139,9 @@ CONTAINS
     ! thread-parallel region to avoid segfault when dereferencing NULL
     ! pointers. Otherwise %DATA and %VIEW will always be unassociated.
     TYPE(FIELD_3D) :: SELF
-    CHARACTER(LEN=*), INTENT(IN) :: NAME
     INTEGER(KIND=JPIM), OPTIONAL, INTENT(IN) :: SHAPE(2)
 
-    SELF%NAME = NAME
-    SELF%DATA => NULL()
+    SELF%PTR => NULL()
     IF (PRESENT(SHAPE)) THEN
       ALLOCATE(SELF%VIEW(SHAPE(1),SHAPE(2)))
     END IF
@@ -855,9 +1149,11 @@ CONTAINS
     SELF%THREAD_BUFFER = .FALSE.
     SELF%OWNED = .FALSE.
     SELF%NBLOCKS = 0
+    SELF%BASE_PTR => NULL()
+    SELF%FIDX = -1
   END FUNCTION FIELD_3D_EMPTY
 
-  FUNCTION FIELD_4D_EMPTY(NAME, SHAPE) RESULT(SELF)
+  FUNCTION FIELD_4D_EMPTY(SHAPE) RESULT(SELF)
     ! Create FIELD object by wrapping existing data
     !
     ! If a SHAPE is provided, a single empty buffer block-sized buffer
@@ -865,11 +1161,9 @@ CONTAINS
     ! thread-parallel region to avoid segfault when dereferencing NULL
     ! pointers. Otherwise %DATA and %VIEW will always be unassociated.
     TYPE(FIELD_4D) :: SELF
-    CHARACTER(LEN=*), INTENT(IN) :: NAME
     INTEGER(KIND=JPIM), OPTIONAL, INTENT(IN) :: SHAPE(3)
 
-    SELF%NAME = NAME
-    SELF%DATA => NULL()
+    SELF%PTR => NULL()
     IF (PRESENT(SHAPE)) THEN
       ALLOCATE(SELF%VIEW(SHAPE(1),SHAPE(2),SHAPE(3)))
     END IF
@@ -877,9 +1171,11 @@ CONTAINS
     SELF%THREAD_BUFFER = .FALSE.
     SELF%OWNED = .FALSE.
     SELF%NBLOCKS = 0
+    SELF%BASE_PTR => NULL()
+    SELF%FIDX = -1
   END FUNCTION FIELD_4D_EMPTY
 
-  FUNCTION FIELD_5D_EMPTY(NAME, SHAPE) RESULT(SELF)
+  FUNCTION FIELD_5D_EMPTY(SHAPE) RESULT(SELF)
     ! Create FIELD object by wrapping existing data
     !
     ! If a SHAPE is provided, a single empty buffer block-sized buffer
@@ -887,11 +1183,9 @@ CONTAINS
     ! thread-parallel region to avoid segfault when dereferencing NULL
     ! pointers. Otherwise %DATA and %VIEW will always be unassociated.
     TYPE(FIELD_5D) :: SELF
-    CHARACTER(LEN=*), INTENT(IN) :: NAME
     INTEGER(KIND=JPIM), OPTIONAL, INTENT(IN) :: SHAPE(4)
 
-    SELF%NAME = NAME
-    SELF%DATA => NULL()
+    SELF%PTR => NULL()
     IF (PRESENT(SHAPE)) THEN
       ALLOCATE(SELF%VIEW(SHAPE(1),SHAPE(2),SHAPE(3),SHAPE(4)))
     END IF
@@ -899,9 +1193,11 @@ CONTAINS
     SELF%THREAD_BUFFER = .FALSE.
     SELF%OWNED = .FALSE.
     SELF%NBLOCKS = 0
+    SELF%BASE_PTR => NULL()
+    SELF%FIDX = -1
   END FUNCTION FIELD_5D_EMPTY
 
-  FUNCTION FIELD_INT2D_EMPTY(NAME, SHAPE) RESULT(SELF)
+  FUNCTION FIELD_INT2D_EMPTY(SHAPE) RESULT(SELF)
     ! Create FIELD object by wrapping existing data
     !
     ! If a SHAPE is provided, a single empty buffer block-sized buffer
@@ -909,11 +1205,9 @@ CONTAINS
     ! thread-parallel region to avoid segfault when dereferencing NULL
     ! pointers. Otherwise %DATA and %VIEW will always be unassociated.
     TYPE(FIELD_INT2D) :: SELF
-    CHARACTER(LEN=*), INTENT(IN) :: NAME
     INTEGER(KIND=JPIM), OPTIONAL, INTENT(IN) :: SHAPE(1)
 
-    SELF%NAME = NAME
-    SELF%DATA => NULL()
+    SELF%PTR => NULL()
     IF (PRESENT(SHAPE)) THEN
       ALLOCATE(SELF%VIEW(SHAPE(1)))
     END IF
@@ -921,9 +1215,11 @@ CONTAINS
     SELF%THREAD_BUFFER = .FALSE.
     SELF%OWNED = .FALSE.
     SELF%NBLOCKS = 0
+    SELF%BASE_PTR => NULL()
+    SELF%FIDX = -1
   END FUNCTION FIELD_INT2D_EMPTY
 
-  FUNCTION FIELD_INT3D_EMPTY(NAME, SHAPE) RESULT(SELF)
+  FUNCTION FIELD_INT3D_EMPTY(SHAPE) RESULT(SELF)
     ! Create FIELD object by wrapping existing data
     !
     ! If a SHAPE is provided, a single empty buffer block-sized buffer
@@ -931,11 +1227,9 @@ CONTAINS
     ! thread-parallel region to avoid segfault when dereferencing NULL
     ! pointers. Otherwise %DATA and %VIEW will always be unassociated.
     TYPE(FIELD_INT3D) :: SELF
-    CHARACTER(LEN=*), INTENT(IN) :: NAME
     INTEGER(KIND=JPIM), OPTIONAL, INTENT(IN) :: SHAPE(2)
 
-    SELF%NAME = NAME
-    SELF%DATA => NULL()
+    SELF%PTR => NULL()
     IF (PRESENT(SHAPE)) THEN
       ALLOCATE(SELF%VIEW(SHAPE(1),SHAPE(2)))
     END IF
@@ -943,9 +1237,11 @@ CONTAINS
     SELF%THREAD_BUFFER = .FALSE.
     SELF%OWNED = .FALSE.
     SELF%NBLOCKS = 0
+    SELF%BASE_PTR => NULL()
+    SELF%FIDX = -1
   END FUNCTION FIELD_INT3D_EMPTY
 
-  FUNCTION FIELD_INT4D_EMPTY(NAME, SHAPE) RESULT(SELF)
+  FUNCTION FIELD_INT4D_EMPTY(SHAPE) RESULT(SELF)
     ! Create FIELD object by wrapping existing data
     !
     ! If a SHAPE is provided, a single empty buffer block-sized buffer
@@ -953,11 +1249,9 @@ CONTAINS
     ! thread-parallel region to avoid segfault when dereferencing NULL
     ! pointers. Otherwise %DATA and %VIEW will always be unassociated.
     TYPE(FIELD_INT4D) :: SELF
-    CHARACTER(LEN=*), INTENT(IN) :: NAME
     INTEGER(KIND=JPIM), OPTIONAL, INTENT(IN) :: SHAPE(3)
 
-    SELF%NAME = NAME
-    SELF%DATA => NULL()
+    SELF%PTR => NULL()
     IF (PRESENT(SHAPE)) THEN
       ALLOCATE(SELF%VIEW(SHAPE(1),SHAPE(2),SHAPE(3)))
     END IF
@@ -965,9 +1259,11 @@ CONTAINS
     SELF%THREAD_BUFFER = .FALSE.
     SELF%OWNED = .FALSE.
     SELF%NBLOCKS = 0
+    SELF%BASE_PTR => NULL()
+    SELF%FIDX = -1
   END FUNCTION FIELD_INT4D_EMPTY
 
-  FUNCTION FIELD_INT5D_EMPTY(NAME, SHAPE) RESULT(SELF)
+  FUNCTION FIELD_INT5D_EMPTY(SHAPE) RESULT(SELF)
     ! Create FIELD object by wrapping existing data
     !
     ! If a SHAPE is provided, a single empty buffer block-sized buffer
@@ -975,11 +1271,9 @@ CONTAINS
     ! thread-parallel region to avoid segfault when dereferencing NULL
     ! pointers. Otherwise %DATA and %VIEW will always be unassociated.
     TYPE(FIELD_INT5D) :: SELF
-    CHARACTER(LEN=*), INTENT(IN) :: NAME
     INTEGER(KIND=JPIM), OPTIONAL, INTENT(IN) :: SHAPE(4)
 
-    SELF%NAME = NAME
-    SELF%DATA => NULL()
+    SELF%PTR => NULL()
     IF (PRESENT(SHAPE)) THEN
       ALLOCATE(SELF%VIEW(SHAPE(1),SHAPE(2),SHAPE(3),SHAPE(4)))
     END IF
@@ -987,9 +1281,11 @@ CONTAINS
     SELF%THREAD_BUFFER = .FALSE.
     SELF%OWNED = .FALSE.
     SELF%NBLOCKS = 0
+    SELF%BASE_PTR => NULL()
+    SELF%FIDX = -1
   END FUNCTION FIELD_INT5D_EMPTY
 
-  FUNCTION FIELD_LOG2D_EMPTY(NAME, SHAPE) RESULT(SELF)
+  FUNCTION FIELD_LOG2D_EMPTY(SHAPE) RESULT(SELF)
     ! Create FIELD object by wrapping existing data
     !
     ! If a SHAPE is provided, a single empty buffer block-sized buffer
@@ -997,11 +1293,9 @@ CONTAINS
     ! thread-parallel region to avoid segfault when dereferencing NULL
     ! pointers. Otherwise %DATA and %VIEW will always be unassociated.
     TYPE(FIELD_LOG2D) :: SELF
-    CHARACTER(LEN=*), INTENT(IN) :: NAME
     INTEGER(KIND=JPIM), OPTIONAL, INTENT(IN) :: SHAPE(1)
 
-    SELF%NAME = NAME
-    SELF%DATA => NULL()
+    SELF%PTR => NULL()
     IF (PRESENT(SHAPE)) THEN
       ALLOCATE(SELF%VIEW(SHAPE(1)))
     END IF
@@ -1009,9 +1303,11 @@ CONTAINS
     SELF%THREAD_BUFFER = .FALSE.
     SELF%OWNED = .FALSE.
     SELF%NBLOCKS = 0
+    SELF%BASE_PTR => NULL()
+    SELF%FIDX = -1
   END FUNCTION FIELD_LOG2D_EMPTY
 
-  FUNCTION FIELD_LOG3D_EMPTY(NAME, SHAPE) RESULT(SELF)
+  FUNCTION FIELD_LOG3D_EMPTY(SHAPE) RESULT(SELF)
     ! Create FIELD object by wrapping existing data
     !
     ! If a SHAPE is provided, a single empty buffer block-sized buffer
@@ -1019,11 +1315,9 @@ CONTAINS
     ! thread-parallel region to avoid segfault when dereferencing NULL
     ! pointers. Otherwise %DATA and %VIEW will always be unassociated.
     TYPE(FIELD_LOG3D) :: SELF
-    CHARACTER(LEN=*), INTENT(IN) :: NAME
     INTEGER(KIND=JPIM), OPTIONAL, INTENT(IN) :: SHAPE(2)
 
-    SELF%NAME = NAME
-    SELF%DATA => NULL()
+    SELF%PTR => NULL()
     IF (PRESENT(SHAPE)) THEN
       ALLOCATE(SELF%VIEW(SHAPE(1),SHAPE(2)))
     END IF
@@ -1031,9 +1325,11 @@ CONTAINS
     SELF%THREAD_BUFFER = .FALSE.
     SELF%OWNED = .FALSE.
     SELF%NBLOCKS = 0
+    SELF%BASE_PTR => NULL()
+    SELF%FIDX = -1
   END FUNCTION FIELD_LOG3D_EMPTY
 
-  FUNCTION FIELD_LOG4D_EMPTY(NAME, SHAPE) RESULT(SELF)
+  FUNCTION FIELD_LOG4D_EMPTY(SHAPE) RESULT(SELF)
     ! Create FIELD object by wrapping existing data
     !
     ! If a SHAPE is provided, a single empty buffer block-sized buffer
@@ -1041,11 +1337,9 @@ CONTAINS
     ! thread-parallel region to avoid segfault when dereferencing NULL
     ! pointers. Otherwise %DATA and %VIEW will always be unassociated.
     TYPE(FIELD_LOG4D) :: SELF
-    CHARACTER(LEN=*), INTENT(IN) :: NAME
     INTEGER(KIND=JPIM), OPTIONAL, INTENT(IN) :: SHAPE(3)
 
-    SELF%NAME = NAME
-    SELF%DATA => NULL()
+    SELF%PTR => NULL()
     IF (PRESENT(SHAPE)) THEN
       ALLOCATE(SELF%VIEW(SHAPE(1),SHAPE(2),SHAPE(3)))
     END IF
@@ -1053,9 +1347,11 @@ CONTAINS
     SELF%THREAD_BUFFER = .FALSE.
     SELF%OWNED = .FALSE.
     SELF%NBLOCKS = 0
+    SELF%BASE_PTR => NULL()
+    SELF%FIDX = -1
   END FUNCTION FIELD_LOG4D_EMPTY
 
-  FUNCTION FIELD_LOG5D_EMPTY(NAME, SHAPE) RESULT(SELF)
+  FUNCTION FIELD_LOG5D_EMPTY(SHAPE) RESULT(SELF)
     ! Create FIELD object by wrapping existing data
     !
     ! If a SHAPE is provided, a single empty buffer block-sized buffer
@@ -1063,11 +1359,9 @@ CONTAINS
     ! thread-parallel region to avoid segfault when dereferencing NULL
     ! pointers. Otherwise %DATA and %VIEW will always be unassociated.
     TYPE(FIELD_LOG5D) :: SELF
-    CHARACTER(LEN=*), INTENT(IN) :: NAME
     INTEGER(KIND=JPIM), OPTIONAL, INTENT(IN) :: SHAPE(4)
 
-    SELF%NAME = NAME
-    SELF%DATA => NULL()
+    SELF%PTR => NULL()
     IF (PRESENT(SHAPE)) THEN
       ALLOCATE(SELF%VIEW(SHAPE(1),SHAPE(2),SHAPE(3),SHAPE(4)))
     END IF
@@ -1075,13 +1369,14 @@ CONTAINS
     SELF%THREAD_BUFFER = .FALSE.
     SELF%OWNED = .FALSE.
     SELF%NBLOCKS = 0
+    SELF%BASE_PTR => NULL()
+    SELF%FIDX = -1
   END FUNCTION FIELD_LOG5D_EMPTY
 
 
-  FUNCTION FIELD_2D_WRAP(NAME, DATA, PERSISTENT) RESULT(SELF)
+  FUNCTION FIELD_2D_WRAP(DATA, PERSISTENT) RESULT(SELF)
     ! Create FIELD object by wrapping existing data
-    TYPE(FIELD_2D) :: SELF
-    CHARACTER(LEN=*), INTENT(IN) :: NAME
+    TYPE(FIELD_2D), TARGET :: SELF
     REAL(KIND=JPRB), TARGET, INTENT(IN) :: DATA(:,:)
     LOGICAL, INTENT(IN), OPTIONAL :: PERSISTENT
     LOGICAL :: LLPERSISTENT
@@ -1089,25 +1384,25 @@ CONTAINS
     LLPERSISTENT = .TRUE.
     IF (PRESENT (PERSISTENT)) LLPERSISTENT = PERSISTENT
 
-    SELF%NAME = NAME
-    SELF%DATA => DATA
+    SELF%PTR => DATA
     SELF%ACTIVE = .TRUE.
-    SELF%OWNED = .FALSE.
-
     SELF%THREAD_BUFFER = .NOT. LLPERSISTENT
+    SELF%OWNED = .FALSE.
+    SELF%NBLOCKS = SIZE(SELF%PTR, 2)
+    SELF%BASE_PTR => NULL()
+    SELF%FIDX = -1
+
     IF (.NOT. LLPERSISTENT) THEN
       IF (OML_MAX_THREADS() /= SIZE (DATA, 2)) THEN
         CALL ABOR1 ('FIELD_2D_WRAP: DIMENSION MISMATCH')
       ENDIF
     ENDIF
 
-    SELF%NBLOCKS = SIZE(SELF%DATA, 2)
   END FUNCTION FIELD_2D_WRAP
 
-  FUNCTION FIELD_3D_WRAP(NAME, DATA, PERSISTENT) RESULT(SELF)
+  FUNCTION FIELD_3D_WRAP(DATA, PERSISTENT) RESULT(SELF)
     ! Create FIELD object by wrapping existing data
-    TYPE(FIELD_3D) :: SELF
-    CHARACTER(LEN=*), INTENT(IN) :: NAME
+    TYPE(FIELD_3D), TARGET :: SELF
     REAL(KIND=JPRB), TARGET, INTENT(IN) :: DATA(:,:,:)
     LOGICAL, INTENT(IN), OPTIONAL :: PERSISTENT
     LOGICAL :: LLPERSISTENT
@@ -1115,25 +1410,25 @@ CONTAINS
     LLPERSISTENT = .TRUE.
     IF (PRESENT (PERSISTENT)) LLPERSISTENT = PERSISTENT
 
-    SELF%NAME = NAME
-    SELF%DATA => DATA
+    SELF%PTR => DATA
     SELF%ACTIVE = .TRUE.
-    SELF%OWNED = .FALSE.
-
     SELF%THREAD_BUFFER = .NOT. LLPERSISTENT
+    SELF%OWNED = .FALSE.
+    SELF%NBLOCKS = SIZE(SELF%PTR, 3)
+    SELF%BASE_PTR => NULL()
+    SELF%FIDX = -1
+
     IF (.NOT. LLPERSISTENT) THEN
       IF (OML_MAX_THREADS() /= SIZE (DATA, 3)) THEN
         CALL ABOR1 ('FIELD_3D_WRAP: DIMENSION MISMATCH')
       ENDIF
     ENDIF
 
-    SELF%NBLOCKS = SIZE(SELF%DATA, 3)
   END FUNCTION FIELD_3D_WRAP
 
-  FUNCTION FIELD_4D_WRAP(NAME, DATA, PERSISTENT) RESULT(SELF)
+  FUNCTION FIELD_4D_WRAP(DATA, PERSISTENT) RESULT(SELF)
     ! Create FIELD object by wrapping existing data
-    TYPE(FIELD_4D) :: SELF
-    CHARACTER(LEN=*), INTENT(IN) :: NAME
+    TYPE(FIELD_4D), TARGET :: SELF
     REAL(KIND=JPRB), TARGET, INTENT(IN) :: DATA(:,:,:,:)
     LOGICAL, INTENT(IN), OPTIONAL :: PERSISTENT
     LOGICAL :: LLPERSISTENT
@@ -1141,25 +1436,25 @@ CONTAINS
     LLPERSISTENT = .TRUE.
     IF (PRESENT (PERSISTENT)) LLPERSISTENT = PERSISTENT
 
-    SELF%NAME = NAME
-    SELF%DATA => DATA
+    SELF%PTR => DATA
     SELF%ACTIVE = .TRUE.
-    SELF%OWNED = .FALSE.
-
     SELF%THREAD_BUFFER = .NOT. LLPERSISTENT
+    SELF%OWNED = .FALSE.
+    SELF%NBLOCKS = SIZE(SELF%PTR, 4)
+    SELF%BASE_PTR => NULL()
+    SELF%FIDX = -1
+
     IF (.NOT. LLPERSISTENT) THEN
       IF (OML_MAX_THREADS() /= SIZE (DATA, 4)) THEN
         CALL ABOR1 ('FIELD_4D_WRAP: DIMENSION MISMATCH')
       ENDIF
     ENDIF
 
-    SELF%NBLOCKS = SIZE(SELF%DATA, 4)
   END FUNCTION FIELD_4D_WRAP
 
-  FUNCTION FIELD_5D_WRAP(NAME, DATA, PERSISTENT) RESULT(SELF)
+  FUNCTION FIELD_5D_WRAP(DATA, PERSISTENT) RESULT(SELF)
     ! Create FIELD object by wrapping existing data
-    TYPE(FIELD_5D) :: SELF
-    CHARACTER(LEN=*), INTENT(IN) :: NAME
+    TYPE(FIELD_5D), TARGET :: SELF
     REAL(KIND=JPRB), TARGET, INTENT(IN) :: DATA(:,:,:,:,:)
     LOGICAL, INTENT(IN), OPTIONAL :: PERSISTENT
     LOGICAL :: LLPERSISTENT
@@ -1167,25 +1462,25 @@ CONTAINS
     LLPERSISTENT = .TRUE.
     IF (PRESENT (PERSISTENT)) LLPERSISTENT = PERSISTENT
 
-    SELF%NAME = NAME
-    SELF%DATA => DATA
+    SELF%PTR => DATA
     SELF%ACTIVE = .TRUE.
-    SELF%OWNED = .FALSE.
-
     SELF%THREAD_BUFFER = .NOT. LLPERSISTENT
+    SELF%OWNED = .FALSE.
+    SELF%NBLOCKS = SIZE(SELF%PTR, 5)
+    SELF%BASE_PTR => NULL()
+    SELF%FIDX = -1
+
     IF (.NOT. LLPERSISTENT) THEN
       IF (OML_MAX_THREADS() /= SIZE (DATA, 5)) THEN
         CALL ABOR1 ('FIELD_5D_WRAP: DIMENSION MISMATCH')
       ENDIF
     ENDIF
 
-    SELF%NBLOCKS = SIZE(SELF%DATA, 5)
   END FUNCTION FIELD_5D_WRAP
 
-  FUNCTION FIELD_INT2D_WRAP(NAME, DATA, PERSISTENT) RESULT(SELF)
+  FUNCTION FIELD_INT2D_WRAP(DATA, PERSISTENT) RESULT(SELF)
     ! Create FIELD object by wrapping existing data
-    TYPE(FIELD_INT2D) :: SELF
-    CHARACTER(LEN=*), INTENT(IN) :: NAME
+    TYPE(FIELD_INT2D), TARGET :: SELF
     INTEGER(KIND=JPIM), TARGET, INTENT(IN) :: DATA(:,:)
     LOGICAL, INTENT(IN), OPTIONAL :: PERSISTENT
     LOGICAL :: LLPERSISTENT
@@ -1193,25 +1488,25 @@ CONTAINS
     LLPERSISTENT = .TRUE.
     IF (PRESENT (PERSISTENT)) LLPERSISTENT = PERSISTENT
 
-    SELF%NAME = NAME
-    SELF%DATA => DATA
+    SELF%PTR => DATA
     SELF%ACTIVE = .TRUE.
-    SELF%OWNED = .FALSE.
-
     SELF%THREAD_BUFFER = .NOT. LLPERSISTENT
+    SELF%OWNED = .FALSE.
+    SELF%NBLOCKS = SIZE(SELF%PTR, 2)
+    SELF%BASE_PTR => NULL()
+    SELF%FIDX = -1
+
     IF (.NOT. LLPERSISTENT) THEN
       IF (OML_MAX_THREADS() /= SIZE (DATA, 2)) THEN
         CALL ABOR1 ('FIELD_INT2D_WRAP: DIMENSION MISMATCH')
       ENDIF
     ENDIF
 
-    SELF%NBLOCKS = SIZE(SELF%DATA, 2)
   END FUNCTION FIELD_INT2D_WRAP
 
-  FUNCTION FIELD_INT3D_WRAP(NAME, DATA, PERSISTENT) RESULT(SELF)
+  FUNCTION FIELD_INT3D_WRAP(DATA, PERSISTENT) RESULT(SELF)
     ! Create FIELD object by wrapping existing data
-    TYPE(FIELD_INT3D) :: SELF
-    CHARACTER(LEN=*), INTENT(IN) :: NAME
+    TYPE(FIELD_INT3D), TARGET :: SELF
     INTEGER(KIND=JPIM), TARGET, INTENT(IN) :: DATA(:,:,:)
     LOGICAL, INTENT(IN), OPTIONAL :: PERSISTENT
     LOGICAL :: LLPERSISTENT
@@ -1219,25 +1514,25 @@ CONTAINS
     LLPERSISTENT = .TRUE.
     IF (PRESENT (PERSISTENT)) LLPERSISTENT = PERSISTENT
 
-    SELF%NAME = NAME
-    SELF%DATA => DATA
+    SELF%PTR => DATA
     SELF%ACTIVE = .TRUE.
-    SELF%OWNED = .FALSE.
-
     SELF%THREAD_BUFFER = .NOT. LLPERSISTENT
+    SELF%OWNED = .FALSE.
+    SELF%NBLOCKS = SIZE(SELF%PTR, 3)
+    SELF%BASE_PTR => NULL()
+    SELF%FIDX = -1
+
     IF (.NOT. LLPERSISTENT) THEN
       IF (OML_MAX_THREADS() /= SIZE (DATA, 3)) THEN
         CALL ABOR1 ('FIELD_INT3D_WRAP: DIMENSION MISMATCH')
       ENDIF
     ENDIF
 
-    SELF%NBLOCKS = SIZE(SELF%DATA, 3)
   END FUNCTION FIELD_INT3D_WRAP
 
-  FUNCTION FIELD_INT4D_WRAP(NAME, DATA, PERSISTENT) RESULT(SELF)
+  FUNCTION FIELD_INT4D_WRAP(DATA, PERSISTENT) RESULT(SELF)
     ! Create FIELD object by wrapping existing data
-    TYPE(FIELD_INT4D) :: SELF
-    CHARACTER(LEN=*), INTENT(IN) :: NAME
+    TYPE(FIELD_INT4D), TARGET :: SELF
     INTEGER(KIND=JPIM), TARGET, INTENT(IN) :: DATA(:,:,:,:)
     LOGICAL, INTENT(IN), OPTIONAL :: PERSISTENT
     LOGICAL :: LLPERSISTENT
@@ -1245,25 +1540,25 @@ CONTAINS
     LLPERSISTENT = .TRUE.
     IF (PRESENT (PERSISTENT)) LLPERSISTENT = PERSISTENT
 
-    SELF%NAME = NAME
-    SELF%DATA => DATA
+    SELF%PTR => DATA
     SELF%ACTIVE = .TRUE.
-    SELF%OWNED = .FALSE.
-
     SELF%THREAD_BUFFER = .NOT. LLPERSISTENT
+    SELF%OWNED = .FALSE.
+    SELF%NBLOCKS = SIZE(SELF%PTR, 4)
+    SELF%BASE_PTR => NULL()
+    SELF%FIDX = -1
+
     IF (.NOT. LLPERSISTENT) THEN
       IF (OML_MAX_THREADS() /= SIZE (DATA, 4)) THEN
         CALL ABOR1 ('FIELD_INT4D_WRAP: DIMENSION MISMATCH')
       ENDIF
     ENDIF
 
-    SELF%NBLOCKS = SIZE(SELF%DATA, 4)
   END FUNCTION FIELD_INT4D_WRAP
 
-  FUNCTION FIELD_INT5D_WRAP(NAME, DATA, PERSISTENT) RESULT(SELF)
+  FUNCTION FIELD_INT5D_WRAP(DATA, PERSISTENT) RESULT(SELF)
     ! Create FIELD object by wrapping existing data
-    TYPE(FIELD_INT5D) :: SELF
-    CHARACTER(LEN=*), INTENT(IN) :: NAME
+    TYPE(FIELD_INT5D), TARGET :: SELF
     INTEGER(KIND=JPIM), TARGET, INTENT(IN) :: DATA(:,:,:,:,:)
     LOGICAL, INTENT(IN), OPTIONAL :: PERSISTENT
     LOGICAL :: LLPERSISTENT
@@ -1271,25 +1566,25 @@ CONTAINS
     LLPERSISTENT = .TRUE.
     IF (PRESENT (PERSISTENT)) LLPERSISTENT = PERSISTENT
 
-    SELF%NAME = NAME
-    SELF%DATA => DATA
+    SELF%PTR => DATA
     SELF%ACTIVE = .TRUE.
-    SELF%OWNED = .FALSE.
-
     SELF%THREAD_BUFFER = .NOT. LLPERSISTENT
+    SELF%OWNED = .FALSE.
+    SELF%NBLOCKS = SIZE(SELF%PTR, 5)
+    SELF%BASE_PTR => NULL()
+    SELF%FIDX = -1
+
     IF (.NOT. LLPERSISTENT) THEN
       IF (OML_MAX_THREADS() /= SIZE (DATA, 5)) THEN
         CALL ABOR1 ('FIELD_INT5D_WRAP: DIMENSION MISMATCH')
       ENDIF
     ENDIF
 
-    SELF%NBLOCKS = SIZE(SELF%DATA, 5)
   END FUNCTION FIELD_INT5D_WRAP
 
-  FUNCTION FIELD_LOG2D_WRAP(NAME, DATA, PERSISTENT) RESULT(SELF)
+  FUNCTION FIELD_LOG2D_WRAP(DATA, PERSISTENT) RESULT(SELF)
     ! Create FIELD object by wrapping existing data
-    TYPE(FIELD_LOG2D) :: SELF
-    CHARACTER(LEN=*), INTENT(IN) :: NAME
+    TYPE(FIELD_LOG2D), TARGET :: SELF
     LOGICAL, TARGET, INTENT(IN) :: DATA(:,:)
     LOGICAL, INTENT(IN), OPTIONAL :: PERSISTENT
     LOGICAL :: LLPERSISTENT
@@ -1297,25 +1592,25 @@ CONTAINS
     LLPERSISTENT = .TRUE.
     IF (PRESENT (PERSISTENT)) LLPERSISTENT = PERSISTENT
 
-    SELF%NAME = NAME
-    SELF%DATA => DATA
+    SELF%PTR => DATA
     SELF%ACTIVE = .TRUE.
-    SELF%OWNED = .FALSE.
-
     SELF%THREAD_BUFFER = .NOT. LLPERSISTENT
+    SELF%OWNED = .FALSE.
+    SELF%NBLOCKS = SIZE(SELF%PTR, 2)
+    SELF%BASE_PTR => NULL()
+    SELF%FIDX = -1
+
     IF (.NOT. LLPERSISTENT) THEN
       IF (OML_MAX_THREADS() /= SIZE (DATA, 2)) THEN
         CALL ABOR1 ('FIELD_LOG2D_WRAP: DIMENSION MISMATCH')
       ENDIF
     ENDIF
 
-    SELF%NBLOCKS = SIZE(SELF%DATA, 2)
   END FUNCTION FIELD_LOG2D_WRAP
 
-  FUNCTION FIELD_LOG3D_WRAP(NAME, DATA, PERSISTENT) RESULT(SELF)
+  FUNCTION FIELD_LOG3D_WRAP(DATA, PERSISTENT) RESULT(SELF)
     ! Create FIELD object by wrapping existing data
-    TYPE(FIELD_LOG3D) :: SELF
-    CHARACTER(LEN=*), INTENT(IN) :: NAME
+    TYPE(FIELD_LOG3D), TARGET :: SELF
     LOGICAL, TARGET, INTENT(IN) :: DATA(:,:,:)
     LOGICAL, INTENT(IN), OPTIONAL :: PERSISTENT
     LOGICAL :: LLPERSISTENT
@@ -1323,25 +1618,25 @@ CONTAINS
     LLPERSISTENT = .TRUE.
     IF (PRESENT (PERSISTENT)) LLPERSISTENT = PERSISTENT
 
-    SELF%NAME = NAME
-    SELF%DATA => DATA
+    SELF%PTR => DATA
     SELF%ACTIVE = .TRUE.
-    SELF%OWNED = .FALSE.
-
     SELF%THREAD_BUFFER = .NOT. LLPERSISTENT
+    SELF%OWNED = .FALSE.
+    SELF%NBLOCKS = SIZE(SELF%PTR, 3)
+    SELF%BASE_PTR => NULL()
+    SELF%FIDX = -1
+
     IF (.NOT. LLPERSISTENT) THEN
       IF (OML_MAX_THREADS() /= SIZE (DATA, 3)) THEN
         CALL ABOR1 ('FIELD_LOG3D_WRAP: DIMENSION MISMATCH')
       ENDIF
     ENDIF
 
-    SELF%NBLOCKS = SIZE(SELF%DATA, 3)
   END FUNCTION FIELD_LOG3D_WRAP
 
-  FUNCTION FIELD_LOG4D_WRAP(NAME, DATA, PERSISTENT) RESULT(SELF)
+  FUNCTION FIELD_LOG4D_WRAP(DATA, PERSISTENT) RESULT(SELF)
     ! Create FIELD object by wrapping existing data
-    TYPE(FIELD_LOG4D) :: SELF
-    CHARACTER(LEN=*), INTENT(IN) :: NAME
+    TYPE(FIELD_LOG4D), TARGET :: SELF
     LOGICAL, TARGET, INTENT(IN) :: DATA(:,:,:,:)
     LOGICAL, INTENT(IN), OPTIONAL :: PERSISTENT
     LOGICAL :: LLPERSISTENT
@@ -1349,25 +1644,25 @@ CONTAINS
     LLPERSISTENT = .TRUE.
     IF (PRESENT (PERSISTENT)) LLPERSISTENT = PERSISTENT
 
-    SELF%NAME = NAME
-    SELF%DATA => DATA
+    SELF%PTR => DATA
     SELF%ACTIVE = .TRUE.
-    SELF%OWNED = .FALSE.
-
     SELF%THREAD_BUFFER = .NOT. LLPERSISTENT
+    SELF%OWNED = .FALSE.
+    SELF%NBLOCKS = SIZE(SELF%PTR, 4)
+    SELF%BASE_PTR => NULL()
+    SELF%FIDX = -1
+
     IF (.NOT. LLPERSISTENT) THEN
       IF (OML_MAX_THREADS() /= SIZE (DATA, 4)) THEN
         CALL ABOR1 ('FIELD_LOG4D_WRAP: DIMENSION MISMATCH')
       ENDIF
     ENDIF
 
-    SELF%NBLOCKS = SIZE(SELF%DATA, 4)
   END FUNCTION FIELD_LOG4D_WRAP
 
-  FUNCTION FIELD_LOG5D_WRAP(NAME, DATA, PERSISTENT) RESULT(SELF)
+  FUNCTION FIELD_LOG5D_WRAP(DATA, PERSISTENT) RESULT(SELF)
     ! Create FIELD object by wrapping existing data
-    TYPE(FIELD_LOG5D) :: SELF
-    CHARACTER(LEN=*), INTENT(IN) :: NAME
+    TYPE(FIELD_LOG5D), TARGET :: SELF
     LOGICAL, TARGET, INTENT(IN) :: DATA(:,:,:,:,:)
     LOGICAL, INTENT(IN), OPTIONAL :: PERSISTENT
     LOGICAL :: LLPERSISTENT
@@ -1375,28 +1670,221 @@ CONTAINS
     LLPERSISTENT = .TRUE.
     IF (PRESENT (PERSISTENT)) LLPERSISTENT = PERSISTENT
 
-    SELF%NAME = NAME
-    SELF%DATA => DATA
+    SELF%PTR => DATA
     SELF%ACTIVE = .TRUE.
-    SELF%OWNED = .FALSE.
-
     SELF%THREAD_BUFFER = .NOT. LLPERSISTENT
+    SELF%OWNED = .FALSE.
+    SELF%NBLOCKS = SIZE(SELF%PTR, 5)
+    SELF%BASE_PTR => NULL()
+    SELF%FIDX = -1
+
     IF (.NOT. LLPERSISTENT) THEN
       IF (OML_MAX_THREADS() /= SIZE (DATA, 5)) THEN
         CALL ABOR1 ('FIELD_LOG5D_WRAP: DIMENSION MISMATCH')
       ENDIF
     ENDIF
 
-    SELF%NBLOCKS = SIZE(SELF%DATA, 5)
   END FUNCTION FIELD_LOG5D_WRAP
 
 
-  FUNCTION FIELD_2D_ALLOCATE(NAME, SHAPE, NBLOCKS, PERSISTENT) RESULT(SELF)
+  FUNCTION FIELD_2D_WRAP_PACKED(DATA, IDX) RESULT(SELF)
+    ! Create FIELD object packed in a multi-field buffer by storing a
+    ! contiguous pointer to existing data and an index.
+    TYPE(FIELD_2D), TARGET :: SELF
+    REAL(KIND=JPRB), TARGET, INTENT(IN) :: DATA(:,:,:)
+    INTEGER(KIND=JPIM), INTENT(IN) :: IDX
+
+    SELF%PTR => DATA(:,IDX,:)
+    SELF%ACTIVE = .TRUE.
+    SELF%THREAD_BUFFER = .FALSE.
+    SELF%OWNED = .FALSE.
+    SELF%NBLOCKS = SIZE(SELF%PTR, 2)
+    SELF%BASE_PTR => DATA
+    SELF%FIDX = IDX
+  END FUNCTION FIELD_2D_WRAP_PACKED
+
+  FUNCTION FIELD_3D_WRAP_PACKED(DATA, IDX) RESULT(SELF)
+    ! Create FIELD object packed in a multi-field buffer by storing a
+    ! contiguous pointer to existing data and an index.
+    TYPE(FIELD_3D), TARGET :: SELF
+    REAL(KIND=JPRB), TARGET, INTENT(IN) :: DATA(:,:,:,:)
+    INTEGER(KIND=JPIM), INTENT(IN) :: IDX
+
+    SELF%PTR => DATA(:,:,IDX,:)
+    SELF%ACTIVE = .TRUE.
+    SELF%THREAD_BUFFER = .FALSE.
+    SELF%OWNED = .FALSE.
+    SELF%NBLOCKS = SIZE(SELF%PTR, 3)
+    SELF%BASE_PTR => DATA
+    SELF%FIDX = IDX
+  END FUNCTION FIELD_3D_WRAP_PACKED
+
+  FUNCTION FIELD_4D_WRAP_PACKED(DATA, IDX) RESULT(SELF)
+    ! Create FIELD object packed in a multi-field buffer by storing a
+    ! contiguous pointer to existing data and an index.
+    TYPE(FIELD_4D), TARGET :: SELF
+    REAL(KIND=JPRB), TARGET, INTENT(IN) :: DATA(:,:,:,:,:)
+    INTEGER(KIND=JPIM), INTENT(IN) :: IDX
+
+    SELF%PTR => DATA(:,:,:,IDX,:)
+    SELF%ACTIVE = .TRUE.
+    SELF%THREAD_BUFFER = .FALSE.
+    SELF%OWNED = .FALSE.
+    SELF%NBLOCKS = SIZE(SELF%PTR, 4)
+    SELF%BASE_PTR => DATA
+    SELF%FIDX = IDX
+  END FUNCTION FIELD_4D_WRAP_PACKED
+
+  FUNCTION FIELD_5D_WRAP_PACKED(DATA, IDX) RESULT(SELF)
+    ! Create FIELD object packed in a multi-field buffer by storing a
+    ! contiguous pointer to existing data and an index.
+    TYPE(FIELD_5D), TARGET :: SELF
+    REAL(KIND=JPRB), TARGET, INTENT(IN) :: DATA(:,:,:,:,:,:)
+    INTEGER(KIND=JPIM), INTENT(IN) :: IDX
+
+    SELF%PTR => DATA(:,:,:,:,IDX,:)
+    SELF%ACTIVE = .TRUE.
+    SELF%THREAD_BUFFER = .FALSE.
+    SELF%OWNED = .FALSE.
+    SELF%NBLOCKS = SIZE(SELF%PTR, 5)
+    SELF%BASE_PTR => DATA
+    SELF%FIDX = IDX
+  END FUNCTION FIELD_5D_WRAP_PACKED
+
+  FUNCTION FIELD_INT2D_WRAP_PACKED(DATA, IDX) RESULT(SELF)
+    ! Create FIELD object packed in a multi-field buffer by storing a
+    ! contiguous pointer to existing data and an index.
+    TYPE(FIELD_INT2D), TARGET :: SELF
+    INTEGER(KIND=JPIM), TARGET, INTENT(IN) :: DATA(:,:,:)
+    INTEGER(KIND=JPIM), INTENT(IN) :: IDX
+
+    SELF%PTR => DATA(:,IDX,:)
+    SELF%ACTIVE = .TRUE.
+    SELF%THREAD_BUFFER = .FALSE.
+    SELF%OWNED = .FALSE.
+    SELF%NBLOCKS = SIZE(SELF%PTR, 2)
+    SELF%BASE_PTR => DATA
+    SELF%FIDX = IDX
+  END FUNCTION FIELD_INT2D_WRAP_PACKED
+
+  FUNCTION FIELD_INT3D_WRAP_PACKED(DATA, IDX) RESULT(SELF)
+    ! Create FIELD object packed in a multi-field buffer by storing a
+    ! contiguous pointer to existing data and an index.
+    TYPE(FIELD_INT3D), TARGET :: SELF
+    INTEGER(KIND=JPIM), TARGET, INTENT(IN) :: DATA(:,:,:,:)
+    INTEGER(KIND=JPIM), INTENT(IN) :: IDX
+
+    SELF%PTR => DATA(:,:,IDX,:)
+    SELF%ACTIVE = .TRUE.
+    SELF%THREAD_BUFFER = .FALSE.
+    SELF%OWNED = .FALSE.
+    SELF%NBLOCKS = SIZE(SELF%PTR, 3)
+    SELF%BASE_PTR => DATA
+    SELF%FIDX = IDX
+  END FUNCTION FIELD_INT3D_WRAP_PACKED
+
+  FUNCTION FIELD_INT4D_WRAP_PACKED(DATA, IDX) RESULT(SELF)
+    ! Create FIELD object packed in a multi-field buffer by storing a
+    ! contiguous pointer to existing data and an index.
+    TYPE(FIELD_INT4D), TARGET :: SELF
+    INTEGER(KIND=JPIM), TARGET, INTENT(IN) :: DATA(:,:,:,:,:)
+    INTEGER(KIND=JPIM), INTENT(IN) :: IDX
+
+    SELF%PTR => DATA(:,:,:,IDX,:)
+    SELF%ACTIVE = .TRUE.
+    SELF%THREAD_BUFFER = .FALSE.
+    SELF%OWNED = .FALSE.
+    SELF%NBLOCKS = SIZE(SELF%PTR, 4)
+    SELF%BASE_PTR => DATA
+    SELF%FIDX = IDX
+  END FUNCTION FIELD_INT4D_WRAP_PACKED
+
+  FUNCTION FIELD_INT5D_WRAP_PACKED(DATA, IDX) RESULT(SELF)
+    ! Create FIELD object packed in a multi-field buffer by storing a
+    ! contiguous pointer to existing data and an index.
+    TYPE(FIELD_INT5D), TARGET :: SELF
+    INTEGER(KIND=JPIM), TARGET, INTENT(IN) :: DATA(:,:,:,:,:,:)
+    INTEGER(KIND=JPIM), INTENT(IN) :: IDX
+
+    SELF%PTR => DATA(:,:,:,:,IDX,:)
+    SELF%ACTIVE = .TRUE.
+    SELF%THREAD_BUFFER = .FALSE.
+    SELF%OWNED = .FALSE.
+    SELF%NBLOCKS = SIZE(SELF%PTR, 5)
+    SELF%BASE_PTR => DATA
+    SELF%FIDX = IDX
+  END FUNCTION FIELD_INT5D_WRAP_PACKED
+
+  FUNCTION FIELD_LOG2D_WRAP_PACKED(DATA, IDX) RESULT(SELF)
+    ! Create FIELD object packed in a multi-field buffer by storing a
+    ! contiguous pointer to existing data and an index.
+    TYPE(FIELD_LOG2D), TARGET :: SELF
+    LOGICAL, TARGET, INTENT(IN) :: DATA(:,:,:)
+    INTEGER(KIND=JPIM), INTENT(IN) :: IDX
+
+    SELF%PTR => DATA(:,IDX,:)
+    SELF%ACTIVE = .TRUE.
+    SELF%THREAD_BUFFER = .FALSE.
+    SELF%OWNED = .FALSE.
+    SELF%NBLOCKS = SIZE(SELF%PTR, 2)
+    SELF%BASE_PTR => DATA
+    SELF%FIDX = IDX
+  END FUNCTION FIELD_LOG2D_WRAP_PACKED
+
+  FUNCTION FIELD_LOG3D_WRAP_PACKED(DATA, IDX) RESULT(SELF)
+    ! Create FIELD object packed in a multi-field buffer by storing a
+    ! contiguous pointer to existing data and an index.
+    TYPE(FIELD_LOG3D), TARGET :: SELF
+    LOGICAL, TARGET, INTENT(IN) :: DATA(:,:,:,:)
+    INTEGER(KIND=JPIM), INTENT(IN) :: IDX
+
+    SELF%PTR => DATA(:,:,IDX,:)
+    SELF%ACTIVE = .TRUE.
+    SELF%THREAD_BUFFER = .FALSE.
+    SELF%OWNED = .FALSE.
+    SELF%NBLOCKS = SIZE(SELF%PTR, 3)
+    SELF%BASE_PTR => DATA
+    SELF%FIDX = IDX
+  END FUNCTION FIELD_LOG3D_WRAP_PACKED
+
+  FUNCTION FIELD_LOG4D_WRAP_PACKED(DATA, IDX) RESULT(SELF)
+    ! Create FIELD object packed in a multi-field buffer by storing a
+    ! contiguous pointer to existing data and an index.
+    TYPE(FIELD_LOG4D), TARGET :: SELF
+    LOGICAL, TARGET, INTENT(IN) :: DATA(:,:,:,:,:)
+    INTEGER(KIND=JPIM), INTENT(IN) :: IDX
+
+    SELF%PTR => DATA(:,:,:,IDX,:)
+    SELF%ACTIVE = .TRUE.
+    SELF%THREAD_BUFFER = .FALSE.
+    SELF%OWNED = .FALSE.
+    SELF%NBLOCKS = SIZE(SELF%PTR, 4)
+    SELF%BASE_PTR => DATA
+    SELF%FIDX = IDX
+  END FUNCTION FIELD_LOG4D_WRAP_PACKED
+
+  FUNCTION FIELD_LOG5D_WRAP_PACKED(DATA, IDX) RESULT(SELF)
+    ! Create FIELD object packed in a multi-field buffer by storing a
+    ! contiguous pointer to existing data and an index.
+    TYPE(FIELD_LOG5D), TARGET :: SELF
+    LOGICAL, TARGET, INTENT(IN) :: DATA(:,:,:,:,:,:)
+    INTEGER(KIND=JPIM), INTENT(IN) :: IDX
+
+    SELF%PTR => DATA(:,:,:,:,IDX,:)
+    SELF%ACTIVE = .TRUE.
+    SELF%THREAD_BUFFER = .FALSE.
+    SELF%OWNED = .FALSE.
+    SELF%NBLOCKS = SIZE(SELF%PTR, 5)
+    SELF%BASE_PTR => DATA
+    SELF%FIDX = IDX
+  END FUNCTION FIELD_LOG5D_WRAP_PACKED
+
+
+  FUNCTION FIELD_2D_ALLOCATE(SHAPE, NBLOCKS, PERSISTENT) RESULT(SELF)
     ! Create FIELD object by explicitly allocating new data
     !
     ! Please note that SHAPE is the conceptual shape without the block dimension
-    TYPE(FIELD_2D) :: SELF
-    CHARACTER(LEN=*), INTENT(IN) :: NAME
+    TYPE(FIELD_2D), TARGET :: SELF
     INTEGER(KIND=JPIM), INTENT(IN) :: SHAPE(1)
     INTEGER(KIND=JPIM), INTENT(IN), OPTIONAL :: NBLOCKS
     LOGICAL, INTENT(IN), OPTIONAL :: PERSISTENT
@@ -1417,19 +1905,20 @@ CONTAINS
     END IF
 
     ! Allocate storage array and store metadata
-    SELF%NAME = NAME
     ALLOCATE(SELF%DATA(SHAPE(1),NBLK))
+    SELF%PTR => SELF%DATA
     SELF%ACTIVE = .TRUE.
     SELF%OWNED = .TRUE.
     SELF%NBLOCKS = SIZE(SELF%DATA, 2)
+    SELF%BASE_PTR => NULL()
+    SELF%FIDX = -1
   END FUNCTION FIELD_2D_ALLOCATE
 
-  FUNCTION FIELD_3D_ALLOCATE(NAME, SHAPE, NBLOCKS, PERSISTENT) RESULT(SELF)
+  FUNCTION FIELD_3D_ALLOCATE(SHAPE, NBLOCKS, PERSISTENT) RESULT(SELF)
     ! Create FIELD object by explicitly allocating new data
     !
     ! Please note that SHAPE is the conceptual shape without the block dimension
-    TYPE(FIELD_3D) :: SELF
-    CHARACTER(LEN=*), INTENT(IN) :: NAME
+    TYPE(FIELD_3D), TARGET :: SELF
     INTEGER(KIND=JPIM), INTENT(IN) :: SHAPE(2)
     INTEGER(KIND=JPIM), INTENT(IN), OPTIONAL :: NBLOCKS
     LOGICAL, INTENT(IN), OPTIONAL :: PERSISTENT
@@ -1450,19 +1939,20 @@ CONTAINS
     END IF
 
     ! Allocate storage array and store metadata
-    SELF%NAME = NAME
     ALLOCATE(SELF%DATA(SHAPE(1),SHAPE(2),NBLK))
+    SELF%PTR => SELF%DATA
     SELF%ACTIVE = .TRUE.
     SELF%OWNED = .TRUE.
     SELF%NBLOCKS = SIZE(SELF%DATA, 3)
+    SELF%BASE_PTR => NULL()
+    SELF%FIDX = -1
   END FUNCTION FIELD_3D_ALLOCATE
 
-  FUNCTION FIELD_4D_ALLOCATE(NAME, SHAPE, NBLOCKS, PERSISTENT) RESULT(SELF)
+  FUNCTION FIELD_4D_ALLOCATE(SHAPE, NBLOCKS, PERSISTENT) RESULT(SELF)
     ! Create FIELD object by explicitly allocating new data
     !
     ! Please note that SHAPE is the conceptual shape without the block dimension
-    TYPE(FIELD_4D) :: SELF
-    CHARACTER(LEN=*), INTENT(IN) :: NAME
+    TYPE(FIELD_4D), TARGET :: SELF
     INTEGER(KIND=JPIM), INTENT(IN) :: SHAPE(3)
     INTEGER(KIND=JPIM), INTENT(IN), OPTIONAL :: NBLOCKS
     LOGICAL, INTENT(IN), OPTIONAL :: PERSISTENT
@@ -1483,19 +1973,20 @@ CONTAINS
     END IF
 
     ! Allocate storage array and store metadata
-    SELF%NAME = NAME
     ALLOCATE(SELF%DATA(SHAPE(1),SHAPE(2),SHAPE(3),NBLK))
+    SELF%PTR => SELF%DATA
     SELF%ACTIVE = .TRUE.
     SELF%OWNED = .TRUE.
     SELF%NBLOCKS = SIZE(SELF%DATA, 4)
+    SELF%BASE_PTR => NULL()
+    SELF%FIDX = -1
   END FUNCTION FIELD_4D_ALLOCATE
 
-  FUNCTION FIELD_5D_ALLOCATE(NAME, SHAPE, NBLOCKS, PERSISTENT) RESULT(SELF)
+  FUNCTION FIELD_5D_ALLOCATE(SHAPE, NBLOCKS, PERSISTENT) RESULT(SELF)
     ! Create FIELD object by explicitly allocating new data
     !
     ! Please note that SHAPE is the conceptual shape without the block dimension
-    TYPE(FIELD_5D) :: SELF
-    CHARACTER(LEN=*), INTENT(IN) :: NAME
+    TYPE(FIELD_5D), TARGET :: SELF
     INTEGER(KIND=JPIM), INTENT(IN) :: SHAPE(4)
     INTEGER(KIND=JPIM), INTENT(IN), OPTIONAL :: NBLOCKS
     LOGICAL, INTENT(IN), OPTIONAL :: PERSISTENT
@@ -1516,19 +2007,20 @@ CONTAINS
     END IF
 
     ! Allocate storage array and store metadata
-    SELF%NAME = NAME
     ALLOCATE(SELF%DATA(SHAPE(1),SHAPE(2),SHAPE(3),SHAPE(4),NBLK))
+    SELF%PTR => SELF%DATA
     SELF%ACTIVE = .TRUE.
     SELF%OWNED = .TRUE.
     SELF%NBLOCKS = SIZE(SELF%DATA, 5)
+    SELF%BASE_PTR => NULL()
+    SELF%FIDX = -1
   END FUNCTION FIELD_5D_ALLOCATE
 
-  FUNCTION FIELD_INT2D_ALLOCATE(NAME, SHAPE, NBLOCKS, PERSISTENT) RESULT(SELF)
+  FUNCTION FIELD_INT2D_ALLOCATE(SHAPE, NBLOCKS, PERSISTENT) RESULT(SELF)
     ! Create FIELD object by explicitly allocating new data
     !
     ! Please note that SHAPE is the conceptual shape without the block dimension
-    TYPE(FIELD_INT2D) :: SELF
-    CHARACTER(LEN=*), INTENT(IN) :: NAME
+    TYPE(FIELD_INT2D), TARGET :: SELF
     INTEGER(KIND=JPIM), INTENT(IN) :: SHAPE(1)
     INTEGER(KIND=JPIM), INTENT(IN), OPTIONAL :: NBLOCKS
     LOGICAL, INTENT(IN), OPTIONAL :: PERSISTENT
@@ -1549,19 +2041,20 @@ CONTAINS
     END IF
 
     ! Allocate storage array and store metadata
-    SELF%NAME = NAME
     ALLOCATE(SELF%DATA(SHAPE(1),NBLK))
+    SELF%PTR => SELF%DATA
     SELF%ACTIVE = .TRUE.
     SELF%OWNED = .TRUE.
     SELF%NBLOCKS = SIZE(SELF%DATA, 2)
+    SELF%BASE_PTR => NULL()
+    SELF%FIDX = -1
   END FUNCTION FIELD_INT2D_ALLOCATE
 
-  FUNCTION FIELD_INT3D_ALLOCATE(NAME, SHAPE, NBLOCKS, PERSISTENT) RESULT(SELF)
+  FUNCTION FIELD_INT3D_ALLOCATE(SHAPE, NBLOCKS, PERSISTENT) RESULT(SELF)
     ! Create FIELD object by explicitly allocating new data
     !
     ! Please note that SHAPE is the conceptual shape without the block dimension
-    TYPE(FIELD_INT3D) :: SELF
-    CHARACTER(LEN=*), INTENT(IN) :: NAME
+    TYPE(FIELD_INT3D), TARGET :: SELF
     INTEGER(KIND=JPIM), INTENT(IN) :: SHAPE(2)
     INTEGER(KIND=JPIM), INTENT(IN), OPTIONAL :: NBLOCKS
     LOGICAL, INTENT(IN), OPTIONAL :: PERSISTENT
@@ -1582,19 +2075,20 @@ CONTAINS
     END IF
 
     ! Allocate storage array and store metadata
-    SELF%NAME = NAME
     ALLOCATE(SELF%DATA(SHAPE(1),SHAPE(2),NBLK))
+    SELF%PTR => SELF%DATA
     SELF%ACTIVE = .TRUE.
     SELF%OWNED = .TRUE.
     SELF%NBLOCKS = SIZE(SELF%DATA, 3)
+    SELF%BASE_PTR => NULL()
+    SELF%FIDX = -1
   END FUNCTION FIELD_INT3D_ALLOCATE
 
-  FUNCTION FIELD_INT4D_ALLOCATE(NAME, SHAPE, NBLOCKS, PERSISTENT) RESULT(SELF)
+  FUNCTION FIELD_INT4D_ALLOCATE(SHAPE, NBLOCKS, PERSISTENT) RESULT(SELF)
     ! Create FIELD object by explicitly allocating new data
     !
     ! Please note that SHAPE is the conceptual shape without the block dimension
-    TYPE(FIELD_INT4D) :: SELF
-    CHARACTER(LEN=*), INTENT(IN) :: NAME
+    TYPE(FIELD_INT4D), TARGET :: SELF
     INTEGER(KIND=JPIM), INTENT(IN) :: SHAPE(3)
     INTEGER(KIND=JPIM), INTENT(IN), OPTIONAL :: NBLOCKS
     LOGICAL, INTENT(IN), OPTIONAL :: PERSISTENT
@@ -1615,19 +2109,20 @@ CONTAINS
     END IF
 
     ! Allocate storage array and store metadata
-    SELF%NAME = NAME
     ALLOCATE(SELF%DATA(SHAPE(1),SHAPE(2),SHAPE(3),NBLK))
+    SELF%PTR => SELF%DATA
     SELF%ACTIVE = .TRUE.
     SELF%OWNED = .TRUE.
     SELF%NBLOCKS = SIZE(SELF%DATA, 4)
+    SELF%BASE_PTR => NULL()
+    SELF%FIDX = -1
   END FUNCTION FIELD_INT4D_ALLOCATE
 
-  FUNCTION FIELD_INT5D_ALLOCATE(NAME, SHAPE, NBLOCKS, PERSISTENT) RESULT(SELF)
+  FUNCTION FIELD_INT5D_ALLOCATE(SHAPE, NBLOCKS, PERSISTENT) RESULT(SELF)
     ! Create FIELD object by explicitly allocating new data
     !
     ! Please note that SHAPE is the conceptual shape without the block dimension
-    TYPE(FIELD_INT5D) :: SELF
-    CHARACTER(LEN=*), INTENT(IN) :: NAME
+    TYPE(FIELD_INT5D), TARGET :: SELF
     INTEGER(KIND=JPIM), INTENT(IN) :: SHAPE(4)
     INTEGER(KIND=JPIM), INTENT(IN), OPTIONAL :: NBLOCKS
     LOGICAL, INTENT(IN), OPTIONAL :: PERSISTENT
@@ -1648,19 +2143,20 @@ CONTAINS
     END IF
 
     ! Allocate storage array and store metadata
-    SELF%NAME = NAME
     ALLOCATE(SELF%DATA(SHAPE(1),SHAPE(2),SHAPE(3),SHAPE(4),NBLK))
+    SELF%PTR => SELF%DATA
     SELF%ACTIVE = .TRUE.
     SELF%OWNED = .TRUE.
     SELF%NBLOCKS = SIZE(SELF%DATA, 5)
+    SELF%BASE_PTR => NULL()
+    SELF%FIDX = -1
   END FUNCTION FIELD_INT5D_ALLOCATE
 
-  FUNCTION FIELD_LOG2D_ALLOCATE(NAME, SHAPE, NBLOCKS, PERSISTENT) RESULT(SELF)
+  FUNCTION FIELD_LOG2D_ALLOCATE(SHAPE, NBLOCKS, PERSISTENT) RESULT(SELF)
     ! Create FIELD object by explicitly allocating new data
     !
     ! Please note that SHAPE is the conceptual shape without the block dimension
-    TYPE(FIELD_LOG2D) :: SELF
-    CHARACTER(LEN=*), INTENT(IN) :: NAME
+    TYPE(FIELD_LOG2D), TARGET :: SELF
     INTEGER(KIND=JPIM), INTENT(IN) :: SHAPE(1)
     INTEGER(KIND=JPIM), INTENT(IN), OPTIONAL :: NBLOCKS
     LOGICAL, INTENT(IN), OPTIONAL :: PERSISTENT
@@ -1681,19 +2177,20 @@ CONTAINS
     END IF
 
     ! Allocate storage array and store metadata
-    SELF%NAME = NAME
     ALLOCATE(SELF%DATA(SHAPE(1),NBLK))
+    SELF%PTR => SELF%DATA
     SELF%ACTIVE = .TRUE.
     SELF%OWNED = .TRUE.
     SELF%NBLOCKS = SIZE(SELF%DATA, 2)
+    SELF%BASE_PTR => NULL()
+    SELF%FIDX = -1
   END FUNCTION FIELD_LOG2D_ALLOCATE
 
-  FUNCTION FIELD_LOG3D_ALLOCATE(NAME, SHAPE, NBLOCKS, PERSISTENT) RESULT(SELF)
+  FUNCTION FIELD_LOG3D_ALLOCATE(SHAPE, NBLOCKS, PERSISTENT) RESULT(SELF)
     ! Create FIELD object by explicitly allocating new data
     !
     ! Please note that SHAPE is the conceptual shape without the block dimension
-    TYPE(FIELD_LOG3D) :: SELF
-    CHARACTER(LEN=*), INTENT(IN) :: NAME
+    TYPE(FIELD_LOG3D), TARGET :: SELF
     INTEGER(KIND=JPIM), INTENT(IN) :: SHAPE(2)
     INTEGER(KIND=JPIM), INTENT(IN), OPTIONAL :: NBLOCKS
     LOGICAL, INTENT(IN), OPTIONAL :: PERSISTENT
@@ -1714,19 +2211,20 @@ CONTAINS
     END IF
 
     ! Allocate storage array and store metadata
-    SELF%NAME = NAME
     ALLOCATE(SELF%DATA(SHAPE(1),SHAPE(2),NBLK))
+    SELF%PTR => SELF%DATA
     SELF%ACTIVE = .TRUE.
     SELF%OWNED = .TRUE.
     SELF%NBLOCKS = SIZE(SELF%DATA, 3)
+    SELF%BASE_PTR => NULL()
+    SELF%FIDX = -1
   END FUNCTION FIELD_LOG3D_ALLOCATE
 
-  FUNCTION FIELD_LOG4D_ALLOCATE(NAME, SHAPE, NBLOCKS, PERSISTENT) RESULT(SELF)
+  FUNCTION FIELD_LOG4D_ALLOCATE(SHAPE, NBLOCKS, PERSISTENT) RESULT(SELF)
     ! Create FIELD object by explicitly allocating new data
     !
     ! Please note that SHAPE is the conceptual shape without the block dimension
-    TYPE(FIELD_LOG4D) :: SELF
-    CHARACTER(LEN=*), INTENT(IN) :: NAME
+    TYPE(FIELD_LOG4D), TARGET :: SELF
     INTEGER(KIND=JPIM), INTENT(IN) :: SHAPE(3)
     INTEGER(KIND=JPIM), INTENT(IN), OPTIONAL :: NBLOCKS
     LOGICAL, INTENT(IN), OPTIONAL :: PERSISTENT
@@ -1747,19 +2245,20 @@ CONTAINS
     END IF
 
     ! Allocate storage array and store metadata
-    SELF%NAME = NAME
     ALLOCATE(SELF%DATA(SHAPE(1),SHAPE(2),SHAPE(3),NBLK))
+    SELF%PTR => SELF%DATA
     SELF%ACTIVE = .TRUE.
     SELF%OWNED = .TRUE.
     SELF%NBLOCKS = SIZE(SELF%DATA, 4)
+    SELF%BASE_PTR => NULL()
+    SELF%FIDX = -1
   END FUNCTION FIELD_LOG4D_ALLOCATE
 
-  FUNCTION FIELD_LOG5D_ALLOCATE(NAME, SHAPE, NBLOCKS, PERSISTENT) RESULT(SELF)
+  FUNCTION FIELD_LOG5D_ALLOCATE(SHAPE, NBLOCKS, PERSISTENT) RESULT(SELF)
     ! Create FIELD object by explicitly allocating new data
     !
     ! Please note that SHAPE is the conceptual shape without the block dimension
-    TYPE(FIELD_LOG5D) :: SELF
-    CHARACTER(LEN=*), INTENT(IN) :: NAME
+    TYPE(FIELD_LOG5D), TARGET :: SELF
     INTEGER(KIND=JPIM), INTENT(IN) :: SHAPE(4)
     INTEGER(KIND=JPIM), INTENT(IN), OPTIONAL :: NBLOCKS
     LOGICAL, INTENT(IN), OPTIONAL :: PERSISTENT
@@ -1780,11 +2279,13 @@ CONTAINS
     END IF
 
     ! Allocate storage array and store metadata
-    SELF%NAME = NAME
     ALLOCATE(SELF%DATA(SHAPE(1),SHAPE(2),SHAPE(3),SHAPE(4),NBLK))
+    SELF%PTR => SELF%DATA
     SELF%ACTIVE = .TRUE.
     SELF%OWNED = .TRUE.
     SELF%NBLOCKS = SIZE(SELF%DATA, 5)
+    SELF%BASE_PTR => NULL()
+    SELF%FIDX = -1
   END FUNCTION FIELD_LOG5D_ALLOCATE
 
 
@@ -1795,8 +2296,13 @@ CONTAINS
     TYPE(FIELD_2D), POINTER :: NEWOBJ
 
     ALLOCATE(NEWOBJ)
-    NEWOBJ%NAME = SELF%NAME
-    NEWOBJ%DATA => SELF%DATA
+    ! For owned storage data, re-allocate but do not copy data over
+    IF (SELF%OWNED) THEN
+      ALLOCATE(NEWOBJ%DATA, MOLD=SELF%DATA)
+      NEWOBJ%PTR => NEWOBJ%DATA
+    ELSE
+      NEWOBJ%PTR => SELF%PTR
+    END IF
     NEWOBJ%VIEW => NULL()
     NEWOBJ%NBLOCKS = SELF%NBLOCKS
     NEWOBJ%THREAD_BUFFER = SELF%THREAD_BUFFER
@@ -1810,8 +2316,13 @@ CONTAINS
     TYPE(FIELD_3D), POINTER :: NEWOBJ
 
     ALLOCATE(NEWOBJ)
-    NEWOBJ%NAME = SELF%NAME
-    NEWOBJ%DATA => SELF%DATA
+    ! For owned storage data, re-allocate but do not copy data over
+    IF (SELF%OWNED) THEN
+      ALLOCATE(NEWOBJ%DATA, MOLD=SELF%DATA)
+      NEWOBJ%PTR => NEWOBJ%DATA
+    ELSE
+      NEWOBJ%PTR => SELF%PTR
+    END IF
     NEWOBJ%VIEW => NULL()
     NEWOBJ%NBLOCKS = SELF%NBLOCKS
     NEWOBJ%THREAD_BUFFER = SELF%THREAD_BUFFER
@@ -1825,8 +2336,13 @@ CONTAINS
     TYPE(FIELD_4D), POINTER :: NEWOBJ
 
     ALLOCATE(NEWOBJ)
-    NEWOBJ%NAME = SELF%NAME
-    NEWOBJ%DATA => SELF%DATA
+    ! For owned storage data, re-allocate but do not copy data over
+    IF (SELF%OWNED) THEN
+      ALLOCATE(NEWOBJ%DATA, MOLD=SELF%DATA)
+      NEWOBJ%PTR => NEWOBJ%DATA
+    ELSE
+      NEWOBJ%PTR => SELF%PTR
+    END IF
     NEWOBJ%VIEW => NULL()
     NEWOBJ%NBLOCKS = SELF%NBLOCKS
     NEWOBJ%THREAD_BUFFER = SELF%THREAD_BUFFER
@@ -1840,8 +2356,13 @@ CONTAINS
     TYPE(FIELD_5D), POINTER :: NEWOBJ
 
     ALLOCATE(NEWOBJ)
-    NEWOBJ%NAME = SELF%NAME
-    NEWOBJ%DATA => SELF%DATA
+    ! For owned storage data, re-allocate but do not copy data over
+    IF (SELF%OWNED) THEN
+      ALLOCATE(NEWOBJ%DATA, MOLD=SELF%DATA)
+      NEWOBJ%PTR => NEWOBJ%DATA
+    ELSE
+      NEWOBJ%PTR => SELF%PTR
+    END IF
     NEWOBJ%VIEW => NULL()
     NEWOBJ%NBLOCKS = SELF%NBLOCKS
     NEWOBJ%THREAD_BUFFER = SELF%THREAD_BUFFER
@@ -1855,8 +2376,13 @@ CONTAINS
     TYPE(FIELD_INT2D), POINTER :: NEWOBJ
 
     ALLOCATE(NEWOBJ)
-    NEWOBJ%NAME = SELF%NAME
-    NEWOBJ%DATA => SELF%DATA
+    ! For owned storage data, re-allocate but do not copy data over
+    IF (SELF%OWNED) THEN
+      ALLOCATE(NEWOBJ%DATA, MOLD=SELF%DATA)
+      NEWOBJ%PTR => NEWOBJ%DATA
+    ELSE
+      NEWOBJ%PTR => SELF%PTR
+    END IF
     NEWOBJ%VIEW => NULL()
     NEWOBJ%NBLOCKS = SELF%NBLOCKS
     NEWOBJ%THREAD_BUFFER = SELF%THREAD_BUFFER
@@ -1870,8 +2396,13 @@ CONTAINS
     TYPE(FIELD_INT3D), POINTER :: NEWOBJ
 
     ALLOCATE(NEWOBJ)
-    NEWOBJ%NAME = SELF%NAME
-    NEWOBJ%DATA => SELF%DATA
+    ! For owned storage data, re-allocate but do not copy data over
+    IF (SELF%OWNED) THEN
+      ALLOCATE(NEWOBJ%DATA, MOLD=SELF%DATA)
+      NEWOBJ%PTR => NEWOBJ%DATA
+    ELSE
+      NEWOBJ%PTR => SELF%PTR
+    END IF
     NEWOBJ%VIEW => NULL()
     NEWOBJ%NBLOCKS = SELF%NBLOCKS
     NEWOBJ%THREAD_BUFFER = SELF%THREAD_BUFFER
@@ -1885,8 +2416,13 @@ CONTAINS
     TYPE(FIELD_INT4D), POINTER :: NEWOBJ
 
     ALLOCATE(NEWOBJ)
-    NEWOBJ%NAME = SELF%NAME
-    NEWOBJ%DATA => SELF%DATA
+    ! For owned storage data, re-allocate but do not copy data over
+    IF (SELF%OWNED) THEN
+      ALLOCATE(NEWOBJ%DATA, MOLD=SELF%DATA)
+      NEWOBJ%PTR => NEWOBJ%DATA
+    ELSE
+      NEWOBJ%PTR => SELF%PTR
+    END IF
     NEWOBJ%VIEW => NULL()
     NEWOBJ%NBLOCKS = SELF%NBLOCKS
     NEWOBJ%THREAD_BUFFER = SELF%THREAD_BUFFER
@@ -1900,8 +2436,13 @@ CONTAINS
     TYPE(FIELD_INT5D), POINTER :: NEWOBJ
 
     ALLOCATE(NEWOBJ)
-    NEWOBJ%NAME = SELF%NAME
-    NEWOBJ%DATA => SELF%DATA
+    ! For owned storage data, re-allocate but do not copy data over
+    IF (SELF%OWNED) THEN
+      ALLOCATE(NEWOBJ%DATA, MOLD=SELF%DATA)
+      NEWOBJ%PTR => NEWOBJ%DATA
+    ELSE
+      NEWOBJ%PTR => SELF%PTR
+    END IF
     NEWOBJ%VIEW => NULL()
     NEWOBJ%NBLOCKS = SELF%NBLOCKS
     NEWOBJ%THREAD_BUFFER = SELF%THREAD_BUFFER
@@ -1915,8 +2456,13 @@ CONTAINS
     TYPE(FIELD_LOG2D), POINTER :: NEWOBJ
 
     ALLOCATE(NEWOBJ)
-    NEWOBJ%NAME = SELF%NAME
-    NEWOBJ%DATA => SELF%DATA
+    ! For owned storage data, re-allocate but do not copy data over
+    IF (SELF%OWNED) THEN
+      ALLOCATE(NEWOBJ%DATA, MOLD=SELF%DATA)
+      NEWOBJ%PTR => NEWOBJ%DATA
+    ELSE
+      NEWOBJ%PTR => SELF%PTR
+    END IF
     NEWOBJ%VIEW => NULL()
     NEWOBJ%NBLOCKS = SELF%NBLOCKS
     NEWOBJ%THREAD_BUFFER = SELF%THREAD_BUFFER
@@ -1930,8 +2476,13 @@ CONTAINS
     TYPE(FIELD_LOG3D), POINTER :: NEWOBJ
 
     ALLOCATE(NEWOBJ)
-    NEWOBJ%NAME = SELF%NAME
-    NEWOBJ%DATA => SELF%DATA
+    ! For owned storage data, re-allocate but do not copy data over
+    IF (SELF%OWNED) THEN
+      ALLOCATE(NEWOBJ%DATA, MOLD=SELF%DATA)
+      NEWOBJ%PTR => NEWOBJ%DATA
+    ELSE
+      NEWOBJ%PTR => SELF%PTR
+    END IF
     NEWOBJ%VIEW => NULL()
     NEWOBJ%NBLOCKS = SELF%NBLOCKS
     NEWOBJ%THREAD_BUFFER = SELF%THREAD_BUFFER
@@ -1945,8 +2496,13 @@ CONTAINS
     TYPE(FIELD_LOG4D), POINTER :: NEWOBJ
 
     ALLOCATE(NEWOBJ)
-    NEWOBJ%NAME = SELF%NAME
-    NEWOBJ%DATA => SELF%DATA
+    ! For owned storage data, re-allocate but do not copy data over
+    IF (SELF%OWNED) THEN
+      ALLOCATE(NEWOBJ%DATA, MOLD=SELF%DATA)
+      NEWOBJ%PTR => NEWOBJ%DATA
+    ELSE
+      NEWOBJ%PTR => SELF%PTR
+    END IF
     NEWOBJ%VIEW => NULL()
     NEWOBJ%NBLOCKS = SELF%NBLOCKS
     NEWOBJ%THREAD_BUFFER = SELF%THREAD_BUFFER
@@ -1960,8 +2516,13 @@ CONTAINS
     TYPE(FIELD_LOG5D), POINTER :: NEWOBJ
 
     ALLOCATE(NEWOBJ)
-    NEWOBJ%NAME = SELF%NAME
-    NEWOBJ%DATA => SELF%DATA
+    ! For owned storage data, re-allocate but do not copy data over
+    IF (SELF%OWNED) THEN
+      ALLOCATE(NEWOBJ%DATA, MOLD=SELF%DATA)
+      NEWOBJ%PTR => NEWOBJ%DATA
+    ELSE
+      NEWOBJ%PTR => SELF%PTR
+    END IF
     NEWOBJ%VIEW => NULL()
     NEWOBJ%NBLOCKS = SELF%NBLOCKS
     NEWOBJ%THREAD_BUFFER = SELF%THREAD_BUFFER
@@ -1971,7 +2532,7 @@ CONTAINS
 
   SUBROUTINE FIELD_2D_UPDATE_VIEW(SELF, BLOCK_INDEX, BLOCK_SIZE, ZERO)
     ! Sets the view pointer FIELD%MP to the block of the given index
-    CLASS(FIELD_2D) :: SELF
+    CLASS(FIELD_2D), TARGET :: SELF
     INTEGER(KIND=JPIM), INTENT(IN) :: BLOCK_INDEX
     INTEGER(KIND=JPIM), INTENT(IN), OPTIONAL :: BLOCK_SIZE
     LOGICAL, OPTIONAL, INTENT(IN) :: ZERO
@@ -1979,8 +2540,10 @@ CONTAINS
 
     IDX = BLOCK_INDEX
     IF (SELF%THREAD_BUFFER) IDX = OML_MY_THREAD()
-    IF (SELF%ACTIVE) THEN
+    IF (SELF%ACTIVE .AND. SELF%OWNED) THEN
       SELF%VIEW => SELF%DATA(:,IDX)
+    ELSEIF (SELF%ACTIVE .AND. .NOT. SELF%OWNED) THEN
+      SELF%VIEW => SELF%PTR(:,IDX)
     END IF
 
     IF (PRESENT(BLOCK_SIZE) .AND. BLOCK_INDEX == SELF%NBLOCKS) THEN
@@ -1995,7 +2558,7 @@ CONTAINS
 
   SUBROUTINE FIELD_3D_UPDATE_VIEW(SELF, BLOCK_INDEX, BLOCK_SIZE, ZERO)
     ! Sets the view pointer FIELD%MP to the block of the given index
-    CLASS(FIELD_3D) :: SELF
+    CLASS(FIELD_3D), TARGET :: SELF
     INTEGER(KIND=JPIM), INTENT(IN) :: BLOCK_INDEX
     INTEGER(KIND=JPIM), INTENT(IN), OPTIONAL :: BLOCK_SIZE
     LOGICAL, OPTIONAL, INTENT(IN) :: ZERO
@@ -2003,8 +2566,10 @@ CONTAINS
 
     IDX = BLOCK_INDEX
     IF (SELF%THREAD_BUFFER) IDX = OML_MY_THREAD()
-    IF (SELF%ACTIVE) THEN
+    IF (SELF%ACTIVE .AND. SELF%OWNED) THEN
       SELF%VIEW => SELF%DATA(:,:,IDX)
+    ELSEIF (SELF%ACTIVE .AND. .NOT. SELF%OWNED) THEN
+      SELF%VIEW => SELF%PTR(:,:,IDX)
     END IF
 
     IF (PRESENT(BLOCK_SIZE) .AND. BLOCK_INDEX == SELF%NBLOCKS) THEN
@@ -2019,7 +2584,7 @@ CONTAINS
 
   SUBROUTINE FIELD_4D_UPDATE_VIEW(SELF, BLOCK_INDEX, BLOCK_SIZE, ZERO)
     ! Sets the view pointer FIELD%MP to the block of the given index
-    CLASS(FIELD_4D) :: SELF
+    CLASS(FIELD_4D), TARGET :: SELF
     INTEGER(KIND=JPIM), INTENT(IN) :: BLOCK_INDEX
     INTEGER(KIND=JPIM), INTENT(IN), OPTIONAL :: BLOCK_SIZE
     LOGICAL, OPTIONAL, INTENT(IN) :: ZERO
@@ -2027,8 +2592,10 @@ CONTAINS
 
     IDX = BLOCK_INDEX
     IF (SELF%THREAD_BUFFER) IDX = OML_MY_THREAD()
-    IF (SELF%ACTIVE) THEN
+    IF (SELF%ACTIVE .AND. SELF%OWNED) THEN
       SELF%VIEW => SELF%DATA(:,:,:,IDX)
+    ELSEIF (SELF%ACTIVE .AND. .NOT. SELF%OWNED) THEN
+      SELF%VIEW => SELF%PTR(:,:,:,IDX)
     END IF
 
     IF (PRESENT(BLOCK_SIZE) .AND. BLOCK_INDEX == SELF%NBLOCKS) THEN
@@ -2043,7 +2610,7 @@ CONTAINS
 
   SUBROUTINE FIELD_5D_UPDATE_VIEW(SELF, BLOCK_INDEX, BLOCK_SIZE, ZERO)
     ! Sets the view pointer FIELD%MP to the block of the given index
-    CLASS(FIELD_5D) :: SELF
+    CLASS(FIELD_5D), TARGET :: SELF
     INTEGER(KIND=JPIM), INTENT(IN) :: BLOCK_INDEX
     INTEGER(KIND=JPIM), INTENT(IN), OPTIONAL :: BLOCK_SIZE
     LOGICAL, OPTIONAL, INTENT(IN) :: ZERO
@@ -2051,8 +2618,10 @@ CONTAINS
 
     IDX = BLOCK_INDEX
     IF (SELF%THREAD_BUFFER) IDX = OML_MY_THREAD()
-    IF (SELF%ACTIVE) THEN
+    IF (SELF%ACTIVE .AND. SELF%OWNED) THEN
       SELF%VIEW => SELF%DATA(:,:,:,:,IDX)
+    ELSEIF (SELF%ACTIVE .AND. .NOT. SELF%OWNED) THEN
+      SELF%VIEW => SELF%PTR(:,:,:,:,IDX)
     END IF
 
     IF (PRESENT(BLOCK_SIZE) .AND. BLOCK_INDEX == SELF%NBLOCKS) THEN
@@ -2067,7 +2636,7 @@ CONTAINS
 
   SUBROUTINE FIELD_INT2D_UPDATE_VIEW(SELF, BLOCK_INDEX, BLOCK_SIZE, ZERO)
     ! Sets the view pointer FIELD%MP to the block of the given index
-    CLASS(FIELD_INT2D) :: SELF
+    CLASS(FIELD_INT2D), TARGET :: SELF
     INTEGER(KIND=JPIM), INTENT(IN) :: BLOCK_INDEX
     INTEGER(KIND=JPIM), INTENT(IN), OPTIONAL :: BLOCK_SIZE
     LOGICAL, OPTIONAL, INTENT(IN) :: ZERO
@@ -2075,8 +2644,10 @@ CONTAINS
 
     IDX = BLOCK_INDEX
     IF (SELF%THREAD_BUFFER) IDX = OML_MY_THREAD()
-    IF (SELF%ACTIVE) THEN
+    IF (SELF%ACTIVE .AND. SELF%OWNED) THEN
       SELF%VIEW => SELF%DATA(:,IDX)
+    ELSEIF (SELF%ACTIVE .AND. .NOT. SELF%OWNED) THEN
+      SELF%VIEW => SELF%PTR(:,IDX)
     END IF
 
     IF (PRESENT(BLOCK_SIZE) .AND. BLOCK_INDEX == SELF%NBLOCKS) THEN
@@ -2091,7 +2662,7 @@ CONTAINS
 
   SUBROUTINE FIELD_INT3D_UPDATE_VIEW(SELF, BLOCK_INDEX, BLOCK_SIZE, ZERO)
     ! Sets the view pointer FIELD%MP to the block of the given index
-    CLASS(FIELD_INT3D) :: SELF
+    CLASS(FIELD_INT3D), TARGET :: SELF
     INTEGER(KIND=JPIM), INTENT(IN) :: BLOCK_INDEX
     INTEGER(KIND=JPIM), INTENT(IN), OPTIONAL :: BLOCK_SIZE
     LOGICAL, OPTIONAL, INTENT(IN) :: ZERO
@@ -2099,8 +2670,10 @@ CONTAINS
 
     IDX = BLOCK_INDEX
     IF (SELF%THREAD_BUFFER) IDX = OML_MY_THREAD()
-    IF (SELF%ACTIVE) THEN
+    IF (SELF%ACTIVE .AND. SELF%OWNED) THEN
       SELF%VIEW => SELF%DATA(:,:,IDX)
+    ELSEIF (SELF%ACTIVE .AND. .NOT. SELF%OWNED) THEN
+      SELF%VIEW => SELF%PTR(:,:,IDX)
     END IF
 
     IF (PRESENT(BLOCK_SIZE) .AND. BLOCK_INDEX == SELF%NBLOCKS) THEN
@@ -2115,7 +2688,7 @@ CONTAINS
 
   SUBROUTINE FIELD_INT4D_UPDATE_VIEW(SELF, BLOCK_INDEX, BLOCK_SIZE, ZERO)
     ! Sets the view pointer FIELD%MP to the block of the given index
-    CLASS(FIELD_INT4D) :: SELF
+    CLASS(FIELD_INT4D), TARGET :: SELF
     INTEGER(KIND=JPIM), INTENT(IN) :: BLOCK_INDEX
     INTEGER(KIND=JPIM), INTENT(IN), OPTIONAL :: BLOCK_SIZE
     LOGICAL, OPTIONAL, INTENT(IN) :: ZERO
@@ -2123,8 +2696,10 @@ CONTAINS
 
     IDX = BLOCK_INDEX
     IF (SELF%THREAD_BUFFER) IDX = OML_MY_THREAD()
-    IF (SELF%ACTIVE) THEN
+    IF (SELF%ACTIVE .AND. SELF%OWNED) THEN
       SELF%VIEW => SELF%DATA(:,:,:,IDX)
+    ELSEIF (SELF%ACTIVE .AND. .NOT. SELF%OWNED) THEN
+      SELF%VIEW => SELF%PTR(:,:,:,IDX)
     END IF
 
     IF (PRESENT(BLOCK_SIZE) .AND. BLOCK_INDEX == SELF%NBLOCKS) THEN
@@ -2139,7 +2714,7 @@ CONTAINS
 
   SUBROUTINE FIELD_INT5D_UPDATE_VIEW(SELF, BLOCK_INDEX, BLOCK_SIZE, ZERO)
     ! Sets the view pointer FIELD%MP to the block of the given index
-    CLASS(FIELD_INT5D) :: SELF
+    CLASS(FIELD_INT5D), TARGET :: SELF
     INTEGER(KIND=JPIM), INTENT(IN) :: BLOCK_INDEX
     INTEGER(KIND=JPIM), INTENT(IN), OPTIONAL :: BLOCK_SIZE
     LOGICAL, OPTIONAL, INTENT(IN) :: ZERO
@@ -2147,8 +2722,10 @@ CONTAINS
 
     IDX = BLOCK_INDEX
     IF (SELF%THREAD_BUFFER) IDX = OML_MY_THREAD()
-    IF (SELF%ACTIVE) THEN
+    IF (SELF%ACTIVE .AND. SELF%OWNED) THEN
       SELF%VIEW => SELF%DATA(:,:,:,:,IDX)
+    ELSEIF (SELF%ACTIVE .AND. .NOT. SELF%OWNED) THEN
+      SELF%VIEW => SELF%PTR(:,:,:,:,IDX)
     END IF
 
     IF (PRESENT(BLOCK_SIZE) .AND. BLOCK_INDEX == SELF%NBLOCKS) THEN
@@ -2163,7 +2740,7 @@ CONTAINS
 
   SUBROUTINE FIELD_LOG2D_UPDATE_VIEW(SELF, BLOCK_INDEX, BLOCK_SIZE, ZERO)
     ! Sets the view pointer FIELD%MP to the block of the given index
-    CLASS(FIELD_LOG2D) :: SELF
+    CLASS(FIELD_LOG2D), TARGET :: SELF
     INTEGER(KIND=JPIM), INTENT(IN) :: BLOCK_INDEX
     INTEGER(KIND=JPIM), INTENT(IN), OPTIONAL :: BLOCK_SIZE
     LOGICAL, OPTIONAL, INTENT(IN) :: ZERO
@@ -2171,8 +2748,10 @@ CONTAINS
 
     IDX = BLOCK_INDEX
     IF (SELF%THREAD_BUFFER) IDX = OML_MY_THREAD()
-    IF (SELF%ACTIVE) THEN
+    IF (SELF%ACTIVE .AND. SELF%OWNED) THEN
       SELF%VIEW => SELF%DATA(:,IDX)
+    ELSEIF (SELF%ACTIVE .AND. .NOT. SELF%OWNED) THEN
+      SELF%VIEW => SELF%PTR(:,IDX)
     END IF
 
     IF (PRESENT(BLOCK_SIZE) .AND. BLOCK_INDEX == SELF%NBLOCKS) THEN
@@ -2187,7 +2766,7 @@ CONTAINS
 
   SUBROUTINE FIELD_LOG3D_UPDATE_VIEW(SELF, BLOCK_INDEX, BLOCK_SIZE, ZERO)
     ! Sets the view pointer FIELD%MP to the block of the given index
-    CLASS(FIELD_LOG3D) :: SELF
+    CLASS(FIELD_LOG3D), TARGET :: SELF
     INTEGER(KIND=JPIM), INTENT(IN) :: BLOCK_INDEX
     INTEGER(KIND=JPIM), INTENT(IN), OPTIONAL :: BLOCK_SIZE
     LOGICAL, OPTIONAL, INTENT(IN) :: ZERO
@@ -2195,8 +2774,10 @@ CONTAINS
 
     IDX = BLOCK_INDEX
     IF (SELF%THREAD_BUFFER) IDX = OML_MY_THREAD()
-    IF (SELF%ACTIVE) THEN
+    IF (SELF%ACTIVE .AND. SELF%OWNED) THEN
       SELF%VIEW => SELF%DATA(:,:,IDX)
+    ELSEIF (SELF%ACTIVE .AND. .NOT. SELF%OWNED) THEN
+      SELF%VIEW => SELF%PTR(:,:,IDX)
     END IF
 
     IF (PRESENT(BLOCK_SIZE) .AND. BLOCK_INDEX == SELF%NBLOCKS) THEN
@@ -2211,7 +2792,7 @@ CONTAINS
 
   SUBROUTINE FIELD_LOG4D_UPDATE_VIEW(SELF, BLOCK_INDEX, BLOCK_SIZE, ZERO)
     ! Sets the view pointer FIELD%MP to the block of the given index
-    CLASS(FIELD_LOG4D) :: SELF
+    CLASS(FIELD_LOG4D), TARGET :: SELF
     INTEGER(KIND=JPIM), INTENT(IN) :: BLOCK_INDEX
     INTEGER(KIND=JPIM), INTENT(IN), OPTIONAL :: BLOCK_SIZE
     LOGICAL, OPTIONAL, INTENT(IN) :: ZERO
@@ -2219,8 +2800,10 @@ CONTAINS
 
     IDX = BLOCK_INDEX
     IF (SELF%THREAD_BUFFER) IDX = OML_MY_THREAD()
-    IF (SELF%ACTIVE) THEN
+    IF (SELF%ACTIVE .AND. SELF%OWNED) THEN
       SELF%VIEW => SELF%DATA(:,:,:,IDX)
+    ELSEIF (SELF%ACTIVE .AND. .NOT. SELF%OWNED) THEN
+      SELF%VIEW => SELF%PTR(:,:,:,IDX)
     END IF
 
     IF (PRESENT(BLOCK_SIZE) .AND. BLOCK_INDEX == SELF%NBLOCKS) THEN
@@ -2235,7 +2818,7 @@ CONTAINS
 
   SUBROUTINE FIELD_LOG5D_UPDATE_VIEW(SELF, BLOCK_INDEX, BLOCK_SIZE, ZERO)
     ! Sets the view pointer FIELD%MP to the block of the given index
-    CLASS(FIELD_LOG5D) :: SELF
+    CLASS(FIELD_LOG5D), TARGET :: SELF
     INTEGER(KIND=JPIM), INTENT(IN) :: BLOCK_INDEX
     INTEGER(KIND=JPIM), INTENT(IN), OPTIONAL :: BLOCK_SIZE
     LOGICAL, OPTIONAL, INTENT(IN) :: ZERO
@@ -2243,8 +2826,10 @@ CONTAINS
 
     IDX = BLOCK_INDEX
     IF (SELF%THREAD_BUFFER) IDX = OML_MY_THREAD()
-    IF (SELF%ACTIVE) THEN
+    IF (SELF%ACTIVE .AND. SELF%OWNED) THEN
       SELF%VIEW => SELF%DATA(:,:,:,:,IDX)
+    ELSEIF (SELF%ACTIVE .AND. .NOT. SELF%OWNED) THEN
+      SELF%VIEW => SELF%PTR(:,:,:,:,IDX)
     END IF
 
     IF (PRESENT(BLOCK_SIZE) .AND. BLOCK_INDEX == SELF%NBLOCKS) THEN
@@ -2260,7 +2845,7 @@ CONTAINS
 
   SUBROUTINE FIELD_2D_EXTRACT_VIEW(SELF, VIEW_PTR, BLOCK_INDEX, BLOCK_SIZE, ZERO)
     ! Updates internal view and exports it to an external pointer
-    CLASS(FIELD_2D) :: SELF
+    CLASS(FIELD_2D), TARGET :: SELF
     REAL(KIND=JPRB), POINTER, INTENT(INOUT) :: VIEW_PTR(:)
     INTEGER(KIND=JPIM), INTENT(IN) :: BLOCK_INDEX
     INTEGER(KIND=JPIM), INTENT(IN), OPTIONAL :: BLOCK_SIZE
@@ -2269,8 +2854,10 @@ CONTAINS
 
     IDX = BLOCK_INDEX
     IF (SELF%THREAD_BUFFER) IDX = OML_MY_THREAD()
-    IF (SELF%ACTIVE) THEN
+    IF (SELF%ACTIVE .AND. SELF%OWNED) THEN
       VIEW_PTR => SELF%DATA(:,IDX)
+    ELSEIF (SELF%ACTIVE .AND. .NOT. SELF%OWNED) THEN
+      VIEW_PTR => SELF%PTR(:,IDX)
     ELSE
       VIEW_PTR => SELF%VIEW  ! Set to NaN'd field buffer
     END IF
@@ -2287,7 +2874,7 @@ CONTAINS
 
   SUBROUTINE FIELD_3D_EXTRACT_VIEW(SELF, VIEW_PTR, BLOCK_INDEX, BLOCK_SIZE, ZERO)
     ! Updates internal view and exports it to an external pointer
-    CLASS(FIELD_3D) :: SELF
+    CLASS(FIELD_3D), TARGET :: SELF
     REAL(KIND=JPRB), POINTER, INTENT(INOUT) :: VIEW_PTR(:,:)
     INTEGER(KIND=JPIM), INTENT(IN) :: BLOCK_INDEX
     INTEGER(KIND=JPIM), INTENT(IN), OPTIONAL :: BLOCK_SIZE
@@ -2296,8 +2883,10 @@ CONTAINS
 
     IDX = BLOCK_INDEX
     IF (SELF%THREAD_BUFFER) IDX = OML_MY_THREAD()
-    IF (SELF%ACTIVE) THEN
+    IF (SELF%ACTIVE .AND. SELF%OWNED) THEN
       VIEW_PTR => SELF%DATA(:,:,IDX)
+    ELSEIF (SELF%ACTIVE .AND. .NOT. SELF%OWNED) THEN
+      VIEW_PTR => SELF%PTR(:,:,IDX)
     ELSE
       VIEW_PTR => SELF%VIEW  ! Set to NaN'd field buffer
     END IF
@@ -2314,7 +2903,7 @@ CONTAINS
 
   SUBROUTINE FIELD_4D_EXTRACT_VIEW(SELF, VIEW_PTR, BLOCK_INDEX, BLOCK_SIZE, ZERO)
     ! Updates internal view and exports it to an external pointer
-    CLASS(FIELD_4D) :: SELF
+    CLASS(FIELD_4D), TARGET :: SELF
     REAL(KIND=JPRB), POINTER, INTENT(INOUT) :: VIEW_PTR(:,:,:)
     INTEGER(KIND=JPIM), INTENT(IN) :: BLOCK_INDEX
     INTEGER(KIND=JPIM), INTENT(IN), OPTIONAL :: BLOCK_SIZE
@@ -2323,8 +2912,10 @@ CONTAINS
 
     IDX = BLOCK_INDEX
     IF (SELF%THREAD_BUFFER) IDX = OML_MY_THREAD()
-    IF (SELF%ACTIVE) THEN
+    IF (SELF%ACTIVE .AND. SELF%OWNED) THEN
       VIEW_PTR => SELF%DATA(:,:,:,IDX)
+    ELSEIF (SELF%ACTIVE .AND. .NOT. SELF%OWNED) THEN
+      VIEW_PTR => SELF%PTR(:,:,:,IDX)
     ELSE
       VIEW_PTR => SELF%VIEW  ! Set to NaN'd field buffer
     END IF
@@ -2341,7 +2932,7 @@ CONTAINS
 
   SUBROUTINE FIELD_5D_EXTRACT_VIEW(SELF, VIEW_PTR, BLOCK_INDEX, BLOCK_SIZE, ZERO)
     ! Updates internal view and exports it to an external pointer
-    CLASS(FIELD_5D) :: SELF
+    CLASS(FIELD_5D), TARGET :: SELF
     REAL(KIND=JPRB), POINTER, INTENT(INOUT) :: VIEW_PTR(:,:,:,:)
     INTEGER(KIND=JPIM), INTENT(IN) :: BLOCK_INDEX
     INTEGER(KIND=JPIM), INTENT(IN), OPTIONAL :: BLOCK_SIZE
@@ -2350,8 +2941,10 @@ CONTAINS
 
     IDX = BLOCK_INDEX
     IF (SELF%THREAD_BUFFER) IDX = OML_MY_THREAD()
-    IF (SELF%ACTIVE) THEN
+    IF (SELF%ACTIVE .AND. SELF%OWNED) THEN
       VIEW_PTR => SELF%DATA(:,:,:,:,IDX)
+    ELSEIF (SELF%ACTIVE .AND. .NOT. SELF%OWNED) THEN
+      VIEW_PTR => SELF%PTR(:,:,:,:,IDX)
     ELSE
       VIEW_PTR => SELF%VIEW  ! Set to NaN'd field buffer
     END IF
@@ -2368,7 +2961,7 @@ CONTAINS
 
   SUBROUTINE FIELD_INT2D_EXTRACT_VIEW(SELF, VIEW_PTR, BLOCK_INDEX, BLOCK_SIZE, ZERO)
     ! Updates internal view and exports it to an external pointer
-    CLASS(FIELD_INT2D) :: SELF
+    CLASS(FIELD_INT2D), TARGET :: SELF
     INTEGER(KIND=JPIM), POINTER, INTENT(INOUT) :: VIEW_PTR(:)
     INTEGER(KIND=JPIM), INTENT(IN) :: BLOCK_INDEX
     INTEGER(KIND=JPIM), INTENT(IN), OPTIONAL :: BLOCK_SIZE
@@ -2377,8 +2970,10 @@ CONTAINS
 
     IDX = BLOCK_INDEX
     IF (SELF%THREAD_BUFFER) IDX = OML_MY_THREAD()
-    IF (SELF%ACTIVE) THEN
+    IF (SELF%ACTIVE .AND. SELF%OWNED) THEN
       VIEW_PTR => SELF%DATA(:,IDX)
+    ELSEIF (SELF%ACTIVE .AND. .NOT. SELF%OWNED) THEN
+      VIEW_PTR => SELF%PTR(:,IDX)
     ELSE
       VIEW_PTR => SELF%VIEW  ! Set to NaN'd field buffer
     END IF
@@ -2395,7 +2990,7 @@ CONTAINS
 
   SUBROUTINE FIELD_INT3D_EXTRACT_VIEW(SELF, VIEW_PTR, BLOCK_INDEX, BLOCK_SIZE, ZERO)
     ! Updates internal view and exports it to an external pointer
-    CLASS(FIELD_INT3D) :: SELF
+    CLASS(FIELD_INT3D), TARGET :: SELF
     INTEGER(KIND=JPIM), POINTER, INTENT(INOUT) :: VIEW_PTR(:,:)
     INTEGER(KIND=JPIM), INTENT(IN) :: BLOCK_INDEX
     INTEGER(KIND=JPIM), INTENT(IN), OPTIONAL :: BLOCK_SIZE
@@ -2404,8 +2999,10 @@ CONTAINS
 
     IDX = BLOCK_INDEX
     IF (SELF%THREAD_BUFFER) IDX = OML_MY_THREAD()
-    IF (SELF%ACTIVE) THEN
+    IF (SELF%ACTIVE .AND. SELF%OWNED) THEN
       VIEW_PTR => SELF%DATA(:,:,IDX)
+    ELSEIF (SELF%ACTIVE .AND. .NOT. SELF%OWNED) THEN
+      VIEW_PTR => SELF%PTR(:,:,IDX)
     ELSE
       VIEW_PTR => SELF%VIEW  ! Set to NaN'd field buffer
     END IF
@@ -2422,7 +3019,7 @@ CONTAINS
 
   SUBROUTINE FIELD_INT4D_EXTRACT_VIEW(SELF, VIEW_PTR, BLOCK_INDEX, BLOCK_SIZE, ZERO)
     ! Updates internal view and exports it to an external pointer
-    CLASS(FIELD_INT4D) :: SELF
+    CLASS(FIELD_INT4D), TARGET :: SELF
     INTEGER(KIND=JPIM), POINTER, INTENT(INOUT) :: VIEW_PTR(:,:,:)
     INTEGER(KIND=JPIM), INTENT(IN) :: BLOCK_INDEX
     INTEGER(KIND=JPIM), INTENT(IN), OPTIONAL :: BLOCK_SIZE
@@ -2431,8 +3028,10 @@ CONTAINS
 
     IDX = BLOCK_INDEX
     IF (SELF%THREAD_BUFFER) IDX = OML_MY_THREAD()
-    IF (SELF%ACTIVE) THEN
+    IF (SELF%ACTIVE .AND. SELF%OWNED) THEN
       VIEW_PTR => SELF%DATA(:,:,:,IDX)
+    ELSEIF (SELF%ACTIVE .AND. .NOT. SELF%OWNED) THEN
+      VIEW_PTR => SELF%PTR(:,:,:,IDX)
     ELSE
       VIEW_PTR => SELF%VIEW  ! Set to NaN'd field buffer
     END IF
@@ -2449,7 +3048,7 @@ CONTAINS
 
   SUBROUTINE FIELD_INT5D_EXTRACT_VIEW(SELF, VIEW_PTR, BLOCK_INDEX, BLOCK_SIZE, ZERO)
     ! Updates internal view and exports it to an external pointer
-    CLASS(FIELD_INT5D) :: SELF
+    CLASS(FIELD_INT5D), TARGET :: SELF
     INTEGER(KIND=JPIM), POINTER, INTENT(INOUT) :: VIEW_PTR(:,:,:,:)
     INTEGER(KIND=JPIM), INTENT(IN) :: BLOCK_INDEX
     INTEGER(KIND=JPIM), INTENT(IN), OPTIONAL :: BLOCK_SIZE
@@ -2458,8 +3057,10 @@ CONTAINS
 
     IDX = BLOCK_INDEX
     IF (SELF%THREAD_BUFFER) IDX = OML_MY_THREAD()
-    IF (SELF%ACTIVE) THEN
+    IF (SELF%ACTIVE .AND. SELF%OWNED) THEN
       VIEW_PTR => SELF%DATA(:,:,:,:,IDX)
+    ELSEIF (SELF%ACTIVE .AND. .NOT. SELF%OWNED) THEN
+      VIEW_PTR => SELF%PTR(:,:,:,:,IDX)
     ELSE
       VIEW_PTR => SELF%VIEW  ! Set to NaN'd field buffer
     END IF
@@ -2476,7 +3077,7 @@ CONTAINS
 
   SUBROUTINE FIELD_LOG2D_EXTRACT_VIEW(SELF, VIEW_PTR, BLOCK_INDEX, BLOCK_SIZE, ZERO)
     ! Updates internal view and exports it to an external pointer
-    CLASS(FIELD_LOG2D) :: SELF
+    CLASS(FIELD_LOG2D), TARGET :: SELF
     LOGICAL, POINTER, INTENT(INOUT) :: VIEW_PTR(:)
     INTEGER(KIND=JPIM), INTENT(IN) :: BLOCK_INDEX
     INTEGER(KIND=JPIM), INTENT(IN), OPTIONAL :: BLOCK_SIZE
@@ -2485,8 +3086,10 @@ CONTAINS
 
     IDX = BLOCK_INDEX
     IF (SELF%THREAD_BUFFER) IDX = OML_MY_THREAD()
-    IF (SELF%ACTIVE) THEN
+    IF (SELF%ACTIVE .AND. SELF%OWNED) THEN
       VIEW_PTR => SELF%DATA(:,IDX)
+    ELSEIF (SELF%ACTIVE .AND. .NOT. SELF%OWNED) THEN
+      VIEW_PTR => SELF%PTR(:,IDX)
     ELSE
       VIEW_PTR => SELF%VIEW  ! Set to NaN'd field buffer
     END IF
@@ -2503,7 +3106,7 @@ CONTAINS
 
   SUBROUTINE FIELD_LOG3D_EXTRACT_VIEW(SELF, VIEW_PTR, BLOCK_INDEX, BLOCK_SIZE, ZERO)
     ! Updates internal view and exports it to an external pointer
-    CLASS(FIELD_LOG3D) :: SELF
+    CLASS(FIELD_LOG3D), TARGET :: SELF
     LOGICAL, POINTER, INTENT(INOUT) :: VIEW_PTR(:,:)
     INTEGER(KIND=JPIM), INTENT(IN) :: BLOCK_INDEX
     INTEGER(KIND=JPIM), INTENT(IN), OPTIONAL :: BLOCK_SIZE
@@ -2512,8 +3115,10 @@ CONTAINS
 
     IDX = BLOCK_INDEX
     IF (SELF%THREAD_BUFFER) IDX = OML_MY_THREAD()
-    IF (SELF%ACTIVE) THEN
+    IF (SELF%ACTIVE .AND. SELF%OWNED) THEN
       VIEW_PTR => SELF%DATA(:,:,IDX)
+    ELSEIF (SELF%ACTIVE .AND. .NOT. SELF%OWNED) THEN
+      VIEW_PTR => SELF%PTR(:,:,IDX)
     ELSE
       VIEW_PTR => SELF%VIEW  ! Set to NaN'd field buffer
     END IF
@@ -2530,7 +3135,7 @@ CONTAINS
 
   SUBROUTINE FIELD_LOG4D_EXTRACT_VIEW(SELF, VIEW_PTR, BLOCK_INDEX, BLOCK_SIZE, ZERO)
     ! Updates internal view and exports it to an external pointer
-    CLASS(FIELD_LOG4D) :: SELF
+    CLASS(FIELD_LOG4D), TARGET :: SELF
     LOGICAL, POINTER, INTENT(INOUT) :: VIEW_PTR(:,:,:)
     INTEGER(KIND=JPIM), INTENT(IN) :: BLOCK_INDEX
     INTEGER(KIND=JPIM), INTENT(IN), OPTIONAL :: BLOCK_SIZE
@@ -2539,8 +3144,10 @@ CONTAINS
 
     IDX = BLOCK_INDEX
     IF (SELF%THREAD_BUFFER) IDX = OML_MY_THREAD()
-    IF (SELF%ACTIVE) THEN
+    IF (SELF%ACTIVE .AND. SELF%OWNED) THEN
       VIEW_PTR => SELF%DATA(:,:,:,IDX)
+    ELSEIF (SELF%ACTIVE .AND. .NOT. SELF%OWNED) THEN
+      VIEW_PTR => SELF%PTR(:,:,:,IDX)
     ELSE
       VIEW_PTR => SELF%VIEW  ! Set to NaN'd field buffer
     END IF
@@ -2557,7 +3164,7 @@ CONTAINS
 
   SUBROUTINE FIELD_LOG5D_EXTRACT_VIEW(SELF, VIEW_PTR, BLOCK_INDEX, BLOCK_SIZE, ZERO)
     ! Updates internal view and exports it to an external pointer
-    CLASS(FIELD_LOG5D) :: SELF
+    CLASS(FIELD_LOG5D), TARGET :: SELF
     LOGICAL, POINTER, INTENT(INOUT) :: VIEW_PTR(:,:,:,:)
     INTEGER(KIND=JPIM), INTENT(IN) :: BLOCK_INDEX
     INTEGER(KIND=JPIM), INTENT(IN), OPTIONAL :: BLOCK_SIZE
@@ -2566,8 +3173,10 @@ CONTAINS
 
     IDX = BLOCK_INDEX
     IF (SELF%THREAD_BUFFER) IDX = OML_MY_THREAD()
-    IF (SELF%ACTIVE) THEN
+    IF (SELF%ACTIVE .AND. SELF%OWNED) THEN
       VIEW_PTR => SELF%DATA(:,:,:,:,IDX)
+    ELSEIF (SELF%ACTIVE .AND. .NOT. SELF%OWNED) THEN
+      VIEW_PTR => SELF%PTR(:,:,:,:,IDX)
     ELSE
       VIEW_PTR => SELF%VIEW  ! Set to NaN'd field buffer
     END IF
@@ -2585,7 +3194,7 @@ CONTAINS
 
   FUNCTION FIELD_2D_GET_VIEW(SELF, BLOCK_INDEX, BLOCK_SIZE, ZERO) RESULT(VIEW_PTR)
     ! Updates internal view and exports it to an external pointer
-    CLASS(FIELD_2D) :: SELF
+    CLASS(FIELD_2D), TARGET :: SELF
     REAL(KIND=JPRB), POINTER :: VIEW_PTR(:)
     INTEGER(KIND=JPIM), INTENT(IN) :: BLOCK_INDEX
     INTEGER(KIND=JPIM), INTENT(IN), OPTIONAL :: BLOCK_SIZE
@@ -2594,15 +3203,19 @@ CONTAINS
 
     IDX = BLOCK_INDEX
     IF (SELF%THREAD_BUFFER) IDX = OML_MY_THREAD()
-    IF (SELF%ACTIVE) THEN
+    IF (SELF%ACTIVE .AND. SELF%OWNED) THEN
       VIEW_PTR => SELF%DATA(:,IDX)
+    ELSEIF (SELF%ACTIVE .AND. .NOT. SELF%OWNED) THEN
+      VIEW_PTR => SELF%PTR(:,IDX)
     ELSE
       VIEW_PTR => SELF%VIEW  ! Set to NaN'd field buffer
     END IF
 
-    IF (PRESENT(BLOCK_SIZE) .AND. BLOCK_INDEX == SELF%NBLOCKS) THEN
-      ! Fill the the buffer by replicating the last entry
-      CALL FILL_BUFFER(VIEW_PTR, INDEX=BLOCK_SIZE)
+    IF (PRESENT(BLOCK_SIZE)) THEN
+      IF (BLOCK_INDEX == SELF%NBLOCKS) THEN
+        ! Fill the the buffer by replicating the last entry
+        CALL FILL_BUFFER(VIEW_PTR, INDEX=BLOCK_SIZE)
+      END IF
     END IF
 
     IF (PRESENT(ZERO)) THEN
@@ -2612,7 +3225,7 @@ CONTAINS
 
   FUNCTION FIELD_3D_GET_VIEW(SELF, BLOCK_INDEX, BLOCK_SIZE, ZERO) RESULT(VIEW_PTR)
     ! Updates internal view and exports it to an external pointer
-    CLASS(FIELD_3D) :: SELF
+    CLASS(FIELD_3D), TARGET :: SELF
     REAL(KIND=JPRB), POINTER :: VIEW_PTR(:,:)
     INTEGER(KIND=JPIM), INTENT(IN) :: BLOCK_INDEX
     INTEGER(KIND=JPIM), INTENT(IN), OPTIONAL :: BLOCK_SIZE
@@ -2621,15 +3234,19 @@ CONTAINS
 
     IDX = BLOCK_INDEX
     IF (SELF%THREAD_BUFFER) IDX = OML_MY_THREAD()
-    IF (SELF%ACTIVE) THEN
+    IF (SELF%ACTIVE .AND. SELF%OWNED) THEN
       VIEW_PTR => SELF%DATA(:,:,IDX)
+    ELSEIF (SELF%ACTIVE .AND. .NOT. SELF%OWNED) THEN
+      VIEW_PTR => SELF%PTR(:,:,IDX)
     ELSE
       VIEW_PTR => SELF%VIEW  ! Set to NaN'd field buffer
     END IF
 
-    IF (PRESENT(BLOCK_SIZE) .AND. BLOCK_INDEX == SELF%NBLOCKS) THEN
-      ! Fill the the buffer by replicating the last entry
-      CALL FILL_BUFFER(VIEW_PTR, INDEX=BLOCK_SIZE)
+    IF (PRESENT(BLOCK_SIZE)) THEN
+      IF (BLOCK_INDEX == SELF%NBLOCKS) THEN
+        ! Fill the the buffer by replicating the last entry
+        CALL FILL_BUFFER(VIEW_PTR, INDEX=BLOCK_SIZE)
+      END IF
     END IF
 
     IF (PRESENT(ZERO)) THEN
@@ -2639,7 +3256,7 @@ CONTAINS
 
   FUNCTION FIELD_4D_GET_VIEW(SELF, BLOCK_INDEX, BLOCK_SIZE, ZERO) RESULT(VIEW_PTR)
     ! Updates internal view and exports it to an external pointer
-    CLASS(FIELD_4D) :: SELF
+    CLASS(FIELD_4D), TARGET :: SELF
     REAL(KIND=JPRB), POINTER :: VIEW_PTR(:,:,:)
     INTEGER(KIND=JPIM), INTENT(IN) :: BLOCK_INDEX
     INTEGER(KIND=JPIM), INTENT(IN), OPTIONAL :: BLOCK_SIZE
@@ -2648,15 +3265,19 @@ CONTAINS
 
     IDX = BLOCK_INDEX
     IF (SELF%THREAD_BUFFER) IDX = OML_MY_THREAD()
-    IF (SELF%ACTIVE) THEN
+    IF (SELF%ACTIVE .AND. SELF%OWNED) THEN
       VIEW_PTR => SELF%DATA(:,:,:,IDX)
+    ELSEIF (SELF%ACTIVE .AND. .NOT. SELF%OWNED) THEN
+      VIEW_PTR => SELF%PTR(:,:,:,IDX)
     ELSE
       VIEW_PTR => SELF%VIEW  ! Set to NaN'd field buffer
     END IF
 
-    IF (PRESENT(BLOCK_SIZE) .AND. BLOCK_INDEX == SELF%NBLOCKS) THEN
-      ! Fill the the buffer by replicating the last entry
-      CALL FILL_BUFFER(VIEW_PTR, INDEX=BLOCK_SIZE)
+    IF (PRESENT(BLOCK_SIZE)) THEN
+      IF (BLOCK_INDEX == SELF%NBLOCKS) THEN
+        ! Fill the the buffer by replicating the last entry
+        CALL FILL_BUFFER(VIEW_PTR, INDEX=BLOCK_SIZE)
+      END IF
     END IF
 
     IF (PRESENT(ZERO)) THEN
@@ -2666,7 +3287,7 @@ CONTAINS
 
   FUNCTION FIELD_5D_GET_VIEW(SELF, BLOCK_INDEX, BLOCK_SIZE, ZERO) RESULT(VIEW_PTR)
     ! Updates internal view and exports it to an external pointer
-    CLASS(FIELD_5D) :: SELF
+    CLASS(FIELD_5D), TARGET :: SELF
     REAL(KIND=JPRB), POINTER :: VIEW_PTR(:,:,:,:)
     INTEGER(KIND=JPIM), INTENT(IN) :: BLOCK_INDEX
     INTEGER(KIND=JPIM), INTENT(IN), OPTIONAL :: BLOCK_SIZE
@@ -2675,15 +3296,19 @@ CONTAINS
 
     IDX = BLOCK_INDEX
     IF (SELF%THREAD_BUFFER) IDX = OML_MY_THREAD()
-    IF (SELF%ACTIVE) THEN
+    IF (SELF%ACTIVE .AND. SELF%OWNED) THEN
       VIEW_PTR => SELF%DATA(:,:,:,:,IDX)
+    ELSEIF (SELF%ACTIVE .AND. .NOT. SELF%OWNED) THEN
+      VIEW_PTR => SELF%PTR(:,:,:,:,IDX)
     ELSE
       VIEW_PTR => SELF%VIEW  ! Set to NaN'd field buffer
     END IF
 
-    IF (PRESENT(BLOCK_SIZE) .AND. BLOCK_INDEX == SELF%NBLOCKS) THEN
-      ! Fill the the buffer by replicating the last entry
-      CALL FILL_BUFFER(VIEW_PTR, INDEX=BLOCK_SIZE)
+    IF (PRESENT(BLOCK_SIZE)) THEN
+      IF (BLOCK_INDEX == SELF%NBLOCKS) THEN
+        ! Fill the the buffer by replicating the last entry
+        CALL FILL_BUFFER(VIEW_PTR, INDEX=BLOCK_SIZE)
+      END IF
     END IF
 
     IF (PRESENT(ZERO)) THEN
@@ -2693,7 +3318,7 @@ CONTAINS
 
   FUNCTION FIELD_INT2D_GET_VIEW(SELF, BLOCK_INDEX, BLOCK_SIZE, ZERO) RESULT(VIEW_PTR)
     ! Updates internal view and exports it to an external pointer
-    CLASS(FIELD_INT2D) :: SELF
+    CLASS(FIELD_INT2D), TARGET :: SELF
     INTEGER(KIND=JPIM), POINTER :: VIEW_PTR(:)
     INTEGER(KIND=JPIM), INTENT(IN) :: BLOCK_INDEX
     INTEGER(KIND=JPIM), INTENT(IN), OPTIONAL :: BLOCK_SIZE
@@ -2702,15 +3327,19 @@ CONTAINS
 
     IDX = BLOCK_INDEX
     IF (SELF%THREAD_BUFFER) IDX = OML_MY_THREAD()
-    IF (SELF%ACTIVE) THEN
+    IF (SELF%ACTIVE .AND. SELF%OWNED) THEN
       VIEW_PTR => SELF%DATA(:,IDX)
+    ELSEIF (SELF%ACTIVE .AND. .NOT. SELF%OWNED) THEN
+      VIEW_PTR => SELF%PTR(:,IDX)
     ELSE
       VIEW_PTR => SELF%VIEW  ! Set to NaN'd field buffer
     END IF
 
-    IF (PRESENT(BLOCK_SIZE) .AND. BLOCK_INDEX == SELF%NBLOCKS) THEN
-      ! Fill the the buffer by replicating the last entry
-      CALL FILL_BUFFER(VIEW_PTR, INDEX=BLOCK_SIZE)
+    IF (PRESENT(BLOCK_SIZE)) THEN
+      IF (BLOCK_INDEX == SELF%NBLOCKS) THEN
+        ! Fill the the buffer by replicating the last entry
+        CALL FILL_BUFFER(VIEW_PTR, INDEX=BLOCK_SIZE)
+      END IF
     END IF
 
     IF (PRESENT(ZERO)) THEN
@@ -2720,7 +3349,7 @@ CONTAINS
 
   FUNCTION FIELD_INT3D_GET_VIEW(SELF, BLOCK_INDEX, BLOCK_SIZE, ZERO) RESULT(VIEW_PTR)
     ! Updates internal view and exports it to an external pointer
-    CLASS(FIELD_INT3D) :: SELF
+    CLASS(FIELD_INT3D), TARGET :: SELF
     INTEGER(KIND=JPIM), POINTER :: VIEW_PTR(:,:)
     INTEGER(KIND=JPIM), INTENT(IN) :: BLOCK_INDEX
     INTEGER(KIND=JPIM), INTENT(IN), OPTIONAL :: BLOCK_SIZE
@@ -2729,15 +3358,19 @@ CONTAINS
 
     IDX = BLOCK_INDEX
     IF (SELF%THREAD_BUFFER) IDX = OML_MY_THREAD()
-    IF (SELF%ACTIVE) THEN
+    IF (SELF%ACTIVE .AND. SELF%OWNED) THEN
       VIEW_PTR => SELF%DATA(:,:,IDX)
+    ELSEIF (SELF%ACTIVE .AND. .NOT. SELF%OWNED) THEN
+      VIEW_PTR => SELF%PTR(:,:,IDX)
     ELSE
       VIEW_PTR => SELF%VIEW  ! Set to NaN'd field buffer
     END IF
 
-    IF (PRESENT(BLOCK_SIZE) .AND. BLOCK_INDEX == SELF%NBLOCKS) THEN
-      ! Fill the the buffer by replicating the last entry
-      CALL FILL_BUFFER(VIEW_PTR, INDEX=BLOCK_SIZE)
+    IF (PRESENT(BLOCK_SIZE)) THEN
+      IF (BLOCK_INDEX == SELF%NBLOCKS) THEN
+        ! Fill the the buffer by replicating the last entry
+        CALL FILL_BUFFER(VIEW_PTR, INDEX=BLOCK_SIZE)
+      END IF
     END IF
 
     IF (PRESENT(ZERO)) THEN
@@ -2747,7 +3380,7 @@ CONTAINS
 
   FUNCTION FIELD_INT4D_GET_VIEW(SELF, BLOCK_INDEX, BLOCK_SIZE, ZERO) RESULT(VIEW_PTR)
     ! Updates internal view and exports it to an external pointer
-    CLASS(FIELD_INT4D) :: SELF
+    CLASS(FIELD_INT4D), TARGET :: SELF
     INTEGER(KIND=JPIM), POINTER :: VIEW_PTR(:,:,:)
     INTEGER(KIND=JPIM), INTENT(IN) :: BLOCK_INDEX
     INTEGER(KIND=JPIM), INTENT(IN), OPTIONAL :: BLOCK_SIZE
@@ -2756,15 +3389,19 @@ CONTAINS
 
     IDX = BLOCK_INDEX
     IF (SELF%THREAD_BUFFER) IDX = OML_MY_THREAD()
-    IF (SELF%ACTIVE) THEN
+    IF (SELF%ACTIVE .AND. SELF%OWNED) THEN
       VIEW_PTR => SELF%DATA(:,:,:,IDX)
+    ELSEIF (SELF%ACTIVE .AND. .NOT. SELF%OWNED) THEN
+      VIEW_PTR => SELF%PTR(:,:,:,IDX)
     ELSE
       VIEW_PTR => SELF%VIEW  ! Set to NaN'd field buffer
     END IF
 
-    IF (PRESENT(BLOCK_SIZE) .AND. BLOCK_INDEX == SELF%NBLOCKS) THEN
-      ! Fill the the buffer by replicating the last entry
-      CALL FILL_BUFFER(VIEW_PTR, INDEX=BLOCK_SIZE)
+    IF (PRESENT(BLOCK_SIZE)) THEN
+      IF (BLOCK_INDEX == SELF%NBLOCKS) THEN
+        ! Fill the the buffer by replicating the last entry
+        CALL FILL_BUFFER(VIEW_PTR, INDEX=BLOCK_SIZE)
+      END IF
     END IF
 
     IF (PRESENT(ZERO)) THEN
@@ -2774,7 +3411,7 @@ CONTAINS
 
   FUNCTION FIELD_INT5D_GET_VIEW(SELF, BLOCK_INDEX, BLOCK_SIZE, ZERO) RESULT(VIEW_PTR)
     ! Updates internal view and exports it to an external pointer
-    CLASS(FIELD_INT5D) :: SELF
+    CLASS(FIELD_INT5D), TARGET :: SELF
     INTEGER(KIND=JPIM), POINTER :: VIEW_PTR(:,:,:,:)
     INTEGER(KIND=JPIM), INTENT(IN) :: BLOCK_INDEX
     INTEGER(KIND=JPIM), INTENT(IN), OPTIONAL :: BLOCK_SIZE
@@ -2783,15 +3420,19 @@ CONTAINS
 
     IDX = BLOCK_INDEX
     IF (SELF%THREAD_BUFFER) IDX = OML_MY_THREAD()
-    IF (SELF%ACTIVE) THEN
+    IF (SELF%ACTIVE .AND. SELF%OWNED) THEN
       VIEW_PTR => SELF%DATA(:,:,:,:,IDX)
+    ELSEIF (SELF%ACTIVE .AND. .NOT. SELF%OWNED) THEN
+      VIEW_PTR => SELF%PTR(:,:,:,:,IDX)
     ELSE
       VIEW_PTR => SELF%VIEW  ! Set to NaN'd field buffer
     END IF
 
-    IF (PRESENT(BLOCK_SIZE) .AND. BLOCK_INDEX == SELF%NBLOCKS) THEN
-      ! Fill the the buffer by replicating the last entry
-      CALL FILL_BUFFER(VIEW_PTR, INDEX=BLOCK_SIZE)
+    IF (PRESENT(BLOCK_SIZE)) THEN
+      IF (BLOCK_INDEX == SELF%NBLOCKS) THEN
+        ! Fill the the buffer by replicating the last entry
+        CALL FILL_BUFFER(VIEW_PTR, INDEX=BLOCK_SIZE)
+      END IF
     END IF
 
     IF (PRESENT(ZERO)) THEN
@@ -2801,7 +3442,7 @@ CONTAINS
 
   FUNCTION FIELD_LOG2D_GET_VIEW(SELF, BLOCK_INDEX, BLOCK_SIZE, ZERO) RESULT(VIEW_PTR)
     ! Updates internal view and exports it to an external pointer
-    CLASS(FIELD_LOG2D) :: SELF
+    CLASS(FIELD_LOG2D), TARGET :: SELF
     LOGICAL, POINTER :: VIEW_PTR(:)
     INTEGER(KIND=JPIM), INTENT(IN) :: BLOCK_INDEX
     INTEGER(KIND=JPIM), INTENT(IN), OPTIONAL :: BLOCK_SIZE
@@ -2810,15 +3451,19 @@ CONTAINS
 
     IDX = BLOCK_INDEX
     IF (SELF%THREAD_BUFFER) IDX = OML_MY_THREAD()
-    IF (SELF%ACTIVE) THEN
+    IF (SELF%ACTIVE .AND. SELF%OWNED) THEN
       VIEW_PTR => SELF%DATA(:,IDX)
+    ELSEIF (SELF%ACTIVE .AND. .NOT. SELF%OWNED) THEN
+      VIEW_PTR => SELF%PTR(:,IDX)
     ELSE
       VIEW_PTR => SELF%VIEW  ! Set to NaN'd field buffer
     END IF
 
-    IF (PRESENT(BLOCK_SIZE) .AND. BLOCK_INDEX == SELF%NBLOCKS) THEN
-      ! Fill the the buffer by replicating the last entry
-      CALL FILL_BUFFER(VIEW_PTR, INDEX=BLOCK_SIZE)
+    IF (PRESENT(BLOCK_SIZE)) THEN
+      IF (BLOCK_INDEX == SELF%NBLOCKS) THEN
+        ! Fill the the buffer by replicating the last entry
+        CALL FILL_BUFFER(VIEW_PTR, INDEX=BLOCK_SIZE)
+      END IF
     END IF
 
     IF (PRESENT(ZERO)) THEN
@@ -2828,7 +3473,7 @@ CONTAINS
 
   FUNCTION FIELD_LOG3D_GET_VIEW(SELF, BLOCK_INDEX, BLOCK_SIZE, ZERO) RESULT(VIEW_PTR)
     ! Updates internal view and exports it to an external pointer
-    CLASS(FIELD_LOG3D) :: SELF
+    CLASS(FIELD_LOG3D), TARGET :: SELF
     LOGICAL, POINTER :: VIEW_PTR(:,:)
     INTEGER(KIND=JPIM), INTENT(IN) :: BLOCK_INDEX
     INTEGER(KIND=JPIM), INTENT(IN), OPTIONAL :: BLOCK_SIZE
@@ -2837,15 +3482,19 @@ CONTAINS
 
     IDX = BLOCK_INDEX
     IF (SELF%THREAD_BUFFER) IDX = OML_MY_THREAD()
-    IF (SELF%ACTIVE) THEN
+    IF (SELF%ACTIVE .AND. SELF%OWNED) THEN
       VIEW_PTR => SELF%DATA(:,:,IDX)
+    ELSEIF (SELF%ACTIVE .AND. .NOT. SELF%OWNED) THEN
+      VIEW_PTR => SELF%PTR(:,:,IDX)
     ELSE
       VIEW_PTR => SELF%VIEW  ! Set to NaN'd field buffer
     END IF
 
-    IF (PRESENT(BLOCK_SIZE) .AND. BLOCK_INDEX == SELF%NBLOCKS) THEN
-      ! Fill the the buffer by replicating the last entry
-      CALL FILL_BUFFER(VIEW_PTR, INDEX=BLOCK_SIZE)
+    IF (PRESENT(BLOCK_SIZE)) THEN
+      IF (BLOCK_INDEX == SELF%NBLOCKS) THEN
+        ! Fill the the buffer by replicating the last entry
+        CALL FILL_BUFFER(VIEW_PTR, INDEX=BLOCK_SIZE)
+      END IF
     END IF
 
     IF (PRESENT(ZERO)) THEN
@@ -2855,7 +3504,7 @@ CONTAINS
 
   FUNCTION FIELD_LOG4D_GET_VIEW(SELF, BLOCK_INDEX, BLOCK_SIZE, ZERO) RESULT(VIEW_PTR)
     ! Updates internal view and exports it to an external pointer
-    CLASS(FIELD_LOG4D) :: SELF
+    CLASS(FIELD_LOG4D), TARGET :: SELF
     LOGICAL, POINTER :: VIEW_PTR(:,:,:)
     INTEGER(KIND=JPIM), INTENT(IN) :: BLOCK_INDEX
     INTEGER(KIND=JPIM), INTENT(IN), OPTIONAL :: BLOCK_SIZE
@@ -2864,15 +3513,19 @@ CONTAINS
 
     IDX = BLOCK_INDEX
     IF (SELF%THREAD_BUFFER) IDX = OML_MY_THREAD()
-    IF (SELF%ACTIVE) THEN
+    IF (SELF%ACTIVE .AND. SELF%OWNED) THEN
       VIEW_PTR => SELF%DATA(:,:,:,IDX)
+    ELSEIF (SELF%ACTIVE .AND. .NOT. SELF%OWNED) THEN
+      VIEW_PTR => SELF%PTR(:,:,:,IDX)
     ELSE
       VIEW_PTR => SELF%VIEW  ! Set to NaN'd field buffer
     END IF
 
-    IF (PRESENT(BLOCK_SIZE) .AND. BLOCK_INDEX == SELF%NBLOCKS) THEN
-      ! Fill the the buffer by replicating the last entry
-      CALL FILL_BUFFER(VIEW_PTR, INDEX=BLOCK_SIZE)
+    IF (PRESENT(BLOCK_SIZE)) THEN
+      IF (BLOCK_INDEX == SELF%NBLOCKS) THEN
+        ! Fill the the buffer by replicating the last entry
+        CALL FILL_BUFFER(VIEW_PTR, INDEX=BLOCK_SIZE)
+      END IF
     END IF
 
     IF (PRESENT(ZERO)) THEN
@@ -2882,7 +3535,7 @@ CONTAINS
 
   FUNCTION FIELD_LOG5D_GET_VIEW(SELF, BLOCK_INDEX, BLOCK_SIZE, ZERO) RESULT(VIEW_PTR)
     ! Updates internal view and exports it to an external pointer
-    CLASS(FIELD_LOG5D) :: SELF
+    CLASS(FIELD_LOG5D), TARGET :: SELF
     LOGICAL, POINTER :: VIEW_PTR(:,:,:,:)
     INTEGER(KIND=JPIM), INTENT(IN) :: BLOCK_INDEX
     INTEGER(KIND=JPIM), INTENT(IN), OPTIONAL :: BLOCK_SIZE
@@ -2891,15 +3544,19 @@ CONTAINS
 
     IDX = BLOCK_INDEX
     IF (SELF%THREAD_BUFFER) IDX = OML_MY_THREAD()
-    IF (SELF%ACTIVE) THEN
+    IF (SELF%ACTIVE .AND. SELF%OWNED) THEN
       VIEW_PTR => SELF%DATA(:,:,:,:,IDX)
+    ELSEIF (SELF%ACTIVE .AND. .NOT. SELF%OWNED) THEN
+      VIEW_PTR => SELF%PTR(:,:,:,:,IDX)
     ELSE
       VIEW_PTR => SELF%VIEW  ! Set to NaN'd field buffer
     END IF
 
-    IF (PRESENT(BLOCK_SIZE) .AND. BLOCK_INDEX == SELF%NBLOCKS) THEN
-      ! Fill the the buffer by replicating the last entry
-      CALL FILL_BUFFER(VIEW_PTR, INDEX=BLOCK_SIZE)
+    IF (PRESENT(BLOCK_SIZE)) THEN
+      IF (BLOCK_INDEX == SELF%NBLOCKS) THEN
+        ! Fill the the buffer by replicating the last entry
+        CALL FILL_BUFFER(VIEW_PTR, INDEX=BLOCK_SIZE)
+      END IF
     END IF
 
     IF (PRESENT(ZERO)) THEN
@@ -2908,13 +3565,702 @@ CONTAINS
   END FUNCTION FIELD_LOG5D_GET_VIEW
 
 
+  SUBROUTINE FIELD_2D_CREATE_DEVICE(SELF)
+    ! Initialize a copy of this field on GPU device
+    CLASS(FIELD_2D), TARGET :: SELF
+
+    SELF%DEVPTR => SELF%DATA
+!$acc enter data create(SELF%DATA)
+  END SUBROUTINE FIELD_2D_CREATE_DEVICE
+
+  SUBROUTINE FIELD_3D_CREATE_DEVICE(SELF)
+    ! Initialize a copy of this field on GPU device
+    CLASS(FIELD_3D), TARGET :: SELF
+
+    SELF%DEVPTR => SELF%DATA
+!$acc enter data create(SELF%DATA)
+  END SUBROUTINE FIELD_3D_CREATE_DEVICE
+
+  SUBROUTINE FIELD_4D_CREATE_DEVICE(SELF)
+    ! Initialize a copy of this field on GPU device
+    CLASS(FIELD_4D), TARGET :: SELF
+
+    SELF%DEVPTR => SELF%DATA
+!$acc enter data create(SELF%DATA)
+  END SUBROUTINE FIELD_4D_CREATE_DEVICE
+
+  SUBROUTINE FIELD_5D_CREATE_DEVICE(SELF)
+    ! Initialize a copy of this field on GPU device
+    CLASS(FIELD_5D), TARGET :: SELF
+
+    SELF%DEVPTR => SELF%DATA
+!$acc enter data create(SELF%DATA)
+  END SUBROUTINE FIELD_5D_CREATE_DEVICE
+
+  SUBROUTINE FIELD_INT2D_CREATE_DEVICE(SELF)
+    ! Initialize a copy of this field on GPU device
+    CLASS(FIELD_INT2D), TARGET :: SELF
+
+    SELF%DEVPTR => SELF%DATA
+!$acc enter data create(SELF%DATA)
+  END SUBROUTINE FIELD_INT2D_CREATE_DEVICE
+
+  SUBROUTINE FIELD_INT3D_CREATE_DEVICE(SELF)
+    ! Initialize a copy of this field on GPU device
+    CLASS(FIELD_INT3D), TARGET :: SELF
+
+    SELF%DEVPTR => SELF%DATA
+!$acc enter data create(SELF%DATA)
+  END SUBROUTINE FIELD_INT3D_CREATE_DEVICE
+
+  SUBROUTINE FIELD_INT4D_CREATE_DEVICE(SELF)
+    ! Initialize a copy of this field on GPU device
+    CLASS(FIELD_INT4D), TARGET :: SELF
+
+    SELF%DEVPTR => SELF%DATA
+!$acc enter data create(SELF%DATA)
+  END SUBROUTINE FIELD_INT4D_CREATE_DEVICE
+
+  SUBROUTINE FIELD_INT5D_CREATE_DEVICE(SELF)
+    ! Initialize a copy of this field on GPU device
+    CLASS(FIELD_INT5D), TARGET :: SELF
+
+    SELF%DEVPTR => SELF%DATA
+!$acc enter data create(SELF%DATA)
+  END SUBROUTINE FIELD_INT5D_CREATE_DEVICE
+
+  SUBROUTINE FIELD_LOG2D_CREATE_DEVICE(SELF)
+    ! Initialize a copy of this field on GPU device
+    CLASS(FIELD_LOG2D), TARGET :: SELF
+
+    SELF%DEVPTR => SELF%DATA
+!$acc enter data create(SELF%DATA)
+  END SUBROUTINE FIELD_LOG2D_CREATE_DEVICE
+
+  SUBROUTINE FIELD_LOG3D_CREATE_DEVICE(SELF)
+    ! Initialize a copy of this field on GPU device
+    CLASS(FIELD_LOG3D), TARGET :: SELF
+
+    SELF%DEVPTR => SELF%DATA
+!$acc enter data create(SELF%DATA)
+  END SUBROUTINE FIELD_LOG3D_CREATE_DEVICE
+
+  SUBROUTINE FIELD_LOG4D_CREATE_DEVICE(SELF)
+    ! Initialize a copy of this field on GPU device
+    CLASS(FIELD_LOG4D), TARGET :: SELF
+
+    SELF%DEVPTR => SELF%DATA
+!$acc enter data create(SELF%DATA)
+  END SUBROUTINE FIELD_LOG4D_CREATE_DEVICE
+
+  SUBROUTINE FIELD_LOG5D_CREATE_DEVICE(SELF)
+    ! Initialize a copy of this field on GPU device
+    CLASS(FIELD_LOG5D), TARGET :: SELF
+
+    SELF%DEVPTR => SELF%DATA
+!$acc enter data create(SELF%DATA)
+  END SUBROUTINE FIELD_LOG5D_CREATE_DEVICE
+
+
+  FUNCTION FIELD_2D_GET_DEVICE_DATA(SELF) RESULT(DEVPTR)
+    ! Initialize a copy of this field on GPU device
+    CLASS(FIELD_2D), TARGET :: SELF
+    REAL(KIND=JPRB), POINTER, CONTIGUOUS :: DEVPTR(:,:)
+
+    IF (SELF%OWNED) THEN
+      DEVPTR => SELF%DATA
+    ELSE
+      DEVPTR => SELF%DEVPTR
+    END IF
+  END FUNCTION FIELD_2D_GET_DEVICE_DATA
+
+  FUNCTION FIELD_3D_GET_DEVICE_DATA(SELF) RESULT(DEVPTR)
+    ! Initialize a copy of this field on GPU device
+    CLASS(FIELD_3D), TARGET :: SELF
+    REAL(KIND=JPRB), POINTER, CONTIGUOUS :: DEVPTR(:,:,:)
+
+    IF (SELF%OWNED) THEN
+      DEVPTR => SELF%DATA
+    ELSE
+      DEVPTR => SELF%DEVPTR
+    END IF
+  END FUNCTION FIELD_3D_GET_DEVICE_DATA
+
+  FUNCTION FIELD_4D_GET_DEVICE_DATA(SELF) RESULT(DEVPTR)
+    ! Initialize a copy of this field on GPU device
+    CLASS(FIELD_4D), TARGET :: SELF
+    REAL(KIND=JPRB), POINTER, CONTIGUOUS :: DEVPTR(:,:,:,:)
+
+    IF (SELF%OWNED) THEN
+      DEVPTR => SELF%DATA
+    ELSE
+      DEVPTR => SELF%DEVPTR
+    END IF
+  END FUNCTION FIELD_4D_GET_DEVICE_DATA
+
+  FUNCTION FIELD_5D_GET_DEVICE_DATA(SELF) RESULT(DEVPTR)
+    ! Initialize a copy of this field on GPU device
+    CLASS(FIELD_5D), TARGET :: SELF
+    REAL(KIND=JPRB), POINTER, CONTIGUOUS :: DEVPTR(:,:,:,:,:)
+
+    IF (SELF%OWNED) THEN
+      DEVPTR => SELF%DATA
+    ELSE
+      DEVPTR => SELF%DEVPTR
+    END IF
+  END FUNCTION FIELD_5D_GET_DEVICE_DATA
+
+  FUNCTION FIELD_INT2D_GET_DEVICE_DATA(SELF) RESULT(DEVPTR)
+    ! Initialize a copy of this field on GPU device
+    CLASS(FIELD_INT2D), TARGET :: SELF
+    INTEGER(KIND=JPIM), POINTER, CONTIGUOUS :: DEVPTR(:,:)
+
+    IF (SELF%OWNED) THEN
+      DEVPTR => SELF%DATA
+    ELSE
+      DEVPTR => SELF%DEVPTR
+    END IF
+  END FUNCTION FIELD_INT2D_GET_DEVICE_DATA
+
+  FUNCTION FIELD_INT3D_GET_DEVICE_DATA(SELF) RESULT(DEVPTR)
+    ! Initialize a copy of this field on GPU device
+    CLASS(FIELD_INT3D), TARGET :: SELF
+    INTEGER(KIND=JPIM), POINTER, CONTIGUOUS :: DEVPTR(:,:,:)
+
+    IF (SELF%OWNED) THEN
+      DEVPTR => SELF%DATA
+    ELSE
+      DEVPTR => SELF%DEVPTR
+    END IF
+  END FUNCTION FIELD_INT3D_GET_DEVICE_DATA
+
+  FUNCTION FIELD_INT4D_GET_DEVICE_DATA(SELF) RESULT(DEVPTR)
+    ! Initialize a copy of this field on GPU device
+    CLASS(FIELD_INT4D), TARGET :: SELF
+    INTEGER(KIND=JPIM), POINTER, CONTIGUOUS :: DEVPTR(:,:,:,:)
+
+    IF (SELF%OWNED) THEN
+      DEVPTR => SELF%DATA
+    ELSE
+      DEVPTR => SELF%DEVPTR
+    END IF
+  END FUNCTION FIELD_INT4D_GET_DEVICE_DATA
+
+  FUNCTION FIELD_INT5D_GET_DEVICE_DATA(SELF) RESULT(DEVPTR)
+    ! Initialize a copy of this field on GPU device
+    CLASS(FIELD_INT5D), TARGET :: SELF
+    INTEGER(KIND=JPIM), POINTER, CONTIGUOUS :: DEVPTR(:,:,:,:,:)
+
+    IF (SELF%OWNED) THEN
+      DEVPTR => SELF%DATA
+    ELSE
+      DEVPTR => SELF%DEVPTR
+    END IF
+  END FUNCTION FIELD_INT5D_GET_DEVICE_DATA
+
+  FUNCTION FIELD_LOG2D_GET_DEVICE_DATA(SELF) RESULT(DEVPTR)
+    ! Initialize a copy of this field on GPU device
+    CLASS(FIELD_LOG2D), TARGET :: SELF
+    LOGICAL, POINTER, CONTIGUOUS :: DEVPTR(:,:)
+
+    IF (SELF%OWNED) THEN
+      DEVPTR => SELF%DATA
+    ELSE
+      DEVPTR => SELF%DEVPTR
+    END IF
+  END FUNCTION FIELD_LOG2D_GET_DEVICE_DATA
+
+  FUNCTION FIELD_LOG3D_GET_DEVICE_DATA(SELF) RESULT(DEVPTR)
+    ! Initialize a copy of this field on GPU device
+    CLASS(FIELD_LOG3D), TARGET :: SELF
+    LOGICAL, POINTER, CONTIGUOUS :: DEVPTR(:,:,:)
+
+    IF (SELF%OWNED) THEN
+      DEVPTR => SELF%DATA
+    ELSE
+      DEVPTR => SELF%DEVPTR
+    END IF
+  END FUNCTION FIELD_LOG3D_GET_DEVICE_DATA
+
+  FUNCTION FIELD_LOG4D_GET_DEVICE_DATA(SELF) RESULT(DEVPTR)
+    ! Initialize a copy of this field on GPU device
+    CLASS(FIELD_LOG4D), TARGET :: SELF
+    LOGICAL, POINTER, CONTIGUOUS :: DEVPTR(:,:,:,:)
+
+    IF (SELF%OWNED) THEN
+      DEVPTR => SELF%DATA
+    ELSE
+      DEVPTR => SELF%DEVPTR
+    END IF
+  END FUNCTION FIELD_LOG4D_GET_DEVICE_DATA
+
+  FUNCTION FIELD_LOG5D_GET_DEVICE_DATA(SELF) RESULT(DEVPTR)
+    ! Initialize a copy of this field on GPU device
+    CLASS(FIELD_LOG5D), TARGET :: SELF
+    LOGICAL, POINTER, CONTIGUOUS :: DEVPTR(:,:,:,:,:)
+
+    IF (SELF%OWNED) THEN
+      DEVPTR => SELF%DATA
+    ELSE
+      DEVPTR => SELF%DEVPTR
+    END IF
+  END FUNCTION FIELD_LOG5D_GET_DEVICE_DATA
+
+
+  SUBROUTINE FIELD_2D_UPDATE_DEVICE(SELF)
+    ! Create a copy of this field on device and copy data over
+    CLASS(FIELD_2D), TARGET :: SELF
+
+    IF (SELF%OWNED) THEN
+!$acc enter data copyin(SELF%DATA)
+      SELF%DEVPTR => SELF%DATA
+    ELSE
+      ALLOCATE(SELF%DEVPTR, SOURCE=SELF%PTR)
+!$acc enter data copyin(SELF%DEVPTR)
+    END IF
+  END SUBROUTINE FIELD_2D_UPDATE_DEVICE
+
+  SUBROUTINE FIELD_3D_UPDATE_DEVICE(SELF)
+    ! Create a copy of this field on device and copy data over
+    CLASS(FIELD_3D), TARGET :: SELF
+
+    IF (SELF%OWNED) THEN
+!$acc enter data copyin(SELF%DATA)
+      SELF%DEVPTR => SELF%DATA
+    ELSE
+      ALLOCATE(SELF%DEVPTR, SOURCE=SELF%PTR)
+!$acc enter data copyin(SELF%DEVPTR)
+    END IF
+  END SUBROUTINE FIELD_3D_UPDATE_DEVICE
+
+  SUBROUTINE FIELD_4D_UPDATE_DEVICE(SELF)
+    ! Create a copy of this field on device and copy data over
+    CLASS(FIELD_4D), TARGET :: SELF
+
+    IF (SELF%OWNED) THEN
+!$acc enter data copyin(SELF%DATA)
+      SELF%DEVPTR => SELF%DATA
+    ELSE
+      ALLOCATE(SELF%DEVPTR, SOURCE=SELF%PTR)
+!$acc enter data copyin(SELF%DEVPTR)
+    END IF
+  END SUBROUTINE FIELD_4D_UPDATE_DEVICE
+
+  SUBROUTINE FIELD_5D_UPDATE_DEVICE(SELF)
+    ! Create a copy of this field on device and copy data over
+    CLASS(FIELD_5D), TARGET :: SELF
+
+    IF (SELF%OWNED) THEN
+!$acc enter data copyin(SELF%DATA)
+      SELF%DEVPTR => SELF%DATA
+    ELSE
+      ALLOCATE(SELF%DEVPTR, SOURCE=SELF%PTR)
+!$acc enter data copyin(SELF%DEVPTR)
+    END IF
+  END SUBROUTINE FIELD_5D_UPDATE_DEVICE
+
+  SUBROUTINE FIELD_INT2D_UPDATE_DEVICE(SELF)
+    ! Create a copy of this field on device and copy data over
+    CLASS(FIELD_INT2D), TARGET :: SELF
+
+    IF (SELF%OWNED) THEN
+!$acc enter data copyin(SELF%DATA)
+      SELF%DEVPTR => SELF%DATA
+    ELSE
+      ALLOCATE(SELF%DEVPTR, SOURCE=SELF%PTR)
+!$acc enter data copyin(SELF%DEVPTR)
+    END IF
+  END SUBROUTINE FIELD_INT2D_UPDATE_DEVICE
+
+  SUBROUTINE FIELD_INT3D_UPDATE_DEVICE(SELF)
+    ! Create a copy of this field on device and copy data over
+    CLASS(FIELD_INT3D), TARGET :: SELF
+
+    IF (SELF%OWNED) THEN
+!$acc enter data copyin(SELF%DATA)
+      SELF%DEVPTR => SELF%DATA
+    ELSE
+      ALLOCATE(SELF%DEVPTR, SOURCE=SELF%PTR)
+!$acc enter data copyin(SELF%DEVPTR)
+    END IF
+  END SUBROUTINE FIELD_INT3D_UPDATE_DEVICE
+
+  SUBROUTINE FIELD_INT4D_UPDATE_DEVICE(SELF)
+    ! Create a copy of this field on device and copy data over
+    CLASS(FIELD_INT4D), TARGET :: SELF
+
+    IF (SELF%OWNED) THEN
+!$acc enter data copyin(SELF%DATA)
+      SELF%DEVPTR => SELF%DATA
+    ELSE
+      ALLOCATE(SELF%DEVPTR, SOURCE=SELF%PTR)
+!$acc enter data copyin(SELF%DEVPTR)
+    END IF
+  END SUBROUTINE FIELD_INT4D_UPDATE_DEVICE
+
+  SUBROUTINE FIELD_INT5D_UPDATE_DEVICE(SELF)
+    ! Create a copy of this field on device and copy data over
+    CLASS(FIELD_INT5D), TARGET :: SELF
+
+    IF (SELF%OWNED) THEN
+!$acc enter data copyin(SELF%DATA)
+      SELF%DEVPTR => SELF%DATA
+    ELSE
+      ALLOCATE(SELF%DEVPTR, SOURCE=SELF%PTR)
+!$acc enter data copyin(SELF%DEVPTR)
+    END IF
+  END SUBROUTINE FIELD_INT5D_UPDATE_DEVICE
+
+  SUBROUTINE FIELD_LOG2D_UPDATE_DEVICE(SELF)
+    ! Create a copy of this field on device and copy data over
+    CLASS(FIELD_LOG2D), TARGET :: SELF
+
+    IF (SELF%OWNED) THEN
+!$acc enter data copyin(SELF%DATA)
+      SELF%DEVPTR => SELF%DATA
+    ELSE
+      ALLOCATE(SELF%DEVPTR, SOURCE=SELF%PTR)
+!$acc enter data copyin(SELF%DEVPTR)
+    END IF
+  END SUBROUTINE FIELD_LOG2D_UPDATE_DEVICE
+
+  SUBROUTINE FIELD_LOG3D_UPDATE_DEVICE(SELF)
+    ! Create a copy of this field on device and copy data over
+    CLASS(FIELD_LOG3D), TARGET :: SELF
+
+    IF (SELF%OWNED) THEN
+!$acc enter data copyin(SELF%DATA)
+      SELF%DEVPTR => SELF%DATA
+    ELSE
+      ALLOCATE(SELF%DEVPTR, SOURCE=SELF%PTR)
+!$acc enter data copyin(SELF%DEVPTR)
+    END IF
+  END SUBROUTINE FIELD_LOG3D_UPDATE_DEVICE
+
+  SUBROUTINE FIELD_LOG4D_UPDATE_DEVICE(SELF)
+    ! Create a copy of this field on device and copy data over
+    CLASS(FIELD_LOG4D), TARGET :: SELF
+
+    IF (SELF%OWNED) THEN
+!$acc enter data copyin(SELF%DATA)
+      SELF%DEVPTR => SELF%DATA
+    ELSE
+      ALLOCATE(SELF%DEVPTR, SOURCE=SELF%PTR)
+!$acc enter data copyin(SELF%DEVPTR)
+    END IF
+  END SUBROUTINE FIELD_LOG4D_UPDATE_DEVICE
+
+  SUBROUTINE FIELD_LOG5D_UPDATE_DEVICE(SELF)
+    ! Create a copy of this field on device and copy data over
+    CLASS(FIELD_LOG5D), TARGET :: SELF
+
+    IF (SELF%OWNED) THEN
+!$acc enter data copyin(SELF%DATA)
+      SELF%DEVPTR => SELF%DATA
+    ELSE
+      ALLOCATE(SELF%DEVPTR, SOURCE=SELF%PTR)
+!$acc enter data copyin(SELF%DEVPTR)
+    END IF
+  END SUBROUTINE FIELD_LOG5D_UPDATE_DEVICE
+
+
+  SUBROUTINE FIELD_2D_UPDATE_HOST(SELF)
+    ! Synchronize device data back to host
+    CLASS(FIELD_2D) :: SELF
+
+    IF (SELF%OWNED) THEN
+      !$acc exit data copyout(SELF%DATA)
+    ELSE
+      !$acc exit data copyout(SELF%DEVPTR)
+      SELF%PTR(:,:) = SELF%DEVPTR(:,:)
+    END IF
+  END SUBROUTINE FIELD_2D_UPDATE_HOST
+
+  SUBROUTINE FIELD_3D_UPDATE_HOST(SELF)
+    ! Synchronize device data back to host
+    CLASS(FIELD_3D) :: SELF
+
+    IF (SELF%OWNED) THEN
+      !$acc exit data copyout(SELF%DATA)
+    ELSE
+      !$acc exit data copyout(SELF%DEVPTR)
+      SELF%PTR(:,:,:) = SELF%DEVPTR(:,:,:)
+    END IF
+  END SUBROUTINE FIELD_3D_UPDATE_HOST
+
+  SUBROUTINE FIELD_4D_UPDATE_HOST(SELF)
+    ! Synchronize device data back to host
+    CLASS(FIELD_4D) :: SELF
+
+    IF (SELF%OWNED) THEN
+      !$acc exit data copyout(SELF%DATA)
+    ELSE
+      !$acc exit data copyout(SELF%DEVPTR)
+      SELF%PTR(:,:,:,:) = SELF%DEVPTR(:,:,:,:)
+    END IF
+  END SUBROUTINE FIELD_4D_UPDATE_HOST
+
+  SUBROUTINE FIELD_5D_UPDATE_HOST(SELF)
+    ! Synchronize device data back to host
+    CLASS(FIELD_5D) :: SELF
+
+    IF (SELF%OWNED) THEN
+      !$acc exit data copyout(SELF%DATA)
+    ELSE
+      !$acc exit data copyout(SELF%DEVPTR)
+      SELF%PTR(:,:,:,:,:) = SELF%DEVPTR(:,:,:,:,:)
+    END IF
+  END SUBROUTINE FIELD_5D_UPDATE_HOST
+
+  SUBROUTINE FIELD_INT2D_UPDATE_HOST(SELF)
+    ! Synchronize device data back to host
+    CLASS(FIELD_INT2D) :: SELF
+
+    IF (SELF%OWNED) THEN
+      !$acc exit data copyout(SELF%DATA)
+    ELSE
+      !$acc exit data copyout(SELF%DEVPTR)
+      SELF%PTR(:,:) = SELF%DEVPTR(:,:)
+    END IF
+  END SUBROUTINE FIELD_INT2D_UPDATE_HOST
+
+  SUBROUTINE FIELD_INT3D_UPDATE_HOST(SELF)
+    ! Synchronize device data back to host
+    CLASS(FIELD_INT3D) :: SELF
+
+    IF (SELF%OWNED) THEN
+      !$acc exit data copyout(SELF%DATA)
+    ELSE
+      !$acc exit data copyout(SELF%DEVPTR)
+      SELF%PTR(:,:,:) = SELF%DEVPTR(:,:,:)
+    END IF
+  END SUBROUTINE FIELD_INT3D_UPDATE_HOST
+
+  SUBROUTINE FIELD_INT4D_UPDATE_HOST(SELF)
+    ! Synchronize device data back to host
+    CLASS(FIELD_INT4D) :: SELF
+
+    IF (SELF%OWNED) THEN
+      !$acc exit data copyout(SELF%DATA)
+    ELSE
+      !$acc exit data copyout(SELF%DEVPTR)
+      SELF%PTR(:,:,:,:) = SELF%DEVPTR(:,:,:,:)
+    END IF
+  END SUBROUTINE FIELD_INT4D_UPDATE_HOST
+
+  SUBROUTINE FIELD_INT5D_UPDATE_HOST(SELF)
+    ! Synchronize device data back to host
+    CLASS(FIELD_INT5D) :: SELF
+
+    IF (SELF%OWNED) THEN
+      !$acc exit data copyout(SELF%DATA)
+    ELSE
+      !$acc exit data copyout(SELF%DEVPTR)
+      SELF%PTR(:,:,:,:,:) = SELF%DEVPTR(:,:,:,:,:)
+    END IF
+  END SUBROUTINE FIELD_INT5D_UPDATE_HOST
+
+  SUBROUTINE FIELD_LOG2D_UPDATE_HOST(SELF)
+    ! Synchronize device data back to host
+    CLASS(FIELD_LOG2D) :: SELF
+
+    IF (SELF%OWNED) THEN
+      !$acc exit data copyout(SELF%DATA)
+    ELSE
+      !$acc exit data copyout(SELF%DEVPTR)
+      SELF%PTR(:,:) = SELF%DEVPTR(:,:)
+    END IF
+  END SUBROUTINE FIELD_LOG2D_UPDATE_HOST
+
+  SUBROUTINE FIELD_LOG3D_UPDATE_HOST(SELF)
+    ! Synchronize device data back to host
+    CLASS(FIELD_LOG3D) :: SELF
+
+    IF (SELF%OWNED) THEN
+      !$acc exit data copyout(SELF%DATA)
+    ELSE
+      !$acc exit data copyout(SELF%DEVPTR)
+      SELF%PTR(:,:,:) = SELF%DEVPTR(:,:,:)
+    END IF
+  END SUBROUTINE FIELD_LOG3D_UPDATE_HOST
+
+  SUBROUTINE FIELD_LOG4D_UPDATE_HOST(SELF)
+    ! Synchronize device data back to host
+    CLASS(FIELD_LOG4D) :: SELF
+
+    IF (SELF%OWNED) THEN
+      !$acc exit data copyout(SELF%DATA)
+    ELSE
+      !$acc exit data copyout(SELF%DEVPTR)
+      SELF%PTR(:,:,:,:) = SELF%DEVPTR(:,:,:,:)
+    END IF
+  END SUBROUTINE FIELD_LOG4D_UPDATE_HOST
+
+  SUBROUTINE FIELD_LOG5D_UPDATE_HOST(SELF)
+    ! Synchronize device data back to host
+    CLASS(FIELD_LOG5D) :: SELF
+
+    IF (SELF%OWNED) THEN
+      !$acc exit data copyout(SELF%DATA)
+    ELSE
+      !$acc exit data copyout(SELF%DEVPTR)
+      SELF%PTR(:,:,:,:,:) = SELF%DEVPTR(:,:,:,:,:)
+    END IF
+  END SUBROUTINE FIELD_LOG5D_UPDATE_HOST
+
+
+  SUBROUTINE FIELD_2D_DELETE_DEVICE(SELF)
+    ! Initialize a copy of this field on GPU device
+    CLASS(FIELD_2D), TARGET :: SELF
+
+!$acc exit data delete(SELF%DEVPTR)
+    IF (SELF%OWNED) THEN
+      NULLIFY(SELF%DEVPTR)
+    ELSE
+      DEALLOCATE(SELF%DEVPTR)
+    END IF
+  END SUBROUTINE FIELD_2D_DELETE_DEVICE
+
+  SUBROUTINE FIELD_3D_DELETE_DEVICE(SELF)
+    ! Initialize a copy of this field on GPU device
+    CLASS(FIELD_3D), TARGET :: SELF
+
+!$acc exit data delete(SELF%DEVPTR)
+    IF (SELF%OWNED) THEN
+      NULLIFY(SELF%DEVPTR)
+    ELSE
+      DEALLOCATE(SELF%DEVPTR)
+    END IF
+  END SUBROUTINE FIELD_3D_DELETE_DEVICE
+
+  SUBROUTINE FIELD_4D_DELETE_DEVICE(SELF)
+    ! Initialize a copy of this field on GPU device
+    CLASS(FIELD_4D), TARGET :: SELF
+
+!$acc exit data delete(SELF%DEVPTR)
+    IF (SELF%OWNED) THEN
+      NULLIFY(SELF%DEVPTR)
+    ELSE
+      DEALLOCATE(SELF%DEVPTR)
+    END IF
+  END SUBROUTINE FIELD_4D_DELETE_DEVICE
+
+  SUBROUTINE FIELD_5D_DELETE_DEVICE(SELF)
+    ! Initialize a copy of this field on GPU device
+    CLASS(FIELD_5D), TARGET :: SELF
+
+!$acc exit data delete(SELF%DEVPTR)
+    IF (SELF%OWNED) THEN
+      NULLIFY(SELF%DEVPTR)
+    ELSE
+      DEALLOCATE(SELF%DEVPTR)
+    END IF
+  END SUBROUTINE FIELD_5D_DELETE_DEVICE
+
+  SUBROUTINE FIELD_INT2D_DELETE_DEVICE(SELF)
+    ! Initialize a copy of this field on GPU device
+    CLASS(FIELD_INT2D), TARGET :: SELF
+
+!$acc exit data delete(SELF%DEVPTR)
+    IF (SELF%OWNED) THEN
+      NULLIFY(SELF%DEVPTR)
+    ELSE
+      DEALLOCATE(SELF%DEVPTR)
+    END IF
+  END SUBROUTINE FIELD_INT2D_DELETE_DEVICE
+
+  SUBROUTINE FIELD_INT3D_DELETE_DEVICE(SELF)
+    ! Initialize a copy of this field on GPU device
+    CLASS(FIELD_INT3D), TARGET :: SELF
+
+!$acc exit data delete(SELF%DEVPTR)
+    IF (SELF%OWNED) THEN
+      NULLIFY(SELF%DEVPTR)
+    ELSE
+      DEALLOCATE(SELF%DEVPTR)
+    END IF
+  END SUBROUTINE FIELD_INT3D_DELETE_DEVICE
+
+  SUBROUTINE FIELD_INT4D_DELETE_DEVICE(SELF)
+    ! Initialize a copy of this field on GPU device
+    CLASS(FIELD_INT4D), TARGET :: SELF
+
+!$acc exit data delete(SELF%DEVPTR)
+    IF (SELF%OWNED) THEN
+      NULLIFY(SELF%DEVPTR)
+    ELSE
+      DEALLOCATE(SELF%DEVPTR)
+    END IF
+  END SUBROUTINE FIELD_INT4D_DELETE_DEVICE
+
+  SUBROUTINE FIELD_INT5D_DELETE_DEVICE(SELF)
+    ! Initialize a copy of this field on GPU device
+    CLASS(FIELD_INT5D), TARGET :: SELF
+
+!$acc exit data delete(SELF%DEVPTR)
+    IF (SELF%OWNED) THEN
+      NULLIFY(SELF%DEVPTR)
+    ELSE
+      DEALLOCATE(SELF%DEVPTR)
+    END IF
+  END SUBROUTINE FIELD_INT5D_DELETE_DEVICE
+
+  SUBROUTINE FIELD_LOG2D_DELETE_DEVICE(SELF)
+    ! Initialize a copy of this field on GPU device
+    CLASS(FIELD_LOG2D), TARGET :: SELF
+
+!$acc exit data delete(SELF%DEVPTR)
+    IF (SELF%OWNED) THEN
+      NULLIFY(SELF%DEVPTR)
+    ELSE
+      DEALLOCATE(SELF%DEVPTR)
+    END IF
+  END SUBROUTINE FIELD_LOG2D_DELETE_DEVICE
+
+  SUBROUTINE FIELD_LOG3D_DELETE_DEVICE(SELF)
+    ! Initialize a copy of this field on GPU device
+    CLASS(FIELD_LOG3D), TARGET :: SELF
+
+!$acc exit data delete(SELF%DEVPTR)
+    IF (SELF%OWNED) THEN
+      NULLIFY(SELF%DEVPTR)
+    ELSE
+      DEALLOCATE(SELF%DEVPTR)
+    END IF
+  END SUBROUTINE FIELD_LOG3D_DELETE_DEVICE
+
+  SUBROUTINE FIELD_LOG4D_DELETE_DEVICE(SELF)
+    ! Initialize a copy of this field on GPU device
+    CLASS(FIELD_LOG4D), TARGET :: SELF
+
+!$acc exit data delete(SELF%DEVPTR)
+    IF (SELF%OWNED) THEN
+      NULLIFY(SELF%DEVPTR)
+    ELSE
+      DEALLOCATE(SELF%DEVPTR)
+    END IF
+  END SUBROUTINE FIELD_LOG4D_DELETE_DEVICE
+
+  SUBROUTINE FIELD_LOG5D_DELETE_DEVICE(SELF)
+    ! Initialize a copy of this field on GPU device
+    CLASS(FIELD_LOG5D), TARGET :: SELF
+
+!$acc exit data delete(SELF%DEVPTR)
+    IF (SELF%OWNED) THEN
+      NULLIFY(SELF%DEVPTR)
+    ELSE
+      DEALLOCATE(SELF%DEVPTR)
+    END IF
+  END SUBROUTINE FIELD_LOG5D_DELETE_DEVICE
+
+
   SUBROUTINE FIELD_2D_FINAL(SELF)
     ! Finalizes field and dealloactes owned data
     CLASS(FIELD_2D) :: SELF
     IF (SELF%OWNED) THEN
       DEALLOCATE(SELF%DATA)
     END IF
-    NULLIFY(SELF%DATA)
+    NULLIFY(SELF%PTR)
     NULLIFY(SELF%VIEW)
   END SUBROUTINE FIELD_2D_FINAL
 
@@ -2924,7 +4270,7 @@ CONTAINS
     IF (SELF%OWNED) THEN
       DEALLOCATE(SELF%DATA)
     END IF
-    NULLIFY(SELF%DATA)
+    NULLIFY(SELF%PTR)
     NULLIFY(SELF%VIEW)
   END SUBROUTINE FIELD_3D_FINAL
 
@@ -2934,7 +4280,7 @@ CONTAINS
     IF (SELF%OWNED) THEN
       DEALLOCATE(SELF%DATA)
     END IF
-    NULLIFY(SELF%DATA)
+    NULLIFY(SELF%PTR)
     NULLIFY(SELF%VIEW)
   END SUBROUTINE FIELD_4D_FINAL
 
@@ -2944,7 +4290,7 @@ CONTAINS
     IF (SELF%OWNED) THEN
       DEALLOCATE(SELF%DATA)
     END IF
-    NULLIFY(SELF%DATA)
+    NULLIFY(SELF%PTR)
     NULLIFY(SELF%VIEW)
   END SUBROUTINE FIELD_5D_FINAL
 
@@ -2954,7 +4300,7 @@ CONTAINS
     IF (SELF%OWNED) THEN
       DEALLOCATE(SELF%DATA)
     END IF
-    NULLIFY(SELF%DATA)
+    NULLIFY(SELF%PTR)
     NULLIFY(SELF%VIEW)
   END SUBROUTINE FIELD_INT2D_FINAL
 
@@ -2964,7 +4310,7 @@ CONTAINS
     IF (SELF%OWNED) THEN
       DEALLOCATE(SELF%DATA)
     END IF
-    NULLIFY(SELF%DATA)
+    NULLIFY(SELF%PTR)
     NULLIFY(SELF%VIEW)
   END SUBROUTINE FIELD_INT3D_FINAL
 
@@ -2974,7 +4320,7 @@ CONTAINS
     IF (SELF%OWNED) THEN
       DEALLOCATE(SELF%DATA)
     END IF
-    NULLIFY(SELF%DATA)
+    NULLIFY(SELF%PTR)
     NULLIFY(SELF%VIEW)
   END SUBROUTINE FIELD_INT4D_FINAL
 
@@ -2984,7 +4330,7 @@ CONTAINS
     IF (SELF%OWNED) THEN
       DEALLOCATE(SELF%DATA)
     END IF
-    NULLIFY(SELF%DATA)
+    NULLIFY(SELF%PTR)
     NULLIFY(SELF%VIEW)
   END SUBROUTINE FIELD_INT5D_FINAL
 
@@ -2994,7 +4340,7 @@ CONTAINS
     IF (SELF%OWNED) THEN
       DEALLOCATE(SELF%DATA)
     END IF
-    NULLIFY(SELF%DATA)
+    NULLIFY(SELF%PTR)
     NULLIFY(SELF%VIEW)
   END SUBROUTINE FIELD_LOG2D_FINAL
 
@@ -3004,7 +4350,7 @@ CONTAINS
     IF (SELF%OWNED) THEN
       DEALLOCATE(SELF%DATA)
     END IF
-    NULLIFY(SELF%DATA)
+    NULLIFY(SELF%PTR)
     NULLIFY(SELF%VIEW)
   END SUBROUTINE FIELD_LOG3D_FINAL
 
@@ -3014,7 +4360,7 @@ CONTAINS
     IF (SELF%OWNED) THEN
       DEALLOCATE(SELF%DATA)
     END IF
-    NULLIFY(SELF%DATA)
+    NULLIFY(SELF%PTR)
     NULLIFY(SELF%VIEW)
   END SUBROUTINE FIELD_LOG4D_FINAL
 
@@ -3024,7 +4370,7 @@ CONTAINS
     IF (SELF%OWNED) THEN
       DEALLOCATE(SELF%DATA)
     END IF
-    NULLIFY(SELF%DATA)
+    NULLIFY(SELF%PTR)
     NULLIFY(SELF%VIEW)
   END SUBROUTINE FIELD_LOG5D_FINAL
 

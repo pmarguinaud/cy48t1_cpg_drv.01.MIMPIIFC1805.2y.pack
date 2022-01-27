@@ -1393,12 +1393,12 @@ EOF
 
       my @cmd = (qw (fxtran -construct-tag -no-include), @fopts, -o => $xml, $f);
       system (@cmd)
-        && die ("`@cmd' failed\n");
+        && croak ("`@cmd' failed\n");
 
       my $doc = 'XML::LibXML'->load_xml (location => $xml, @xopts);
       return $doc;
     }
-  die "@_";
+  croak "@_";
 }
 
 sub add_used_vars

@@ -1,5 +1,5 @@
 !OPTIONS XOPT(NOEVAL)
-SUBROUTINE ACTSEC (YDPHY,YDPHY0,KIDIA,KFDIA,KLON,KTDIA,KLEV,&
+SUBROUTINE ACTSEC (YDCST,YDPHY,YDPHY0,KIDIA,KFDIA,KLON,KTDIA,KLEV,&
  !-----------------------------------------------------------------------
  ! - INPUT  2D .
  & PAPHI,PAPHIF,PAPRS,PAPRSF,PQ,PT,PU,PV,&
@@ -110,19 +110,21 @@ SUBROUTINE ACTSEC (YDPHY,YDPHY0,KIDIA,KFDIA,KLON,KTDIA,KLEV,&
 
 USE PARKIND1  ,ONLY : JPIM     ,JPRB
 USE YOMHOOK   ,ONLY : LHOOK,   DR_HOOK
-
+USE YOMPHY0  , ONLY : TPHY0
 USE YOMPHY   , ONLY : TPHY
+USE YOMCST   , ONLY : TCST
+
 USE YOMCST   , ONLY : RG       ,RD       ,RV       ,RCPD     ,&
  & RCPV     ,RKAPPA   ,RETV     ,RCW      ,RCS      ,&
  & RLVTT    ,RLSTT    ,RTT      ,RALPW    ,RBETW    ,&
  & RGAMW    ,RALPS    ,RBETS    ,RGAMS    ,RALPD    ,&
  & RBETD    ,RGAMD  
-USE YOMPHY0  , ONLY : TPHY0
 
 !-----------------------------------------------------------------------
 
 IMPLICIT NONE
 
+TYPE(TCST)        ,INTENT(IN)    :: YDCST
 TYPE(TPHY)        ,INTENT(IN)    :: YDPHY
 TYPE(TPHY0)       ,INTENT(IN)    :: YDPHY0
 INTEGER(KIND=JPIM),INTENT(IN)    :: KLON 

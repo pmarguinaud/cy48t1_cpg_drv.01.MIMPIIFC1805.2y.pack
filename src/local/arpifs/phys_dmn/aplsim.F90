@@ -278,8 +278,8 @@ CALL CPTENDSM (YDPHY, YDCPG_DIM%KLON, YDCPG_DIM%KIDIA, YDCPG_DIM%KFDIA, YDCPG_DI
 !        3.5  Computation of evolution of T, u, v and Q.
 !             ------------------------------------------
 
-CALL CPUTQYS (YDCPG_DIM, YDMF_PHYS_BASE_STATE, YDMF_PHYS_NEXT_STATE, YDMF_PHYS, YDSTOPH, YDPHY2, &
-& PDTPHY, ZTENDH, ZTENDQ)
+CALL CPUTQYS (YDCPG_DIM, YDMF_PHYS_BASE_STATE, YDMF_PHYS_NEXT_STATE, YDMF_PHYS, &
+            & YDMODEL%YRCST, YDSTOPH, YDPHY2, PDTPHY, ZTENDH, ZTENDQ)
 
 !     ------------------------------------------------------------------
 

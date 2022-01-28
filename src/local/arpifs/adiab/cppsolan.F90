@@ -35,7 +35,6 @@ USE YOMDIM   , ONLY : TDIM
 USE YOMCST   , ONLY : TCST
 
 USE YOMRIP0  , ONLY : NSSSSS, RTIMST
-USE YOMCST   , ONLY : RPI, RDAY, REA, REPSM
 USE YOMDYNCORE,ONLY : LAPE
 
 !   ----------------------------------------------------------------
@@ -61,7 +60,7 @@ REAL(KIND=JPRB) :: ZHOOK_HANDLE
 
 !   ----------------------------------------------------------------
 
-#include "fctast.func.h"
+#include "fctast.ycst.h"
 
 !   ----------------------------------------------------------------
 IF (LHOOK) CALL DR_HOOK('CPPSOLAN',0,ZHOOK_HANDLE)

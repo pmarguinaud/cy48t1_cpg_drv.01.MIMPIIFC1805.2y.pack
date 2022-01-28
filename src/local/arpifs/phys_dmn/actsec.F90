@@ -114,12 +114,6 @@ USE YOMPHY0  , ONLY : TPHY0
 USE YOMPHY   , ONLY : TPHY
 USE YOMCST   , ONLY : TCST
 
-USE YOMCST   , ONLY : RG       ,RD       ,RV       ,RCPD     ,&
- & RCPV     ,RKAPPA   ,RETV     ,RCW      ,RCS      ,&
- & RLVTT    ,RLSTT    ,RTT      ,RALPW    ,RBETW    ,&
- & RGAMW    ,RALPS    ,RBETS    ,RGAMS    ,RALPD    ,&
- & RBETD    ,RGAMD  
-
 !-----------------------------------------------------------------------
 
 IMPLICIT NONE

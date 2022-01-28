@@ -80,11 +80,6 @@ USE PARKIND1  ,ONLY : JPIM     ,JPRB
 USE YOMHOOK   ,ONLY : LHOOK,   DR_HOOK
 USE YOMCST   , ONLY : TCST
 
-USE YOMCST   , ONLY : RG       ,RV       ,RCPD     ,RCPV     ,&
- & RETV     ,RCW      ,RCS      ,RLVTT    ,RLSTT    ,&
- & RTT      ,RALPW    ,RBETW    ,RGAMW    ,RALPS    ,&
- & RBETS    ,RGAMS    ,RALPD    ,RBETD    ,RGAMD  
-
 !-----------------------------------------------------------------------
 
 IMPLICIT NONE

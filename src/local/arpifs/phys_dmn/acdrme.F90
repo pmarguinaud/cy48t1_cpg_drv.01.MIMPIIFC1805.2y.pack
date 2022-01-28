@@ -130,8 +130,6 @@ USE YOMPHY2  , ONLY : TPHY2
 USE YOMTOPH  , ONLY : TTOPH
 USE YOMCST   , ONLY : TCST
 
-USE YOMCST   , ONLY : RG
-
 !-----------------------------------------------------------------------
 
 IMPLICIT NONE

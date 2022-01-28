@@ -98,11 +98,6 @@ USE YOMPHY   , ONLY : TPHY
 USE YOMPHY1  , ONLY : TPHY1
 USE YOMCST   , ONLY : TCST
 
-USE YOMCST   , ONLY : RPI      ,RV       ,RCPV     ,RETV     ,&
- & RCW      ,RCS      ,RLVTT    ,RLSTT    ,RTT      ,&
- & RALPW    ,RBETW    ,RGAMW    ,RALPS    ,RBETS    ,&
- & RGAMS    ,RALPD    ,RBETD    ,RGAMD  
-
 IMPLICIT NONE
 
 TYPE(TCST)        ,INTENT(IN)    :: YDCST

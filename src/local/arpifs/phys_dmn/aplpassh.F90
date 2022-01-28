@@ -142,7 +142,7 @@ REAL(KIND=JPRB) :: ZDEW, ZEW
 REAL(KIND=JPRB) :: ZHOOK_HANDLE
 
 !     ------------------------------------------------------------------
-#include "fcttrm.func.h"
+#include "fcttrm.ycst.h"
 
 !     -------------------------------------------------------------------
 !      - COMPUTATION OF SURFACE SPECIFIC HUMIDITY

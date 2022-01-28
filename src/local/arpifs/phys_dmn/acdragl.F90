@@ -161,7 +161,7 @@ REAL(KIND=JPRB) :: ZHOOK_HANDLE
 
 !-----------------------------------------------------------------------
 
-#include "fcttrm.func.h"
+#include "fcttrm.ycst.h"
 
 !-----------------------------------------------------------------------
 IF (LHOOK) CALL DR_HOOK('ACDRAGL',0,ZHOOK_HANDLE)

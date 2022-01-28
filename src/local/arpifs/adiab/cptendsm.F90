@@ -1,5 +1,5 @@
 !---------------------------------------------------------------
-SUBROUTINE CPTENDSM( YDPHY,KPROMA, KSTART, KPROF, KFLEV,&
+SUBROUTINE CPTENDSM(YDCST, YDPHY,KPROMA, KSTART, KPROF, KFLEV,&
  !---------------------------------------------------------------      
  !  INPUT 2D 
  & PDIFCQ , PDIFCS , PDIFTQ , PDIFTS ,&
@@ -121,15 +121,17 @@ SUBROUTINE CPTENDSM( YDPHY,KPROMA, KSTART, KPROF, KFLEV,&
 
 USE PARKIND1  ,ONLY : JPIM     ,JPRB
 USE YOMHOOK   ,ONLY : LHOOK,   DR_HOOK
+USE YOMCST   , ONLY : TCST
+USE YOMPHY   , ONLY : TPHY
 
 USE YOMCST   , ONLY : RG       ,RCPD     ,RCPV     ,RCW      ,&
  & RCS      ,RLVZER   ,RLSZER  
-USE YOMPHY   , ONLY : TPHY
 
 !------------------------------------------------------------------------
 
 IMPLICIT NONE
 
+TYPE(TCST)        ,INTENT(IN)    :: YDCST
 TYPE(TPHY)        ,INTENT(IN)    :: YDPHY
 INTEGER(KIND=JPIM),INTENT(IN)    :: KPROMA 
 INTEGER(KIND=JPIM),INTENT(IN)    :: KFLEV 

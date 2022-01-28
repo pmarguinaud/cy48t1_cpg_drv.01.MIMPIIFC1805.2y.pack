@@ -102,12 +102,14 @@ my $g = 'GraphViz2'->new (graph => {rankdir => 'LR', ordering => 'out'}, global 
 
 while (my ($k, $v) = each (%g))
   {
+     next if ($k =~ m/%/o);
     $g->add_node (name => $k, label => "$k\n$L{$k}", shape => 'box', &color ($k));
 #   $g->add_node (name => $k, label => "$k", shape => 'box', &color ($k));
-    for (@$v)
+    for my $v (@$v)
       {   
-        $g->add_edge (from => $k, to => $_);
-print "$k -- $_\n";
+        next if ($v =~ m/%/o);
+        $g->add_edge (from => $k, to => $v);
+print "$k -- $v\n";
       }   
   }
 

@@ -167,6 +167,8 @@ sub getIndent
 {
   my $stmt = shift;
 
+  $stmt or croak;
+
   my $n = $stmt->previousSibling;
 
   unless ($n) 

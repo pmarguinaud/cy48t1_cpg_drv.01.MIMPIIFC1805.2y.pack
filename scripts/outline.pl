@@ -8,6 +8,42 @@ use File::Basename;
 use lib $Bin;
 use Fxtran;
 
+sub removeListElement
+{
+  my $x = shift;
+
+  my $nn = $x->nodeName;
+
+  my ($p) = $x->parentNode;
+  
+  my @cf = &F ('following-sibling::text()[contains(.,",")]', $x);   
+  my @cp = &F ('preceding-sibling::text()[contains(.,",")]', $x);   
+  
+  if (@cf)
+    {   
+      $cf[+0]->unbindNode (); 
+    }   
+  elsif (@cp)
+    {   
+      $cp[-1]->unbindNode (); 
+    }   
+  
+  $x->parentNode->appendChild (&t (' '));
+  my $l = $x->parentNode->lastChild;
+  
+  $x->unbindNode (); 
+  
+  while ($l)
+    {   
+      last if (($l->nodeName ne '#text') && ($l->nodeName ne 'cnt'));
+      $l = $l->previousSibling;
+      last unless ($l);
+      $l->nextSibling->unbindNode;
+    }   
+
+  return &F ("./$nn", $p) ? 0 : 1;
+}
+
 
 sub resolveAssociates
 {
@@ -152,7 +188,6 @@ EOF
     
     for my $N (@N)
       {
-print "N=$N\n";
         next if ($N2M{$N});
         for my $k (@S)
           {
@@ -165,7 +200,6 @@ print "N=$N\n";
                     $M .= '_';
                   }
                 $N2M{$N} = $M;
-print "$N -> $M\n";
 
                 last;
               }
@@ -206,6 +240,15 @@ print "$N -> $M\n";
             $decl = $decl->cloneNode (1);
             my ($n) = &F ('.//EN-decl[string(EN-N)="?"]/EN-N/N/n/text()', $N, $decl);
             my @ts = &F ('.//derived-T-spec/T-N', $decl, 1);
+
+            my @en_decl = &F ('.//EN-decl', $decl);
+
+            for my $en_decl (@en_decl)
+              {
+                my ($EN_N) = &F ('./EN-N', $en_decl, 1);
+                &removeListElement ($en_decl) if ($EN_N ne $N);
+              }
+
 
             for my $ts (@ts)
               {

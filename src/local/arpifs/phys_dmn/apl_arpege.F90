@@ -875,7 +875,6 @@ REAL(KIND=JPRB) :: ZHOOK_HANDLE
 #include "acsol.intfb.h"
 #include "actqsat.intfb.h"
 #include "acuptq.intfb.h"
-#include "acveg.intfb.h"
 #include "acvisih.intfb.h"
 #include "aplpar_init.intfb.h"
 #include "aro_ground_diag_2isba.h"
@@ -923,6 +922,7 @@ REAL(KIND=JPRB) :: ZHOOK_HANDLE
 #include "apl_arpege_aerosols_for_radiation.intfb.h"
 #include "apl_arpege_cloudiness.intfb.h"
 #include "apl_arpege_radiation.intfb.h"
+#include "apl_arpege_soil_hydro.intfb.h"
 
 !     ------------------------------------------------------------------
 IF (LHOOK) CALL DR_HOOK('APL_ARPEGE', 0, ZHOOK_HANDLE)
@@ -1669,15 +1669,9 @@ CALL APL_ARPEGE_RADIATION (YDMF_PHYS_BASE_STATE, YDGEOMETRY, YDCPG_DIM, YDCPG_MI
 !     ------------------------------------------------------------------
 !     HTR DU COUVERT VEGETAL
 !     ----------------------
-! BEGIN BILAN HYDRIQUE DU SOL (IF NOT SURFEX)
-IF (LSOLV.AND.(.NOT.LMSE)) THEN
-  CALL ACVEG ( YDPHY, YDPHY1, YDCPG_DIM%KIDIA, YDCPG_DIM%KFDIA, YDCPG_DIM%KLON, YDCPG_DIM%KFLEVG, YDMF_PHYS%OUT%FRSO, &
-  & ZQV, ZFLU_QSAT, PT, YDMF_PHYS_SURF%GSD_VV%PD2, YDMF_PHYS_SURF%GSD_VF%PLSM, YDMF_PHYS_SURF%GSD_VV%PIVEG,           &
-  & YDMF_PHYS_SURF%GSD_VV%PLAI, ZFLU_NEIJ, ZFLU_VEG, YDMF_PHYS_SURF%GSD_VV%PRSMIN, ZCHROV, ZGWDCS,                    &
-  & ZWFC, YDMF_PHYS_BASE_STATE%YGSP_RR%FC, ZWWILT, YDMF_PHYS_BASE_STATE%YGSP_SB%Q, ZFLU_QSATS, ZHQ,                   &
-  & ZHTR, ZHU, YDMF_PHYS_SURF%GSD_VV%PHV, ZWLMX)
-ENDIF
-! END BILAN HYDRIQUE DU SOL (IF NOT SURFEX)
+
+CALL APL_ARPEGE_SOIL_HYDRO (YDMF_PHYS_BASE_STATE, YDCPG_DIM, YDMF_PHYS, YDMF_PHYS_SURF, YDMODEL, ZCHROV, ZFLU_NEIJ, ZFLU_QSAT, ZFLU_QSATS, ZFLU_VEG, ZGWDCS, ZHQ, ZHTR, ZHU, ZQV, ZWFC, ZWLMX, ZWWILT)
+
 !     ------------------------------------------------------------------
 !     8.- DIFFUSION VERTICALE TURBULENTE
 !     ----------------------------------

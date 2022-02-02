@@ -330,7 +330,6 @@ REAL(KIND=JPRB) :: ZFUN_TTE(YDCPG_DIM%KLON,0:YDCPG_DIM%KFLEVG)   !  Function in 
 REAL(KIND=JPRB) :: ZKTROV(YDCPG_DIM%KLON,0:YDCPG_DIM%KFLEVG),ZKUROV(YDCPG_DIM%KLON,0:YDCPG_DIM%KFLEVG),ZNBVNO(YDCPG_DIM%KLON,0:YDCPG_DIM%KFLEVG)
 REAL(KIND=JPRB) :: ZKQROV(YDCPG_DIM%KLON,0:YDCPG_DIM%KFLEVG),ZKQLROV(YDCPG_DIM%KLON,0:YDCPG_DIM%KFLEVG)
 
-
  ! arrays for 3D turb
 ! ZFMTKE - F_m function for static K_m computation
 ! ZFHTKE - F_h function for static K_h computation
@@ -343,7 +342,6 @@ REAL(KIND=JPRB) :: ZAUTKE(YDCPG_DIM%KLON,0:YDCPG_DIM%KFLEVG),ZATTKE(YDCPG_DIM%KL
 REAL(KIND=JPRB) :: ZTH_FUN(YDCPG_DIM%KLON,0:YDCPG_DIM%KFLEVG),ZWW_FUN(YDCPG_DIM%KLON,0:YDCPG_DIM%KFLEVG)
 ! ZFMGST - stability function F_m for moist gustiness correction
 REAL(KIND=JPRB) :: ZFMGST(YDCPG_DIM%KLON,0:YDCPG_DIM%KFLEVG)
-
 
 !     ------------------------------------------------------------------
 
@@ -362,57 +360,24 @@ REAL(KIND=JPRB) :: ZLMU(YDCPG_DIM%KLON,0:YDCPG_DIM%KFLEVG)
 REAL(KIND=JPRB) :: ZLMU2(YDCPG_DIM%KLON,0:YDCPG_DIM%KFLEVG),ZLMT2(YDCPG_DIM%KLON,0:YDCPG_DIM%KFLEVG) ! temporary storage of lm,lh
 REAL(KIND=JPRB) :: ZLML(YDCPG_DIM%KLON,0:YDCPG_DIM%KFLEVG) ! TKE type mixing length
 REAL(KIND=JPRB) :: ZLMLTILD(YDCPG_DIM%KLON,0:YDCPG_DIM%KFLEVG) ! 'STATIC' TKE type mixing length
-   ! updraught envt vert vel*dt
- ! fall velocity of rain
- ! fall velocity of snow
- ! fall velocity of graupel
 REAL(KIND=JPRB) :: ZICEFR1(YDCPG_DIM%KLON,YDCPG_DIM%KFLEVG)! Resolved Condensate ice fraction
 REAL(KIND=JPRB) :: ZRHCRI(YDCPG_DIM%KLON,YDCPG_DIM%KFLEVG) ! Smith scheme critical RH
 REAL(KIND=JPRB) :: ZRHDFDA(YDCPG_DIM%KLON,YDCPG_DIM%KFLEVG)! RK scheme change in RH over cloud
 REAL(KIND=JPRB) :: ZLHS(YDCPG_DIM%KLON,YDCPG_DIM%KFLEVG)   ! Sublimation latent heat
 REAL(KIND=JPRB) :: ZLHV(YDCPG_DIM%KLON,YDCPG_DIM%KFLEVG)   ! Evaporation latent heat
-    ! Temporar storage for updated PLH
- ! Temporar storage for updated PLSCPE
-  ! Temporar storage for updated PQSAT
 REAL(KIND=JPRB) :: ZQSATS(YDCPG_DIM%KLON,YDCPG_DIM%KFLEVG) ! QSAT of resolved cond./evap. scheme
-    ! Temporar storage for updated PQW
 REAL(KIND=JPRB) :: ZRH(YDCPG_DIM%KLON,YDCPG_DIM%KFLEVG)    ! Temporar storage for updated PRH
 REAL(KIND=JPRB) :: ZTW(YDCPG_DIM%KLON,YDCPG_DIM%KFLEVG)    ! Temporar storage for updated PTW)
-    ! Saturation departure for a given thermodynamic state
-   ! maximum saturation departure
 REAL(KIND=JPRB) :: ZPOID(YDCPG_DIM%KLON,YDCPG_DIM%KFLEVG)  ! DP/(RG*DT) FOR A GIVEN LEVEL AND A GIVEN TIME STEP.
 REAL(KIND=JPRB) :: ZIPOI(YDCPG_DIM%KLON,YDCPG_DIM%KFLEVG)  ! INVERSE OF ZPOID.
-
- ! Updraught Specific moisture
- ! Updraught Temperature
- ! Updraught zonal wind
- ! Updraught merid. wind
-
- ! Temperature for microphysics
- ! Specific moisture for microphysics
-
-     ! updated temperature T for cascading parameterization
- ! temperature corr. for convective cloud
- ! net melting (-freezing) rate of ice
-! net melting (-freezing) rate of graupel
-     ! updated zonal velocity
-     ! updated meridional velocity
-
 REAL(KIND=JPRB) :: ZQV(YDCPG_DIM%KLON,YDCPG_DIM%KFLEVG)    ! corrected (for negative values) vapour
-                                     ! updated value for cascading parameterization
 REAL(KIND=JPRB) :: ZQI(YDCPG_DIM%KLON,YDCPG_DIM%KFLEVG)    ! corrected (for negative values) cloud ice
-                                     ! updated value for cascading parameterization
 REAL(KIND=JPRB) :: ZQL(YDCPG_DIM%KLON,YDCPG_DIM%KFLEVG)    ! corrected (for negative values) cloud liquid
-                                     ! updated value for cascading parameterization
 REAL(KIND=JPRB) :: ZQR(YDCPG_DIM%KLON,YDCPG_DIM%KFLEVG)    ! corrected (for negative values) rain
-                                     ! updated value for cascading parameterization
 REAL(KIND=JPRB) :: ZQS(YDCPG_DIM%KLON,YDCPG_DIM%KFLEVG)    ! corrected (for negative values) snow
-                                     ! updated value for cascading parameterization
 REAL(KIND=JPRB) :: ZTENHA(YDCPG_DIM%KLON,YDCPG_DIM%KFLEVG)
 REAL(KIND=JPRB) :: ZTENQVA(YDCPG_DIM%KLON,YDCPG_DIM%KFLEVG)
 REAL(KIND=JPRB) :: ZCP(YDCPG_DIM%KLON,YDCPG_DIM%KFLEVG)    ! new cp for turbulent diffusion
-
-
 REAL(KIND=JPRB) :: ZFCQVNG(YDCPG_DIM%KLON,0:YDCPG_DIM%KFLEVG) ! correction flux increment for neg vapour
 REAL(KIND=JPRB) :: ZFCQING(YDCPG_DIM%KLON,0:YDCPG_DIM%KFLEVG) ! correction flux increment for neg ice
 REAL(KIND=JPRB) :: ZFCQLNG(YDCPG_DIM%KLON,0:YDCPG_DIM%KFLEVG) ! correction flux increment for neg liquid water
@@ -420,37 +385,22 @@ REAL(KIND=JPRB) :: ZFPLSL(YDCPG_DIM%KLON,0:YDCPG_DIM%KFLEVG) ! total liquid wate
 REAL(KIND=JPRB) :: ZFPLSN(YDCPG_DIM%KLON,0:YDCPG_DIM%KFLEVG) ! total solid water flux: diff+sedi+snow
 REAL(KIND=JPRB) :: ZFCQL(YDCPG_DIM%KLON,0:YDCPG_DIM%KFLEVG)   ! condensation flux(liquid)
 REAL(KIND=JPRB) :: ZFCQI(YDCPG_DIM%KLON,0:YDCPG_DIM%KFLEVG)   ! condensation flux(ice)
- ! downdraft flux of specific humidity
- ! downdraft flux of liquid water
- ! downdraft flux of  solid water
 REAL(KIND=JPRB) :: ZSEDIQL(YDCPG_DIM%KLON,0:YDCPG_DIM%KFLEVG) ! sedimentation flux of cloud liquid water
 REAL(KIND=JPRB) :: ZSEDIQI(YDCPG_DIM%KLON,0:YDCPG_DIM%KFLEVG) ! sedimentation flux of cloud ice water
- ! downdraft entalphy flux
- ! change in horizontal mom.
- ! change in horizontal mom.
- ! degree of inhomogeneity in precips.
-         ! Convective precipit mesh fraction
-         ! Precipitation mesh fraction
-        ! Precipitation auxilary
 REAL(KIND=JPRB) :: ZDIFCVPPQ(YDCPG_DIM%KLON,0:YDCPG_DIM%KFLEVG) ! Flux de CVPP (KFB or EDKF) sur Qv
 REAL(KIND=JPRB) :: ZDIFCVPPS(YDCPG_DIM%KLON,0:YDCPG_DIM%KFLEVG) ! Flux de CVPP (KFB or EDKF) sur CpT
 REAL(KIND=JPRB) :: ZDIFCVTH(YDCPG_DIM%KLON,0:YDCPG_DIM%KFLEVG) ! Flux de CV sur Theta air sec
 REAL(KIND=JPRB) :: ZDIFCVPPU(YDCPG_DIM%KLON,0:YDCPG_DIM%KFLEVG) ! Flux de CVPP (EDKF) sur U
 REAL(KIND=JPRB) :: ZDIFCVPPV(YDCPG_DIM%KLON,0:YDCPG_DIM%KFLEVG) ! Flux de CVPP (EDKF) sur V
-
 REAL(KIND=JPRB) :: ZEDMFQ(YDCPG_DIM%KLON,0:YDCPG_DIM%KFLEVG) ! Mass flux part of EDMF flux for Qv
 REAL(KIND=JPRB) :: ZEDMFS(YDCPG_DIM%KLON,0:YDCPG_DIM%KFLEVG) ! Mass flux part of EDMF flux for CpT
 REAL(KIND=JPRB) :: ZEDMFU(YDCPG_DIM%KLON,0:YDCPG_DIM%KFLEVG) ! Mass flux part of EDMF flux for U
 REAL(KIND=JPRB) :: ZEDMFV(YDCPG_DIM%KLON,0:YDCPG_DIM%KFLEVG) ! Mass flux part of EDMF flux for V
 REAL(KIND=JPRB) :: ZMF_UP(YDCPG_DIM%KLON,0:YDCPG_DIM%KFLEVG) ! Mass flux for implicit formulation of EDMF equation (LEDMFI)
- ! Flux de masse (updraft) pour XIOS output
- ! Flux de masse (downdraft) pour XIOS output
-
 REAL(KIND=JPRB) :: ZCONDCVPPL(YDCPG_DIM%KLON,0:YDCPG_DIM%KFLEVG) ! Flux de condensation liquide du a CVVPP (KFB)
 REAL(KIND=JPRB) :: ZCONDCVPPI(YDCPG_DIM%KLON,0:YDCPG_DIM%KFLEVG) ! Flux de condensation glace du a CVVPP (KFB)
 REAL(KIND=JPRB) :: ZPRODTH_CVPP(YDCPG_DIM%KLON,0:YDCPG_DIM%KFLEVG) ! Flux de production thermique de TKE du a CVPP(KFB)
 REAL(KIND=JPRB) :: ZDQV, ZDQI, ZDQL, ZDQR, ZDQS, ZDQC, ZGDT, ZGDTI, ZQV0
- ! temporary array
 
 !!for BAYRAD
 REAL(KIND=JPRB) :: ZDE2MR(YDCPG_DIM%KLON,YDCPG_DIM%KFLEVG) ! temporary array for conversion of density to mixing ratio
@@ -709,15 +659,6 @@ REAL(KIND=JPRB)    :: ZQLI_CVP(YDCPG_DIM%KLON,YDCPG_DIM%KFLEVG)
 REAL(KIND=JPRB)    :: ZQC_DET_PCMT(YDCPG_DIM%KLON,YDCPG_DIM%KFLEVG)
 REAL(KIND=JPRB)    :: ZFPLS(YDCPG_DIM%KLON,0:YDCPG_DIM%KFLEVG),ZFPLC(YDCPG_DIM%KLON,0:YDCPG_DIM%KFLEVG)
 
-
-
-
-! Tracers: prognostique aerosols, passive scalars...
-INTEGER(KIND=JPIM) :: INBTRA
-INTEGER(KIND=JPIM) :: INBTRA_DEP
-REAL(KIND=JPRB), ALLOCATABLE :: ZSTRCTRA(:,:,:)
-REAL(KIND=JPRB), ALLOCATABLE :: ZTRA(:,:,:)
-
 REAL(KIND=JPRB) :: ZDCAPE(YDCPG_DIM%KLON) ! Descending CAPE for gusts.
 
 ! ACRANEB/ACRANEB2 local variables
@@ -729,10 +670,6 @@ REAL(KIND=JPRB) :: ZDECRD   (YDCPG_DIM%KLON) ! decorrelation depth for cloud ove
 REAL(KIND=JPRB) :: ZDECRD_MF(YDCPG_DIM%KLON) ! decorrelation depth for cloud overlaps
                                    ! in microphysics
 REAL(KIND=JPRB) :: ZQG(YDCPG_DIM%KLON,YDCPG_DIM%KFLEVG)
-
-
-
-
 
 ! Precipitation type diagnostics
 !--------------------------------
@@ -1156,26 +1093,6 @@ ENDIF
     ENDDO
   ENDDO
 
-!    ------------------------------------------------------------------
-!     PROGNOSTIC GEMS/MACC AEROSOLS - INITIAL COMPUTATIONS
-!     IMPORTANT for IFS: Tracer order is : CO2 - other tracers - react Gases - Aerosol - extra GFL
-!    ------------------------------------------------------------------
-
-  ! Preliminary for prog. aerosol or extra gfl
-  INBTRA=0
-  
-  IF (NAERO>0)                  INBTRA=NAERO           ! the two cases exclude each other
-  ALLOCATE(ZSTRCTRA(YDCPG_DIM%KLON,0:YDCPG_DIM%KFLEVG,INBTRA)) ! to cover both prog aero and extra gfl cases
-  ALLOCATE(ZTRA    (YDCPG_DIM%KLON,  YDCPG_DIM%KFLEVG,INBTRA))
-  IF (INBTRA > 0) THEN
-    ZSTRCTRA(:,:,:) = 0._JPRB
-    ZTRA(:,:,:)     = 0._JPRB
-  ENDIF 
-  IF(INBTRA == 0) THEN
-    INBTRA_DEP=0
-  ELSE
-    INBTRA_DEP=1
-  ENDIF
 
 !     ------------------------------------------------------------------
 !     2.- MISES A ZERO DE SECURITE EN CAS DE NON-APPEL DES PARAMETRIS.
@@ -1763,11 +1680,11 @@ CALL APL_ARPEGE_HYDRO_BUDGET (YDMF_PHYS_BASE_STATE, YDCPG_DIM, YDCPG_GPAR, YDMF_
 !               AU-DESSUS DE 50 KM (I.E. DANS LA MESOSPHERE)
 !     ------------------------------------------------------------------
 
-! BEGIN MESOSPHERIC DRAG  
+! 
+! MESOSPHERIC DRAG  
 CALL ACDRME ( YDMODEL%YRCST, YDPHY2, YDTOPH, YDCPG_DIM%KIDIA, YDCPG_DIM%KFDIA, YDCPG_DIM%KLON,               &
 & NTDRME, YDCPG_DIM%KFLEVG, PCP, PDELP, PT, ZQV, PU, PV, YDMF_PHYS%OUT%FRMH, ZMSC_FRMQ, YDMF_PHYS%OUT%STRMU, &
 & YDMF_PHYS%OUT%STRMV, RMESOT, RMESOQ, RMESOU, STTEM)
-! END MESOSPHERIC DRAG  
   
 !     ------------------------------------------------------------------
 

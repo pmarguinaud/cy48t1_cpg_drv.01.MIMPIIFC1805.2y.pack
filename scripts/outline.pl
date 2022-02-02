@@ -168,8 +168,13 @@ EOF
 
     for my $N (@N)
       {
-        my @expr = &F ('.//named-E[string(N)="?"]', $N, $d);
-        $loc{$N} = @expr > 1 ? 0 : 1;
+        my @expr_d = &F ('.//named-E[string(N)="?"]', $N, $d); 
+        my @expr_n;
+        for my $node (@node)
+          {
+            push @expr_n, &F ('.//named-E[string(N)="?"]', $N, $node);
+          }
+        $loc{$N} = @expr_d > @expr_n ? 0 : 1;
       }
 
     my %rank = map { ($N[$_], $_) } (0 .. $#N);

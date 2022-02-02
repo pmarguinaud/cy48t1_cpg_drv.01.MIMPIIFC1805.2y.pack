@@ -144,7 +144,7 @@ EOF
         &resolveAssociates ($node);
       }
     
-    my (%N, %do, %call);
+    my (%N, %do, %call, %loc);
     for my $node (@node)
       {
         my @expr = &F ('.//named-E', $node);
@@ -165,6 +165,17 @@ EOF
       }
 
     my @N = &sortArgs ($d, grep { (! $do{$_}) && (! $call{$_}) } keys (%N));
+
+    for my $N (@N)
+      {
+        my @expr = &F ('.//named-E[string(N)="?"]', $N, $d);
+        $loc{$N} = @expr > 1 ? 0 : 1;
+      }
+
+    my %rank = map { ($N[$_], $_) } (0 .. $#N);
+
+    @N = sort { ($loc{$a} <=> $loc{$b}) or ($rank{$a} <=> $rank{$b}) } @N;
+
 
     my %N2M;
     
@@ -194,7 +205,8 @@ EOF
             if (index ($N, $k) == 0)
               {
                 my $v = $S{$k};
-                (my $M = $N) =~ s/^$k/$v/;
+                my $M = $N;
+                $M =~ s/^$k/$v/ unless ($loc{$N});
                 while ($M{$M})
                   {
                     $M .= '_';
@@ -208,7 +220,7 @@ EOF
 
 
     $C->replaceNode (&n ("<call-stmt>CALL <procedure-designator><named-E><N><n>$SUB</n></N></named-E></procedure-designator> (<arg-spec>"  
-                       . join (', ', map { "<arg><named-E><N><n>$_</n></N></named-E></arg>" } @N) . '</arg-spec>)</call-stmt>'));
+                       . join (', ', map { "<arg><named-E><N><n>$_</n></N></named-E></arg>" } grep { ! $loc{$_} } @N) . '</arg-spec>)</call-stmt>'));
 
     my ($C1, $C2) = &F ('.//C', $o);
     
@@ -226,8 +238,11 @@ EOF
 
         $N2M{$N} or die $N;
 
-        $dummy_arg_LT->appendChild (&n ("<arg-N><N><n>$N2M{$N}</n></N></arg-N>"));
-        $dummy_arg_LT->appendChild (&t (", ")) if ($N ne $N[-1]);
+        if (! $loc{$N})
+          {
+            $dummy_arg_LT->appendChild (&n ("<arg-N><N><n>$N2M{$N}</n></N></arg-N>"));
+            $dummy_arg_LT->appendChild (&t (", ")) if ($N ne $N[-1]);
+          }
 
         my @n = &F ('.//named-E[string(N)="?"]/N/n/text()', $N, $o);
         for my $n (@n)
@@ -303,6 +318,13 @@ EOF
 
     $C1->unbindNode ();
     $C2->unbindNode ();
+
+    for my $N (@N)
+      {
+        my ($en_decl) = &F ('.//EN-decl[string(EN-N)="?"]', $N, $d);
+        my $stmt = &Fxtran::stmt ($en_decl);
+        $stmt->unbindNode () if (&removeListElement ($en_decl));
+      }
 
     my $dir = &dirname ($F90);
     'FileHandle'->new (">$dir/$sub.F90")->print ($o->textContent);

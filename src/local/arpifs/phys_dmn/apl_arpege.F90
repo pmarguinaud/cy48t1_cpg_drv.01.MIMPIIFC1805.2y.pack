@@ -388,8 +388,8 @@ REAL(KIND=JPRB) :: ZIPOI(YDCPG_DIM%KLON,YDCPG_DIM%KFLEVG)  ! INVERSE OF ZPOID.
  ! Updraught zonal wind
  ! Updraught merid. wind
 
-REAL(KIND=JPRB) :: ZTMIC(YDCPG_DIM%KLON,YDCPG_DIM%KFLEVG) ! Temperature for microphysics
-REAL(KIND=JPRB) :: ZQMIC(YDCPG_DIM%KLON,YDCPG_DIM%KFLEVG) ! Specific moisture for microphysics
+ ! Temperature for microphysics
+ ! Specific moisture for microphysics
 
      ! updated temperature T for cascading parameterization
  ! temperature corr. for convective cloud
@@ -730,9 +730,9 @@ REAL(KIND=JPRB) :: ZDECRD_MF(YDCPG_DIM%KLON) ! decorrelation depth for cloud ove
                                    ! in microphysics
 REAL(KIND=JPRB) :: ZQG(YDCPG_DIM%KLON,YDCPG_DIM%KFLEVG)
 
-REAL(KIND=JPRB) :: ZFRSO(YDCPG_DIM%KLON,0:YDCPG_DIM%KFLEVG),ZFRTH(YDCPG_DIM%KLON,0:YDCPG_DIM%KFLEVG)
 
-LOGICAL :: LLPTQ
+
+
 
 ! Precipitation type diagnostics
 !--------------------------------
@@ -816,10 +816,8 @@ REAL(KIND=JPRB) :: ZHOOK_HANDLE
 #include "achmt.intfb.h"
 #include "achmtls.intfb.h"
 #include "acpluis.intfb.h"
-#include "acpluiz.intfb.h"
 #include "acsol.intfb.h"
 #include "actqsat.intfb.h"
-#include "acuptq.intfb.h"
 #include "acvisih.intfb.h"
 #include "aplpar_init.intfb.h"
 #include "aro_ground_diag_2isba.h"
@@ -867,6 +865,7 @@ REAL(KIND=JPRB) :: ZHOOK_HANDLE
 #include "apl_arpege_soil_hydro.intfb.h"
 #include "apl_arpege_surface.intfb.h"
 #include "apl_arpege_deep_convection.intfb.h"
+#include "apl_arpege_precipitation.intfb.h"
 
 !     ------------------------------------------------------------------
 IF (LHOOK) CALL DR_HOOK('APL_ARPEGE', 0, ZHOOK_HANDLE)
@@ -1701,28 +1700,9 @@ ENDIF
 CALL APL_ARPEGE_DEEP_CONVECTION (YDMF_PHYS_BASE_STATE, YDGEOMETRY, YDCPG_DIM, YDMF_PHYS, YDCPG_DYN0, &
 & YDMF_PHYS_SURF, YDVARS, YDCFU, YDMODEL, ZFPCOR, ZQV, ZTENHA, ZTENQVA, ZTENT)
 
-! BEGIN ARPEGE PRECIPITATION SCHEME  
-ZFRSO(:,:) = 0.0_JPRB
-ZFRTH(:,:) = 0.0_JPRB
-LLPTQ = .TRUE.
-CALL ACUPTQ ( YDCPG_DIM%KLON, YDCPG_DIM%KIDIA, YDCPG_DIM%KFDIA, YDCPG_DIM%KFLEVG, LLPTQ, ZFRSO,                    &
-& ZFRTH, YDMF_PHYS%OUT%DIFCQ, YDMF_PHYS%OUT%DIFCS, YDMF_PHYS%OUT%DIFTQ, YDMF_PHYS%OUT%DIFTS, YDMF_PHYS%OUT%FCCQL,  &
-& YDMF_PHYS%OUT%FCCQN, YDMF_PHYS%OUT%FPLCL, YDMF_PHYS%OUT%FPLCN, YDMF_PHYS%OUT%FPEVPCL, YDMF_PHYS%OUT%FPEVPCN,     &
-& YDMF_PHYS%OUT%FPFPCL, YDMF_PHYS%OUT%FPFPCN, YDMF_PHYS_BASE_STATE%YCPG_PHY%XYB%RDELP, PT, YDMF_PHYS_BASE_STATE%Q, &
-& YDMF_PHYS_BASE_STATE%YGSP_RR%T, ZTENHA, ZTENQVA )
-  
-      ! Microphysics occurs in the resolved state.
-ZTMIC(YDCPG_DIM%KIDIA:YDCPG_DIM%KFDIA,YDCPG_DIM%KTDIA:YDCPG_DIM%KFLEVG)=PT(YDCPG_DIM%KIDIA:YDCPG_DIM%KFDIA,YDCPG_DIM%KTDIA:YDCPG_DIM%KFLEVG)
-ZQMIC(YDCPG_DIM%KIDIA:YDCPG_DIM%KFDIA,YDCPG_DIM%KTDIA:YDCPG_DIM%KFLEVG)=ZQV(YDCPG_DIM%KIDIA:YDCPG_DIM%KFDIA,YDCPG_DIM%KTDIA:YDCPG_DIM%KFLEVG)
-
-CALL ACPLUIZ ( YDMODEL%YRML_PHY_MF, YDCPG_DIM%KIDIA, YDCPG_DIM%KFDIA, YDCPG_DIM%KLON, NTPLUI, YDCPG_DIM%KFLEVG,        &
-& ZTMIC, ZQMIC, ZQL, ZQI, ZQR, ZQS, PDELP, PAPRSF, PCP, PR, ZNEBS, ZQLIS, ZNEB_CVPP, ZQLI_CVPP,                        &
-& ZQC_DET_PCMT, ZTENHA, ZTENQVA, .TRUE., PAPHI, YDMF_PHYS_BASE_STATE%YGSP_RR%T, ZFLU_NEIJ, YDMF_PHYS_SURF%GSD_VF%PLSM, &
-& YDVARS%GEOMETRY%GM%T0, ZVETAF, YDMF_PHYS%OUT%FCSQL, YDMF_PHYS%OUT%FCSQN, YDMF_PHYS%OUT%FPLSL, YDMF_PHYS%OUT%FPLSN,   &
-& YDMF_PHYS%OUT%FPEVPSL, YDMF_PHYS%OUT%FPEVPSN, YDMF_PHYS%OUT%FPFPSL, YDMF_PHYS%OUT%FPFPSN, ZSEDIQL,                   &
-& ZSEDIQI )
-
-! END ARPEGE PRECIPITATION SCHEME  
+CALL APL_ARPEGE_PRECIPITATION (YDMF_PHYS_BASE_STATE, YDCPG_DIM, YDMF_PHYS, YDMF_PHYS_SURF, YDVARS, YDMODEL, &
+& ZFLU_NEIJ, ZNEBS, ZNEB_CVPP, ZQC_DET_PCMT, ZQI, ZQL, ZQLIS, ZQLI_CVPP, ZQR, ZQS, ZQV, ZSEDIQI, ZSEDIQL, &
+& ZTENHA, ZTENQVA, ZVETAF)
     
 ZFLX_LOTT_GWU(:, :) = 0.0_JPRB
 ZFLX_LOTT_GWV(:, :) = 0.0_JPRB

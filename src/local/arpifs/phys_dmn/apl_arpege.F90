@@ -811,7 +811,6 @@ REAL(KIND=JPRB) :: ZHOOK_HANDLE
 #include "acdnshf.intfb.h"
 #include "acdrag.intfb.h"
 #include "acdrme.intfb.h"
-#include "acdrov.intfb.h"
 #include "acevadcape.intfb.h"
 #include "achmt.intfb.h"
 #include "achmtls.intfb.h"
@@ -820,10 +819,7 @@ REAL(KIND=JPRB) :: ZHOOK_HANDLE
 #include "actqsat.intfb.h"
 #include "acvisih.intfb.h"
 #include "aplpar_init.intfb.h"
-#include "aro_ground_diag_2isba.h"
-#include "aro_ground_diag.h"
 #include "aro_ground_diag_z0.h"
-#include "aro_ground_param.h"
 #include "checkmv.intfb.h"
 #include "cpchet.intfb.h"
 #include "cpmvvps.intfb.h"
@@ -866,6 +862,7 @@ REAL(KIND=JPRB) :: ZHOOK_HANDLE
 #include "apl_arpege_surface.intfb.h"
 #include "apl_arpege_deep_convection.intfb.h"
 #include "apl_arpege_precipitation.intfb.h"
+#include "apl_arpege_hydro_budget.intfb.h"
 
 !     ------------------------------------------------------------------
 IF (LHOOK) CALL DR_HOOK('APL_ARPEGE', 0, ZHOOK_HANDLE)
@@ -1757,27 +1754,9 @@ CALL QNGCOR (YDPHY2, YDCPG_DIM%KIDIA, YDCPG_DIM%KFDIA, YDCPG_DIM%KLON, NTPLUI, Y
 !     ------------------------------------------------------------------
 !     12. - BILAN HYDRIQUE DU SOL
 !     ---------------------------
-! BEGIN BILAN HYDRIQUE DU SOL 
-IF ( LMSE ) THEN
-  DO JLON=YDCPG_DIM%KIDIA,YDCPG_DIM%KFDIA
-    YDCPG_GPAR%RAIN(JLON)=ZFPLSL(JLON,YDCPG_DIM%KFLEVG)+YDMF_PHYS%OUT%FPLCL(JLON,YDCPG_DIM%KFLEVG)
-    YDCPG_GPAR%SNOW(JLON)=ZFPLSN(JLON,YDCPG_DIM%KFLEVG)+YDMF_PHYS%OUT%FPLCN(JLON,YDCPG_DIM%KFLEVG)
-  ENDDO
-ELSE
-  IF ( LSOLV ) THEN
-    CALL ACDROV ( YDMODEL%YRML_PHY_MF, YDCPG_DIM%KIDIA, YDCPG_DIM%KFDIA, YDCPG_DIM%KLON, YDCPG_DIM%KFLEVG,             &
-    & YSP_SBD%NLEVS, YDMF_PHYS%OUT%FPLCL, YDMF_PHYS%OUT%FPLCN, ZFPLSL, ZFPLSN, YDMF_PHYS%OUT%FRSO, YDMF_PHYS%OUT%FRTH, &
-    & ZDSA_C1, ZDSA_C2, ZC3, ZCN, YDMF_PHYS%OUT%CT, YDMF_PHYS_SURF%GSD_VV%PD2, YDMF_PHYS%OUT%FEVV, YDMF_PHYS%OUT%FTR,  &
-    & YDMF_PHYS_SURF%GSD_VV%PLAI, ZFLU_NEIJ, ZFLU_VEG, ZWFC, ZWPMX, YDMF_PHYS_BASE_STATE%YGSP_RR%FC,                   &
-    & ZWLMX, ZWSEQ, ZWSMX, YDMF_PHYS%OUT%FCHSP, YDMF_PHYS%OUT%FCLL, YDMF_PHYS%OUT%FCLN, YDMF_PHYS%OUT%FCS,             &
-    & ZFLU_FEVI, YDMF_PHYS%OUT%FEVL, YDMF_PHYS%OUT%FEVN, YDMF_PHYS_SURF%GSD_VF%PLSM, YDMF_PHYS_BASE_STATE%YGSP_SG%F,   &
-    & YDMF_PHYS_BASE_STATE%YGSP_SB%T, YDMF_PHYS_BASE_STATE%YGSP_RR%T, YDMF_PHYS_BASE_STATE%YGSP_SB%Q,                  &
-    & YDMF_PHYS_BASE_STATE%YGSP_SB%TL, YDMF_PHYS_BASE_STATE%YGSP_RR%W, YDMF_PHYS_BASE_STATE%YGSP_RR%IC,                &
-    & YDMF_PHYS%OUT%FGEL, YDMF_PHYS%OUT%FGELS, YDMF_PHYS%OUT%FLWSP, YDMF_PHYS%OUT%FONTE, YDMF_PHYS%OUT%RUISP,          &
-    & YDMF_PHYS%OUT%RUISL, YDMF_PHYS%OUT%RUISS)
-  ENDIF
-ENDIF
-! END BILAN HYDRIQUE DU SOL 
+
+CALL APL_ARPEGE_HYDRO_BUDGET (YDMF_PHYS_BASE_STATE, YDCPG_DIM, YDCPG_GPAR, YDMF_PHYS, YDMF_PHYS_SURF, YDSURF, YDMODEL, ZC3, ZCN, ZDSA_C1, ZDSA_C2, ZFLU_FEVI, ZFLU_NEIJ, ZFLU_VEG, ZFPLSL, ZFPLSN, ZWFC, ZWLMX, ZWPMX, ZWSEQ, ZWSMX)
+
 !*
 !-  --------------------------------------------------------------------
 !     13.- DRAG MESOSPHERIQUE POUR UN MODELE POSSEDANT DES NIVEAUX

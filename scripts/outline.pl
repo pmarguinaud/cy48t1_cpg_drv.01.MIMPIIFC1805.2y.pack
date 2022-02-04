@@ -328,6 +328,7 @@ EOF
       {
         next unless ($loc{$N});
         my ($en_decl) = &F ('.//EN-decl[string(EN-N)="?"]', $N, $d);
+        die $N unless ($en_decl);
         my $stmt = &Fxtran::stmt ($en_decl);
         $stmt->unbindNode () if (&removeListElement ($en_decl));
       }

@@ -772,6 +772,7 @@ REAL(KIND=JPRB) :: ZHOOK_HANDLE
 !     ------------------------------------------------------------------
 
 #include "fcttrm.func.h"
+
 #include "apl_arpege_oceanic_fluxes.intfb.h"
 #include "apl_wind_gust.intfb.h"
 #include "apl_arpege_shallow_convection_and_turbulence.intfb.h"
@@ -913,15 +914,6 @@ CALL APLPAR_INIT (YDCPG_DIM%KIDIA, YDCPG_DIM%KFDIA, YDCPG_DIM%KLON, YDCPG_DIM%KF
 DO JROF=YDCPG_DIM%KIDIA,YDCPG_DIM%KFDIA
   YDMF_PHYS_SURF%GSD_VF%PLSM(JROF)=REAL(NINT(YDMF_PHYS_SURF%GSD_VF%PLSM(JROF)),JPRB)
 ENDDO
-
-IF (LTWOTL) THEN
-  
-ELSE
-   ! IF (LAJUCV) THEN
-   !   missing code under LAJUCV for leap-frog schemes.
-   ! ENDIF
-ENDIF
-
 
 !
 !-------------------------------------------------
@@ -1838,6 +1830,9 @@ ZTENDLCONV  = 0._JPRB
 ZTENDRCONV  = 0._JPRB
 ZTENDSCONV  = 0._JPRB
 ZTENDTKE    = 0._JPRB
+! ky: non-zero option not yet coded for the time being.
+ZTENDD      = 0.0_JPRB
+
 
 ! * CPTEND+CPUTQY = Old( CPATY + CPDUP + CPDTHP )
 ! Calcul des tendances de T , U et de Q et modifications
@@ -1875,7 +1870,7 @@ ELSE
 !     PFEPFP was ZFEPFP in CPTEND_NEW, before, ZFEPFP still in CPFHPFS
     DO JLEV= 0, YDCPG_DIM%KFLEVG 
       DO JROF = 1, YDCPG_DIM%KLON
-        YDMF_PHYS%OUT%FEPFP(JROF,JLEV) = 0.0_JPRB
+        YDMF_PHYS%OUT%FEPFP (JROF,JLEV) = 0.0_JPRB
         YDMF_PHYS%OUT%FCMPCQ(JROF,JLEV) = 0.0_JPRB
         YDMF_PHYS%OUT%FCMPSN(JROF,JLEV) = 0.0_JPRB
         YDMF_PHYS%OUT%FCMPSL(JROF,JLEV) = 0.0_JPRB
@@ -1919,9 +1914,6 @@ ENDIF
 
 !        2.9  Computation of evolution of T, u, v and Q.
 !             ------------------------------------------
-
-! ky: non-zero option not yet coded for the time being.
-ZTENDD=0.0_JPRB
 
 ! Calcul de T , Q et du Vent a l'instant 1
 

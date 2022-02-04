@@ -94,7 +94,7 @@ sub sortArgs
   return (@d, @l);
 }
 
-my @INTRINSIC = qw (SIGN MAX MIN MOD JPRB REAL);
+my @INTRINSIC = qw (SIGN MAX MIN MOD JPRB REAL EXP ASIN FOLH SQRT);
 my %INTRINSIC = map { ($_, 1) } @INTRINSIC;
 
 

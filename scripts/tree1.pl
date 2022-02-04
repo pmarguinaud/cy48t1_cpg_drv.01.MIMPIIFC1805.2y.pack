@@ -99,6 +99,7 @@ sub color
 my $root = join ('-', sort @root);
 
 my $g = 'GraphViz2'->new (graph => {rankdir => 'LR', ordering => 'out'}, global => {rank => 'source'});
+#my $g = 'GraphViz2'->new (graph => {rankdir => 'TB', ordering => 'out'}, global => {rank => 'source'});
 
 while (my ($k, $v) = each (%g))
   {

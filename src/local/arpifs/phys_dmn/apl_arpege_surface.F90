@@ -196,7 +196,7 @@ IF ( YDMODEL%YRML_PHY_MF%YRARPHY%LMSE.AND.LCALLSFX ) THEN
   & ZFMDV(YDCPG_DIM%KIDIA:YDCPG_DIM%KFDIA), PALBP(YDCPG_DIM%KIDIA:YDCPG_DIM%KFDIA, 1:YDMODEL%YRML_PHY_RAD%YRERAD%NSW),                                                                      &
   & PALBD(YDCPG_DIM%KIDIA:YDCPG_DIM%KFDIA, 1:YDMODEL%YRML_PHY_RAD%YRERAD%NSW), PFLU_EMIS(YDCPG_DIM%KIDIA:YDCPG_DIM%KFDIA),                                                                  &
   & PTSN(YDCPG_DIM%KIDIA:YDCPG_DIM%KFDIA), YDMF_PHYS%OUT%FRTH(YDCPG_DIM%KIDIA:YDCPG_DIM%KFDIA, YDCPG_DIM%KFLEVG, 1)                                                                         &
-  &                                           )               !orographic shadowing
+  &                                                                                                                      )               !orographic shadowing
 
 ! Opposite water vapor flux
         ZFEVS(:)=-ZFEV(:)
@@ -283,7 +283,7 @@ ELSEIF (.NOT.YDMODEL%YRML_PHY_MF%YRARPHY%LMSE) THEN
   & ZFMDU, ZFMDV, PSC_FEVI, PSC_FEVN, PSC_FCLL, PSC_FCLN, YDMF_PHYS%OUT%FCHSP, YDMF_PHYS%OUT%FCLL, YDMF_PHYS%OUT%FCLN,         &
   & YDMF_PHYS%OUT%FCS, PFLU_FEVI, YDMF_PHYS%OUT%FEVL, YDMF_PHYS%OUT%FEVN, YDMF_PHYS%OUT%FEVV, YDMF_PHYS%OUT%FTR,               &
   & PDSA_LHS, YDMF_PHYS_SURF%GSD_VH%PQSH, YDMF_PHYS%OUT%FRTH, YDMF_PHYS_SURF%GSD_VF%PZ0F, YDMF_PHYS_SURF%GSD_VV%PZ0H           &
-  &                   )
+  &                                )
 
   DO JLON=YDCPG_DIM%KIDIA,YDCPG_DIM%KFDIA
     YDMF_PHYS%OUT%DIFTQ(JLON,YDCPG_DIM%KFLEVG)=PDIFWQ(JLON)

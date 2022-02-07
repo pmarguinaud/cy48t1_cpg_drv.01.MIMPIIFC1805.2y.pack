@@ -248,7 +248,7 @@ ENDIF
 END SUBROUTINE ${name}$_FINAL
 #:enddef
 
-#:def pcpg_struct_methods (name, vars, type, modn, memb)
+#:def pcpg_struct_methods (name, vars, type, modn, memb, use_lbounds=False)
 SUBROUTINE ${name}$_INIT (SELF, REGISTRY, NLEV, YD${type}$, PERSISTENT, P${type}$)
 
 USE ${modn}$, ONLY : ${type}$
@@ -283,7 +283,13 @@ ENDIF
 SELF%F_DATA => CREATE_FIELD_WRAP (SELF%ZDATA, PERSISTENT=LLPERSISTENT)
 
 #:for var in vars
+  #:if use_lbounds
+    #:set dim = vars[var][NDIMS]
+    #:set nlev0 = dim[0][0]
+SELF%F_${var}$ => CREATE_FIELD_WRAP (SELF%ZDATA (:, :, YD${type}$%${memb}$${var}$, :), PERSISTENT=LLPERSISTENT, LBOUNDS=[1, ${nlev0}$, 1, 1])
+  #:else
 SELF%F_${var}$ => CREATE_FIELD_WRAP (SELF%ZDATA (:, :, YD${type}$%${memb}$${var}$, :), PERSISTENT=LLPERSISTENT)
+  #:endif
 #:endfor
 
 END SUBROUTINE ${name}$_INIT
@@ -298,8 +304,12 @@ IF (ASSOCIATED (SELF%F_DATA)) THEN
   SELF%ZVIEW => SELF%F_DATA%GET_VIEW (BLOCK_INDEX)
 
 #:for var in vars
-  #:set ss = pdim (vars[var][NDIMS])
   #:set ndim = 1 + len (vars[var][NDIMS])
+  #:if use_lbounds
+    #:set ss = ""
+  #:else
+    #:set ss = pdim (vars[var][NDIMS])
+  #:endif
   IF (ASSOCIATED (SELF%F_${var}$)) THEN
     SELF%${var}$ ${ss}$ => SELF%F_${var}$%GET_VIEW (BLOCK_INDEX)
   ELSE
@@ -312,8 +322,12 @@ ELSE
   SELF%ZVIEW => ZDUM3
 
 #:for var in vars
-  #:set ss = pdim (vars[var][NDIMS])
   #:set ndim = 1 + len (vars[var][NDIMS])
+  #:if use_lbounds
+    #:set ss = ""
+  #:else
+    #:set ss = pdim (vars[var][NDIMS])
+  #:endif
   SELF%${var}$ ${ss}$ => ZDUM${ndim}$
 #:endfor
 
@@ -345,8 +359,8 @@ ENDIF
 END SUBROUTINE ${name}$_FINAL
 #:enddef
 
-#:def pcpg_intdyn_methods (name, vars, type)
-$:pcpg_struct_methods (name, vars, "T" + type, "INTDYN_MOD", "M_")
+#:def pcpg_intdyn_methods (name, vars, type, use_lbounds=False)
+$:pcpg_struct_methods (name, vars, "T" + type, "INTDYN_MOD", "M_", use_lbounds=use_lbounds)
 #:enddef
 
 #:def pcpg_type_methods (name, vars, use_intdyn=False, use_lbounds=False)

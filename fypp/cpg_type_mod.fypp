@@ -382,17 +382,17 @@ INTEGER(KIND=JPIM), PRIVATE, SAVE, TARGET :: IDUM1 (1), IDUM2 (1, 1), IDUM3 (1,1
 
 CONTAINS
 
-$:pcpg_intdyn_methods ("CPG_XYBDER_TYPE"  , vars_cpg_dyn_xybder, "XYBDER"  )
+$:pcpg_intdyn_methods ("CPG_XYBDER_TYPE"  , vars_cpg_dyn_xybder, "XYBDER", use_lbounds=True)
 
-$:pcpg_intdyn_methods ("CPG_XYB_TYPE"     , vars_cpg_dyn_xyb   , "XYB"     )
+$:pcpg_intdyn_methods ("CPG_XYB_TYPE"     , vars_cpg_dyn_xyb   , "XYB"   , use_lbounds=True)
 
-$:pcpg_intdyn_methods ("CPG_HWIND_TYPE"   , vars_cpg_dyn_hwind , "HWIND"   )
+$:pcpg_intdyn_methods ("CPG_HWIND_TYPE"   , vars_cpg_dyn_hwind , "HWIND" , use_lbounds=True)
 
-$:pcpg_intdyn_methods ("CPG_RCP_TYPE"     , vars_cpg_dyn_rcp   , "RCP"     )
+$:pcpg_intdyn_methods ("CPG_RCP_TYPE"     , vars_cpg_dyn_rcp   , "RCP"   , use_lbounds=True)
 
-$:pcpg_intdyn_methods ("CPG_CTY_TYPE"     , vars_cpg_dyn_cty   , "CTY"     )
+$:pcpg_intdyn_methods ("CPG_CTY_TYPE"     , vars_cpg_dyn_cty   , "CTY"   , use_lbounds=True)
 
-$:pcpg_intdyn_methods ("CPG_TND_TYPE"     , vars_cpg_dyn_tnd   , "TND"     )
+$:pcpg_intdyn_methods ("CPG_TND_TYPE"     , vars_cpg_dyn_tnd   , "TND"   , use_lbounds=True)
 
 $:pcpg_struct1_methods ("CPG_GPAR_TYPE"   , vars_cpg_gpar   , "TPARAR", "YOMPARAR", "M", "NGPAR")
 

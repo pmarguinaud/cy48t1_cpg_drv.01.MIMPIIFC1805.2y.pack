@@ -89,7 +89,7 @@ $:s
 
 #:def wrap_array (var, dim, ind, typ, use_lbounds=False)
   #:if use_lbounds
-${ind}$  SELF%F_${var}$ => CREATE_FIELD_WRAP (${argn (var)}$, LBOUNDS=[1, ${", ",join (list (map (lambda x: x[0], dim)}$, 1]))}$])
+${ind}$  SELF%F_${var}$ => CREATE_FIELD_WRAP (${argn (var)}$, LBOUNDS=[1, ${", ".join (list (map (lambda x: x[0], dim)) + ["1"])}$])
   #:else
 ${ind}$  SELF%F_${var}$ => CREATE_FIELD_WRAP (${argn (var)}$)
   #:endif

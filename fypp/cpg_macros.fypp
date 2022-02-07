@@ -87,7 +87,15 @@ END TYPE ${name}$
 $:s
 #:enddef gdim
 
-#:def temporary (var, dim, ind, typ)
+#:def wrap_array (var, dim, ind, typ, use_lbounds=False)
+  #:if use_lbounds
+${ind}$  SELF%F_${var}$ => CREATE_FIELD_WRAP (${argn (var)}$, LBOUNDS=[1, ${", ",join (list (map (lambda x: x[0], dim)}$, 1]))}$])
+  #:else
+${ind}$  SELF%F_${var}$ => CREATE_FIELD_WRAP (${argn (var)}$)
+  #:endif
+#:enddef wrap_array
+
+#:def temporary (var, dim, ind, typ, use_lbounds=False)
   #:set ndim = 1 + len (dim)
   #:if typ is None
     #:set suf = ""
@@ -98,11 +106,23 @@ $:s
 ${ind}$SELF%F_${var}$ => CREATE_TEMPORARY${suf}$ (GEOM=REGISTRY%GEOM, PERSISTENT=PERSISTENT)
   #:elif ndim == 2
     #:set s2 = gdim (dim[0])
-${ind}$SELF%F_${var}$ => CREATE_TEMPORARY${suf}$ (GEOM=REGISTRY%GEOM, NLEV=${s2}$, PERSISTENT=PERSISTENT)
+    #:if use_lbounds
+      #:set nlev0 = ", NLEV0=" + dim[0][0]
+    #:else
+      #:set nlev0 = ""
+    #:endif
+${ind}$SELF%F_${var}$ => CREATE_TEMPORARY${suf}$ (GEOM=REGISTRY%GEOM, NLEV=${s2}$${nlev0}$, PERSISTENT=PERSISTENT)
   #:elif ndim == 3
     #:set s2 = gdim (dim[0])
     #:set s3 = gdim (dim[1])
-${ind}$SELF%F_${var}$ => CREATE_TEMPORARY${suf}$ (GEOM=REGISTRY%GEOM, NLEV=${s2}$, NDIM=${s3}$, PERSISTENT=PERSISTENT)
+    #:if use_lbounds
+      #:set nlev0 = ", NLEV0=" + dim[0][0]
+      #:set ndim0 = ", NDIM0=" + dim[1][0]
+    #:else
+      #:set nlev0 = ""
+      #:set ndim0 = ""
+    #:endif
+${ind}$SELF%F_${var}$ => CREATE_TEMPORARY${suf}$ (GEOM=REGISTRY%GEOM, NLEV=${s2}$${nlev0}$, NDIM=${s3}$${ndim0}$, PERSISTENT=PERSISTENT)
   #:endif
 #:enddef temporary
 
@@ -329,7 +349,7 @@ END SUBROUTINE ${name}$_FINAL
 $:pcpg_struct_methods (name, vars, "T" + type, "INTDYN_MOD", "M_")
 #:enddef
 
-#:def pcpg_type_methods (name, vars, use_intdyn=False)
+#:def pcpg_type_methods (name, vars, use_intdyn=False, use_lbounds=False)
 
 #:set use_llt0      = False
 #:set use_llmf_phys = False
@@ -524,14 +544,14 @@ IF (${elt[NCOND]}$) THEN
   #:if (elt[NTYPE] is None) or (elt[NTYPE] == 'INTEGER')
     #:if elt[ISARG]
 ${ind}$IF (PRESENT (${argn (var)}$)) THEN
-${ind}$  SELF%F_${var}$ => CREATE_FIELD_WRAP (${argn (var)}$)
+$:wrap_array (var, elt[NDIMS], ind + "  ", elt[NTYPE], use_lbounds)
       #:if elt[ELARG]
 ${ind}$ELSE
-$:temporary (var, elt[NDIMS], ind + "  ", elt[NTYPE])
+$:temporary (var, elt[NDIMS], ind + "  ", elt[NTYPE], use_lbounds)
       #:endif
 ${ind}$ENDIF
     #:else
-$:temporary (var, elt[NDIMS], ind + "", elt[NTYPE])
+$:temporary (var, elt[NDIMS], ind + "", elt[NTYPE], use_lbounds)
     #:endif
   #:elif (NDEFS < len (elt)) and (elt[NDEFS] is not None)
     #:set defs = elt[NDEFS]
@@ -570,6 +590,9 @@ INTEGER(KIND=JPIM), INTENT (IN)   :: BLOCK_INDEX
   #:if elt[NTYPE] is None
     #:set ss = pdim (elt[NDIMS])
     #:set ndim = 1 + len (elt[NDIMS])
+    #:if use_lbounds
+      #:set ss = ""
+    #:endif
 IF (ASSOCIATED (SELF%F_${var}$)) THEN
   SELF%${var}$ ${ss}$ => SELF%F_${var}$%GET_VIEW (BLOCK_INDEX)
 ELSE

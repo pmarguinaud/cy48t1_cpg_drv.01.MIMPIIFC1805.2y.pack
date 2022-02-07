@@ -221,7 +221,7 @@ INTEGER(KIND=JPIM), PRIVATE, SAVE, TARGET :: IDUM1 (1), IDUM2 (1, 1), IDUM3 (1,1
 
 CONTAINS
 
-$:pcpg_type_methods ("MF_PHYS_OUT_TYPE", vars_mf_phys_out)
+$:pcpg_type_methods ("MF_PHYS_OUT_TYPE", vars_mf_phys_out, use_lbounds=True)
 
 $:pcpg_type_methods ("MF_PHYS_OPT_TYPE", vars_mf_phys_opt)
 

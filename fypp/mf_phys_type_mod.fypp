@@ -223,7 +223,7 @@ CONTAINS
 
 $:pcpg_type_methods ("MF_PHYS_OUT_TYPE", vars_mf_phys_out, use_lbounds=True)
 
-$:pcpg_type_methods ("MF_PHYS_OPT_TYPE", vars_mf_phys_opt)
+$:pcpg_type_methods ("MF_PHYS_OPT_TYPE", vars_mf_phys_opt, use_lbounds=True)
 
 $:pcpg_type_methods ("MF_PHYS_FOR_TYPE", vars_mf_phys_for)
 

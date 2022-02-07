@@ -396,15 +396,15 @@ $:pcpg_intdyn_methods ("CPG_TND_TYPE"     , vars_cpg_dyn_tnd   , "TND"     )
 
 $:pcpg_struct1_methods ("CPG_GPAR_TYPE"   , vars_cpg_gpar   , "TPARAR", "YOMPARAR", "M", "NGPAR")
 
-$:pcpg_type_methods ("CPG_GP_T_TMP_TYPE" , vars_cpg_gp_t_tmp, use_intdyn=True)
+$:pcpg_type_methods ("CPG_GP_T_TMP_TYPE" , vars_cpg_gp_t_tmp, use_intdyn=True, use_lbounds=True)
 
-$:pcpg_type_methods ("CPG_GP_TMP_TYPE"   , vars_cpg_gp_tmp)
+$:pcpg_type_methods ("CPG_GP_TMP_TYPE"   , vars_cpg_gp_tmp, use_lbounds=True)
 
-$:pcpg_type_methods ("CPG_DYN_TYPE"      , vars_cpg_dyn , use_intdyn=True)
+$:pcpg_type_methods ("CPG_DYN_TYPE"      , vars_cpg_dyn , use_intdyn=True, use_lbounds=True)
 
-$:pcpg_type_methods ("CPG_PHY_TYPE"      , vars_cpg_phy , use_intdyn=True)
+$:pcpg_type_methods ("CPG_PHY_TYPE"      , vars_cpg_phy , use_intdyn=True, use_lbounds=True)
 
-$:pcpg_type_methods ("CPG_MISC_TYPE"     , vars_cpg_misc)
+$:pcpg_type_methods ("CPG_MISC_TYPE"     , vars_cpg_misc, use_lbounds=True)
 
 SUBROUTINE CPG_TMP_TYPE_INIT (SELF, REGISTRY, NLEV, PERSISTENT)
 

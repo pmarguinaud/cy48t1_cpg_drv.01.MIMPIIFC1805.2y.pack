@@ -72,6 +72,8 @@ TYPE ${field_type_name}$
   ! Flag indicating whether we own the allocated base array
   LOGICAL :: OWNED = .TRUE.
 
+  INTEGER(KIND=JPIM) :: LBOUNDS (${rank}$) = [${", ".join (["1"] * rank)}$]
+
 CONTAINS
 
   PROCEDURE :: CLONE => ${field_type_name}$_CLONE
@@ -263,15 +265,17 @@ CONTAINS
 
 #:for dtype, suffix, rank, default in field_descriptors
 #:set field_type_name = 'FIELD_%s%sD' % (suffix, rank)
-  FUNCTION ${field_type_name}$_WRAP(DATA, PERSISTENT) RESULT(SELF)
+  FUNCTION ${field_type_name}$_WRAP(DATA, PERSISTENT, LBOUNDS) RESULT(SELF)
     ! Create FIELD object by wrapping existing data
     TYPE(${field_type_name}$), TARGET :: SELF
     ${dtype}$, TARGET, INTENT(IN) :: DATA(${shapes[rank]}$)
     LOGICAL, INTENT(IN), OPTIONAL :: PERSISTENT
+    INTEGER(KIND=JPIM), INTENT(IN), OPTIONAL :: LBOUNDS(${rank}$)
     LOGICAL :: LLPERSISTENT
 
     LLPERSISTENT = .TRUE.
     IF (PRESENT (PERSISTENT)) LLPERSISTENT = PERSISTENT
+    IF (PRESENT (LBOUNDS)) SELF%LBOUNDS = LBOUNDS
 
     SELF%PTR => DATA
     SELF%ACTIVE = .TRUE.
@@ -293,12 +297,15 @@ CONTAINS
 
 #:for dtype, suffix, rank, default in field_descriptors
 #:set field_type_name = 'FIELD_%s%sD' % (suffix, rank)
-  FUNCTION ${field_type_name}$_WRAP_PACKED(DATA, IDX) RESULT(SELF)
+  FUNCTION ${field_type_name}$_WRAP_PACKED(DATA, IDX, LBOUNDS) RESULT(SELF)
     ! Create FIELD object packed in a multi-field buffer by storing a
     ! contiguous pointer to existing data and an index.
     TYPE(${field_type_name}$), TARGET :: SELF
     ${dtype}$, TARGET, INTENT(IN) :: DATA(${shapes[rank+1]}$)
     INTEGER(KIND=JPIM), INTENT(IN) :: IDX
+    INTEGER(KIND=JPIM), INTENT(IN), OPTIONAL :: LBOUNDS(${rank}$)
+
+    IF (PRESENT (LBOUNDS)) SELF%LBOUNDS = LBOUNDS
 
     SELF%PTR => DATA(${shapes[rank-1]}$,IDX,:)
     SELF%ACTIVE = .TRUE.
@@ -313,7 +320,7 @@ CONTAINS
 
 #:for dtype, suffix, rank, default in field_descriptors
 #:set field_type_name = 'FIELD_%s%sD' % (suffix, rank)
-  FUNCTION ${field_type_name}$_ALLOCATE(SHAPE, NBLOCKS, PERSISTENT) RESULT(SELF)
+  FUNCTION ${field_type_name}$_ALLOCATE(SHAPE, NBLOCKS, PERSISTENT, LBOUNDS) RESULT(SELF)
     ! Create FIELD object by explicitly allocating new data
     !
     ! Please note that SHAPE is the conceptual shape without the block dimension
@@ -321,7 +328,10 @@ CONTAINS
     INTEGER(KIND=JPIM), INTENT(IN) :: SHAPE(${rank-1}$)
     INTEGER(KIND=JPIM), INTENT(IN), OPTIONAL :: NBLOCKS
     LOGICAL, INTENT(IN), OPTIONAL :: PERSISTENT
+    INTEGER(KIND=JPIM), INTENT(IN), OPTIONAL :: LBOUNDS(${rank}$)
     INTEGER(KIND=JPIM) :: NBLK
+
+    IF (PRESENT (LBOUNDS)) SELF%LBOUNDS = LBOUNDS
 
     ! By default we allocate thread-local temporaries
     SELF%THREAD_BUFFER = .TRUE.
@@ -369,9 +379,15 @@ CONTAINS
     NEWOBJ%NBLOCKS = SELF%NBLOCKS
     NEWOBJ%THREAD_BUFFER = SELF%THREAD_BUFFER
     NEWOBJ%OWNED = .FALSE.
+    NEWOBJ%LBOUNDS = SELF%LBOUNDS
   END FUNCTION ${field_type_name}$_CLONE
 
 #:endfor
+
+#:def lbptr (rank)
+  #:set lb = ", ".join (list (map (lambda i: "SELF%LBOUNDS(" + str (i+1) + "):", range (0, rank))))
+$:lb
+#:enddef
 
 #:for dtype, suffix, rank, default in field_descriptors
 #:set field_type_name = 'FIELD_%s%sD' % (suffix, rank)
@@ -386,9 +402,9 @@ CONTAINS
     IDX = BLOCK_INDEX
     IF (SELF%THREAD_BUFFER) IDX = OML_MY_THREAD()
     IF (SELF%ACTIVE .AND. SELF%OWNED) THEN
-      SELF%VIEW => SELF%DATA(${','.join(':' for _ in range(rank-1))}$,IDX)
+      SELF%VIEW (${lbptr (rank-1)}$) => SELF%DATA(${','.join(':' for _ in range(rank-1))}$,IDX)
     ELSEIF (SELF%ACTIVE .AND. .NOT. SELF%OWNED) THEN
-      SELF%VIEW => SELF%PTR(${','.join(':' for _ in range(rank-1))}$,IDX)
+      SELF%VIEW (${lbptr (rank-1)}$) => SELF%PTR(${','.join(':' for _ in range(rank-1))}$,IDX)
     END IF
 
     IF (PRESENT(BLOCK_SIZE) .AND. BLOCK_INDEX == SELF%NBLOCKS) THEN
@@ -417,11 +433,11 @@ CONTAINS
     IDX = BLOCK_INDEX
     IF (SELF%THREAD_BUFFER) IDX = OML_MY_THREAD()
     IF (SELF%ACTIVE .AND. SELF%OWNED) THEN
-      VIEW_PTR => SELF%DATA(${','.join(':' for _ in range(rank-1))}$,IDX)
+      VIEW_PTR (${lbptr (rank-1)}$)  => SELF%DATA(${','.join(':' for _ in range(rank-1))}$,IDX)
     ELSEIF (SELF%ACTIVE .AND. .NOT. SELF%OWNED) THEN
-      VIEW_PTR => SELF%PTR(${','.join(':' for _ in range(rank-1))}$,IDX)
+      VIEW_PTR (${lbptr (rank-1)}$) => SELF%PTR(${','.join(':' for _ in range(rank-1))}$,IDX)
     ELSE
-      VIEW_PTR => SELF%VIEW  ! Set to NaN'd field buffer
+      VIEW_PTR (${lbptr (rank-1)}$) => SELF%VIEW  ! Set to NaN'd field buffer
     END IF
 
     IF (PRESENT(BLOCK_SIZE) .AND. BLOCK_INDEX == SELF%NBLOCKS) THEN
@@ -450,11 +466,11 @@ CONTAINS
     IDX = BLOCK_INDEX
     IF (SELF%THREAD_BUFFER) IDX = OML_MY_THREAD()
     IF (SELF%ACTIVE .AND. SELF%OWNED) THEN
-      VIEW_PTR => SELF%DATA(${','.join(':' for _ in range(rank-1))}$,IDX)
+      VIEW_PTR (${lbptr (rank-1)}$) => SELF%DATA(${','.join(':' for _ in range(rank-1))}$,IDX)
     ELSEIF (SELF%ACTIVE .AND. .NOT. SELF%OWNED) THEN
-      VIEW_PTR => SELF%PTR(${','.join(':' for _ in range(rank-1))}$,IDX)
+      VIEW_PTR (${lbptr (rank-1)}$) => SELF%PTR(${','.join(':' for _ in range(rank-1))}$,IDX)
     ELSE
-      VIEW_PTR => SELF%VIEW  ! Set to NaN'd field buffer
+      VIEW_PTR (${lbptr (rank-1)}$) => SELF%VIEW  ! Set to NaN'd field buffer
     END IF
 
     IF (PRESENT(BLOCK_SIZE)) THEN
@@ -491,9 +507,9 @@ CONTAINS
     ${dtype}$, POINTER, CONTIGUOUS :: DEVPTR(${shapes[rank]}$)
 
     IF (SELF%OWNED) THEN
-      DEVPTR => SELF%DATA
+      DEVPTR (${lbptr (rank)}$) => SELF%DATA
     ELSE
-      DEVPTR => SELF%DEVPTR
+      DEVPTR (${lbptr (rank)}$) => SELF%DEVPTR
     END IF
   END FUNCTION ${field_type_name}$_GET_DEVICE_DATA
 
@@ -569,7 +585,7 @@ CONTAINS
     CLASS(${field_type_name}$), TARGET :: SELF
     ${dtype}$, POINTER, CONTIGUOUS :: PTR(${shapes[rank]}$)
 
-    PTR => SELF%PTR
+    PTR (${lbptr (rank)}$) => SELF%PTR
 
   END FUNCTION ${field_type_name}$_GET_HOST_DATA_RDONLY
 
@@ -578,7 +594,7 @@ CONTAINS
     CLASS(${field_type_name}$), TARGET :: SELF
     ${dtype}$, POINTER, CONTIGUOUS :: PTR(${shapes[rank]}$)
 
-    PTR => SELF%PTR
+    PTR (${lbptr (rank)}$) => SELF%PTR
 
   END FUNCTION ${field_type_name}$_GET_HOST_DATA_WRONLY
 
@@ -587,7 +603,7 @@ CONTAINS
     CLASS(${field_type_name}$), TARGET :: SELF
     ${dtype}$, POINTER, CONTIGUOUS :: PTR(${shapes[rank]}$)
 
-    PTR => SELF%PTR
+    PTR (${lbptr (rank)}$) => SELF%PTR
 
   END FUNCTION ${field_type_name}$_GET_HOST_DATA_RDWR
 

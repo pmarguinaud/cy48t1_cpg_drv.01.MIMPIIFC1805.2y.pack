@@ -57,7 +57,9 @@ while (my $name = shift (@q))
     my $d = &Fxtran::fxtran (location => $file, fopts => [qw (-line-length 300)], dir => '/tmp');
     
     
-    my @call = grep { ! $skip1{$_} } &F ('//call-stmt/procedure-designator', $d, 1);
+    my @call = 
+       grep { ! m/GSTAT/o } grep { ! m/^MPL_/o } grep { ! m/^JFH_/o }
+       grep { ! $skip1{$_} } &F ('//call-stmt/procedure-designator', $d, 1);
 
     for my $call (@call)
       {

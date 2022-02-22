@@ -2,14 +2,19 @@
 #:set config_file = os.path.dirname(_THIS_FILE_) + '/field_config.yaml'
 #:set config = field_config.VariableConfiguration(config_file)
 #:set gfl = config.groups['GFL'] 
+#:set surf_config_file = os.path.dirname(_THIS_FILE_) + '/surface_fields_config.yaml'
+#:set surf_config = field_config.VariableConfiguration(surf_config_file)
+#:set prognostic = [field_config.VariableGroup(**group) for group in surf_config.schema['prognostic']]
+#:set diagnostic = [field_config.VariableGroup(**group) for group in surf_config.schema['diagnostic']]
+#:set variable_groups = prognostic + diagnostic
 
 #:endmute
 MODULE CPG_DIM_TYPE_MOD
 
 USE PARKIND1, ONLY : JPIM, JPRB
-USE SURFACE_FIELDS_MIX , ONLY : TSURF
 USE GEOMETRY_MOD, ONLY : GEOMETRY
 USE YOMCT3, ONLY : NSTEP
+USE SURFACE_FIELDS_MIX , ONLY : TYPE_SURF_GEN
 
 IMPLICIT NONE
 
@@ -37,6 +42,14 @@ CONTAINS
   PROCEDURE :: INIT => CPG_DIM_VARS_TYPE_INIT
 END TYPE
 
+TYPE CPG_DIM_SURF_TYPE
+#:for group in prognostic
+  TYPE (TYPE_SURF_GEN) :: YSP_${group.short}$D
+#:endfor
+#:for group in diagnostic
+  TYPE (TYPE_SURF_GEN) :: YSD_${group.short}$D
+#:endfor
+END TYPE
 
 TYPE CPG_DIM_TYPE
   INTEGER(KIND=JPIM) :: KIDIA 
@@ -62,7 +75,7 @@ TYPE CPG_DIM_TYPE
   INTEGER(KIND=JPIM) :: KMAXDRAFT
   INTEGER(KIND=JPIM) :: KSW
   
-  TYPE (TSURF), POINTER :: YRSURF => NULL ()
+  TYPE (CPG_DIM_SURF_TYPE) :: YRSURF
 
   TYPE (CPG_DIM_VARS_TYPE) :: VARS
 
@@ -113,7 +126,12 @@ CONTAINS
       SELF%KSW = YDMODEL%YRML_PHY_RAD%YRERAD%NSW
     ENDIF
 
-    SELF%YRSURF => YDFIELDS%YRSURF
+#:for group in prognostic
+    SELF%YRSURF%YSP_${group.short}$D = YDFIELDS%YRSURF%YSP_${group.short}$D
+#:endfor
+#:for group in diagnostic
+    SELF%YRSURF%YSD_${group.short}$D = YDFIELDS%YRSURF%YSD_${group.short}$D
+#:endfor
 
     CALL SELF%VARS%INIT (YDGEOMETRY, YDMODEL, YDFIELDS%VARIABLES)
 

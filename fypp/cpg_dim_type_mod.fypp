@@ -27,7 +27,7 @@ END TYPE
   TYPE (CPG_DIM_VAR_TYPE) :: ${var}$
 #:enddef
 
-TYPE CPG_DIM_VARS_TYPE
+TYPE CPG_DIMS_VARS_TYPE
 $:cpg_dim_var_decl ("U")
 $:cpg_dim_var_decl ("V")
 $:cpg_dim_var_decl ("T")
@@ -39,16 +39,18 @@ $:cpg_dim_var_decl (v.name)
   #:endif
 #:endfor
 CONTAINS 
-  PROCEDURE :: INIT => CPG_DIM_VARS_TYPE_INIT
-END TYPE
+  PROCEDURE :: INIT => CPG_DIMS_VARS_TYPE_INIT
+END TYPE CPG_DIMS_VARS_TYPE
 
-TYPE CPG_DIM_SURF_TYPE
+TYPE CPG_DIMS_SURF_TYPE
 #:for group in prognostic
   TYPE (TYPE_SURF_GEN) :: YSP_${group.short}$D
 #:endfor
 #:for group in diagnostic
   TYPE (TYPE_SURF_GEN) :: YSD_${group.short}$D
 #:endfor
+CONTAINS
+  PROCEDURE :: INIT => CPG_DIMS_SURF_TYPE_INIT
 END TYPE
 
 TYPE CPG_DIM_TYPE
@@ -75,16 +77,116 @@ TYPE CPG_DIM_TYPE
   INTEGER(KIND=JPIM) :: KMAXDRAFT
   INTEGER(KIND=JPIM) :: KSW
   
-  TYPE (CPG_DIM_SURF_TYPE) :: YRSURF
-
-  TYPE (CPG_DIM_VARS_TYPE) :: VARS
+  TYPE (CPG_DIMS_SURF_TYPE) :: YRSURF
+  TYPE (CPG_DIMS_VARS_TYPE) :: YRVARS
 
 CONTAINS
   PROCEDURE :: INIT => CPG_DIM_TYPE_INIT
   PROCEDURE :: UPDATE => CPG_DIM_TYPE_UPDATE
 END TYPE CPG_DIM_TYPE
 
+#:for group in prognostic
+  #:for v in group.variables
+    #:if v.array
+    #:else
+TYPE CPG_SURF_${group.short}$_${v.name}$P_OPTS_TYPE
+  LOGICAL :: LSET
+END TYPE
+    #:endif
+
+  #:endfor
+TYPE CPG_SURF_${group.short}$P_OPTS_TYPE
+  #:for v in group.variables
+    #:if v.array
+    #:else
+  TYPE (CPG_SURF_${group.short}$_${v.name}$P_OPTS_TYPE) :: Y${v.name}$
+    #:endif
+  #:endfor
+END TYPE
+
+#:endfor
+#:for group in diagnostic
+  #:for v in group.variables
+    #:if v.array
+    #:else
+TYPE CPG_SURF_${group.short}$_${v.name}$D_OPTS_TYPE
+  LOGICAL :: LSET
+END TYPE
+    #:endif
+
+  #:endfor
+TYPE CPG_SURF_${group.short}$D_OPTS_TYPE
+  #:for v in group.variables
+    #:if v.array
+    #:else
+  TYPE (CPG_SURF_${group.short}$_${v.name}$D_OPTS_TYPE) :: Y${v.name}$ 
+    #:endif
+  #:endfor
+END TYPE
+
+#:endfor
+
+TYPE CPG_OPTS_SURF_TYPE
+#:for group in prognostic
+  TYPE (CPG_SURF_${group.short}$P_OPTS_TYPE) :: YSP_${group.short}$
+#:endfor
+#:for group in diagnostic
+  TYPE (CPG_SURF_${group.short}$D_OPTS_TYPE) :: YSD_${group.short}$
+#:endfor
 CONTAINS
+  PROCEDURE :: INIT => CPG_OPTS_SURF_TYPE_INIT
+END TYPE
+
+TYPE CPG_OPTS_TYPE
+  TYPE (CPG_OPTS_SURF_TYPE) :: YRSURF_OPTS
+  TYPE (CPG_DIMS_SURF_TYPE) :: YRSURF_DIMS
+  TYPE (CPG_DIMS_VARS_TYPE) :: YRVARS_DIMS
+CONTAINS
+  PROCEDURE :: INIT => CPG_OPTS_TYPE_INIT
+END TYPE CPG_OPTS_TYPE
+
+CONTAINS
+
+  SUBROUTINE CPG_OPTS_TYPE_INIT (SELF, YDGEOMETRY, YDMODEL, YDFIELDS)
+    USE TYPE_MODEL, ONLY : MODEL
+    USE FIELDS_MOD, ONLY : FIELDS
+    CLASS(CPG_OPTS_TYPE) :: SELF
+    TYPE(MODEL)   , INTENT(IN) :: YDMODEL
+    TYPE(GEOMETRY), INTENT(IN) :: YDGEOMETRY
+    TYPE(FIELDS),   INTENT(IN) :: YDFIELDS
+
+    CALL SELF%YRSURF_OPTS%INIT (YDGEOMETRY, YDMODEL, YDFIELDS)
+    CALL SELF%YRSURF_DIMS%INIT (YDGEOMETRY, YDMODEL, YDFIELDS)
+    CALL SELF%YRVARS_DIMS%INIT (YDGEOMETRY, YDMODEL, YDFIELDS%VARIABLES)
+
+  END SUBROUTINE CPG_OPTS_TYPE_INIT
+
+  SUBROUTINE CPG_OPTS_SURF_TYPE_INIT (SELF, YDGEOMETRY, YDMODEL, YDFIELDS)
+    USE TYPE_MODEL, ONLY : MODEL
+    USE FIELDS_MOD, ONLY : FIELDS
+    CLASS(CPG_OPTS_SURF_TYPE) :: SELF
+    TYPE(MODEL)   , INTENT(IN) :: YDMODEL
+    TYPE(GEOMETRY), INTENT(IN) :: YDGEOMETRY
+    TYPE(FIELDS),   INTENT(IN) :: YDFIELDS
+
+#:for group in prognostic
+  #:for v in group.variables
+    #:if v.array
+    #:else
+    SELF%YSP_${group.short}$%Y${v.name}$%LSET = YDFIELDS%YRSURF%YSP_${group.short}$%Y${v.name}$%LSET
+    #:endif
+  #:endfor
+#:endfor
+#:for group in diagnostic
+  #:for v in group.variables
+    #:if v.array
+    #:else
+    SELF%YSD_${group.short}$%Y${v.name}$%LSET = YDFIELDS%YRSURF%YSD_${group.short}$%Y${v.name}$%LSET
+    #:endif
+  #:endfor
+#:endfor
+
+  END SUBROUTINE CPG_OPTS_SURF_TYPE_INIT
 
   SUBROUTINE CPG_DIM_TYPE_INIT(SELF, YDGEOMETRY, YDMODEL, YDFIELDS)
     USE TYPE_MODEL, ONLY : MODEL
@@ -126,16 +228,27 @@ CONTAINS
       SELF%KSW = YDMODEL%YRML_PHY_RAD%YRERAD%NSW
     ENDIF
 
-#:for group in prognostic
-    SELF%YRSURF%YSP_${group.short}$D = YDFIELDS%YRSURF%YSP_${group.short}$D
-#:endfor
-#:for group in diagnostic
-    SELF%YRSURF%YSD_${group.short}$D = YDFIELDS%YRSURF%YSD_${group.short}$D
-#:endfor
-
-    CALL SELF%VARS%INIT (YDGEOMETRY, YDMODEL, YDFIELDS%VARIABLES)
+    CALL SELF%YRSURF%INIT (YDGEOMETRY, YDMODEL, YDFIELDS)
+    CALL SELF%YRVARS%INIT (YDGEOMETRY, YDMODEL, YDFIELDS%VARIABLES)
 
   END SUBROUTINE CPG_DIM_TYPE_INIT
+
+  SUBROUTINE CPG_DIMS_SURF_TYPE_INIT (SELF, YDGEOMETRY, YDMODEL, YDFIELDS)
+    USE TYPE_MODEL, ONLY : MODEL
+    USE FIELDS_MOD, ONLY : FIELDS
+    CLASS(CPG_DIMS_SURF_TYPE) :: SELF
+    TYPE(MODEL)   , INTENT(IN) :: YDMODEL
+    TYPE(GEOMETRY), INTENT(IN) :: YDGEOMETRY
+    TYPE(FIELDS),   INTENT(IN) :: YDFIELDS
+
+#:for group in prognostic
+    SELF%YSP_${group.short}$D = YDFIELDS%YRSURF%YSP_${group.short}$D
+#:endfor
+#:for group in diagnostic
+    SELF%YSD_${group.short}$D = YDFIELDS%YRSURF%YSD_${group.short}$D
+#:endfor
+
+  END SUBROUTINE CPG_DIMS_SURF_TYPE_INIT
 
   SUBROUTINE CPG_DIM_TYPE_UPDATE(SELF, IBL)
     CLASS(CPG_DIM_TYPE) :: SELF
@@ -148,14 +261,14 @@ CONTAINS
 
   END SUBROUTINE CPG_DIM_TYPE_UPDATE
 
-  SUBROUTINE CPG_DIM_VARS_TYPE_INIT (SELF, YDGEOMETRY, YDMODEL, YDVARS)
+  SUBROUTINE CPG_DIMS_VARS_TYPE_INIT (SELF, YDGEOMETRY, YDMODEL, YDVARS)
     USE TYPE_MODEL, ONLY : MODEL
     USE FIELD_VARIABLES_MOD, ONLY: FIELD_VARIABLES
     USE YOMCT0, ONLY : LSLAG, LTWOTL
-    CLASS(CPG_DIM_VARS_TYPE) :: SELF
+    CLASS(CPG_DIMS_VARS_TYPE) :: SELF
     TYPE(MODEL)   , INTENT(IN) :: YDMODEL
     TYPE(GEOMETRY), INTENT(IN) :: YDGEOMETRY
-    TYPE (FIELD_VARIABLES), INTENT (IN) :: YDVARS
+    TYPE(FIELD_VARIABLES),   INTENT(IN) :: YDVARS
 
     IF (LSLAG) THEN
     
@@ -190,6 +303,7 @@ CONTAINS
 #:endfor
 
     ENDIF
+
   END SUBROUTINE 
 
 END MODULE CPG_DIM_TYPE_MOD

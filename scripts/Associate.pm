@@ -23,7 +23,7 @@ sub resolveAssociates
           my ($n) = &f ('./f:associate-N/f:n/text ()', $as, 1);
           my ($e) = &f ('./f:selector/f:named-E', $as);
   
-          my @expr = &f ('.//f:named-E[./f:N/f:n/text ()="?"]', $n, $assoc);
+          my @expr = reverse &f ('.//f:named-E[./f:N/f:n/text ()="?"]', $n, $assoc);
   
           for my $expr (@expr)
             {

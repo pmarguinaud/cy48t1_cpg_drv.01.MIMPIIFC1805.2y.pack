@@ -91,7 +91,7 @@ END TYPE CPG_DIM_TYPE
     #:if v.array
     #:else
 TYPE CPG_SURF_${group.short}$_${v.name}$P_OPTS_TYPE
-  LOGICAL :: LSET
+  LOGICAL :: LSET = .FALSE.
 END TYPE
     #:endif
 
@@ -111,7 +111,7 @@ END TYPE
     #:if v.array
     #:else
 TYPE CPG_SURF_${group.short}$_${v.name}$D_OPTS_TYPE
-  LOGICAL :: LSET
+  LOGICAL :: LSET = .FALSE.
 END TYPE
     #:endif
 
@@ -219,7 +219,8 @@ CONTAINS
   #:for v in group.variables
     #:if v.array
     #:else
-    SELF%YSP_${group.short}$%Y${v.name}$%LSET = YDFIELDS%YRSURF%YSP_${group.short}$%Y${v.name}$%LSET
+    IF (ASSOCIATED (YDFIELDS%YRSURF%YSP_${group.short}$%Y${v.name}$)) &
+  & SELF%YSP_${group.short}$%Y${v.name}$%LSET = YDFIELDS%YRSURF%YSP_${group.short}$%Y${v.name}$%LSET
     #:endif
   #:endfor
 #:endfor
@@ -227,7 +228,8 @@ CONTAINS
   #:for v in group.variables
     #:if v.array
     #:else
-    SELF%YSD_${group.short}$%Y${v.name}$%LSET = YDFIELDS%YRSURF%YSD_${group.short}$%Y${v.name}$%LSET
+    IF (ASSOCIATED (YDFIELDS%YRSURF%YSD_${group.short}$%Y${v.name}$)) &
+  & SELF%YSD_${group.short}$%Y${v.name}$%LSET = YDFIELDS%YRSURF%YSD_${group.short}$%Y${v.name}$%LSET
     #:endif
   #:endfor
 #:endfor

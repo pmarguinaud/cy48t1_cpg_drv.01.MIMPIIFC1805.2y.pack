@@ -21,7 +21,7 @@ TYPE MF_PHYS_STATE_${name}$_TYPE
 #:if ndim == 1
 !>REAL (KIND=JPRB)                      :: ${var}$ (NPROMA)
 #:else
-!>REAL (KIND=JPRB)                      :: ${var}$ (NPROMA, YDCPG_DIM%YRSURF%YSP_${name}$)
+!>REAL (KIND=JPRB)                      :: ${var}$ (NPROMA, YDCPG_OPTS%YRSURF_DIMS%YSP_${name}$)
 #:endif
   TYPE (FIELD_${ndim+1}$D), POINTER :: F_${var}$ => NULL ()
 #:endfor

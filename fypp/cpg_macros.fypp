@@ -143,15 +143,15 @@ $:s
 #:enddef pdim
 
 #:def pcpg_struct1_methods (name, vars, type, modn, memb, ntot)
-SUBROUTINE ${name}$_INIT (SELF, REGISTRY, YDCPG_DIM, YD${type}$, PERSISTENT, P${type}$)
+SUBROUTINE ${name}$_INIT (SELF, REGISTRY, YDCPG_OPTS, YD${type}$, PERSISTENT, P${type}$)
 
 USE ${modn}$, ONLY : ${type}$
 USE OML_MOD, ONLY: OML_MAX_THREADS
-USE CPG_DIM_TYPE_MOD, ONLY : CPG_DIM_TYPE
+USE CPG_DIM_TYPE_MOD, ONLY : CPG_OPTS_TYPE
 
 CLASS (${name}$)                          :: SELF
 TYPE (FIELD_REGISTRY),              INTENT (INOUT) :: REGISTRY
-TYPE (CPG_DIM_TYPE),                INTENT (IN)    :: YDCPG_DIM
+TYPE (CPG_OPTS_TYPE),               INTENT (IN)    :: YDCPG_OPTS
 TYPE (${type}$),                    INTENT (IN)    :: YD${type}$
 LOGICAL, OPTIONAL,                  INTENT (IN)    :: PERSISTENT
 REAL (KIND=JPRB), OPTIONAL, TARGET, INTENT (IN)    :: P${type}$ (:, :, :)
@@ -382,10 +382,10 @@ $:pcpg_struct_methods (name, vars, "T" + type, "INTDYN_MOD", "M_", use_lbounds=u
   #:endif
   #:for dim in vars[var][NDIMS]
     #:for x in dim
-      #:set use_yddphy  = use_yddphy    or ("YDDPHY"    in x)
-      #:set use_ydsurf  = use_ydsurf    or ("YDSURF"    in x)
-      #:set use_ydmodel = use_ydmodel   or ("YDMODEL"   in x)
-      #:set use_cpg_dim = use_cpg_dim   or ("YDCPG_DIM" in x)
+      #:set use_yddphy  = use_yddphy    or ("YDDPHY"     in x)
+      #:set use_ydsurf  = use_ydsurf    or ("YDSURF"     in x)
+      #:set use_ydmodel = use_ydmodel   or ("YDMODEL"    in x)
+      #:set use_cpg_dim = use_cpg_dim   or ("YDCPG_OPTS" in x)
     #:endfor
   #:endfor
 #:endfor
@@ -398,7 +398,7 @@ SUBROUTINE ${name}$_INIT (SELF &
 #:endif
                                 & , REGISTRY &
 #:if use_cpg_dim
-                                & , YDCPG_DIM &
+                                & , YDCPG_OPTS &
 #:else
                                 & , NLEV &
 #:endif
@@ -429,8 +429,8 @@ USE INTDYN_MOD, ONLY : TRCP, TCTY, THWIND, TXYB, TXYBDER
 #:endif
 
 #:if use_cpg_dim
-USE CPG_DIM_TYPE_MOD, ONLY : CPG_DIM_TYPE
-#:set nlev = "YDCPG_DIM%KFLEVG"
+USE CPG_DIM_TYPE_MOD, ONLY : CPG_OPTS_TYPE
+#:set nlev = "YDCPG_OPTS%KFLEVG"
 #:else
 #:set nlev = "NLEV"
 #:endif
@@ -454,7 +454,7 @@ INTEGER(KIND=JPIM),           INTENT (IN)    :: KT
 #:endif
 TYPE (FIELD_REGISTRY),        INTENT (INOUT) :: REGISTRY
 #:if use_cpg_dim
-TYPE (CPG_DIM_TYPE),          INTENT (IN)    :: YDCPG_DIM
+TYPE (CPG_OPTS_TYPE),         INTENT (IN)    :: YDCPG_OPTS
 #:else
 INTEGER (KIND=JPIM),          INTENT (IN)    :: NLEV
 #:endif

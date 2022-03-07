@@ -43,13 +43,13 @@ TYPE SURFACE_VIEW_GROUP_${group.name}$
   #:if v.array
   #:else
     #:if group.dimension == 2
-!>REAL(KIND=JPRB)          :: P${v.name}$_T0 (YDCPG_DIM%KLON)
-!>REAL(KIND=JPRB)          :: P${v.name}$_T1 (YDCPG_DIM%KLON)
-!>REAL(KIND=JPRB)          :: P${v.name}$_T9 (YDCPG_DIM%KLON)
+!>REAL(KIND=JPRB)          :: P${v.name}$_T0 (YDCPG_OPTS%KLON)
+!>REAL(KIND=JPRB)          :: P${v.name}$_T1 (YDCPG_OPTS%KLON)
+!>REAL(KIND=JPRB)          :: P${v.name}$_T9 (YDCPG_OPTS%KLON)
     #:elif group.dimension == 3
-!>REAL(KIND=JPRB)          :: P${v.name}$_T0 (YDCPG_DIM%KLON, YDCPG_DIM%YRSURF%YSP_${group.short}$D%NLEVS)
-!>REAL(KIND=JPRB)          :: P${v.name}$_T1 (YDCPG_DIM%KLON, YDCPG_DIM%YRSURF%YSP_${group.short}$D%NLEVS)
-!>REAL(KIND=JPRB)          :: P${v.name}$_T9 (YDCPG_DIM%KLON, YDCPG_DIM%YRSURF%YSP_${group.short}$D%NLEVS)
+!>REAL(KIND=JPRB)          :: P${v.name}$_T0 (YDCPG_OPTS%KLON, YDCPG_OPTS%YRSURF_DIMS%YSP_${group.short}$D%NLEVS)
+!>REAL(KIND=JPRB)          :: P${v.name}$_T1 (YDCPG_OPTS%KLON, YDCPG_OPTS%YRSURF_DIMS%YSP_${group.short}$D%NLEVS)
+!>REAL(KIND=JPRB)          :: P${v.name}$_T9 (YDCPG_OPTS%KLON, YDCPG_OPTS%YRSURF_DIMS%YSP_${group.short}$D%NLEVS)
     #:endif
   #:endif
 #:endfor

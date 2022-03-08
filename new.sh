@@ -181,6 +181,15 @@ xpnam --delta="
 " --inplace fort.4
 fi
 
+if [ "x$aplpar_new" = "x1" ]
+then
+xpnam --delta="
+&NAMARPHY
+  LAPL_ARPEGE=.TRUE.
+/
+" --inplace fort.4
+fi
+
 ls -lrt
 
 cat fort.4

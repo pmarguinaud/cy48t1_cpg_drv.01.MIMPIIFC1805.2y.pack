@@ -347,7 +347,7 @@ REAL(KIND=JPRB) :: ZHOOK_HANDLE
 
 !     CHECK RELIABILITY OF INPUT ARGUMENTS.
 
-IF (LHOOK) CALL DR_HOOK('MF_PHYS_INIT',0,ZHOOK_HANDLE)
+IF (LHOOK) CALL DR_HOOK('MF_PHYS_INIT', 0, ZHOOK_HANDLE)
 
 !     ------------------------------------------------------------------
 
@@ -489,5 +489,5 @@ YDMF_PHYS%OUT%MOCON(:)=0.0_JPRB
 
 !     ------------------------------------------------------------------
 
-IF (LHOOK) CALL DR_HOOK('MF_PHYS_INIT',1,ZHOOK_HANDLE)
+IF (LHOOK) CALL DR_HOOK('MF_PHYS_INIT', 1, ZHOOK_HANDLE)
 END SUBROUTINE MF_PHYS_INIT

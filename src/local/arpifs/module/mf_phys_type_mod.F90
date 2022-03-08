@@ -543,11 +543,7 @@ CONTAINS
 
 
 
-SUBROUTINE MF_PHYS_OUT_TYPE_INIT (SELF &
-                                & , REGISTRY &
-                                & , YDCPG_OPTS &
-                                & , PERSISTENT &
-                           &)
+SUBROUTINE MF_PHYS_OUT_TYPE_INIT (SELF, REGISTRY, YDCPG_OPTS, PERSISTENT  )
 
 
 USE CPG_OPTS_TYPE_MOD, ONLY : CPG_OPTS_TYPE
@@ -1666,27 +1662,9 @@ END SUBROUTINE MF_PHYS_OUT_TYPE_FINAL
 
 
 
-SUBROUTINE MF_PHYS_OPT_TYPE_INIT (SELF &
-                                & , REGISTRY &
-                                & , YDCPG_OPTS &
-                                & , PERSISTENT &
-                                & , LDMF_PHYS &
-                           &, PGDEOSI &
-                           &, PGUEOSI &
-                           &, PGMU0 &
-                           &, PGMU0_MIN &
-                           &, PGMU0_MAX &
-                           &, PGDEOTI &
-                           &, PGDEOTI2 &
-                           &, PGUEOTI &
-                           &, PGUEOTI2 &
-                           &, PGEOLT &
-                           &, PGEOXT &
-                           &, PGRPROX &
-                           &, PGMIXP &
-                           &, PGFLUXC &
-                           &, PGRSURF &
-                           &)
+SUBROUTINE MF_PHYS_OPT_TYPE_INIT (SELF, REGISTRY, YDCPG_OPTS, PERSISTENT, LDMF_PHYS, PGDEOSI, &
+& PGUEOSI, PGMU0, PGMU0_MIN, PGMU0_MAX, PGDEOTI, PGDEOTI2, PGUEOTI, PGUEOTI2, PGEOLT, PGEOXT, &
+& PGRPROX, PGMIXP, PGFLUXC, PGRSURF  )
 
 
 USE CPG_OPTS_TYPE_MOD, ONLY : CPG_OPTS_TYPE
@@ -1924,16 +1902,8 @@ END SUBROUTINE MF_PHYS_OPT_TYPE_FINAL
 
 
 
-SUBROUTINE MF_PHYS_FOR_TYPE_INIT (SELF &
-                                & , REGISTRY &
-                                & , YDCPG_OPTS &
-                                & , PERSISTENT &
-                                & , LDMF_PHYS &
-                           &, PU &
-                           &, PV &
-                           &, PT &
-                           &, PQ &
-                           &)
+SUBROUTINE MF_PHYS_FOR_TYPE_INIT (SELF, REGISTRY, YDCPG_OPTS, PERSISTENT, LDMF_PHYS, PU, PV, PT, PQ&
+&   )
 
 
 USE CPG_OPTS_TYPE_MOD, ONLY : CPG_OPTS_TYPE
@@ -2028,13 +1998,7 @@ END SUBROUTINE MF_PHYS_FOR_TYPE_FINAL
 
 
 
-SUBROUTINE MF_PHYS_GRA_TYPE_INIT (SELF &
-                                & , REGISTRY &
-                                & , YDCPG_OPTS &
-                                & , PERSISTENT &
-                                & , LDMF_PHYS &
-                           &, PG &
-                           &)
+SUBROUTINE MF_PHYS_GRA_TYPE_INIT (SELF, REGISTRY, YDCPG_OPTS, PERSISTENT, LDMF_PHYS, PG  )
 
 
 USE CPG_OPTS_TYPE_MOD, ONLY : CPG_OPTS_TYPE
@@ -2090,16 +2054,8 @@ END SUBROUTINE MF_PHYS_GRA_TYPE_FINAL
 
 
 
-SUBROUTINE MF_PHYS_RAD_TYPE_INIT (SELF &
-                                & , REGISTRY &
-                                & , YDCPG_OPTS &
-                                & , PERSISTENT &
-                                & , LDMF_PHYS &
-                           &, PEMTD &
-                           &, PEMTU &
-                           &, PTRSW &
-                           &, PRMOON &
-                           &)
+SUBROUTINE MF_PHYS_RAD_TYPE_INIT (SELF, REGISTRY, YDCPG_OPTS, PERSISTENT, LDMF_PHYS, PEMTD, PEMTU, &
+& PTRSW, PRMOON  )
 
 
 USE CPG_OPTS_TYPE_MOD, ONLY : CPG_OPTS_TYPE

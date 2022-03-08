@@ -1,4 +1,3 @@
-LSTRATS   =        FALSE
 RDECRD    =        20000
 RDECRD1   =        10000
 RDECRD2   =        20000
@@ -6,5 +5,4 @@ RDECRD3   =        0.3
 RDECRD4   =        0.45
 NVCLIS    =        0
 NOZOCL    =        1
-LHVCN     =        FALSE
 LRKCDEV   =        FALSE

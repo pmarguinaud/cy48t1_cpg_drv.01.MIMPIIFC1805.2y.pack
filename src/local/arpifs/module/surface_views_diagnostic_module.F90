@@ -27,140 +27,140 @@ IMPLICIT NONE
 
 TYPE SURFACE_VIEW_GROUP_VARSF
   REAL(KIND=JPRB), POINTER :: PZ0F(:)   ! gravity * surface roughness length
-!>REAL(KIND=JPRB)          :: PZ0F (YDCPG_BNDS%KLON)
+!>REAL(KIND=JPRB)          :: PZ0F (YDCPG_OPTS%KLON)
   REAL(KIND=JPRB), POINTER :: PALBF(:)   ! surface shortwave albedo
-!>REAL(KIND=JPRB)          :: PALBF (YDCPG_BNDS%KLON)
+!>REAL(KIND=JPRB)          :: PALBF (YDCPG_OPTS%KLON)
   REAL(KIND=JPRB), POINTER :: PEMISF(:)   ! surface longwave emissivity
-!>REAL(KIND=JPRB)          :: PEMISF (YDCPG_BNDS%KLON)
+!>REAL(KIND=JPRB)          :: PEMISF (YDCPG_OPTS%KLON)
   REAL(KIND=JPRB), POINTER :: PGETRL(:)   ! standard deviation of orography
-!>REAL(KIND=JPRB)          :: PGETRL (YDCPG_BNDS%KLON)
+!>REAL(KIND=JPRB)          :: PGETRL (YDCPG_OPTS%KLON)
   REAL(KIND=JPRB), POINTER :: PLSM(:)   ! land-sea mask
-!>REAL(KIND=JPRB)          :: PLSM (YDCPG_BNDS%KLON)
+!>REAL(KIND=JPRB)          :: PLSM (YDCPG_OPTS%KLON)
   REAL(KIND=JPRB), POINTER :: PVEG(:)   ! vegetation cover
-!>REAL(KIND=JPRB)          :: PVEG (YDCPG_BNDS%KLON)
+!>REAL(KIND=JPRB)          :: PVEG (YDCPG_OPTS%KLON)
   REAL(KIND=JPRB), POINTER :: PVRLAN(:)   ! anisotropy of the sub-grid scale orography
-!>REAL(KIND=JPRB)          :: PVRLAN (YDCPG_BNDS%KLON)
+!>REAL(KIND=JPRB)          :: PVRLAN (YDCPG_OPTS%KLON)
   REAL(KIND=JPRB), POINTER :: PVRLDI(:)   ! angle of the direction of orography with the x axis
-!>REAL(KIND=JPRB)          :: PVRLDI (YDCPG_BNDS%KLON)
+!>REAL(KIND=JPRB)          :: PVRLDI (YDCPG_OPTS%KLON)
   REAL(KIND=JPRB), POINTER :: PSIG(:)   ! characteristic orographic slope
-!>REAL(KIND=JPRB)          :: PSIG (YDCPG_BNDS%KLON)
+!>REAL(KIND=JPRB)          :: PSIG (YDCPG_OPTS%KLON)
   REAL(KIND=JPRB), POINTER :: PALBSF(:)   ! soil shortwave albedo
-!>REAL(KIND=JPRB)          :: PALBSF (YDCPG_BNDS%KLON)
+!>REAL(KIND=JPRB)          :: PALBSF (YDCPG_OPTS%KLON)
   REAL(KIND=JPRB), POINTER :: PLAN(:)   ! fraction of land
-!>REAL(KIND=JPRB)          :: PLAN (YDCPG_BNDS%KLON)
+!>REAL(KIND=JPRB)          :: PLAN (YDCPG_OPTS%KLON)
   REAL(KIND=JPRB), POINTER :: PSST(:)   ! (open) sea surface temperature
-!>REAL(KIND=JPRB)          :: PSST (YDCPG_BNDS%KLON)
+!>REAL(KIND=JPRB)          :: PSST (YDCPG_OPTS%KLON)
   REAL(KIND=JPRB), POINTER :: PSSS(:)   ! sea surface salinity
-!>REAL(KIND=JPRB)          :: PSSS (YDCPG_BNDS%KLON)
+!>REAL(KIND=JPRB)          :: PSSS (YDCPG_OPTS%KLON)
   REAL(KIND=JPRB), POINTER :: PLZ0H(:)   ! logarithm of roughness length for heat
-!>REAL(KIND=JPRB)          :: PLZ0H (YDCPG_BNDS%KLON)
+!>REAL(KIND=JPRB)          :: PLZ0H (YDCPG_OPTS%KLON)
   REAL(KIND=JPRB), POINTER :: PCVL(:)   ! low vegetation cover
-!>REAL(KIND=JPRB)          :: PCVL (YDCPG_BNDS%KLON)
+!>REAL(KIND=JPRB)          :: PCVL (YDCPG_OPTS%KLON)
   REAL(KIND=JPRB), POINTER :: PCVH(:)   ! high vegetation cover
-!>REAL(KIND=JPRB)          :: PCVH (YDCPG_BNDS%KLON)
+!>REAL(KIND=JPRB)          :: PCVH (YDCPG_OPTS%KLON)
   REAL(KIND=JPRB), POINTER :: PTVL(:)   ! low vegetation type
-!>REAL(KIND=JPRB)          :: PTVL (YDCPG_BNDS%KLON)
+!>REAL(KIND=JPRB)          :: PTVL (YDCPG_OPTS%KLON)
   REAL(KIND=JPRB), POINTER :: PTVH(:)   ! high vegetation type
-!>REAL(KIND=JPRB)          :: PTVH (YDCPG_BNDS%KLON)
+!>REAL(KIND=JPRB)          :: PTVH (YDCPG_OPTS%KLON)
   REAL(KIND=JPRB), POINTER :: PLAIL(:)   ! low vegetation LAI
-!>REAL(KIND=JPRB)          :: PLAIL (YDCPG_BNDS%KLON)
+!>REAL(KIND=JPRB)          :: PLAIL (YDCPG_OPTS%KLON)
   REAL(KIND=JPRB), POINTER :: PLAIH(:)   ! high vegetation LAI
-!>REAL(KIND=JPRB)          :: PLAIH (YDCPG_BNDS%KLON)
+!>REAL(KIND=JPRB)          :: PLAIH (YDCPG_OPTS%KLON)
   REAL(KIND=JPRB), POINTER :: PSOTY(:)   ! soil type
-!>REAL(KIND=JPRB)          :: PSOTY (YDCPG_BNDS%KLON)
+!>REAL(KIND=JPRB)          :: PSOTY (YDCPG_OPTS%KLON)
   REAL(KIND=JPRB), POINTER :: PCLK(:)   ! lake cover
-!>REAL(KIND=JPRB)          :: PCLK (YDCPG_BNDS%KLON)
+!>REAL(KIND=JPRB)          :: PCLK (YDCPG_OPTS%KLON)
   REAL(KIND=JPRB), POINTER :: PDL(:)   ! lake depth
-!>REAL(KIND=JPRB)          :: PDL (YDCPG_BNDS%KLON)
+!>REAL(KIND=JPRB)          :: PDL (YDCPG_OPTS%KLON)
   REAL(KIND=JPRB), POINTER :: PCI(:)   ! sea ice fraction
-!>REAL(KIND=JPRB)          :: PCI (YDCPG_BNDS%KLON)
+!>REAL(KIND=JPRB)          :: PCI (YDCPG_OPTS%KLON)
   REAL(KIND=JPRB), POINTER :: PUCUR(:)   ! U-component of the ocean current
-!>REAL(KIND=JPRB)          :: PUCUR (YDCPG_BNDS%KLON)
+!>REAL(KIND=JPRB)          :: PUCUR (YDCPG_OPTS%KLON)
   REAL(KIND=JPRB), POINTER :: PVCUR(:)   ! V-component of the ocean current
-!>REAL(KIND=JPRB)          :: PVCUR (YDCPG_BNDS%KLON)
+!>REAL(KIND=JPRB)          :: PVCUR (YDCPG_OPTS%KLON)
   REAL(KIND=JPRB), POINTER :: PZ0RLF(:)   ! gravity * vegetation roughness length
-!>REAL(KIND=JPRB)          :: PZ0RLF (YDCPG_BNDS%KLON)
+!>REAL(KIND=JPRB)          :: PZ0RLF (YDCPG_OPTS%KLON)
   REAL(KIND=JPRB), POINTER :: PCO2O(:)   ! oceanic CO2 flux
-!>REAL(KIND=JPRB)          :: PCO2O (YDCPG_BNDS%KLON)
+!>REAL(KIND=JPRB)          :: PCO2O (YDCPG_OPTS%KLON)
   REAL(KIND=JPRB), POINTER :: PCO2B(:)   ! biosphere CO2 flux
-!>REAL(KIND=JPRB)          :: PCO2B (YDCPG_BNDS%KLON)
+!>REAL(KIND=JPRB)          :: PCO2B (YDCPG_OPTS%KLON)
   REAL(KIND=JPRB), POINTER :: PCO2A(:)   ! anthropogenic CO2 flux
-!>REAL(KIND=JPRB)          :: PCO2A (YDCPG_BNDS%KLON)
+!>REAL(KIND=JPRB)          :: PCO2A (YDCPG_OPTS%KLON)
   REAL(KIND=JPRB), POINTER :: PCO2F(:)   ! CO2 fire emissions
-!>REAL(KIND=JPRB)          :: PCO2F (YDCPG_BNDS%KLON)
+!>REAL(KIND=JPRB)          :: PCO2F (YDCPG_OPTS%KLON)
   REAL(KIND=JPRB), POINTER :: PCGPP(:)   ! GPP bias correction factor
-!>REAL(KIND=JPRB)          :: PCGPP (YDCPG_BNDS%KLON)
+!>REAL(KIND=JPRB)          :: PCGPP (YDCPG_OPTS%KLON)
   REAL(KIND=JPRB), POINTER :: PCREC(:)   ! REC bias correction factor
-!>REAL(KIND=JPRB)          :: PCREC (YDCPG_BNDS%KLON)
+!>REAL(KIND=JPRB)          :: PCREC (YDCPG_OPTS%KLON)
   REAL(KIND=JPRB), POINTER :: PCH4AG(:)   ! CH4 surface fluxes - aggregated field
-!>REAL(KIND=JPRB)          :: PCH4AG (YDCPG_BNDS%KLON)
+!>REAL(KIND=JPRB)          :: PCH4AG (YDCPG_OPTS%KLON)
   REAL(KIND=JPRB), POINTER :: PCH4F(:)   ! CH4 fire emissions
-!>REAL(KIND=JPRB)          :: PCH4F (YDCPG_BNDS%KLON)
+!>REAL(KIND=JPRB)          :: PCH4F (YDCPG_OPTS%KLON)
   REAL(KIND=JPRB), POINTER :: PSDFOR(:)   ! SD filtered orography
-!>REAL(KIND=JPRB)          :: PSDFOR (YDCPG_BNDS%KLON)
+!>REAL(KIND=JPRB)          :: PSDFOR (YDCPG_OPTS%KLON)
   REAL(KIND=JPRB), POINTER :: PALUVP(:)   ! MODIS-derived parallel albedo for shortwave radiation
-!>REAL(KIND=JPRB)          :: PALUVP (YDCPG_BNDS%KLON)
+!>REAL(KIND=JPRB)          :: PALUVP (YDCPG_OPTS%KLON)
   REAL(KIND=JPRB), POINTER :: PALUVD(:)   ! MODIS-derived diffuse albedo for shortwave radiation
-!>REAL(KIND=JPRB)          :: PALUVD (YDCPG_BNDS%KLON)
+!>REAL(KIND=JPRB)          :: PALUVD (YDCPG_OPTS%KLON)
   REAL(KIND=JPRB), POINTER :: PALNIP(:)   ! MODIS-derived parallel albedo for longwave radiation
-!>REAL(KIND=JPRB)          :: PALNIP (YDCPG_BNDS%KLON)
+!>REAL(KIND=JPRB)          :: PALNIP (YDCPG_OPTS%KLON)
   REAL(KIND=JPRB), POINTER :: PALNID(:)   ! MODIS-derived diffuse albedo for longwave radiation
-!>REAL(KIND=JPRB)          :: PALNID (YDCPG_BNDS%KLON)
+!>REAL(KIND=JPRB)          :: PALNID (YDCPG_OPTS%KLON)
   REAL(KIND=JPRB), POINTER :: PFP1(:)   ! surface orography in the 2nd part of FULLPOS-927
-!>REAL(KIND=JPRB)          :: PFP1 (YDCPG_BNDS%KLON)
+!>REAL(KIND=JPRB)          :: PFP1 (YDCPG_OPTS%KLON)
   REAL(KIND=JPRB), POINTER :: PBCBF(:)   ! black carbon biogenic
-!>REAL(KIND=JPRB)          :: PBCBF (YDCPG_BNDS%KLON)
+!>REAL(KIND=JPRB)          :: PBCBF (YDCPG_OPTS%KLON)
   REAL(KIND=JPRB), POINTER :: PBCFF(:)   ! black carbon fossil fuel
-!>REAL(KIND=JPRB)          :: PBCFF (YDCPG_BNDS%KLON)
+!>REAL(KIND=JPRB)          :: PBCFF (YDCPG_OPTS%KLON)
   REAL(KIND=JPRB), POINTER :: PBCGF(:)   ! black carbon GFED
-!>REAL(KIND=JPRB)          :: PBCGF (YDCPG_BNDS%KLON)
+!>REAL(KIND=JPRB)          :: PBCGF (YDCPG_OPTS%KLON)
   REAL(KIND=JPRB), POINTER :: POMBF(:)   ! organic matter biogenic
-!>REAL(KIND=JPRB)          :: POMBF (YDCPG_BNDS%KLON)
+!>REAL(KIND=JPRB)          :: POMBF (YDCPG_OPTS%KLON)
   REAL(KIND=JPRB), POINTER :: POMFF(:)   ! organic matter fossil fuel
-!>REAL(KIND=JPRB)          :: POMFF (YDCPG_BNDS%KLON)
+!>REAL(KIND=JPRB)          :: POMFF (YDCPG_OPTS%KLON)
   REAL(KIND=JPRB), POINTER :: POMGF(:)   ! organic matter GFED
-!>REAL(KIND=JPRB)          :: POMGF (YDCPG_BNDS%KLON)
+!>REAL(KIND=JPRB)          :: POMGF (YDCPG_OPTS%KLON)
   REAL(KIND=JPRB), POINTER :: PINJF(:)   ! height of maximum injection for biomass burning emissions
-!>REAL(KIND=JPRB)          :: PINJF (YDCPG_BNDS%KLON)
+!>REAL(KIND=JPRB)          :: PINJF (YDCPG_OPTS%KLON)
   REAL(KIND=JPRB), POINTER :: PSO2L(:)   ! sulphate low-level
-!>REAL(KIND=JPRB)          :: PSO2L (YDCPG_BNDS%KLON)
+!>REAL(KIND=JPRB)          :: PSO2L (YDCPG_OPTS%KLON)
   REAL(KIND=JPRB), POINTER :: PSO2H(:)   ! sulphate higher-level
-!>REAL(KIND=JPRB)          :: PSO2H (YDCPG_BNDS%KLON)
+!>REAL(KIND=JPRB)          :: PSO2H (YDCPG_OPTS%KLON)
   REAL(KIND=JPRB), POINTER :: PSO2DD(:)   ! sulphate dry dep velocity
-!>REAL(KIND=JPRB)          :: PSO2DD (YDCPG_BNDS%KLON)
+!>REAL(KIND=JPRB)          :: PSO2DD (YDCPG_OPTS%KLON)
   REAL(KIND=JPRB), POINTER :: PSOGF(:)   ! sulphate GFED
-!>REAL(KIND=JPRB)          :: PSOGF (YDCPG_BNDS%KLON)
+!>REAL(KIND=JPRB)          :: PSOGF (YDCPG_OPTS%KLON)
   REAL(KIND=JPRB), POINTER :: PSOA(:)   ! secondary organic
-!>REAL(KIND=JPRB)          :: PSOA (YDCPG_BNDS%KLON)
+!>REAL(KIND=JPRB)          :: PSOA (YDCPG_OPTS%KLON)
   REAL(KIND=JPRB), POINTER :: PVOLC(:)   ! volcanic continuous
-!>REAL(KIND=JPRB)          :: PVOLC (YDCPG_BNDS%KLON)
+!>REAL(KIND=JPRB)          :: PVOLC (YDCPG_OPTS%KLON)
   REAL(KIND=JPRB), POINTER :: PVOLE(:)   ! volcanic explosive
-!>REAL(KIND=JPRB)          :: PVOLE (YDCPG_BNDS%KLON)
+!>REAL(KIND=JPRB)          :: PVOLE (YDCPG_OPTS%KLON)
   REAL(KIND=JPRB), POINTER :: PDMSO(:)   ! oceanic DMS
-!>REAL(KIND=JPRB)          :: PDMSO (YDCPG_BNDS%KLON)
+!>REAL(KIND=JPRB)          :: PDMSO (YDCPG_OPTS%KLON)
   REAL(KIND=JPRB), POINTER :: PSOACO(:)   ! SOA from CO
-!>REAL(KIND=JPRB)          :: PSOACO (YDCPG_BNDS%KLON)
+!>REAL(KIND=JPRB)          :: PSOACO (YDCPG_OPTS%KLON)
   REAL(KIND=JPRB), POINTER :: PURBF(:)   ! Urban fraction
-!>REAL(KIND=JPRB)          :: PURBF (YDCPG_BNDS%KLON)
+!>REAL(KIND=JPRB)          :: PURBF (YDCPG_OPTS%KLON)
   REAL(KIND=JPRB), POINTER :: PVOLCALTI(:)   ! Altitude of volcanoes
-!>REAL(KIND=JPRB)          :: PVOLCALTI (YDCPG_BNDS%KLON)
+!>REAL(KIND=JPRB)          :: PVOLCALTI (YDCPG_OPTS%KLON)
   REAL(KIND=JPRB), POINTER :: PFCA1(:)   ! Fraction of calcite over dust 1st bin
-!>REAL(KIND=JPRB)          :: PFCA1 (YDCPG_BNDS%KLON)
+!>REAL(KIND=JPRB)          :: PFCA1 (YDCPG_OPTS%KLON)
   REAL(KIND=JPRB), POINTER :: PFCA2(:)   ! Fraction of calcite over dust 2nd bin
-!>REAL(KIND=JPRB)          :: PFCA2 (YDCPG_BNDS%KLON)
+!>REAL(KIND=JPRB)          :: PFCA2 (YDCPG_OPTS%KLON)
   REAL(KIND=JPRB), POINTER :: PAERDEP(:)   ! dust emission potential
-!>REAL(KIND=JPRB)          :: PAERDEP (YDCPG_BNDS%KLON)
+!>REAL(KIND=JPRB)          :: PAERDEP (YDCPG_OPTS%KLON)
   REAL(KIND=JPRB), POINTER :: PAERLTS(:)   ! dust lifting threshold speed
-!>REAL(KIND=JPRB)          :: PAERLTS (YDCPG_BNDS%KLON)
+!>REAL(KIND=JPRB)          :: PAERLTS (YDCPG_OPTS%KLON)
   REAL(KIND=JPRB), POINTER :: PAERSCC(:)   ! dust soil clay content
-!>REAL(KIND=JPRB)          :: PAERSCC (YDCPG_BNDS%KLON)
+!>REAL(KIND=JPRB)          :: PAERSCC (YDCPG_OPTS%KLON)
   REAL(KIND=JPRB), POINTER :: PDSF(:)   ! dust source function
-!>REAL(KIND=JPRB)          :: PDSF (YDCPG_BNDS%KLON)
+!>REAL(KIND=JPRB)          :: PDSF (YDCPG_OPTS%KLON)
   TYPE(FIELD_2D_VIEW), ALLOCATABLE, DIMENSION(:) :: PCHEMFLX   ! chemistry emissions input
   TYPE(FIELD_2D_VIEW), ALLOCATABLE, DIMENSION(:) :: PCHEMFLXO   ! total chemistry flux (emissions + deposition)
   TYPE(FIELD_2D_VIEW), ALLOCATABLE, DIMENSION(:) :: PCHEMDV   ! chemistry deposition velocity
   REAL(KIND=JPRB), POINTER :: PNUDM(:)   ! nudging mask
-!>REAL(KIND=JPRB)          :: PNUDM (YDCPG_BNDS%KLON)
+!>REAL(KIND=JPRB)          :: PNUDM (YDCPG_OPTS%KLON)
   REAL(KIND=JPRB), POINTER :: PGROUP(:,:)
 
   TYPE(SURFACE_VARIABLE_GROUP_VARSF), POINTER :: VARIABLE_GROUP
@@ -242,27 +242,27 @@ END TYPE SURFACE_VIEW_GROUP_VARSF
 
 TYPE SURFACE_VIEW_GROUP_VCLIH
   REAL(KIND=JPRB), POINTER :: PTCCH(:)   ! total convective cloudiness
-!>REAL(KIND=JPRB)          :: PTCCH (YDCPG_BNDS%KLON)
+!>REAL(KIND=JPRB)          :: PTCCH (YDCPG_OPTS%KLON)
   REAL(KIND=JPRB), POINTER :: PSCCH(:)   ! convective cloud summit
-!>REAL(KIND=JPRB)          :: PSCCH (YDCPG_BNDS%KLON)
+!>REAL(KIND=JPRB)          :: PSCCH (YDCPG_OPTS%KLON)
   REAL(KIND=JPRB), POINTER :: PBCCH(:)   ! convective cloud base
-!>REAL(KIND=JPRB)          :: PBCCH (YDCPG_BNDS%KLON)
+!>REAL(KIND=JPRB)          :: PBCCH (YDCPG_OPTS%KLON)
   REAL(KIND=JPRB), POINTER :: PPBLH(:)   ! PBL height
-!>REAL(KIND=JPRB)          :: PPBLH (YDCPG_BNDS%KLON)
+!>REAL(KIND=JPRB)          :: PPBLH (YDCPG_OPTS%KLON)
   REAL(KIND=JPRB), POINTER :: PSPSH(:)   ! variable for prognostic convection scheme (ALARO)
-!>REAL(KIND=JPRB)          :: PSPSH (YDCPG_BNDS%KLON)
+!>REAL(KIND=JPRB)          :: PSPSH (YDCPG_OPTS%KLON)
   REAL(KIND=JPRB), POINTER :: PQSH(:)   ! surface moisture historic variable (used by TOUCANS)
-!>REAL(KIND=JPRB)          :: PQSH (YDCPG_BNDS%KLON)
+!>REAL(KIND=JPRB)          :: PQSH (YDCPG_OPTS%KLON)
   REAL(KIND=JPRB), POINTER :: PPCL(:)   ! 
-!>REAL(KIND=JPRB)          :: PPCL (YDCPG_BNDS%KLON)
+!>REAL(KIND=JPRB)          :: PPCL (YDCPG_OPTS%KLON)
   REAL(KIND=JPRB), POINTER :: PPSL(:)   ! 
-!>REAL(KIND=JPRB)          :: PPSL (YDCPG_BNDS%KLON)
+!>REAL(KIND=JPRB)          :: PPSL (YDCPG_OPTS%KLON)
   REAL(KIND=JPRB), POINTER :: PPCN(:)   ! 
-!>REAL(KIND=JPRB)          :: PPCN (YDCPG_BNDS%KLON)
+!>REAL(KIND=JPRB)          :: PPCN (YDCPG_OPTS%KLON)
   REAL(KIND=JPRB), POINTER :: PPSN(:)   ! 
-!>REAL(KIND=JPRB)          :: PPSN (YDCPG_BNDS%KLON)
+!>REAL(KIND=JPRB)          :: PPSN (YDCPG_OPTS%KLON)
   REAL(KIND=JPRB), POINTER :: PEVA(:)   ! 
-!>REAL(KIND=JPRB)          :: PEVA (YDCPG_BNDS%KLON)
+!>REAL(KIND=JPRB)          :: PEVA (YDCPG_OPTS%KLON)
   REAL(KIND=JPRB), POINTER :: PGROUP(:,:)
 
   TYPE(SURFACE_VARIABLE_GROUP_VCLIH), POINTER :: VARIABLE_GROUP
@@ -286,7 +286,7 @@ END TYPE SURFACE_VIEW_GROUP_VCLIH
 
 TYPE SURFACE_VIEW_GROUP_VCLIK
   REAL(KIND=JPRB), POINTER :: PUDGRO(:)   ! ud top position (accsu)
-!>REAL(KIND=JPRB)          :: PUDGRO (YDCPG_BNDS%KLON)
+!>REAL(KIND=JPRB)          :: PUDGRO (YDCPG_OPTS%KLON)
   REAL(KIND=JPRB), POINTER :: PGROUP(:,:)
 
   TYPE(SURFACE_VARIABLE_GROUP_VCLIK), POINTER :: VARIABLE_GROUP
@@ -300,9 +300,9 @@ END TYPE SURFACE_VIEW_GROUP_VCLIK
 
 TYPE SURFACE_VIEW_GROUP_VCLIP
   REAL(KIND=JPRB), POINTER :: PTPC(:)   ! climatological deep layer temperature
-!>REAL(KIND=JPRB)          :: PTPC (YDCPG_BNDS%KLON)
+!>REAL(KIND=JPRB)          :: PTPC (YDCPG_OPTS%KLON)
   REAL(KIND=JPRB), POINTER :: PWPC(:)   ! climatological deep layer moisture
-!>REAL(KIND=JPRB)          :: PWPC (YDCPG_BNDS%KLON)
+!>REAL(KIND=JPRB)          :: PWPC (YDCPG_OPTS%KLON)
   REAL(KIND=JPRB), POINTER :: PGROUP(:,:)
 
   TYPE(SURFACE_VARIABLE_GROUP_VCLIP), POINTER :: VARIABLE_GROUP
@@ -317,25 +317,25 @@ END TYPE SURFACE_VIEW_GROUP_VCLIP
 
 TYPE SURFACE_VIEW_GROUP_VCLIV
   REAL(KIND=JPRB), POINTER :: PARG(:)   ! silt percentage within soil
-!>REAL(KIND=JPRB)          :: PARG (YDCPG_BNDS%KLON)
+!>REAL(KIND=JPRB)          :: PARG (YDCPG_OPTS%KLON)
   REAL(KIND=JPRB), POINTER :: PSAB(:)   ! percentage of sand within the soil
-!>REAL(KIND=JPRB)          :: PSAB (YDCPG_BNDS%KLON)
+!>REAL(KIND=JPRB)          :: PSAB (YDCPG_OPTS%KLON)
   REAL(KIND=JPRB), POINTER :: PD2(:)   ! soil depth
-!>REAL(KIND=JPRB)          :: PD2 (YDCPG_BNDS%KLON)
+!>REAL(KIND=JPRB)          :: PD2 (YDCPG_OPTS%KLON)
   REAL(KIND=JPRB), POINTER :: PIVEG(:)   ! type of vegetation
-!>REAL(KIND=JPRB)          :: PIVEG (YDCPG_BNDS%KLON)
+!>REAL(KIND=JPRB)          :: PIVEG (YDCPG_OPTS%KLON)
   REAL(KIND=JPRB), POINTER :: PRSMIN(:)   ! stomatal minimum resistance
-!>REAL(KIND=JPRB)          :: PRSMIN (YDCPG_BNDS%KLON)
+!>REAL(KIND=JPRB)          :: PRSMIN (YDCPG_OPTS%KLON)
   REAL(KIND=JPRB), POINTER :: PLAI(:)   ! leaf area index
-!>REAL(KIND=JPRB)          :: PLAI (YDCPG_BNDS%KLON)
+!>REAL(KIND=JPRB)          :: PLAI (YDCPG_OPTS%KLON)
   REAL(KIND=JPRB), POINTER :: PHV(:)   ! resistance to evapotranspiration
-!>REAL(KIND=JPRB)          :: PHV (YDCPG_BNDS%KLON)
+!>REAL(KIND=JPRB)          :: PHV (YDCPG_OPTS%KLON)
   REAL(KIND=JPRB), POINTER :: PZ0H(:)   ! gravity * roughness length for heat
-!>REAL(KIND=JPRB)          :: PZ0H (YDCPG_BNDS%KLON)
+!>REAL(KIND=JPRB)          :: PZ0H (YDCPG_OPTS%KLON)
   REAL(KIND=JPRB), POINTER :: PALS(:)   ! albedo of bare ground
-!>REAL(KIND=JPRB)          :: PALS (YDCPG_BNDS%KLON)
+!>REAL(KIND=JPRB)          :: PALS (YDCPG_OPTS%KLON)
   REAL(KIND=JPRB), POINTER :: PALV(:)   ! albedo of vegetation
-!>REAL(KIND=JPRB)          :: PALV (YDCPG_BNDS%KLON)
+!>REAL(KIND=JPRB)          :: PALV (YDCPG_OPTS%KLON)
   REAL(KIND=JPRB), POINTER :: PGROUP(:,:)
 
   TYPE(SURFACE_VARIABLE_GROUP_VCLIV), POINTER :: VARIABLE_GROUP
@@ -358,17 +358,17 @@ END TYPE SURFACE_VIEW_GROUP_VCLIV
 
 TYPE SURFACE_VIEW_GROUP_VCLIA
   REAL(KIND=JPRB), POINTER :: PSEA(:)   ! aerosol sea
-!>REAL(KIND=JPRB)          :: PSEA (YDCPG_BNDS%KLON)
+!>REAL(KIND=JPRB)          :: PSEA (YDCPG_OPTS%KLON)
   REAL(KIND=JPRB), POINTER :: PLAN(:)   ! aerosol land
-!>REAL(KIND=JPRB)          :: PLAN (YDCPG_BNDS%KLON)
+!>REAL(KIND=JPRB)          :: PLAN (YDCPG_OPTS%KLON)
   REAL(KIND=JPRB), POINTER :: PSOO(:)   ! aerosol soot
-!>REAL(KIND=JPRB)          :: PSOO (YDCPG_BNDS%KLON)
+!>REAL(KIND=JPRB)          :: PSOO (YDCPG_OPTS%KLON)
   REAL(KIND=JPRB), POINTER :: PDES(:)   ! aerosol desert
-!>REAL(KIND=JPRB)          :: PDES (YDCPG_BNDS%KLON)
+!>REAL(KIND=JPRB)          :: PDES (YDCPG_OPTS%KLON)
   REAL(KIND=JPRB), POINTER :: PSUL(:)   ! aerosol sulfate
-!>REAL(KIND=JPRB)          :: PSUL (YDCPG_BNDS%KLON)
+!>REAL(KIND=JPRB)          :: PSUL (YDCPG_OPTS%KLON)
   REAL(KIND=JPRB), POINTER :: PVOL(:)   ! aerosol volcano
-!>REAL(KIND=JPRB)          :: PVOL (YDCPG_BNDS%KLON)
+!>REAL(KIND=JPRB)          :: PVOL (YDCPG_OPTS%KLON)
   REAL(KIND=JPRB), POINTER :: PGROUP(:,:)
 
   TYPE(SURFACE_VARIABLE_GROUP_VCLIA), POINTER :: VARIABLE_GROUP
@@ -387,15 +387,15 @@ END TYPE SURFACE_VIEW_GROUP_VCLIA
 
 TYPE SURFACE_VIEW_GROUP_VCLIN
   REAL(KIND=JPRB), POINTER :: PTOP(:)   ! index of convective cloud top
-!>REAL(KIND=JPRB)          :: PTOP (YDCPG_BNDS%KLON)
+!>REAL(KIND=JPRB)          :: PTOP (YDCPG_OPTS%KLON)
   REAL(KIND=JPRB), POINTER :: PBAS(:)   ! index of convective cloud base
-!>REAL(KIND=JPRB)          :: PBAS (YDCPG_BNDS%KLON)
+!>REAL(KIND=JPRB)          :: PBAS (YDCPG_OPTS%KLON)
   REAL(KIND=JPRB), POINTER :: PACPR(:)   ! averaged convective precipitaion rate
-!>REAL(KIND=JPRB)          :: PACPR (YDCPG_BNDS%KLON)
+!>REAL(KIND=JPRB)          :: PACPR (YDCPG_OPTS%KLON)
   REAL(KIND=JPRB), POINTER :: PACCPR(:)   ! accumulated total precipitaion for assimilation
-!>REAL(KIND=JPRB)          :: PACCPR (YDCPG_BNDS%KLON)
+!>REAL(KIND=JPRB)          :: PACCPR (YDCPG_OPTS%KLON)
   REAL(KIND=JPRB), POINTER :: PACCPR5(:)   ! accumulated total precipitaion for assimilation (trajectory)
-!>REAL(KIND=JPRB)          :: PACCPR5 (YDCPG_BNDS%KLON)
+!>REAL(KIND=JPRB)          :: PACCPR5 (YDCPG_OPTS%KLON)
   REAL(KIND=JPRB), POINTER :: PGROUP(:,:)
 
   TYPE(SURFACE_VARIABLE_GROUP_VCLIN), POINTER :: VARIABLE_GROUP
@@ -413,11 +413,11 @@ END TYPE SURFACE_VIEW_GROUP_VCLIN
 
 TYPE SURFACE_VIEW_GROUP_VDIAGO2
   REAL(KIND=JPRB), POINTER :: POCDEP(:)   ! bottom layer depth
-!>REAL(KIND=JPRB)          :: POCDEP (YDCPG_BNDS%KLON)
+!>REAL(KIND=JPRB)          :: POCDEP (YDCPG_OPTS%KLON)
   REAL(KIND=JPRB), POINTER :: PUSTRC(:)   ! taux clim.
-!>REAL(KIND=JPRB)          :: PUSTRC (YDCPG_BNDS%KLON)
+!>REAL(KIND=JPRB)          :: PUSTRC (YDCPG_OPTS%KLON)
   REAL(KIND=JPRB), POINTER :: PVSTRC(:)   ! tauy clim.
-!>REAL(KIND=JPRB)          :: PVSTRC (YDCPG_BNDS%KLON)
+!>REAL(KIND=JPRB)          :: PVSTRC (YDCPG_OPTS%KLON)
   REAL(KIND=JPRB), POINTER :: PGROUP(:,:)
 
   TYPE(SURFACE_VARIABLE_GROUP_VDIAGO2), POINTER :: VARIABLE_GROUP
@@ -433,33 +433,33 @@ END TYPE SURFACE_VIEW_GROUP_VDIAGO2
 
 TYPE SURFACE_VIEW_GROUP_VDIAGO3
   REAL(KIND=JPRB), POINTER :: PDIFM(:,:)   ! viscosity
-!>REAL(KIND=JPRB)          :: PDIFM (YDCPG_BNDS%KLON, YDCPG_BNDS%YRSURF%YSD_V3D%NLEVS)
+!>REAL(KIND=JPRB)          :: PDIFM (YDCPG_OPTS%KLON, YDCPG_OPTS%YRSURF%YSD_V3D%NLEVS)
   REAL(KIND=JPRB), POINTER :: PDIFT(:,:)   ! diff. coef. of temp
-!>REAL(KIND=JPRB)          :: PDIFT (YDCPG_BNDS%KLON, YDCPG_BNDS%YRSURF%YSD_V3D%NLEVS)
+!>REAL(KIND=JPRB)          :: PDIFT (YDCPG_OPTS%KLON, YDCPG_OPTS%YRSURF%YSD_V3D%NLEVS)
   REAL(KIND=JPRB), POINTER :: PDIFS(:,:)   ! diff. coef. of salinity
-!>REAL(KIND=JPRB)          :: PDIFS (YDCPG_BNDS%KLON, YDCPG_BNDS%YRSURF%YSD_V3D%NLEVS)
+!>REAL(KIND=JPRB)          :: PDIFS (YDCPG_OPTS%KLON, YDCPG_OPTS%YRSURF%YSD_V3D%NLEVS)
   REAL(KIND=JPRB), POINTER :: PADVT(:,:)   ! correction term for temp.
-!>REAL(KIND=JPRB)          :: PADVT (YDCPG_BNDS%KLON, YDCPG_BNDS%YRSURF%YSD_V3D%NLEVS)
+!>REAL(KIND=JPRB)          :: PADVT (YDCPG_OPTS%KLON, YDCPG_OPTS%YRSURF%YSD_V3D%NLEVS)
   REAL(KIND=JPRB), POINTER :: PADVS(:,:)   ! correction term for sal.
-!>REAL(KIND=JPRB)          :: PADVS (YDCPG_BNDS%KLON, YDCPG_BNDS%YRSURF%YSD_V3D%NLEVS)
+!>REAL(KIND=JPRB)          :: PADVS (YDCPG_OPTS%KLON, YDCPG_OPTS%YRSURF%YSD_V3D%NLEVS)
   REAL(KIND=JPRB), POINTER :: PTRI0(:,:)   ! coef. for solving matrix.
-!>REAL(KIND=JPRB)          :: PTRI0 (YDCPG_BNDS%KLON, YDCPG_BNDS%YRSURF%YSD_V3D%NLEVS)
+!>REAL(KIND=JPRB)          :: PTRI0 (YDCPG_OPTS%KLON, YDCPG_OPTS%YRSURF%YSD_V3D%NLEVS)
   REAL(KIND=JPRB), POINTER :: PTRI1(:,:)   ! coef. for solving matrix.
-!>REAL(KIND=JPRB)          :: PTRI1 (YDCPG_BNDS%KLON, YDCPG_BNDS%YRSURF%YSD_V3D%NLEVS)
+!>REAL(KIND=JPRB)          :: PTRI1 (YDCPG_OPTS%KLON, YDCPG_OPTS%YRSURF%YSD_V3D%NLEVS)
   REAL(KIND=JPRB), POINTER :: PSWDK(:,:)   ! radiation term
-!>REAL(KIND=JPRB)          :: PSWDK (YDCPG_BNDS%KLON, YDCPG_BNDS%YRSURF%YSD_V3D%NLEVS)
+!>REAL(KIND=JPRB)          :: PSWDK (YDCPG_OPTS%KLON, YDCPG_OPTS%YRSURF%YSD_V3D%NLEVS)
   REAL(KIND=JPRB), POINTER :: PZO(:,:)   ! depth of layer
-!>REAL(KIND=JPRB)          :: PZO (YDCPG_BNDS%KLON, YDCPG_BNDS%YRSURF%YSD_V3D%NLEVS)
+!>REAL(KIND=JPRB)          :: PZO (YDCPG_OPTS%KLON, YDCPG_OPTS%YRSURF%YSD_V3D%NLEVS)
   REAL(KIND=JPRB), POINTER :: PHO(:,:)   ! depth of interface layer
-!>REAL(KIND=JPRB)          :: PHO (YDCPG_BNDS%KLON, YDCPG_BNDS%YRSURF%YSD_V3D%NLEVS)
+!>REAL(KIND=JPRB)          :: PHO (YDCPG_OPTS%KLON, YDCPG_OPTS%YRSURF%YSD_V3D%NLEVS)
   REAL(KIND=JPRB), POINTER :: PDO(:,:)   ! layer thickness
-!>REAL(KIND=JPRB)          :: PDO (YDCPG_BNDS%KLON, YDCPG_BNDS%YRSURF%YSD_V3D%NLEVS)
+!>REAL(KIND=JPRB)          :: PDO (YDCPG_OPTS%KLON, YDCPG_OPTS%YRSURF%YSD_V3D%NLEVS)
   REAL(KIND=JPRB), POINTER :: PHO_INV(:,:)   ! 1 / YHO
-!>REAL(KIND=JPRB)          :: PHO_INV (YDCPG_BNDS%KLON, YDCPG_BNDS%YRSURF%YSD_V3D%NLEVS)
+!>REAL(KIND=JPRB)          :: PHO_INV (YDCPG_OPTS%KLON, YDCPG_OPTS%YRSURF%YSD_V3D%NLEVS)
   REAL(KIND=JPRB), POINTER :: PUOC(:,:)   ! U velocity clim.
-!>REAL(KIND=JPRB)          :: PUOC (YDCPG_BNDS%KLON, YDCPG_BNDS%YRSURF%YSD_V3D%NLEVS)
+!>REAL(KIND=JPRB)          :: PUOC (YDCPG_OPTS%KLON, YDCPG_OPTS%YRSURF%YSD_V3D%NLEVS)
   REAL(KIND=JPRB), POINTER :: PVOC(:,:)   ! V velocity clim.
-!>REAL(KIND=JPRB)          :: PVOC (YDCPG_BNDS%KLON, YDCPG_BNDS%YRSURF%YSD_V3D%NLEVS)
+!>REAL(KIND=JPRB)          :: PVOC (YDCPG_OPTS%KLON, YDCPG_OPTS%YRSURF%YSD_V3D%NLEVS)
   REAL(KIND=JPRB), POINTER :: PGROUP(:,:,:)
 
   TYPE(SURFACE_VARIABLE_GROUP_VDIAGO3), POINTER :: VARIABLE_GROUP
@@ -486,286 +486,286 @@ END TYPE SURFACE_VIEW_GROUP_VDIAGO3
 
 TYPE SURFACE_VIEW_GROUP_VDIAG
   REAL(KIND=JPRB), POINTER :: PLSP(:)   ! Large scale precipitation
-!>REAL(KIND=JPRB)          :: PLSP (YDCPG_BNDS%KLON)
+!>REAL(KIND=JPRB)          :: PLSP (YDCPG_OPTS%KLON)
   REAL(KIND=JPRB), POINTER :: PCP(:)   ! Convective precipitation
-!>REAL(KIND=JPRB)          :: PCP (YDCPG_BNDS%KLON)
+!>REAL(KIND=JPRB)          :: PCP (YDCPG_OPTS%KLON)
   REAL(KIND=JPRB), POINTER :: PSF(:)   ! Snowfall
-!>REAL(KIND=JPRB)          :: PSF (YDCPG_BNDS%KLON)
+!>REAL(KIND=JPRB)          :: PSF (YDCPG_OPTS%KLON)
   REAL(KIND=JPRB), POINTER :: PFZRA(:)   ! Freezing rain
-!>REAL(KIND=JPRB)          :: PFZRA (YDCPG_BNDS%KLON)
+!>REAL(KIND=JPRB)          :: PFZRA (YDCPG_OPTS%KLON)
   REAL(KIND=JPRB), POINTER :: PBLD(:)   ! Boundary layer dissipation
-!>REAL(KIND=JPRB)          :: PBLD (YDCPG_BNDS%KLON)
+!>REAL(KIND=JPRB)          :: PBLD (YDCPG_OPTS%KLON)
   REAL(KIND=JPRB), POINTER :: PSSHF(:)   ! Surface sensible heat flux
-!>REAL(KIND=JPRB)          :: PSSHF (YDCPG_BNDS%KLON)
+!>REAL(KIND=JPRB)          :: PSSHF (YDCPG_OPTS%KLON)
   REAL(KIND=JPRB), POINTER :: PSLHF(:)   ! Surface latent heat flux
-!>REAL(KIND=JPRB)          :: PSLHF (YDCPG_BNDS%KLON)
+!>REAL(KIND=JPRB)          :: PSLHF (YDCPG_OPTS%KLON)
   REAL(KIND=JPRB), POINTER :: PNEE(:)   ! Surface net ecosystem exchange of CO2
-!>REAL(KIND=JPRB)          :: PNEE (YDCPG_BNDS%KLON)
+!>REAL(KIND=JPRB)          :: PNEE (YDCPG_OPTS%KLON)
   REAL(KIND=JPRB), POINTER :: PGPP(:)   ! Surface gross primary production of CO2
-!>REAL(KIND=JPRB)          :: PGPP (YDCPG_BNDS%KLON)
+!>REAL(KIND=JPRB)          :: PGPP (YDCPG_OPTS%KLON)
   REAL(KIND=JPRB), POINTER :: PREC(:)   ! Surface ecosystem respiration of CO2
-!>REAL(KIND=JPRB)          :: PREC (YDCPG_BNDS%KLON)
+!>REAL(KIND=JPRB)          :: PREC (YDCPG_OPTS%KLON)
   REAL(KIND=JPRB), POINTER :: PMSL(:)   ! Mean sea level pressure
-!>REAL(KIND=JPRB)          :: PMSL (YDCPG_BNDS%KLON)
+!>REAL(KIND=JPRB)          :: PMSL (YDCPG_OPTS%KLON)
   REAL(KIND=JPRB), POINTER :: PSP(:)   ! Surface pressure
-!>REAL(KIND=JPRB)          :: PSP (YDCPG_BNDS%KLON)
+!>REAL(KIND=JPRB)          :: PSP (YDCPG_OPTS%KLON)
   REAL(KIND=JPRB), POINTER :: PTCC(:)   ! Total cloud cover
-!>REAL(KIND=JPRB)          :: PTCC (YDCPG_BNDS%KLON)
+!>REAL(KIND=JPRB)          :: PTCC (YDCPG_OPTS%KLON)
   REAL(KIND=JPRB), POINTER :: P10U(:)   ! U-wind at 10 m
-!>REAL(KIND=JPRB)          :: P10U (YDCPG_BNDS%KLON)
+!>REAL(KIND=JPRB)          :: P10U (YDCPG_OPTS%KLON)
   REAL(KIND=JPRB), POINTER :: P10V(:)   ! V-wind at 10 m
-!>REAL(KIND=JPRB)          :: P10V (YDCPG_BNDS%KLON)
+!>REAL(KIND=JPRB)          :: P10V (YDCPG_OPTS%KLON)
   REAL(KIND=JPRB), POINTER :: P2T(:)   ! Temperature at 2 m
-!>REAL(KIND=JPRB)          :: P2T (YDCPG_BNDS%KLON)
+!>REAL(KIND=JPRB)          :: P2T (YDCPG_OPTS%KLON)
   REAL(KIND=JPRB), POINTER :: P2D(:)   ! Dewpoint temperature at 2 m
-!>REAL(KIND=JPRB)          :: P2D (YDCPG_BNDS%KLON)
+!>REAL(KIND=JPRB)          :: P2D (YDCPG_OPTS%KLON)
   REAL(KIND=JPRB), POINTER :: P2Q(:)   ! Specific humidity at 2 m
-!>REAL(KIND=JPRB)          :: P2Q (YDCPG_BNDS%KLON)
+!>REAL(KIND=JPRB)          :: P2Q (YDCPG_OPTS%KLON)
   REAL(KIND=JPRB), POINTER :: PSSR(:)   ! Surface solar radiation
-!>REAL(KIND=JPRB)          :: PSSR (YDCPG_BNDS%KLON)
+!>REAL(KIND=JPRB)          :: PSSR (YDCPG_OPTS%KLON)
   REAL(KIND=JPRB), POINTER :: PSTR(:)   ! Surface thermal radiation
-!>REAL(KIND=JPRB)          :: PSTR (YDCPG_BNDS%KLON)
+!>REAL(KIND=JPRB)          :: PSTR (YDCPG_OPTS%KLON)
   REAL(KIND=JPRB), POINTER :: PTSR(:)   ! Top solar radiation
-!>REAL(KIND=JPRB)          :: PTSR (YDCPG_BNDS%KLON)
+!>REAL(KIND=JPRB)          :: PTSR (YDCPG_OPTS%KLON)
   REAL(KIND=JPRB), POINTER :: PTTR(:)   ! Top thermal radiation
-!>REAL(KIND=JPRB)          :: PTTR (YDCPG_BNDS%KLON)
+!>REAL(KIND=JPRB)          :: PTTR (YDCPG_OPTS%KLON)
   REAL(KIND=JPRB), POINTER :: PEWSS(:)   ! Instantaneous surface U-wind stress
-!>REAL(KIND=JPRB)          :: PEWSS (YDCPG_BNDS%KLON)
+!>REAL(KIND=JPRB)          :: PEWSS (YDCPG_OPTS%KLON)
   REAL(KIND=JPRB), POINTER :: PNSSS(:)   ! Instantaneous surface V-wind stress
-!>REAL(KIND=JPRB)          :: PNSSS (YDCPG_BNDS%KLON)
+!>REAL(KIND=JPRB)          :: PNSSS (YDCPG_OPTS%KLON)
   REAL(KIND=JPRB), POINTER :: PE(:)   ! Water evaporation
-!>REAL(KIND=JPRB)          :: PE (YDCPG_BNDS%KLON)
+!>REAL(KIND=JPRB)          :: PE (YDCPG_OPTS%KLON)
   REAL(KIND=JPRB), POINTER :: PPEV(:)   ! Potential evaporation
-!>REAL(KIND=JPRB)          :: PPEV (YDCPG_BNDS%KLON)
+!>REAL(KIND=JPRB)          :: PPEV (YDCPG_OPTS%KLON)
   REAL(KIND=JPRB), POINTER :: PCCC(:)   ! Convective cloud cover
-!>REAL(KIND=JPRB)          :: PCCC (YDCPG_BNDS%KLON)
+!>REAL(KIND=JPRB)          :: PCCC (YDCPG_OPTS%KLON)
   REAL(KIND=JPRB), POINTER :: PLCC(:)   ! Low cloud cover
-!>REAL(KIND=JPRB)          :: PLCC (YDCPG_BNDS%KLON)
+!>REAL(KIND=JPRB)          :: PLCC (YDCPG_OPTS%KLON)
   REAL(KIND=JPRB), POINTER :: PMCC(:)   ! Medium cloud cover
-!>REAL(KIND=JPRB)          :: PMCC (YDCPG_BNDS%KLON)
+!>REAL(KIND=JPRB)          :: PMCC (YDCPG_OPTS%KLON)
   REAL(KIND=JPRB), POINTER :: PHCC(:)   ! High cloud cover
-!>REAL(KIND=JPRB)          :: PHCC (YDCPG_BNDS%KLON)
+!>REAL(KIND=JPRB)          :: PHCC (YDCPG_OPTS%KLON)
   REAL(KIND=JPRB), POINTER :: PLGWS(:)   ! Zonal gravity wave stress
-!>REAL(KIND=JPRB)          :: PLGWS (YDCPG_BNDS%KLON)
+!>REAL(KIND=JPRB)          :: PLGWS (YDCPG_OPTS%KLON)
   REAL(KIND=JPRB), POINTER :: PMGWS(:)   ! Meridian gravity wave stress
-!>REAL(KIND=JPRB)          :: PMGWS (YDCPG_BNDS%KLON)
+!>REAL(KIND=JPRB)          :: PMGWS (YDCPG_OPTS%KLON)
   REAL(KIND=JPRB), POINTER :: PGWD(:)   ! Gravity wave dissipation
-!>REAL(KIND=JPRB)          :: PGWD (YDCPG_BNDS%KLON)
+!>REAL(KIND=JPRB)          :: PGWD (YDCPG_OPTS%KLON)
   REAL(KIND=JPRB), POINTER :: PMX2T(:)   ! Maximum temperature at 2 m
-!>REAL(KIND=JPRB)          :: PMX2T (YDCPG_BNDS%KLON)
+!>REAL(KIND=JPRB)          :: PMX2T (YDCPG_OPTS%KLON)
   REAL(KIND=JPRB), POINTER :: PMN2T(:)   ! Minimum temperature at 2 m
-!>REAL(KIND=JPRB)          :: PMN2T (YDCPG_BNDS%KLON)
+!>REAL(KIND=JPRB)          :: PMN2T (YDCPG_OPTS%KLON)
   TYPE(FIELD_2D_VIEW), ALLOCATABLE, DIMENSION(:) :: PMX2T6   ! Bins for maximum temperature at 2 m since last 6 hours
   TYPE(FIELD_2D_VIEW), ALLOCATABLE, DIMENSION(:) :: PMN2T6   ! Bins for minimum temperature at 2 m since last 6 hours
   REAL(KIND=JPRB), POINTER :: PRO(:)   ! Runoff (total)
-!>REAL(KIND=JPRB)          :: PRO (YDCPG_BNDS%KLON)
+!>REAL(KIND=JPRB)          :: PRO (YDCPG_OPTS%KLON)
   REAL(KIND=JPRB), POINTER :: PSRO(:)   ! Runoff surface
-!>REAL(KIND=JPRB)          :: PSRO (YDCPG_BNDS%KLON)
+!>REAL(KIND=JPRB)          :: PSRO (YDCPG_OPTS%KLON)
   REAL(KIND=JPRB), POINTER :: PSSRO(:)   ! Runoff sub-surface
-!>REAL(KIND=JPRB)          :: PSSRO (YDCPG_BNDS%KLON)
+!>REAL(KIND=JPRB)          :: PSSRO (YDCPG_OPTS%KLON)
   REAL(KIND=JPRB), POINTER :: PALB(:)   ! (surface shortwave) albedo
-!>REAL(KIND=JPRB)          :: PALB (YDCPG_BNDS%KLON)
+!>REAL(KIND=JPRB)          :: PALB (YDCPG_OPTS%KLON)
   REAL(KIND=JPRB), POINTER :: PIEWSS(:)   ! Instantaneous surface zonal component of stress
-!>REAL(KIND=JPRB)          :: PIEWSS (YDCPG_BNDS%KLON)
+!>REAL(KIND=JPRB)          :: PIEWSS (YDCPG_OPTS%KLON)
   REAL(KIND=JPRB), POINTER :: PINSSS(:)   ! Instantaneous surface meridian component of stress
-!>REAL(KIND=JPRB)          :: PINSSS (YDCPG_BNDS%KLON)
+!>REAL(KIND=JPRB)          :: PINSSS (YDCPG_OPTS%KLON)
   REAL(KIND=JPRB), POINTER :: PISSHF(:)   ! Instantaneous surface heat flux
-!>REAL(KIND=JPRB)          :: PISSHF (YDCPG_BNDS%KLON)
+!>REAL(KIND=JPRB)          :: PISSHF (YDCPG_OPTS%KLON)
   REAL(KIND=JPRB), POINTER :: PIE(:)   ! Instantaneous surface moisture flux
-!>REAL(KIND=JPRB)          :: PIE (YDCPG_BNDS%KLON)
+!>REAL(KIND=JPRB)          :: PIE (YDCPG_OPTS%KLON)
   REAL(KIND=JPRB), POINTER :: PINEE(:)   ! Instantaneous net ecosystem exchange of CO2
-!>REAL(KIND=JPRB)          :: PINEE (YDCPG_BNDS%KLON)
+!>REAL(KIND=JPRB)          :: PINEE (YDCPG_OPTS%KLON)
   REAL(KIND=JPRB), POINTER :: PIGPP(:)   ! Instantaneous gross primary production of CO2
-!>REAL(KIND=JPRB)          :: PIGPP (YDCPG_BNDS%KLON)
+!>REAL(KIND=JPRB)          :: PIGPP (YDCPG_OPTS%KLON)
   REAL(KIND=JPRB), POINTER :: PIREC(:)   ! Instantaneous ecosystem respiration of CO2
-!>REAL(KIND=JPRB)          :: PIREC (YDCPG_BNDS%KLON)
+!>REAL(KIND=JPRB)          :: PIREC (YDCPG_OPTS%KLON)
   REAL(KIND=JPRB), POINTER :: PCSF(:)   ! Convective snow fall
-!>REAL(KIND=JPRB)          :: PCSF (YDCPG_BNDS%KLON)
+!>REAL(KIND=JPRB)          :: PCSF (YDCPG_OPTS%KLON)
   REAL(KIND=JPRB), POINTER :: PLSSF(:)   ! Large scale snowfall
-!>REAL(KIND=JPRB)          :: PLSSF (YDCPG_BNDS%KLON)
+!>REAL(KIND=JPRB)          :: PLSSF (YDCPG_OPTS%KLON)
   REAL(KIND=JPRB), POINTER :: PMXTPR(:)   ! Max precip rate since last post-processing
-!>REAL(KIND=JPRB)          :: PMXTPR (YDCPG_BNDS%KLON)
+!>REAL(KIND=JPRB)          :: PMXTPR (YDCPG_OPTS%KLON)
   REAL(KIND=JPRB), POINTER :: PMNTPR(:)   ! Min precip rate since last post-processing
-!>REAL(KIND=JPRB)          :: PMNTPR (YDCPG_BNDS%KLON)
+!>REAL(KIND=JPRB)          :: PMNTPR (YDCPG_OPTS%KLON)
   TYPE(FIELD_2D_VIEW), ALLOCATABLE, DIMENSION(:) :: PMXTPR6   ! Max precip rate in last 6 hours
   TYPE(FIELD_2D_VIEW), ALLOCATABLE, DIMENSION(:) :: PMNTPR6   ! Min precip rate in last 6 hours
   REAL(KIND=JPRB), POINTER :: PTPR(:)   ! Total precipitation rate
-!>REAL(KIND=JPRB)          :: PTPR (YDCPG_BNDS%KLON)
+!>REAL(KIND=JPRB)          :: PTPR (YDCPG_OPTS%KLON)
   REAL(KIND=JPRB), POINTER :: PLSRR(:)   ! Large scale rain rate
-!>REAL(KIND=JPRB)          :: PLSRR (YDCPG_BNDS%KLON)
+!>REAL(KIND=JPRB)          :: PLSRR (YDCPG_OPTS%KLON)
   REAL(KIND=JPRB), POINTER :: PCRR(:)   ! Convective rain rate
-!>REAL(KIND=JPRB)          :: PCRR (YDCPG_BNDS%KLON)
+!>REAL(KIND=JPRB)          :: PCRR (YDCPG_OPTS%KLON)
   REAL(KIND=JPRB), POINTER :: PLSSFR(:)   ! Large scale snowfall rate
-!>REAL(KIND=JPRB)          :: PLSSFR (YDCPG_BNDS%KLON)
+!>REAL(KIND=JPRB)          :: PLSSFR (YDCPG_OPTS%KLON)
   REAL(KIND=JPRB), POINTER :: PCSFR(:)   ! Convective snowfall rate
-!>REAL(KIND=JPRB)          :: PCSFR (YDCPG_BNDS%KLON)
+!>REAL(KIND=JPRB)          :: PCSFR (YDCPG_OPTS%KLON)
   REAL(KIND=JPRB), POINTER :: PPTYPE(:)   ! Precipitation type
-!>REAL(KIND=JPRB)          :: PPTYPE (YDCPG_BNDS%KLON)
+!>REAL(KIND=JPRB)          :: PPTYPE (YDCPG_OPTS%KLON)
   REAL(KIND=JPRB), POINTER :: PILSPF(:)   ! Large-scale precipitation fraction (inst.)
-!>REAL(KIND=JPRB)          :: PILSPF (YDCPG_BNDS%KLON)
+!>REAL(KIND=JPRB)          :: PILSPF (YDCPG_OPTS%KLON)
   REAL(KIND=JPRB), POINTER :: PZ0F(:)   ! Gravity * surface roughness length
-!>REAL(KIND=JPRB)          :: PZ0F (YDCPG_BNDS%KLON)
+!>REAL(KIND=JPRB)          :: PZ0F (YDCPG_OPTS%KLON)
   REAL(KIND=JPRB), POINTER :: PLZ0H(:)   ! Logarithm of z0 times heat flux
-!>REAL(KIND=JPRB)          :: PLZ0H (YDCPG_BNDS%KLON)
+!>REAL(KIND=JPRB)          :: PLZ0H (YDCPG_OPTS%KLON)
   REAL(KIND=JPRB), POINTER :: PVIWVE(:)   ! Vertical integral of eastward water vapour flux
-!>REAL(KIND=JPRB)          :: PVIWVE (YDCPG_BNDS%KLON)
+!>REAL(KIND=JPRB)          :: PVIWVE (YDCPG_OPTS%KLON)
   REAL(KIND=JPRB), POINTER :: PVIWVN(:)   ! Vertical integral of northward water vapour flux
-!>REAL(KIND=JPRB)          :: PVIWVN (YDCPG_BNDS%KLON)
+!>REAL(KIND=JPRB)          :: PVIWVN (YDCPG_OPTS%KLON)
   REAL(KIND=JPRB), POINTER :: PTCW(:)   ! Total water content in a vertical column
-!>REAL(KIND=JPRB)          :: PTCW (YDCPG_BNDS%KLON)
+!>REAL(KIND=JPRB)          :: PTCW (YDCPG_OPTS%KLON)
   REAL(KIND=JPRB), POINTER :: PTCWV(:)   ! Total water vapor content in a vertical column
-!>REAL(KIND=JPRB)          :: PTCWV (YDCPG_BNDS%KLON)
+!>REAL(KIND=JPRB)          :: PTCWV (YDCPG_OPTS%KLON)
   REAL(KIND=JPRB), POINTER :: PTCLW(:)   ! Total liquid water content in a vertical column
-!>REAL(KIND=JPRB)          :: PTCLW (YDCPG_BNDS%KLON)
+!>REAL(KIND=JPRB)          :: PTCLW (YDCPG_OPTS%KLON)
   REAL(KIND=JPRB), POINTER :: PTCIW(:)   ! Total ice water content in a vertical column
-!>REAL(KIND=JPRB)          :: PTCIW (YDCPG_BNDS%KLON)
+!>REAL(KIND=JPRB)          :: PTCIW (YDCPG_OPTS%KLON)
   REAL(KIND=JPRB), POINTER :: PTCRW(:)   ! Total rain water content in a vertical column
-!>REAL(KIND=JPRB)          :: PTCRW (YDCPG_BNDS%KLON)
+!>REAL(KIND=JPRB)          :: PTCRW (YDCPG_OPTS%KLON)
   REAL(KIND=JPRB), POINTER :: PTCSW(:)   ! Total snow water content in a vertical column
-!>REAL(KIND=JPRB)          :: PTCSW (YDCPG_BNDS%KLON)
+!>REAL(KIND=JPRB)          :: PTCSW (YDCPG_OPTS%KLON)
   REAL(KIND=JPRB), POINTER :: PTCSLW(:)   ! Total supercooled liquid water content in a vertical column
-!>REAL(KIND=JPRB)          :: PTCSLW (YDCPG_BNDS%KLON)
+!>REAL(KIND=JPRB)          :: PTCSLW (YDCPG_OPTS%KLON)
   REAL(KIND=JPRB), POINTER :: PSSRD(:)   ! Downward surface solar radiation
-!>REAL(KIND=JPRB)          :: PSSRD (YDCPG_BNDS%KLON)
+!>REAL(KIND=JPRB)          :: PSSRD (YDCPG_OPTS%KLON)
   REAL(KIND=JPRB), POINTER :: PSTRD(:)   ! Downward surface thermic radiation
-!>REAL(KIND=JPRB)          :: PSTRD (YDCPG_BNDS%KLON)
+!>REAL(KIND=JPRB)          :: PSTRD (YDCPG_OPTS%KLON)
   REAL(KIND=JPRB), POINTER :: PSSRDC(:)   ! Clear-sky downward surface solar radiation
-!>REAL(KIND=JPRB)          :: PSSRDC (YDCPG_BNDS%KLON)
+!>REAL(KIND=JPRB)          :: PSSRDC (YDCPG_OPTS%KLON)
   REAL(KIND=JPRB), POINTER :: PSTRDC(:)   ! Claer-sky downward surface thermal radiation
-!>REAL(KIND=JPRB)          :: PSTRDC (YDCPG_BNDS%KLON)
+!>REAL(KIND=JPRB)          :: PSTRDC (YDCPG_OPTS%KLON)
   REAL(KIND=JPRB), POINTER :: PBLH(:)   ! Height of boundary layer
-!>REAL(KIND=JPRB)          :: PBLH (YDCPG_BNDS%KLON)
+!>REAL(KIND=JPRB)          :: PBLH (YDCPG_OPTS%KLON)
   REAL(KIND=JPRB), POINTER :: PSUND(:)   ! Sunshine duration
-!>REAL(KIND=JPRB)          :: PSUND (YDCPG_BNDS%KLON)
+!>REAL(KIND=JPRB)          :: PSUND (YDCPG_OPTS%KLON)
   REAL(KIND=JPRB), POINTER :: PSPAR(:)   ! Surface downward PARadiation
-!>REAL(KIND=JPRB)          :: PSPAR (YDCPG_BNDS%KLON)
+!>REAL(KIND=JPRB)          :: PSPAR (YDCPG_OPTS%KLON)
   REAL(KIND=JPRB), POINTER :: PSUVB(:)   ! Surface downward UV-B radiation
-!>REAL(KIND=JPRB)          :: PSUVB (YDCPG_BNDS%KLON)
+!>REAL(KIND=JPRB)          :: PSUVB (YDCPG_OPTS%KLON)
   REAL(KIND=JPRB), POINTER :: PSFDIR(:)   ! Surface total sky direct downward SW radiation
-!>REAL(KIND=JPRB)          :: PSFDIR (YDCPG_BNDS%KLON)
+!>REAL(KIND=JPRB)          :: PSFDIR (YDCPG_OPTS%KLON)
   REAL(KIND=JPRB), POINTER :: PSCDIR(:)   ! Surface clear-sky direct downward SW radiation
-!>REAL(KIND=JPRB)          :: PSCDIR (YDCPG_BNDS%KLON)
+!>REAL(KIND=JPRB)          :: PSCDIR (YDCPG_OPTS%KLON)
   REAL(KIND=JPRB), POINTER :: PSDSRP(:)   ! Surface total-sky direct beam downward SW radiation
-!>REAL(KIND=JPRB)          :: PSDSRP (YDCPG_BNDS%KLON)
+!>REAL(KIND=JPRB)          :: PSDSRP (YDCPG_OPTS%KLON)
   REAL(KIND=JPRB), POINTER :: PCAPE(:)   ! Conv.avail.potential energy (CAPE)
-!>REAL(KIND=JPRB)          :: PCAPE (YDCPG_BNDS%KLON)
+!>REAL(KIND=JPRB)          :: PCAPE (YDCPG_OPTS%KLON)
   REAL(KIND=JPRB), POINTER :: PCAPES(:)   ! CAPE-Shear
-!>REAL(KIND=JPRB)          :: PCAPES (YDCPG_BNDS%KLON)
+!>REAL(KIND=JPRB)          :: PCAPES (YDCPG_OPTS%KLON)
   TYPE(FIELD_2D_VIEW), ALLOCATABLE, DIMENSION(:) :: PMXCAP6   ! Bins for maximum CAPE in last 6 hours
   TYPE(FIELD_2D_VIEW), ALLOCATABLE, DIMENSION(:) :: PMXCAPS6   ! Bins for maximum CAPE-Shear in last 6 hours
   REAL(KIND=JPRB), POINTER :: PTSRC(:)   ! Top solar radiation clear sky
-!>REAL(KIND=JPRB)          :: PTSRC (YDCPG_BNDS%KLON)
+!>REAL(KIND=JPRB)          :: PTSRC (YDCPG_OPTS%KLON)
   REAL(KIND=JPRB), POINTER :: PTTRC(:)   ! Top thermal radiation clear sky
-!>REAL(KIND=JPRB)          :: PTTRC (YDCPG_BNDS%KLON)
+!>REAL(KIND=JPRB)          :: PTTRC (YDCPG_OPTS%KLON)
   REAL(KIND=JPRB), POINTER :: PSSRC(:)   ! Surface solar radiation clear sky
-!>REAL(KIND=JPRB)          :: PSSRC (YDCPG_BNDS%KLON)
+!>REAL(KIND=JPRB)          :: PSSRC (YDCPG_OPTS%KLON)
   REAL(KIND=JPRB), POINTER :: PSTRC(:)   ! Surface thermal radiation clear sky
-!>REAL(KIND=JPRB)          :: PSTRC (YDCPG_BNDS%KLON)
+!>REAL(KIND=JPRB)          :: PSTRC (YDCPG_OPTS%KLON)
   REAL(KIND=JPRB), POINTER :: PES(:)   ! Evaporation of snow
-!>REAL(KIND=JPRB)          :: PES (YDCPG_BNDS%KLON)
+!>REAL(KIND=JPRB)          :: PES (YDCPG_OPTS%KLON)
   REAL(KIND=JPRB), POINTER :: PSMLT(:)   ! Snow melt
-!>REAL(KIND=JPRB)          :: PSMLT (YDCPG_BNDS%KLON)
+!>REAL(KIND=JPRB)          :: PSMLT (YDCPG_OPTS%KLON)
   REAL(KIND=JPRB), POINTER :: P10FG(:)   ! Wind gust at 10 m (max since previous pp)
-!>REAL(KIND=JPRB)          :: P10FG (YDCPG_BNDS%KLON)
+!>REAL(KIND=JPRB)          :: P10FG (YDCPG_OPTS%KLON)
   TYPE(FIELD_2D_VIEW), ALLOCATABLE, DIMENSION(:) :: P10FG6   ! Bins for wind gust at 10 m (max since last 6 hours)
   REAL(KIND=JPRB), POINTER :: P10FGCV(:)   ! convective wind gust at 10m for current time level (m/s)
-!>REAL(KIND=JPRB)          :: P10FGCV (YDCPG_BNDS%KLON)
+!>REAL(KIND=JPRB)          :: P10FGCV (YDCPG_OPTS%KLON)
   REAL(KIND=JPRB), POINTER :: PI10FG(:)   ! Wind gust at 10 m ("instantaneous")
-!>REAL(KIND=JPRB)          :: PI10FG (YDCPG_BNDS%KLON)
+!>REAL(KIND=JPRB)          :: PI10FG (YDCPG_OPTS%KLON)
   REAL(KIND=JPRB), POINTER :: PLSPF(:)   ! Large scale precipitation fraction
-!>REAL(KIND=JPRB)          :: PLSPF (YDCPG_BNDS%KLON)
+!>REAL(KIND=JPRB)          :: PLSPF (YDCPG_OPTS%KLON)
   REAL(KIND=JPRB), POINTER :: PTCO3(:)   ! Total ozone content in a vertical column
-!>REAL(KIND=JPRB)          :: PTCO3 (YDCPG_BNDS%KLON)
+!>REAL(KIND=JPRB)          :: PTCO3 (YDCPG_OPTS%KLON)
   REAL(KIND=JPRB), POINTER :: PVIMD(:)   ! Vertically integrated mass divergence
-!>REAL(KIND=JPRB)          :: PVIMD (YDCPG_BNDS%KLON)
+!>REAL(KIND=JPRB)          :: PVIMD (YDCPG_OPTS%KLON)
   REAL(KIND=JPRB), POINTER :: PSPARC(:)   ! Surface clear-sky parallel radiation
-!>REAL(KIND=JPRB)          :: PSPARC (YDCPG_BNDS%KLON)
+!>REAL(KIND=JPRB)          :: PSPARC (YDCPG_OPTS%KLON)
   REAL(KIND=JPRB), POINTER :: PSTINC(:)   ! Top of atmosphere incident solar radiation
-!>REAL(KIND=JPRB)          :: PSTINC (YDCPG_BNDS%KLON)
+!>REAL(KIND=JPRB)          :: PSTINC (YDCPG_OPTS%KLON)
   REAL(KIND=JPRB), POINTER :: PCBASE(:)   ! Cloud base level
-!>REAL(KIND=JPRB)          :: PCBASE (YDCPG_BNDS%KLON)
+!>REAL(KIND=JPRB)          :: PCBASE (YDCPG_OPTS%KLON)
   REAL(KIND=JPRB), POINTER :: P0DEGL(:)   ! Zero deg. level
-!>REAL(KIND=JPRB)          :: P0DEGL (YDCPG_BNDS%KLON)
+!>REAL(KIND=JPRB)          :: P0DEGL (YDCPG_OPTS%KLON)
   REAL(KIND=JPRB), POINTER :: PVISIH(:)   ! Horizontal visibility
-!>REAL(KIND=JPRB)          :: PVISIH (YDCPG_BNDS%KLON)
+!>REAL(KIND=JPRB)          :: PVISIH (YDCPG_OPTS%KLON)
   REAL(KIND=JPRB), POINTER :: PCIN(:)   ! CIN
-!>REAL(KIND=JPRB)          :: PCIN (YDCPG_BNDS%KLON)
+!>REAL(KIND=JPRB)          :: PCIN (YDCPG_OPTS%KLON)
   REAL(KIND=JPRB), POINTER :: PKINDEX(:)   ! Convective K-Index
-!>REAL(KIND=JPRB)          :: PKINDEX (YDCPG_BNDS%KLON)
+!>REAL(KIND=JPRB)          :: PKINDEX (YDCPG_OPTS%KLON)
   REAL(KIND=JPRB), POINTER :: PTTINDEX(:)   ! Convective TT-Index
-!>REAL(KIND=JPRB)          :: PTTINDEX (YDCPG_BNDS%KLON)
+!>REAL(KIND=JPRB)          :: PTTINDEX (YDCPG_OPTS%KLON)
   REAL(KIND=JPRB), POINTER :: PCBASEA(:)   ! Cloud base aviation
-!>REAL(KIND=JPRB)          :: PCBASEA (YDCPG_BNDS%KLON)
+!>REAL(KIND=JPRB)          :: PCBASEA (YDCPG_OPTS%KLON)
   REAL(KIND=JPRB), POINTER :: PCTOPC(:)   ! Cloud top convective
-!>REAL(KIND=JPRB)          :: PCTOPC (YDCPG_BNDS%KLON)
+!>REAL(KIND=JPRB)          :: PCTOPC (YDCPG_OPTS%KLON)
   REAL(KIND=JPRB), POINTER :: PZTWETB0(:)   ! Height of 0 deg wet bulb temperature
-!>REAL(KIND=JPRB)          :: PZTWETB0 (YDCPG_BNDS%KLON)
+!>REAL(KIND=JPRB)          :: PZTWETB0 (YDCPG_OPTS%KLON)
   REAL(KIND=JPRB), POINTER :: PZTWETB1(:)   ! Height of 1 deg wet bulb temperature
-!>REAL(KIND=JPRB)          :: PZTWETB1 (YDCPG_BNDS%KLON)
+!>REAL(KIND=JPRB)          :: PZTWETB1 (YDCPG_OPTS%KLON)
   TYPE(FIELD_2D_VIEW), ALLOCATABLE, DIMENSION(:) :: PTCGHG   ! Total column greenhouse gases
   TYPE(FIELD_2D_VIEW), ALLOCATABLE, DIMENSION(:) :: PTCCHEM   ! Total column chemistry
   TYPE(FIELD_2D_VIEW), ALLOCATABLE, DIMENSION(:,:) :: PAERODIAG   ! Per-aerosol-type diagnostics
   TYPE(FIELD_2D_VIEW), ALLOCATABLE, DIMENSION(:,:) :: PAERO_WVL_DIAG   ! Per-wavelength aerosol optical diagnostics
   REAL(KIND=JPRB), POINTER :: P100U(:)   ! 100m zonal wind
-!>REAL(KIND=JPRB)          :: P100U (YDCPG_BNDS%KLON)
+!>REAL(KIND=JPRB)          :: P100U (YDCPG_OPTS%KLON)
   REAL(KIND=JPRB), POINTER :: P100V(:)   ! 100m meridional wind
-!>REAL(KIND=JPRB)          :: P100V (YDCPG_BNDS%KLON)
+!>REAL(KIND=JPRB)          :: P100V (YDCPG_OPTS%KLON)
   REAL(KIND=JPRB), POINTER :: P200U(:)   ! 200m zonal wind
-!>REAL(KIND=JPRB)          :: P200U (YDCPG_BNDS%KLON)
+!>REAL(KIND=JPRB)          :: P200U (YDCPG_OPTS%KLON)
   REAL(KIND=JPRB), POINTER :: P200V(:)   ! 200m meridional wind
-!>REAL(KIND=JPRB)          :: P200V (YDCPG_BNDS%KLON)
+!>REAL(KIND=JPRB)          :: P200V (YDCPG_OPTS%KLON)
   REAL(KIND=JPRB), POINTER :: PZUST(:)   ! Friction velocity
-!>REAL(KIND=JPRB)          :: PZUST (YDCPG_BNDS%KLON)
+!>REAL(KIND=JPRB)          :: PZUST (YDCPG_OPTS%KLON)
   REAL(KIND=JPRB), POINTER :: P10NU(:)   ! 10m zonal neutral wind
-!>REAL(KIND=JPRB)          :: P10NU (YDCPG_BNDS%KLON)
+!>REAL(KIND=JPRB)          :: P10NU (YDCPG_OPTS%KLON)
   REAL(KIND=JPRB), POINTER :: P10NV(:)   ! 10m meridional neutral wind
-!>REAL(KIND=JPRB)          :: P10NV (YDCPG_BNDS%KLON)
+!>REAL(KIND=JPRB)          :: P10NV (YDCPG_OPTS%KLON)
   REAL(KIND=JPRB), POINTER :: PDNDZN(:)   ! Minimum vertical refractivity gradient
-!>REAL(KIND=JPRB)          :: PDNDZN (YDCPG_BNDS%KLON)
+!>REAL(KIND=JPRB)          :: PDNDZN (YDCPG_OPTS%KLON)
   REAL(KIND=JPRB), POINTER :: PDNDZA(:)   ! Mean vertical refractivity gradient
-!>REAL(KIND=JPRB)          :: PDNDZA (YDCPG_BNDS%KLON)
+!>REAL(KIND=JPRB)          :: PDNDZA (YDCPG_OPTS%KLON)
   REAL(KIND=JPRB), POINTER :: PDCTB(:)   ! Duct base height
-!>REAL(KIND=JPRB)          :: PDCTB (YDCPG_BNDS%KLON)
+!>REAL(KIND=JPRB)          :: PDCTB (YDCPG_OPTS%KLON)
   REAL(KIND=JPRB), POINTER :: PTPLB(:)   ! Trapping layer base height
-!>REAL(KIND=JPRB)          :: PTPLB (YDCPG_BNDS%KLON)
+!>REAL(KIND=JPRB)          :: PTPLB (YDCPG_OPTS%KLON)
   REAL(KIND=JPRB), POINTER :: PTPLT(:)   ! Trapping layer top height
-!>REAL(KIND=JPRB)          :: PTPLT (YDCPG_BNDS%KLON)
+!>REAL(KIND=JPRB)          :: PTPLT (YDCPG_OPTS%KLON)
   REAL(KIND=JPRB), POINTER :: PODSS(:)   ! optical depth sea salt aerosols
-!>REAL(KIND=JPRB)          :: PODSS (YDCPG_BNDS%KLON)
+!>REAL(KIND=JPRB)          :: PODSS (YDCPG_OPTS%KLON)
   REAL(KIND=JPRB), POINTER :: PODDU(:)   ! optical depth dust aerosols
-!>REAL(KIND=JPRB)          :: PODDU (YDCPG_BNDS%KLON)
+!>REAL(KIND=JPRB)          :: PODDU (YDCPG_OPTS%KLON)
   REAL(KIND=JPRB), POINTER :: PODOM(:)   ! optical depth organic m. aerosols
-!>REAL(KIND=JPRB)          :: PODOM (YDCPG_BNDS%KLON)
+!>REAL(KIND=JPRB)          :: PODOM (YDCPG_OPTS%KLON)
   REAL(KIND=JPRB), POINTER :: PODBC(:)   ! optical depth black C aerosols
-!>REAL(KIND=JPRB)          :: PODBC (YDCPG_BNDS%KLON)
+!>REAL(KIND=JPRB)          :: PODBC (YDCPG_OPTS%KLON)
   REAL(KIND=JPRB), POINTER :: PODSU(:)   ! optical depth sulphate aerosols
-!>REAL(KIND=JPRB)          :: PODSU (YDCPG_BNDS%KLON)
+!>REAL(KIND=JPRB)          :: PODSU (YDCPG_OPTS%KLON)
   REAL(KIND=JPRB), POINTER :: PODNI(:)   ! optical depth nitrate aerosols
-!>REAL(KIND=JPRB)          :: PODNI (YDCPG_BNDS%KLON)
+!>REAL(KIND=JPRB)          :: PODNI (YDCPG_OPTS%KLON)
   REAL(KIND=JPRB), POINTER :: PODAM(:)   ! optical depth ammonium aerosols
-!>REAL(KIND=JPRB)          :: PODAM (YDCPG_BNDS%KLON)
+!>REAL(KIND=JPRB)          :: PODAM (YDCPG_OPTS%KLON)
   REAL(KIND=JPRB), POINTER :: PODSOA(:)   ! optical depth secondary organic aerosols
-!>REAL(KIND=JPRB)          :: PODSOA (YDCPG_BNDS%KLON)
+!>REAL(KIND=JPRB)          :: PODSOA (YDCPG_OPTS%KLON)
   REAL(KIND=JPRB), POINTER :: PODVFA(:)   ! optical depth volcanic flying ash
-!>REAL(KIND=JPRB)          :: PODVFA (YDCPG_BNDS%KLON)
+!>REAL(KIND=JPRB)          :: PODVFA (YDCPG_OPTS%KLON)
   REAL(KIND=JPRB), POINTER :: PODVSU(:)   ! optical depth volcanic sulphate aerosols
-!>REAL(KIND=JPRB)          :: PODVSU (YDCPG_BNDS%KLON)
+!>REAL(KIND=JPRB)          :: PODVSU (YDCPG_OPTS%KLON)
   REAL(KIND=JPRB), POINTER :: PODTOACC(:)   ! optical depth total aerosol accumulated
-!>REAL(KIND=JPRB)          :: PODTOACC (YDCPG_BNDS%KLON)
+!>REAL(KIND=JPRB)          :: PODTOACC (YDCPG_OPTS%KLON)
   REAL(KIND=JPRB), POINTER :: PAEPM1(:)   ! particulate matter le 1 um
-!>REAL(KIND=JPRB)          :: PAEPM1 (YDCPG_BNDS%KLON)
+!>REAL(KIND=JPRB)          :: PAEPM1 (YDCPG_OPTS%KLON)
   REAL(KIND=JPRB), POINTER :: PAEPM25(:)   ! particulate matter le 2.5um
-!>REAL(KIND=JPRB)          :: PAEPM25 (YDCPG_BNDS%KLON)
+!>REAL(KIND=JPRB)          :: PAEPM25 (YDCPG_OPTS%KLON)
   REAL(KIND=JPRB), POINTER :: PAEPM10(:)   ! particulate matter le 10 um
-!>REAL(KIND=JPRB)          :: PAEPM10 (YDCPG_BNDS%KLON)
+!>REAL(KIND=JPRB)          :: PAEPM10 (YDCPG_OPTS%KLON)
   REAL(KIND=JPRB), POINTER :: PUVBED(:)   ! UV biologically effective dose
-!>REAL(KIND=JPRB)          :: PUVBED (YDCPG_BNDS%KLON)
+!>REAL(KIND=JPRB)          :: PUVBED (YDCPG_OPTS%KLON)
   REAL(KIND=JPRB), POINTER :: PUVBEDCS(:)   ! UV biologically effective dose clear sky
-!>REAL(KIND=JPRB)          :: PUVBEDCS (YDCPG_BNDS%KLON)
+!>REAL(KIND=JPRB)          :: PUVBEDCS (YDCPG_OPTS%KLON)
   REAL(KIND=JPRB), POINTER :: PLITOTI(:)   ! instantaneous total lightning flash density
-!>REAL(KIND=JPRB)          :: PLITOTI (YDCPG_BNDS%KLON)
+!>REAL(KIND=JPRB)          :: PLITOTI (YDCPG_OPTS%KLON)
   REAL(KIND=JPRB), POINTER :: PLICGI(:)   ! instantaneous cloud-to-ground lightning flash density
-!>REAL(KIND=JPRB)          :: PLICGI (YDCPG_BNDS%KLON)
+!>REAL(KIND=JPRB)          :: PLICGI (YDCPG_OPTS%KLON)
   TYPE(FIELD_2D_VIEW), ALLOCATABLE, DIMENSION(:) :: PLITOTA6   ! Bins for averaged total lightning over last 6 hours
   TYPE(FIELD_2D_VIEW), ALLOCATABLE, DIMENSION(:) :: PLICGA6   ! Bins for averaged cloud-to-ground lightning over last 6 hours
   REAL(KIND=JPRB), POINTER :: PGROUP(:,:)
@@ -928,9 +928,9 @@ END TYPE SURFACE_VIEW_GROUP_VDIAG
 
 TYPE SURFACE_VIEW_GROUP_SATSIM
   REAL(KIND=JPRB), POINTER :: PCLBT(:,:)   ! Cloudy brightness temperature
-!>REAL(KIND=JPRB)          :: PCLBT (YDCPG_BNDS%KLON, YDCPG_BNDS%YRSURF%YSD_SMD%NLEVS)
+!>REAL(KIND=JPRB)          :: PCLBT (YDCPG_OPTS%KLON, YDCPG_OPTS%YRSURF%YSD_SMD%NLEVS)
   REAL(KIND=JPRB), POINTER :: PCSBT(:,:)   ! Clear-sky brightness temperature
-!>REAL(KIND=JPRB)          :: PCSBT (YDCPG_BNDS%KLON, YDCPG_BNDS%YRSURF%YSD_SMD%NLEVS)
+!>REAL(KIND=JPRB)          :: PCSBT (YDCPG_OPTS%KLON, YDCPG_OPTS%YRSURF%YSD_SMD%NLEVS)
   REAL(KIND=JPRB), POINTER :: PGROUP(:,:,:)
 
   TYPE(SURFACE_VARIABLE_GROUP_SATSIM), POINTER :: VARIABLE_GROUP
@@ -945,21 +945,21 @@ END TYPE SURFACE_VIEW_GROUP_SATSIM
 
 TYPE SURFACE_VIEW_GROUP_WAVES
   REAL(KIND=JPRB), POINTER :: PCHAR(:)   ! Charnock parameter as modified by the wave model.
-!>REAL(KIND=JPRB)          :: PCHAR (YDCPG_BNDS%KLON)
+!>REAL(KIND=JPRB)          :: PCHAR (YDCPG_OPTS%KLON)
   REAL(KIND=JPRB), POINTER :: PUSTOKES(:)   ! U-component of the surface Stokes drift.
-!>REAL(KIND=JPRB)          :: PUSTOKES (YDCPG_BNDS%KLON)
+!>REAL(KIND=JPRB)          :: PUSTOKES (YDCPG_OPTS%KLON)
   REAL(KIND=JPRB), POINTER :: PVSTOKES(:)   ! V-component of the surface Stokes drift.
-!>REAL(KIND=JPRB)          :: PVSTOKES (YDCPG_BNDS%KLON)
+!>REAL(KIND=JPRB)          :: PVSTOKES (YDCPG_OPTS%KLON)
   REAL(KIND=JPRB), POINTER :: PPHIOC(:)   ! Energy flux to ocean.
-!>REAL(KIND=JPRB)          :: PPHIOC (YDCPG_BNDS%KLON)
+!>REAL(KIND=JPRB)          :: PPHIOC (YDCPG_OPTS%KLON)
   REAL(KIND=JPRB), POINTER :: PPHIAW(:)   ! Energy flux to ocean waves.
-!>REAL(KIND=JPRB)          :: PPHIAW (YDCPG_BNDS%KLON)
+!>REAL(KIND=JPRB)          :: PPHIAW (YDCPG_OPTS%KLON)
   REAL(KIND=JPRB), POINTER :: PTAUOC(:)   ! Momentum flux to ocean.
-!>REAL(KIND=JPRB)          :: PTAUOC (YDCPG_BNDS%KLON)
+!>REAL(KIND=JPRB)          :: PTAUOC (YDCPG_OPTS%KLON)
   REAL(KIND=JPRB), POINTER :: PEMEAN(:)   ! Wave variance.
-!>REAL(KIND=JPRB)          :: PEMEAN (YDCPG_BNDS%KLON)
+!>REAL(KIND=JPRB)          :: PEMEAN (YDCPG_OPTS%KLON)
   REAL(KIND=JPRB), POINTER :: PFMEAN(:)   ! Wave mean frequency.
-!>REAL(KIND=JPRB)          :: PFMEAN (YDCPG_BNDS%KLON)
+!>REAL(KIND=JPRB)          :: PFMEAN (YDCPG_OPTS%KLON)
   REAL(KIND=JPRB), POINTER :: PGROUP(:,:)
 
   TYPE(SURFACE_VARIABLE_GROUP_WAVES), POINTER :: VARIABLE_GROUP
@@ -980,21 +980,21 @@ END TYPE SURFACE_VIEW_GROUP_WAVES
 
 TYPE SURFACE_VIEW_GROUP_WAM
   REAL(KIND=JPRB), POINTER :: PU10N(:)   ! 10m neutral wind U-component passed to the wave model (WAM).
-!>REAL(KIND=JPRB)          :: PU10N (YDCPG_BNDS%KLON)
+!>REAL(KIND=JPRB)          :: PU10N (YDCPG_OPTS%KLON)
   REAL(KIND=JPRB), POINTER :: PV10N(:)   ! 10m neutral wind V-component passed to the wave model (WAM).
-!>REAL(KIND=JPRB)          :: PV10N (YDCPG_BNDS%KLON)
+!>REAL(KIND=JPRB)          :: PV10N (YDCPG_OPTS%KLON)
   REAL(KIND=JPRB), POINTER :: PRHO(:)   ! surface density passed to the wave model (WAM).
-!>REAL(KIND=JPRB)          :: PRHO (YDCPG_BNDS%KLON)
+!>REAL(KIND=JPRB)          :: PRHO (YDCPG_OPTS%KLON)
   REAL(KIND=JPRB), POINTER :: PZIL(:)   ! ZI/L passed to the wave model (used for gustiness in WAM).
-!>REAL(KIND=JPRB)          :: PZIL (YDCPG_BNDS%KLON)
+!>REAL(KIND=JPRB)          :: PZIL (YDCPG_OPTS%KLON)
   REAL(KIND=JPRB), POINTER :: PCIF(:)   ! Sea ice fraction passed to the wave model (WAM).
-!>REAL(KIND=JPRB)          :: PCIF (YDCPG_BNDS%KLON)
+!>REAL(KIND=JPRB)          :: PCIF (YDCPG_OPTS%KLON)
   REAL(KIND=JPRB), POINTER :: PCLK(:)   ! Lake cover passed to the wave model (WAM).
-!>REAL(KIND=JPRB)          :: PCLK (YDCPG_BNDS%KLON)
+!>REAL(KIND=JPRB)          :: PCLK (YDCPG_OPTS%KLON)
   REAL(KIND=JPRB), POINTER :: PUCURW(:)   ! Ocean current    U-component passed to the wave model (WAM).
-!>REAL(KIND=JPRB)          :: PUCURW (YDCPG_BNDS%KLON)
+!>REAL(KIND=JPRB)          :: PUCURW (YDCPG_OPTS%KLON)
   REAL(KIND=JPRB), POINTER :: PVCURW(:)   ! Ocean current    V-component passed to the wave model (WAM).
-!>REAL(KIND=JPRB)          :: PVCURW (YDCPG_BNDS%KLON)
+!>REAL(KIND=JPRB)          :: PVCURW (YDCPG_OPTS%KLON)
   REAL(KIND=JPRB), POINTER :: PGROUP(:,:)
 
   TYPE(SURFACE_VARIABLE_GROUP_WAM), POINTER :: VARIABLE_GROUP
@@ -1026,7 +1026,7 @@ END TYPE SURFACE_VIEW_GROUP_VEXTRA
 
 TYPE SURFACE_VIEW_GROUP_VEXTRDI
   REAL(KIND=JPRB), POINTER :: PXEDR(:,:)   ! Eddy diffusivity rate
-!>REAL(KIND=JPRB)          :: PXEDR (YDCPG_BNDS%KLON, YDCPG_BNDS%YRSURF%YSD_DID%NLEVS)
+!>REAL(KIND=JPRB)          :: PXEDR (YDCPG_OPTS%KLON, YDCPG_OPTS%YRSURF%YSD_DID%NLEVS)
   REAL(KIND=JPRB), POINTER :: PGROUP(:,:,:)
 
   TYPE(SURFACE_VARIABLE_GROUP_VEXTRDI), POINTER :: VARIABLE_GROUP
@@ -1040,7 +1040,7 @@ END TYPE SURFACE_VIEW_GROUP_VEXTRDI
 
 TYPE SURFACE_VIEW_GROUP_VPRECIP
   REAL(KIND=JPRB), POINTER :: PPRECIP(:,:)   ! Diagnostic of precipitations type
-!>REAL(KIND=JPRB)          :: PPRECIP (YDCPG_BNDS%KLON, YDCPG_BNDS%YRSURF%YSD_XPD%NLEVS)
+!>REAL(KIND=JPRB)          :: PPRECIP (YDCPG_OPTS%KLON, YDCPG_OPTS%YRSURF%YSD_XPD%NLEVS)
   REAL(KIND=JPRB), POINTER :: PGROUP(:,:,:)
 
   TYPE(SURFACE_VARIABLE_GROUP_VPRECIP), POINTER :: VARIABLE_GROUP
@@ -1054,7 +1054,7 @@ END TYPE SURFACE_VIEW_GROUP_VPRECIP
 
 TYPE SURFACE_VIEW_GROUP_VPRECIP2
   REAL(KIND=JPRB), POINTER :: PPRECIP2(:,:)   ! Diagnostic of precipitations type
-!>REAL(KIND=JPRB)          :: PPRECIP2 (YDCPG_BNDS%KLON, YDCPG_BNDS%YRSURF%YSD_XP2D%NLEVS)
+!>REAL(KIND=JPRB)          :: PPRECIP2 (YDCPG_OPTS%KLON, YDCPG_OPTS%YRSURF%YSD_XP2D%NLEVS)
   REAL(KIND=JPRB), POINTER :: PGROUP(:,:,:)
 
   TYPE(SURFACE_VARIABLE_GROUP_VPRECIP2), POINTER :: VARIABLE_GROUP

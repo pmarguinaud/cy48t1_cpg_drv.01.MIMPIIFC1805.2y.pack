@@ -2421,7 +2421,12 @@ END SUBROUTINE CPG_GPAR_TYPE_FINAL
 
 
 
-SUBROUTINE CPG_GP_T_TMP_TYPE_INIT (SELF, KT, REGISTRY, NLEV, PERSISTENT  )
+SUBROUTINE CPG_GP_T_TMP_TYPE_INIT (SELF &
+                                & , KT  &
+                                & , REGISTRY &
+                                & , NLEV &
+                                & , PERSISTENT &
+                           &)
 
 USE INTDYN_MOD, ONLY : YYTCTY0, YYTRCP0, YYTHW0, YYTXYB0, YYTXYB0_PHY, YYTXYBDER0
 USE INTDYN_MOD, ONLY :          YYTRCP9, YYTHW9, YYTXYB9, YYTXYB9_PHY
@@ -3142,7 +3147,11 @@ END SUBROUTINE CPG_GP_T_TMP_TYPE_FINAL
 
 
 
-SUBROUTINE CPG_GP_TMP_TYPE_INIT (SELF, REGISTRY, NLEV, PERSISTENT  )
+SUBROUTINE CPG_GP_TMP_TYPE_INIT (SELF &
+                                & , REGISTRY &
+                                & , NLEV &
+                                & , PERSISTENT &
+                           &)
 
 
 
@@ -3186,7 +3195,17 @@ END SUBROUTINE CPG_GP_TMP_TYPE_FINAL
 
 
 
-SUBROUTINE CPG_DYN_TYPE_INIT (SELF, KT, REGISTRY, NLEV, PERSISTENT, PHIF, PREF, PWRL, PRCP, PCTY  )
+SUBROUTINE CPG_DYN_TYPE_INIT (SELF &
+                                & , KT  &
+                                & , REGISTRY &
+                                & , NLEV &
+                                & , PERSISTENT &
+                           &, PHIF &
+                           &, PREF &
+                           &, PWRL &
+                           &, PRCP &
+                           &, PCTY &
+                           &)
 
 USE INTDYN_MOD, ONLY : YYTCTY0, YYTRCP0, YYTHW0, YYTXYB0, YYTXYB0_PHY, YYTXYBDER0
 USE INTDYN_MOD, ONLY :          YYTRCP9, YYTHW9, YYTXYB9, YYTXYB9_PHY
@@ -3558,7 +3577,13 @@ END SUBROUTINE CPG_DYN_TYPE_FINAL
 
 
 
-SUBROUTINE CPG_PHY_TYPE_INIT (SELF, KT, REGISTRY, NLEV, PERSISTENT, LDMF_PHYS  )
+SUBROUTINE CPG_PHY_TYPE_INIT (SELF &
+                                & , KT  &
+                                & , REGISTRY &
+                                & , NLEV &
+                                & , PERSISTENT &
+                                & , LDMF_PHYS &
+                           &)
 
 USE INTDYN_MOD, ONLY : YYTCTY0, YYTRCP0, YYTHW0, YYTXYB0, YYTXYB0_PHY, YYTXYBDER0
 USE INTDYN_MOD, ONLY :          YYTRCP9, YYTHW9, YYTXYB9, YYTXYB9_PHY
@@ -3726,7 +3751,11 @@ END SUBROUTINE CPG_PHY_TYPE_FINAL
 
 
 
-SUBROUTINE CPG_MISC_TYPE_INIT (SELF, REGISTRY, YDCPG_OPTS, PERSISTENT  )
+SUBROUTINE CPG_MISC_TYPE_INIT (SELF &
+                                & , REGISTRY &
+                                & , YDCPG_OPTS &
+                                & , PERSISTENT &
+                           &)
 
 
 USE CPG_OPTS_TYPE_MOD, ONLY : CPG_OPTS_TYPE
@@ -3959,7 +3988,10 @@ SELF%DDHI  => NULL ()
 END SUBROUTINE CPG_DDH_TYPE_FINAL
 
 
-SUBROUTINE CPG_SL1_TYPE_INIT (SELF, REGISTRY, NLEV, YDTPTRSLB1, YDMODEL, YGFL, PERSISTENT, PB1)
+SUBROUTINE CPG_SL1_TYPE_INIT (SELF, REGISTRY, NLEV, YDTPTRSLB1 &
+                                & , YDMODEL &
+                                & , YGFL &
+                                & , PERSISTENT, PB1)
 
 USE PTRSLB1, ONLY : TPTRSLB1
 USE OML_MOD, ONLY: OML_MAX_THREADS
@@ -6166,7 +6198,8 @@ SELF%ZVIEW => NULL ()
 
 END SUBROUTINE CPG_SL1_TYPE_FINAL
 
-SUBROUTINE CPG_SL2_TYPE_INIT (SELF, REGISTRY, NLEV, YDTPTRSLB2, PERSISTENT, PB2)
+SUBROUTINE CPG_SL2_TYPE_INIT (SELF, REGISTRY, NLEV, YDTPTRSLB2 &
+                                & , PERSISTENT, PB2)
 
 USE PTRSLB2, ONLY : TPTRSLB2
 USE OML_MOD, ONLY: OML_MAX_THREADS

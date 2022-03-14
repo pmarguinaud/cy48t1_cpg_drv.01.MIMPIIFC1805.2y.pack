@@ -1,0 +1,139 @@
+!     ######################################################################
+SUBROUTINE ARO_SURF_DIAGH(YDGEOMETRY,YDMODEL,YDGFL,YDSURF,YDSPEC,YDCFU,YDXFU)
+!     #######################################################################
+
+!!****  *ARO_SURF_DIAGH*  
+!!
+!!    PURPOSE
+!!    -------
+!       Interface to call externalized surface diagnostics from AROME via 
+!       aro_surf_diag 
+!       Created for the externalisation of the call to aro_surf_diag under stepo 
+!!**  METHOD
+!!    ------
+
+!!    EXTERNAL
+!!    --------
+!!
+!!    IMPLICIT ARGUMENTS
+!!    ------------------
+!!
+!!
+!!    REFERENCE
+!!    ---------
+!!
+!!   
+!!      
+!!    AUTHOR
+!!    ------
+!!    R. Zaaboul
+!!
+!!    MODIFICATIONS
+!!    -------------
+!!      creation 16-Feb-2006
+!       Sep 2006 L.Kraljevic : Check for LMPA to distinguish between ALADIN/AROME
+!       Nov 2008 Y.Seity : Test if proc deals only with E zone before calling diag
+!       Oct 2009 Y.Seity : Remove INPR* and ACPR* writting in surfex file
+!       Nov 2009 A.Alias : adding arguments to ARO_SURF_DIAG
+!       Jul 2011 P.Marguinaud : SURFEX fields IO with WRMLPPA
+!       Jun 2012 P.Marguinaud : Select PDG/Historic fields using LPGDFWR, LHISFWR
+!       O. Marsden: June 2015 CY42 YRGMV, YRGFL, YRSURF, YRGMV5, and YRGFL5 are now passed by argument
+!-------------------------------------------------------------------------------
+
+USE TYPE_MODEL   , ONLY : MODEL
+USE GEOMETRY_MOD , ONLY : GEOMETRY
+USE SURFACE_FIELDS_MIX , ONLY : TSURF
+USE YOMGFL   , ONLY : TGFL
+USE PARKIND1 , ONLY : JPIM, JPRB
+USE YOMHOOK  , ONLY : LHOOK, DR_HOOK
+USE YOMCT3   , ONLY : NSTEP
+USE YOMMP0   , ONLY : NPROC, MYPROC, N_REGIONS_NS, N_REGIONS_EW
+USE YOMRIP   , ONLY : TRIP
+USE YOMCFU   , ONLY : TCFU
+USE YOMXFU   , ONLY : TXFU
+USE YOMTRANS , ONLY : RDISTR_E
+USE YOMOPH0  , ONLY : LINC
+USE YOMGPPB  , ONLY : GPARBUF
+USE SPECTRAL_FIELDS_MOD, ONLY : SPECTRAL_FIELD, ASSIGNMENT(=)
+
+USE MODD_IO_SURF_ARO, ONLY : SURFEX_FIELD_BUF_DEALLOC, YSURFEX_CACHE_OUT
+
+IMPLICIT NONE
+
+!*       0.     DECLARATIONS
+!               ------------
+
+!*      0.1    declarations of arguments
+
+!* Array dimensions
+!  ----------------
+TYPE(GEOMETRY), INTENT(INOUT) :: YDGEOMETRY
+TYPE(MODEL)         ,INTENT(INOUT) :: YDMODEL
+TYPE(TGFL), INTENT(INOUT) :: YDGFL
+TYPE(TSURF), INTENT(INOUT) :: YDSURF
+TYPE(SPECTRAL_FIELD),      INTENT(INOUT) :: YDSPEC
+TYPE(TCFU),      INTENT(INOUT) :: YDCFU
+TYPE(TXFU),      INTENT(INOUT) :: YDXFU
+REAL(KIND=JPRB) :: ZGPAR (YDGEOMETRY%YRGEM%NGPTOT,YDMODEL%YRML_PHY_MF%YRPARAR%NGPAR)
+REAL(KIND=JPRB) :: ZGPAR2 (YDGEOMETRY%YRDIM%NPROMA,YDMODEL%YRML_PHY_MF%YRPARAR%NGPAR)
+REAL(KIND=JPRB) :: ZINRAIN (YDGEOMETRY%YRGEM%NGPTOT), ZINSNOW (YDGEOMETRY%YRGEM%NGPTOT)
+
+!integer
+!-------
+INTEGER(KIND=JPIM) :: INC,JLON,JF,IENDC,JKGLO,IE,JA
+REAL(KIND=JPRB) :: ZHOOK_HANDLE
+
+#include "aro_surf_diag.h"
+#include "wrmlppa.intfb.h"
+
+!initialisations
+IF (LHOOK) CALL DR_HOOK('ARO_SURF_DIAGH',0,ZHOOK_HANDLE)
+ASSOCIATE(YDDIM=>YDGEOMETRY%YRDIM,YDDIMV=>YDGEOMETRY%YRDIMV,YDGEM=>YDGEOMETRY%YRGEM, YDMP=>YDGEOMETRY%YRMP, &
+ & YRMSE=>YDMODEL%YRML_PHY_MF%YRMSE, YDRIP=>YDMODEL%YRML_GCONF%YRRIP, &
+ & YDPARAR=>YDMODEL%YRML_PHY_MF%YRPARAR)
+ASSOCIATE(MRAIN=>YDPARAR%MRAIN, MSNOW=>YDPARAR%MSNOW, NGPAR=>YDPARAR%NGPAR, &
+ & LMPA=>YDMODEL%YRML_PHY_MF%YRARPHY%LMPA, &
+ & LPGDFWR=>YRMSE%LPGDFWR, LHISFWR=>YRMSE%LHISFWR, &
+ & NPROMA=>YDDIM%NPROMA, &
+ & NGPTOT_CAP=>YDGEM%NGPTOT_CAP, NGPTOT=>YDGEM%NGPTOT, &
+ & TSTEP=>YDRIP%TSTEP, NSTOP=>YDRIP%NSTOP)
+
+IF ((NGPAR /= 0) .AND. (.NOT. LMPA)) THEN
+!lecture du buffer
+  DO JKGLO=1,NGPTOT,NPROMA
+    IENDC=MIN(NPROMA,NGPTOT-JKGLO+1)
+     ZGPAR2 = GPARBUF (:, :, 1+(JKGLO-1)/YDGEOMETRY%YRDIM%NPROMA)
+
+    DO JF=1,NGPAR
+      DO JLON=1,IENDC
+        ZGPAR(JKGLO+JLON-1,JF)=ZGPAR2(JLON,JF)
+      ENDDO
+    ENDDO
+  ENDDO
+!initialisation of fields necessary for surface diagnostics 
+  DO JLON=1,NGPTOT_CAP
+    ZINRAIN(JLON)=ZGPAR(JLON,MRAIN)
+    ZINSNOW(JLON)=ZGPAR(JLON,MSNOW)
+  ENDDO
+ELSE
+  ZINRAIN=0._JPRB
+  ZINSNOW=0._JPRB
+ENDIF
+
+IF (LINC) THEN
+  INC=NINT(REAL(NSTEP,JPRB)*TSTEP/3600._JPRB)
+ELSE
+  INC=NSTEP
+ENDIF
+
+CALL ARO_SURF_DIAG(LMPA,LPGDFWR,LHISFWR,NSTOP,NSTEP,INC,MYPROC,NGPTOT,ZINRAIN,ZINSNOW)
+CALL WRMLPPA(YDGEOMETRY,YDGFL,YDSURF,YDSPEC,YDCFU,YDXFU,YDMODEL,'x')
+
+CALL SURFEX_FIELD_BUF_DEALLOC (YSURFEX_CACHE_OUT)
+
+
+END ASSOCIATE
+END ASSOCIATE
+IF (LHOOK) CALL DR_HOOK('ARO_SURF_DIAGH',1,ZHOOK_HANDLE)
+
+END SUBROUTINE ARO_SURF_DIAGH

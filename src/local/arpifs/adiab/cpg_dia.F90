@@ -241,7 +241,6 @@ USE YOMXFU             , ONLY : TXFU
 USE YOMGMV             , ONLY : TGMV
 USE PARKIND1           , ONLY : JPIM, JPRB
 USE YOMHOOK            , ONLY : LHOOK, DR_HOOK
-USE SC2PRG_MOD         , ONLY : SC2PRG
 USE YOMCT0             , ONLY : LAROME
 USE YOMCT3             , ONLY : NSTEP
 USE YOMINI             , ONLY : LINITER

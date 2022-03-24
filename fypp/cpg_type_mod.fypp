@@ -588,14 +588,18 @@ IF (ASSOCIATED (SELF%F_DATA)) THEN
 #:for var in vars
   #:if vars[var][N3D]
   IF (ASSOCIATED (SELF%F_${var}$)) THEN
-    SELF%${var}$ (1:, 0:) => SELF%F_${var}$%GET_VIEW (BLOCK_INDEX)
-  ELSE
+    IF ((.NOT. SELF%F_${var}$%THREAD_BUFFER) .OR. (.NOT. ASSOCIATED (SELF%${var}$))) THEN
+      SELF%${var}$ (1:, 0:) => SELF%F_${var}$%GET_VIEW (BLOCK_INDEX)
+    ENDIF
+  ELSEIF (.NOT. ASSOCIATED (SELF%${var}$)) THEN
     SELF%${var}$ => ZDUM2
   ENDIF
   #:else
   IF (ASSOCIATED (SELF%F_${var}$)) THEN
-    SELF%${var}$ => SELF%F_${var}$%GET_VIEW (BLOCK_INDEX)
-  ELSE
+    IF ((.NOT. SELF%F_${var}$%THREAD_BUFFER) .OR. (.NOT. ASSOCIATED (SELF%${var}$))) THEN
+      SELF%${var}$ => SELF%F_${var}$%GET_VIEW (BLOCK_INDEX)
+    ENDIF
+  ELSEIF (.NOT. ASSOCIATED (SELF%${var}$)) THEN
     SELF%${var}$ => ZDUM1
   ENDIF
   #:endif
@@ -606,13 +610,17 @@ IF (ASSOCIATED (SELF%F_DATA)) THEN
     #:if v.array
     #:elif v.dim == 3
   IF (ASSOCIATED (SELF%F_${v.name}$)) THEN
-    SELF%${v.name}$ (1:, 0:) => SELF%F_${v.name}$%GET_VIEW (BLOCK_INDEX)
-  ELSE
+    IF ((.NOT. SELF%F_${v.name}$%THREAD_BUFFER) .OR. (.NOT. ASSOCIATED (SELF%${v.name}$))) THEN
+      SELF%${v.name}$ (1:, 0:) => SELF%F_${v.name}$%GET_VIEW (BLOCK_INDEX)
+    ENDIF
+  ELSEIF (.NOT. ASSOCIATED (SELF%${v.name}$)) THEN
     SELF%${v.name}$ => ZDUM${v.dim-1}$
   ENDIF
   IF (ASSOCIATED (SELF%F_${v.name}$_F)) THEN
-    SELF%${v.name}$_F (1:, 0:) => SELF%F_${v.name}$_F%GET_VIEW (BLOCK_INDEX)
-  ELSE
+    IF ((.NOT. SELF%F_${v.name}$_F%THREAD_BUFFER) .OR. (.NOT. ASSOCIATED (SELF%${v.name}$_F))) THEN
+      SELF%${v.name}$_F (1:, 0:) => SELF%F_${v.name}$_F%GET_VIEW (BLOCK_INDEX)
+    ENDIF
+  ELSEIF (.NOT. ASSOCIATED (SELF%${v.name}$)) THEN
     SELF%${v.name}$_F => ZDUM${v.dim-1}$
   ENDIF
     #:endif
@@ -624,9 +632,9 @@ ELSE
 
 #:for var in vars
   #:if vars[var][N3D]
-  SELF%${var}$ => ZDUM2
+  IF (.NOT. ASSOCIATED (SELF%${var}$)) SELF%${var}$ => ZDUM2
   #:else
-  SELF%${var}$ => ZDUM1
+  IF (.NOT. ASSOCIATED (SELF%${var}$)) SELF%${var}$ => ZDUM1
   #:endif
 #:endfor
 
@@ -634,8 +642,8 @@ ELSE
   #:for v in gfl.variables
     #:if v.array
     #:elif v.dim == 3
-  SELF%${v.name}$   => ZDUM${v.dim-1}$
-  SELF%${v.name}$_F => ZDUM${v.dim-1}$
+  IF (.NOT. ASSOCIATED (SELF%${v.name}$)) SELF%${v.name}$   => ZDUM${v.dim-1}$
+  IF (.NOT. ASSOCIATED (SELF%${v.name}$)) SELF%${v.name}$_F => ZDUM${v.dim-1}$
     #:endif
   #:endfor
 #:endif

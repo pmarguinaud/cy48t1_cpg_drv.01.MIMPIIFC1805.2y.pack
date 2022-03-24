@@ -204,8 +204,10 @@ IF (ASSOCIATED (SELF%F_DATA)) THEN
   #:set ss = pdim (vars[var][NDIMS])
   #:set ndim = 1 + len (vars[var][NDIMS])
   IF (ASSOCIATED (SELF%F_${var}$)) THEN
-    SELF%${var}$ ${ss}$ => SELF%F_${var}$%GET_VIEW (BLOCK_INDEX)
-  ELSE
+    IF ((.NOT. SELF%F_${var}$%THREAD_BUFFER) .OR. (.NOT. ASSOCIATED (SELF%${var}$))) THEN
+      SELF%${var}$ ${ss}$ => SELF%F_${var}$%GET_VIEW (BLOCK_INDEX)
+    ENDIF
+  ELSEIF (.NOT. ASSOCIATED (SELF%${var}$)) THEN
     SELF%${var}$ ${ss}$ => ZDUM${ndim}$
   ENDIF
 #:endfor
@@ -217,7 +219,7 @@ ELSE
 #:for var in vars
   #:set ss = pdim (vars[var][NDIMS])
   #:set ndim = 1 + len (vars[var][NDIMS])
-  SELF%${var}$ ${ss}$ => ZDUM${ndim}$
+  IF (.NOT. ASSOCIATED (SELF%${var}$)) SELF%${var}$ ${ss}$ => ZDUM${ndim}$
 #:endfor
 
 ENDIF
@@ -311,8 +313,10 @@ IF (ASSOCIATED (SELF%F_DATA)) THEN
     #:set ss = pdim (vars[var][NDIMS])
   #:endif
   IF (ASSOCIATED (SELF%F_${var}$)) THEN
-    SELF%${var}$ ${ss}$ => SELF%F_${var}$%GET_VIEW (BLOCK_INDEX)
-  ELSE
+    IF ((.NOT. SELF%F_${var}$%THREAD_BUFFER) .OR. (.NOT. ASSOCIATED (SELF%${var}$))) THEN
+      SELF%${var}$ ${ss}$ => SELF%F_${var}$%GET_VIEW (BLOCK_INDEX)
+    ENDIF
+  ELSEIF (.NOT. ASSOCIATED (SELF%${var}$)) THEN
     SELF%${var}$ ${ss}$ => ZDUM${ndim}$
   ENDIF
 #:endfor
@@ -328,7 +332,7 @@ ELSE
   #:else
     #:set ss = pdim (vars[var][NDIMS])
   #:endif
-  SELF%${var}$ ${ss}$ => ZDUM${ndim}$
+  IF (.NOT. ASSOCIATED (SELF%${var}$)) SELF%${var}$ ${ss}$ => ZDUM${ndim}$
 #:endfor
 
 ENDIF
@@ -608,16 +612,20 @@ INTEGER(KIND=JPIM), INTENT (IN)   :: BLOCK_INDEX
       #:set ss = ""
     #:endif
 IF (ASSOCIATED (SELF%F_${var}$)) THEN
-  SELF%${var}$ ${ss}$ => SELF%F_${var}$%GET_VIEW (BLOCK_INDEX)
-ELSE
+  IF ((.NOT. SELF%F_${var}$%THREAD_BUFFER) .OR. (.NOT. ASSOCIATED (SELF%${var}$))) THEN
+    SELF%${var}$ ${ss}$ => SELF%F_${var}$%GET_VIEW (BLOCK_INDEX)
+  ENDIF
+ELSEIF (.NOT. ASSOCIATED (SELF%${var}$)) THEN
   SELF%${var}$ ${ss}$ => ZDUM${ndim}$
 ENDIF
   #:elif elt[NTYPE] == 'INTEGER'
     #:set ss = pdim (elt[NDIMS])
     #:set ndim = 1 + len (elt[NDIMS])
 IF (ASSOCIATED (SELF%F_${var}$)) THEN
-  SELF%${var}$ ${ss}$ => SELF%F_${var}$%GET_VIEW (BLOCK_INDEX)
-ELSE
+  IF ((.NOT. SELF%F_${var}$%THREAD_BUFFER) .OR. (.NOT. ASSOCIATED (SELF%${var}$))) THEN
+    SELF%${var}$ ${ss}$ => SELF%F_${var}$%GET_VIEW (BLOCK_INDEX)
+  ENDIF
+ELSEIF (.NOT. ASSOCIATED (SELF%${var}$)) THEN
   SELF%${var}$ ${ss}$ => IDUM${ndim}$
 ENDIF
   #:else

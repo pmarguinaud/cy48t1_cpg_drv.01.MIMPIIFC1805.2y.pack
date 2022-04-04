@@ -4,6 +4,8 @@
 #:set gfl = config.groups['GFL'] 
 #:include "cpg_macros.fypp"
 
+#:set USE_STACK = True
+
 #:set AS_void                 = []
 #:set AS_0_nflevg             = [ [ '0', 'NLEV' ] ]
 #:set AS_1_nflevg             = [ [ '1', 'NLEV' ] ]
@@ -230,40 +232,46 @@ MODULE CPG_TYPE_MOD
 
 USE FIELD_MODULE
 USE FIELD_REGISTRY_MOD
-USE PARKIND1, ONLY : JPRB, JPIM
+USE PARKIND1, ONLY : JPRB, JPIM, JPIB
 
 IMPLICIT NONE
 
-$:pcpg_intdyn_definition ("CPG_XYBDER_TYPE"  ,vars_cpg_dyn_xybder)
+$:pcpg_intdyn_definition ("CPG_XYBDER_TYPE"  ,vars_cpg_dyn_xybder, use_stack=USE_STACK)
 
-$:pcpg_intdyn_definition ("CPG_XYB_TYPE"     ,vars_cpg_dyn_xyb   )
+$:pcpg_intdyn_definition ("CPG_XYB_TYPE"     ,vars_cpg_dyn_xyb   , use_stack=USE_STACK)
 
-$:pcpg_intdyn_definition ("CPG_HWIND_TYPE"   ,vars_cpg_dyn_hwind )
+$:pcpg_intdyn_definition ("CPG_HWIND_TYPE"   ,vars_cpg_dyn_hwind , use_stack=USE_STACK)
 
-$:pcpg_intdyn_definition ("CPG_RCP_TYPE"     ,vars_cpg_dyn_rcp   )
+$:pcpg_intdyn_definition ("CPG_RCP_TYPE"     ,vars_cpg_dyn_rcp   , use_stack=USE_STACK)
 
-$:pcpg_intdyn_definition ("CPG_CTY_TYPE"     ,vars_cpg_dyn_cty   )
+$:pcpg_intdyn_definition ("CPG_CTY_TYPE"     ,vars_cpg_dyn_cty   , use_stack=USE_STACK)
 
-$:pcpg_intdyn_definition ("CPG_TND_TYPE"     ,vars_cpg_dyn_tnd   )
+$:pcpg_intdyn_definition ("CPG_TND_TYPE"     ,vars_cpg_dyn_tnd   , use_stack=USE_STACK)
 
 $:pcpg_struct1_definition ("CPG_GPAR_TYPE"  , vars_cpg_gpar     )
 
-$:pcpg_type_definition ("CPG_GP_T_TMP_TYPE" , vars_cpg_gp_t_tmp )
+$:pcpg_type_definition ("CPG_GP_T_TMP_TYPE" , vars_cpg_gp_t_tmp , use_stack=USE_STACK)
 
-$:pcpg_type_definition ("CPG_GP_TMP_TYPE"   , vars_cpg_gp_tmp   )
+$:pcpg_type_definition ("CPG_GP_TMP_TYPE"   , vars_cpg_gp_tmp   , use_stack=USE_STACK)
 
-$:pcpg_type_definition ("CPG_DYN_TYPE"      , vars_cpg_dyn      )
+$:pcpg_type_definition ("CPG_DYN_TYPE"      , vars_cpg_dyn      , use_stack=USE_STACK)
 
-$:pcpg_type_definition ("CPG_PHY_TYPE"      , vars_cpg_phy      )
+$:pcpg_type_definition ("CPG_PHY_TYPE"      , vars_cpg_phy      , use_stack=USE_STACK)
 
 
-$:pcpg_type_definition ("CPG_MISC_TYPE"     , vars_cpg_misc     )
+$:pcpg_type_definition ("CPG_MISC_TYPE"     , vars_cpg_misc     , use_stack=USE_STACK)
 
 TYPE CPG_TMP_TYPE
   TYPE (CPG_GP_TMP_TYPE) :: CPG_GP
 CONTAINS
   PROCEDURE :: INIT => CPG_TMP_TYPE_INIT
   PROCEDURE :: UPDATE_VIEW => CPG_TMP_TYPE_UPDATE_VIEW
+#:if USE_STACK
+  PROCEDURE :: INIT_STACK => CPG_TMP_TYPE_INIT_STACK
+  PROCEDURE :: ALLOC_STACK => CPG_TMP_TYPE_ALLOC_STACK
+  PROCEDURE :: UPDATE_VIEW_STACK => CPG_TMP_TYPE_UPDATE_VIEW_STACK
+  PROCEDURE :: SIZE_STACK => CPG_TMP_TYPE_SIZE_STACK
+#:endif
   PROCEDURE :: FINAL => CPG_TMP_TYPE_FINAL
 END TYPE CPG_TMP_TYPE
 
@@ -338,6 +346,7 @@ END TYPE CPG_DDH_TYPE
 TYPE CPG_SL${ind}$_TYPE
   LOGICAL :: LOWNED = .FALSE.
   INTEGER (KIND=JPIM) :: NLEV = -1
+  INTEGER (KIND=JPIB) :: ISIZE = 0
   REAL (KIND=JPRB), POINTER, CONTIGUOUS :: ZVIEW (:,:) => NULL ()
   REAL (KIND=JPRB), POINTER, CONTIGUOUS :: ZDATA (:,:,:) => NULL ()
   TYPE (FIELD_3D), POINTER :: F_DATA => NULL ()
@@ -369,6 +378,12 @@ TYPE CPG_SL${ind}$_TYPE
 CONTAINS
   PROCEDURE :: INIT => CPG_SL${ind}$_TYPE_INIT
   PROCEDURE :: UPDATE_VIEW => CPG_SL${ind}$_TYPE_UPDATE_VIEW
+#:if USE_STACK
+  PROCEDURE :: INIT_STACK => CPG_SL${ind}$_TYPE_INIT_STACK
+  PROCEDURE :: ALLOC_STACK => CPG_SL${ind}$_TYPE_ALLOC_STACK
+  PROCEDURE :: UPDATE_VIEW_STACK => CPG_SL${ind}$_TYPE_UPDATE_VIEW_STACK
+  PROCEDURE :: SIZE_STACK => CPG_SL${ind}$_TYPE_SIZE_STACK
+#:endif
   PROCEDURE :: FINAL => CPG_SL${ind}$_TYPE_FINAL
 END TYPE CPG_SL${ind}$_TYPE
 #:enddef
@@ -382,29 +397,29 @@ INTEGER(KIND=JPIM), PRIVATE, SAVE, TARGET :: IDUM1 (1), IDUM2 (1, 1), IDUM3 (1,1
 
 CONTAINS
 
-$:pcpg_intdyn_methods ("CPG_XYBDER_TYPE"  , vars_cpg_dyn_xybder, "XYBDER", use_lbounds=True)
+$:pcpg_intdyn_methods ("CPG_XYBDER_TYPE"  , vars_cpg_dyn_xybder, "XYBDER", use_lbounds=True, use_stack=USE_STACK)
 
-$:pcpg_intdyn_methods ("CPG_XYB_TYPE"     , vars_cpg_dyn_xyb   , "XYB"   , use_lbounds=True)
+$:pcpg_intdyn_methods ("CPG_XYB_TYPE"     , vars_cpg_dyn_xyb   , "XYB"   , use_lbounds=True, use_stack=USE_STACK)
 
-$:pcpg_intdyn_methods ("CPG_HWIND_TYPE"   , vars_cpg_dyn_hwind , "HWIND" , use_lbounds=True)
+$:pcpg_intdyn_methods ("CPG_HWIND_TYPE"   , vars_cpg_dyn_hwind , "HWIND" , use_lbounds=True, use_stack=USE_STACK)
 
-$:pcpg_intdyn_methods ("CPG_RCP_TYPE"     , vars_cpg_dyn_rcp   , "RCP"   , use_lbounds=True)
+$:pcpg_intdyn_methods ("CPG_RCP_TYPE"     , vars_cpg_dyn_rcp   , "RCP"   , use_lbounds=True, use_stack=USE_STACK)
 
-$:pcpg_intdyn_methods ("CPG_CTY_TYPE"     , vars_cpg_dyn_cty   , "CTY"   , use_lbounds=True)
+$:pcpg_intdyn_methods ("CPG_CTY_TYPE"     , vars_cpg_dyn_cty   , "CTY"   , use_lbounds=True, use_stack=USE_STACK)
 
-$:pcpg_intdyn_methods ("CPG_TND_TYPE"     , vars_cpg_dyn_tnd   , "TND"   , use_lbounds=True)
+$:pcpg_intdyn_methods ("CPG_TND_TYPE"     , vars_cpg_dyn_tnd   , "TND"   , use_lbounds=True, use_stack=USE_STACK)
 
 $:pcpg_struct1_methods ("CPG_GPAR_TYPE"   , vars_cpg_gpar   , "TPARAR", "YOMPARAR", "M", "NGPAR")
 
-$:pcpg_type_methods ("CPG_GP_T_TMP_TYPE" , vars_cpg_gp_t_tmp, use_intdyn=True, use_lbounds=True)
+$:pcpg_type_methods ("CPG_GP_T_TMP_TYPE" , vars_cpg_gp_t_tmp, use_intdyn=True, use_lbounds=True, use_stack=USE_STACK)
 
-$:pcpg_type_methods ("CPG_GP_TMP_TYPE"   , vars_cpg_gp_tmp, use_lbounds=True)
+$:pcpg_type_methods ("CPG_GP_TMP_TYPE"   , vars_cpg_gp_tmp,                    use_lbounds=True, use_stack=USE_STACK)
 
-$:pcpg_type_methods ("CPG_DYN_TYPE"      , vars_cpg_dyn , use_intdyn=True, use_lbounds=True)
+$:pcpg_type_methods ("CPG_DYN_TYPE"      , vars_cpg_dyn , use_intdyn=True, use_lbounds=True, use_stack=USE_STACK)
 
-$:pcpg_type_methods ("CPG_PHY_TYPE"      , vars_cpg_phy , use_intdyn=True, use_lbounds=True)
+$:pcpg_type_methods ("CPG_PHY_TYPE"      , vars_cpg_phy , use_intdyn=True, use_lbounds=True, use_stack=USE_STACK)
 
-$:pcpg_type_methods ("CPG_MISC_TYPE"     , vars_cpg_misc, use_lbounds=True)
+$:pcpg_type_methods ("CPG_MISC_TYPE"     , vars_cpg_misc,                  use_lbounds=True, use_stack=USE_STACK)
 
 SUBROUTINE CPG_TMP_TYPE_INIT (SELF, REGISTRY, NLEV, PERSISTENT)
 
@@ -417,6 +432,31 @@ CALL SELF%CPG_GP%INIT (REGISTRY, NLEV, PERSISTENT)
 
 END SUBROUTINE
 
+#:if USE_STACK
+SUBROUTINE CPG_TMP_TYPE_INIT_STACK (SELF, REGISTRY, NLEV)
+
+CLASS (CPG_TMP_TYPE) :: SELF
+TYPE (FIELD_REGISTRY),        INTENT (INOUT) :: REGISTRY
+INTEGER (KIND=JPIM),          INTENT (IN)    :: NLEV
+
+CALL SELF%CPG_GP%INIT_STACK (REGISTRY, NLEV)
+
+END SUBROUTINE
+
+SUBROUTINE CPG_TMP_TYPE_ALLOC_STACK (SELF, REGISTRY, NLEV, YDSTACK)
+
+USE STACK_MOD, ONLY : STACK
+
+CLASS (CPG_TMP_TYPE) :: SELF
+TYPE (FIELD_REGISTRY),        INTENT (INOUT) :: REGISTRY
+INTEGER (KIND=JPIM),          INTENT (IN)    :: NLEV
+TYPE (STACK)                                 :: YDSTACK
+
+CALL SELF%CPG_GP%ALLOC_STACK (REGISTRY, NLEV, YDSTACK)
+
+END SUBROUTINE
+#:endif
+
 SUBROUTINE CPG_TMP_TYPE_UPDATE_VIEW (SELF, BLOCK_INDEX)
 
 CLASS (CPG_TMP_TYPE)         :: SELF
@@ -425,6 +465,25 @@ INTEGER(KIND=JPIM), INTENT (IN)   :: BLOCK_INDEX
 CALL SELF%CPG_GP%UPDATE_VIEW (BLOCK_INDEX)
 
 END SUBROUTINE 
+
+#:if USE_STACK
+SUBROUTINE CPG_TMP_TYPE_UPDATE_VIEW_STACK (SELF, BLOCK_INDEX)
+
+CLASS (CPG_TMP_TYPE)         :: SELF
+INTEGER(KIND=JPIM), INTENT (IN)   :: BLOCK_INDEX
+
+CALL SELF%CPG_GP%UPDATE_VIEW_STACK (BLOCK_INDEX)
+
+END SUBROUTINE 
+
+INTEGER (KIND=JPIB) FUNCTION CPG_TMP_TYPE_SIZE_STACK (SELF)
+
+CLASS (CPG_TMP_TYPE)         :: SELF
+
+CPG_TMP_TYPE_SIZE_STACK = SELF%CPG_GP%SIZE_STACK ()
+
+END FUNCTION
+#:endif
 
 SUBROUTINE CPG_TMP_TYPE_FINAL (SELF)
 
@@ -578,6 +637,47 @@ ENDIF
 
 END SUBROUTINE CPG_SL${ind}$_TYPE_INIT
 
+#:if USE_STACK
+SUBROUTINE CPG_SL${ind}$_TYPE_INIT_STACK (SELF, REGISTRY, NLEV, YDTPTRSLB${ind}$ &
+#:if use_gfl
+                                & , YDMODEL &
+                                & , YGFL &
+#:endif
+                                & , PB${ind}$) 
+
+USE PTRSLB${ind}$, ONLY : TPTRSLB${ind}$
+USE OML_MOD, ONLY: OML_MAX_THREADS
+USE STACK_MOD, ONLY : MALIGN
+
+#:if use_gfl
+USE YOM_YGFL, ONLY: TYPE_GFLD
+USE TYPE_MODEL, ONLY : MODEL
+#:endif
+
+CLASS (CPG_SL${ind}$_TYPE)                         :: SELF
+TYPE (FIELD_REGISTRY),              INTENT (INOUT) :: REGISTRY
+INTEGER (KIND=JPIM),                INTENT (IN)    :: NLEV
+TYPE (TPTRSLB${ind}$),              INTENT (IN)    :: YDTPTRSLB${ind}$
+#:if use_gfl
+TYPE (TYPE_GFLD),                   INTENT (IN)    :: YGFL
+TYPE (MODEL),                       INTENT (IN)    :: YDMODEL
+#:endif
+REAL (KIND=JPRB), OPTIONAL, TARGET, INTENT (IN)    :: PB${ind}$ (:, :, :)
+
+SELF%ISIZE = 0
+SELF%NLEV = NLEV
+SELF%LOWNED = .FALSE.
+
+IF (PRESENT (PB${ind}$)) THEN
+  SELF%ZDATA => PB${ind}$
+  RETURN
+ENDIF
+
+SELF%ISIZE = MALIGN (REGISTRY%GEOM%YRDIM%NPROMA * YDTPTRSLB${ind}$%NFLDSLB${ind}$ * INT (KIND (PB${ind}$), JPIB))
+
+END SUBROUTINE CPG_SL${ind}$_TYPE_INIT_STACK
+#:endif
+
 SUBROUTINE CPG_SL${ind}$_TYPE_UPDATE_VIEW (SELF, BLOCK_INDEX)
 
 CLASS (CPG_SL${ind}$_TYPE)        :: SELF
@@ -651,6 +751,164 @@ ELSE
 ENDIF
 
 END SUBROUTINE CPG_SL${ind}$_TYPE_UPDATE_VIEW
+
+#:if USE_STACK
+SUBROUTINE CPG_SL${ind}$_TYPE_UPDATE_VIEW_STACK (SELF, BLOCK_INDEX, REGISTRY, NLEV, YDTPTRSLB${ind}$ &
+#:if use_gfl
+                                & , YDMODEL &
+                                & , YGFL &
+#:endif
+                                & , PB${ind}$)
+
+USE PTRSLB${ind}$, ONLY : TPTRSLB${ind}$
+
+#:if use_gfl
+USE YOM_YGFL, ONLY: TYPE_GFLD
+USE TYPE_MODEL, ONLY : MODEL
+#:endif
+
+CLASS (CPG_SL${ind}$_TYPE)                         :: SELF
+INTEGER (KIND=JPIM),                INTENT (IN)    :: BLOCK_INDEX
+TYPE (FIELD_REGISTRY),              INTENT (INOUT) :: REGISTRY
+INTEGER (KIND=JPIM),                INTENT (IN)    :: NLEV
+TYPE (TPTRSLB${ind}$),              INTENT (IN)    :: YDTPTRSLB${ind}$
+#:if use_gfl
+TYPE (TYPE_GFLD),                   INTENT (IN)    :: YGFL
+TYPE (MODEL),                       INTENT (IN)    :: YDMODEL
+#:endif
+REAL (KIND=JPRB), OPTIONAL, TARGET, INTENT (IN)    :: PB${ind}$ (:, :, :)
+
+INTEGER (KIND=JPIM) :: JFLD
+
+IF (PRESENT (PB${ind}$)) THEN
+
+#:for var in vars
+  JFLD = YDTPTRSLB${ind}$%MSLB${ind}$${var}$
+  IF (YDTPTRSLB${ind}$%MSLB${ind}$${var}$ > 0) THEN
+    #:if vars[var][N3D]
+    SELF%${var}$ (1:, 0:) => SELF%ZDATA (:, JFLD:JFLD+SELF%NLEV+1, BLOCK_INDEX)
+    #:else
+    SELF%${var}$          => SELF%ZDATA (:, JFLD, BLOCK_INDEX)
+    #:endif
+  ELSE
+    #:if vars[var][N3D]
+    SELF%${var}$ (1:, 0:) => ZDUM2
+    #:else
+    SELF%${var}$          => ZDUM1
+    #:endif
+  ENDIF
+#:endfor
+
+#:if use_gfl
+  #:for v in gfl.variables
+    #:if v.array
+    #:elif v.dim == 3
+  IF (YGFL%Y${v.name}$%MP_SL1 > 0 .AND. YGFL%Y${v.name}$%MP1 > 0) THEN
+    JFLD = YDTPTRSLB${ind}$%MSLB1GFL9  + (YGFL%Y${v.name}$%MP_SL1-1)*(SELF%NLEV+2)
+    SELF%${v.name}$ => SELF%ZDATA (:, JFLD:JFLD+SELF%NLEV+1, BLOCK_INDEX)
+  ELSE
+    SELF%${v.name}$ => ZDUM2
+  ENDIF
+  IF (YDMODEL%YRML_DYN%YRDYN%LSPLTHOIGFL .OR. (YDMODEL%YRML_DYN%YRDYN%NSPLTHOI /= 0)) THEN
+    IF (YGFL%Y${v.name}$%MP_SL1 > 0 .AND. YGFL%Y${v.name}$%MP1 > 0) THEN
+      JFLD = YDTPTRSLB${ind}$%MSLB1GFLF9 + (YGFL%Y${v.name}$%MP_SL1-1)*(SELF%NLEV+2)
+      SELF%${v.name}$_F => SELF%ZDATA (:, JFLD:JFLD+SELF%NLEV+1, BLOCK_INDEX)
+    ELSE
+      SELF%${v.name}$_F => ZDUM2
+    ENDIF
+  ENDIF
+    #:endif
+  #:endfor
+#:endif
+
+ENDIF
+
+END SUBROUTINE CPG_SL${ind}$_TYPE_UPDATE_VIEW_STACK
+
+INTEGER (KIND=JPIB) FUNCTION CPG_SL${ind}$_TYPE_SIZE_STACK (SELF)
+
+CLASS (CPG_SL${ind}$_TYPE) :: SELF
+
+CPG_SL${ind}$_TYPE_SIZE_STACK = SELF%ISIZE
+
+END FUNCTION
+
+SUBROUTINE CPG_SL${ind}$_TYPE_ALLOC_STACK (SELF, REGISTRY, NLEV, YDTPTRSLB${ind}$ &
+#:if use_gfl
+                                & , YDMODEL &
+                                & , YGFL &
+#:endif
+                                & , PB${ind}$ &
+                                & , YDSTACK)
+USE STACK_MOD, ONLY : STACK
+USE PTRSLB${ind}$, ONLY : TPTRSLB${ind}$
+
+#:if use_gfl
+USE YOM_YGFL, ONLY: TYPE_GFLD
+USE TYPE_MODEL, ONLY : MODEL
+#:endif
+
+CLASS (CPG_SL${ind}$_TYPE)                         :: SELF
+TYPE (FIELD_REGISTRY),              INTENT (INOUT) :: REGISTRY
+INTEGER (KIND=JPIM),                INTENT (IN)    :: NLEV
+TYPE (TPTRSLB${ind}$),              INTENT (IN)    :: YDTPTRSLB${ind}$
+#:if use_gfl
+TYPE (TYPE_GFLD),                   INTENT (IN)    :: YGFL
+TYPE (MODEL),                       INTENT (IN)    :: YDMODEL
+#:endif
+REAL (KIND=JPRB), OPTIONAL, TARGET, INTENT (IN)    :: PB${ind}$ (:, :, :)
+TYPE (STACK)                                       :: YDSTACK
+
+INTEGER (KIND=JPIM) :: JFLD
+
+IF (.NOT. PRESENT (PB${ind}$)) THEN
+
+  CALL YDSTACK%ALLOC (SELF%ZDATA, [REGISTRY%GEOM%YRDIM%NPROMA, YDTPTRSLB${ind}$%NFLDSLB${ind}$, 1])
+  SELF%ZVIEW => SELF%ZDATA (:,:,1)
+
+#:for var in vars
+  JFLD = YDTPTRSLB${ind}$%MSLB${ind}$${var}$
+  IF (YDTPTRSLB${ind}$%MSLB${ind}$${var}$ > 0) THEN
+    #:if vars[var][N3D]
+    SELF%${var}$ (1:, 0:) => SELF%ZDATA (:, JFLD:JFLD+NLEV+1, 1)
+    #:else
+    SELF%${var}$          => SELF%ZDATA (:, JFLD,             1)
+    #:endif
+  ELSE
+    #:if vars[var][N3D]
+    SELF%${var}$ (1:, 0:) => ZDUM2
+    #:else
+    SELF%${var}$          => ZDUM1
+    #:endif
+  ENDIF
+#:endfor
+
+#:if use_gfl
+  #:for v in gfl.variables
+    #:if v.array
+    #:elif v.dim == 3
+  IF (YGFL%Y${v.name}$%MP_SL1 > 0 .AND. YGFL%Y${v.name}$%MP1 > 0) THEN
+    JFLD = YDTPTRSLB${ind}$%MSLB1GFL9  + (YGFL%Y${v.name}$%MP_SL1-1)*(SELF%NLEV+2)
+    SELF%${v.name}$ (1:, 0:) => SELF%ZDATA (:, JFLD:JFLD+NLEV+1, 1)
+  ELSE
+    SELF%${v.name}$          => ZDUM2
+  ENDIF
+  IF (YDMODEL%YRML_DYN%YRDYN%LSPLTHOIGFL .OR. (YDMODEL%YRML_DYN%YRDYN%NSPLTHOI /= 0)) THEN
+    IF (YGFL%Y${v.name}$%MP_SL1 > 0 .AND. YGFL%Y${v.name}$%MP1 > 0) THEN
+      JFLD = YDTPTRSLB${ind}$%MSLB1GFLF9 + (YGFL%Y${v.name}$%MP_SL1-1)*(SELF%NLEV+2)
+      SELF%${v.name}$ (1:, 0:) => SELF%ZDATA (:, JFLD:JFLD+NLEV+1, 1)
+    ELSE
+      SELF%${v.name}$_F      => ZDUM2
+    ENDIF
+  ENDIF
+    #:endif
+  #:endfor
+#:endif
+
+ENDIF
+
+END SUBROUTINE CPG_SL${ind}$_TYPE_ALLOC_STACK
+#:endif
 
 SUBROUTINE CPG_SL${ind}$_TYPE_FINAL (SELF)
 CLASS (CPG_SL${ind}$_TYPE)          :: SELF

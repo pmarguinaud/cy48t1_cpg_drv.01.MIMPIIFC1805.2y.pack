@@ -25,14 +25,19 @@ CONTAINS
 END TYPE ${name}$
 #:enddef
 
-#:def pcpg_struct_definition (name, vars)
+#:def pcpg_struct_definition (name, vars, use_stack=False)
 TYPE ${name}$
   LOGICAL :: LOWNED = .FALSE.
+#:if use_stack
+  LOGICAL :: LSTACK = .FALSE.
+  INTEGER (KIND=JPIB) :: ISIZE = 0
+#:endif
   REAL (KIND=JPRB), POINTER, CONTIGUOUS :: ZVIEW (:,:,:) => NULL ()
   REAL (KIND=JPRB), POINTER, CONTIGUOUS :: ZDATA (:,:,:,:) => NULL ()
   TYPE (FIELD_4D), POINTER :: F_DATA => NULL ()
 #:for var in vars
   #:set ndim = 1 + len (vars[var][NDIMS])
+  INTEGER (KIND=JPIM) :: IP_${var}$ = -1
   REAL (KIND=JPRB), POINTER, CONTIGUOUS :: ${var}$ (${", ".join ([":"] * ndim)}$) => NULL ()
 !>REAL (KIND=JPRB)                      :: ${var}$ (${', '.join (['NPROMA'] + list (map (lambda d: d[0] + ':' + d[1], vars[var][NDIMS])))}$)
   TYPE (FIELD_${ndim+1}$D), POINTER :: F_${var}$ => NULL ()
@@ -41,16 +46,32 @@ TYPE ${name}$
 CONTAINS
   PROCEDURE :: INIT => ${name}$_INIT
   PROCEDURE :: UPDATE_VIEW => ${name}$_UPDATE_VIEW
+#:if use_stack
+  PROCEDURE :: INIT_STACK => ${name}$_INIT_STACK
+  PROCEDURE :: ALLOC_STACK => ${name}$_ALLOC_STACK
+  PROCEDURE :: UPDATE_VIEW_STACK => ${name}$_UPDATE_VIEW_STACK
+  PROCEDURE :: SIZE_STACK => ${name}$_SIZE_STACK
+#:endif
   PROCEDURE :: FINAL => ${name}$_FINAL
 END TYPE ${name}$
 #:enddef
 
-#:def pcpg_intdyn_definition (name, vars)
-$:pcpg_struct_definition (name, vars)
+#:def pcpg_intdyn_definition (name, vars, use_stack=False)
+$:pcpg_struct_definition (name, vars, use_stack)
 #:enddef
 
-#:def pcpg_type_definition (name, vars)
+#:def pcpg_type_definition (name, vars, use_stack=False)
 TYPE ${name}$
+
+#:if use_stack
+  INTEGER (KIND=JPIB) :: ISIZE = 0
+  #:for var in vars
+    #:if vars[var][ISARG]
+      #:set ndim = 1 + len (vars[var][NDIMS]) + 1
+  REAL(KIND=JPRB), POINTER :: ${var}$_ALL (${", ".join ([":"] * ndim)}$) => NULL ()
+    #:endif
+  #:endfor
+#:endif
 
 #:for var in vars
   #:set elt = vars[var]
@@ -71,6 +92,12 @@ TYPE ${name}$
 CONTAINS
   PROCEDURE :: INIT => ${name}$_INIT
   PROCEDURE :: UPDATE_VIEW => ${name}$_UPDATE_VIEW
+#:if use_stack
+  PROCEDURE :: INIT_STACK => ${name}$_INIT_STACK
+  PROCEDURE :: ALLOC_STACK => ${name}$_ALLOC_STACK
+  PROCEDURE :: UPDATE_VIEW_STACK => ${name}$_UPDATE_VIEW_STACK
+  PROCEDURE :: SIZE_STACK => ${name}$_SIZE_STACK
+#:endif
   PROCEDURE :: FINAL => ${name}$_FINAL
 END TYPE ${name}$
 #:enddef pcpg_type_definition
@@ -126,6 +153,18 @@ ${ind}$SELF%F_${var}$ => CREATE_TEMPORARY${suf}$ (GEOM=REGISTRY%GEOM, NLEV=${s2}
   #:endif
 #:enddef temporary
 
+#:def size (dims, type)
+  #:if type is None
+    #:set sz = 'REGISTRY%GEOM%YRDIM%NPROMA * JPRB'
+    #:for d in dims
+      #:set sz = sz + ' * (' + d[1] + ' - ' + d[0] + ' + 1)'
+    #:endfor
+  #:else
+    #:set sz = dims + " x " + type
+  #:endif
+$:sz
+#:enddef
+
 #:def argn (a)
   #:if a[0:1] != "P"
     #:set a = "P" + a
@@ -141,6 +180,16 @@ $:a
   #:endif
 $:s
 #:enddef pdim
+
+#:def pdiml (d)
+  #:set s = ", ".join (["1"] + list (map (lambda x: x[0], d)))
+$:s
+#:enddef pdiml
+
+#:def pdimu (d)
+  #:set s = ", ".join (["REGISTRY%GEOM%YRDIM%NPROMA"] + list (map (lambda x: x[1], d)))
+$:s
+#:enddef pdimu
 
 #:def pcpg_struct1_methods (name, vars, type, modn, memb, ntot)
 SUBROUTINE ${name}$_INIT (SELF, REGISTRY, YDCPG_OPTS, YD${type}$, PERSISTENT, P${type}$)
@@ -250,7 +299,7 @@ ENDIF
 END SUBROUTINE ${name}$_FINAL
 #:enddef
 
-#:def pcpg_struct_methods (name, vars, type, modn, memb, use_lbounds=False)
+#:def pcpg_struct_methods (name, vars, type, modn, memb, use_lbounds=False, use_stack=False)
 SUBROUTINE ${name}$_INIT (SELF, REGISTRY, NLEV, YD${type}$, PERSISTENT, P${type}$)
 
 USE ${modn}$, ONLY : ${type}$
@@ -295,6 +344,98 @@ SELF%F_${var}$ => CREATE_FIELD_WRAP (SELF%ZDATA (:, :, YD${type}$%${memb}$${var}
 #:endfor
 
 END SUBROUTINE ${name}$_INIT
+
+#:if use_stack
+SUBROUTINE ${name}$_INIT_STACK (SELF, REGISTRY, NLEV, YD${type}$, P${type}$)
+
+USE ${modn}$, ONLY : ${type}$
+USE STACK_MOD, ONLY : MALIGN
+
+CLASS (${name}$)                          :: SELF
+TYPE (FIELD_REGISTRY),              INTENT (INOUT) :: REGISTRY
+INTEGER (KIND=JPIM),                INTENT (IN)    :: NLEV
+TYPE (${type}$),                    INTENT (IN)    :: YD${type}$
+REAL (KIND=JPRB), OPTIONAL, TARGET, INTENT (IN)    :: P${type}$ (:, :, :, :)
+
+IF (PRESENT (P${type}$)) THEN
+  SELF%ZDATA => P${type}$
+  SELF%LSTACK = .FALSE.
+ELSE
+  SELF%LSTACK = .TRUE.
+ENDIF
+
+SELF%LOWNED = .FALSE.
+
+#:set dim = vars[list(vars.keys())[0]][NDIMS]
+#:set s2 = gdim (dim[0])
+SELF%ISIZE = MALIGN (JPRB * REGISTRY%GEOM%YRDIM%NPROMA * (${s2}$) * YD${type}$%NDIM)
+
+#:for var in vars
+  #:set ndim = 1 + len (vars[var][NDIMS])
+  SELF%IP_${var}$ = YD${type}$%${memb}$${var}$
+#:endfor
+
+END SUBROUTINE ${name}$_INIT_STACK
+
+SUBROUTINE ${name}$_ALLOC_STACK (SELF, REGISTRY, NLEV, YD${type}$, P${type}$, YDSTACK)
+
+USE ${modn}$, ONLY : ${type}$
+USE STACK_MOD, ONLY : STACK
+
+CLASS (${name}$)                          :: SELF
+TYPE (FIELD_REGISTRY),              INTENT (INOUT) :: REGISTRY
+INTEGER (KIND=JPIM),                INTENT (IN)    :: NLEV
+TYPE (${type}$),                    INTENT (IN)    :: YD${type}$
+REAL (KIND=JPRB), OPTIONAL, TARGET, INTENT (IN)    :: P${type}$ (:, :, :, :)
+TYPE (STACK)                                       :: YDSTACK
+
+IF (SELF%LSTACK) THEN
+#:set var0 = list(vars.keys())[0]
+#:set dim = vars[var0][NDIMS]
+#:set s2 = gdim (dim[0])
+  CALL YDSTACK%ALLOC (SELF%ZDATA, [REGISTRY%GEOM%YRDIM%NPROMA, ${s2}$, YD${type}$%NDIM, 1])
+
+#:set ss = pdim (vars[var0][NDIMS] + [['1']])
+  SELF%ZVIEW ${ss}$ => SELF%ZDATA (:, :, :, 1) 
+
+#:for var in vars
+  #:set ss = pdim (vars[var][NDIMS])
+  SELF%${var}$ ${ss}$ => SELF%ZDATA (:, :, SELF%IP_${var}$, 1)
+#:endfor
+
+ENDIF
+
+END SUBROUTINE ${name}$_ALLOC_STACK
+
+SUBROUTINE ${name}$_UPDATE_VIEW_STACK (SELF, BLOCK_INDEX)
+
+CLASS (${name}$)         :: SELF
+INTEGER(KIND=JPIM), INTENT (IN)   :: BLOCK_INDEX
+
+IF (.NOT. SELF%LSTACK) THEN
+
+#:set var0 = list(vars.keys())[0]
+#:set ss = pdim (vars[var0][NDIMS] + [['1']])
+
+  SELF%ZVIEW ${ss}$ => SELF%ZDATA (:, :, :, BLOCK_INDEX)
+
+#:for var in vars
+  #:set ss = pdim (vars[var][NDIMS])
+  SELF%${var}$ ${ss}$ => SELF%ZDATA (:, :, SELF%IP_${var}$, BLOCK_INDEX)
+#:endfor
+
+ENDIF
+
+END SUBROUTINE ${name}$_UPDATE_VIEW_STACK
+
+INTEGER (KIND=JPIB) FUNCTION ${name}$_SIZE_STACK (SELF)
+
+CLASS (${name}$)         :: SELF
+
+${name}$_SIZE_STACK = SELF%ISIZE
+
+END FUNCTION ${name}$_SIZE_STACK
+#:endif
 
 SUBROUTINE ${name}$_UPDATE_VIEW (SELF, BLOCK_INDEX)
 
@@ -363,11 +504,11 @@ ENDIF
 END SUBROUTINE ${name}$_FINAL
 #:enddef
 
-#:def pcpg_intdyn_methods (name, vars, type, use_lbounds=False)
-$:pcpg_struct_methods (name, vars, "T" + type, "INTDYN_MOD", "M_", use_lbounds=use_lbounds)
+#:def pcpg_intdyn_methods (name, vars, type, use_lbounds=False, use_stack=False)
+$:pcpg_struct_methods (name, vars, "T" + type, "INTDYN_MOD", "M_", use_lbounds=use_lbounds, use_stack=use_stack)
 #:enddef
 
-#:def pcpg_type_methods (name, vars, use_intdyn=False, use_lbounds=False)
+#:def pcpg_type_methods (name, vars, use_intdyn=False, use_lbounds=False, use_stack=False)
 
 #:set use_llt0      = False
 #:set use_llmf_phys = False
@@ -597,6 +738,473 @@ ENDIF
 #:endfor
 
 END SUBROUTINE ${name}$_INIT
+
+#:if use_stack
+SUBROUTINE ${name}$_INIT_STACK (SELF &
+#:if use_llt0
+                                & , KT  &
+#:endif
+                                & , REGISTRY &
+#:if use_cpg_dim
+                                & , YDCPG_OPTS &
+#:else
+                                & , NLEV &
+#:endif
+#:if use_yddphy
+                                & , YDDPHY &
+#:endif
+#:if use_ydsurf
+                                & , YDSURF &
+#:endif
+#:if use_ydmodel
+                                & , YDMODEL &
+#:endif
+#:if use_llmf_phys
+                                & , LDMF_PHYS &
+#:endif
+#:for var in vars
+  #:if vars[var][ISARG]
+                           &, ${argn (var)}$ &
+  #:endif
+#:endfor
+                           &)
+
+#:if use_intdyn
+USE INTDYN_MOD, ONLY : YYTCTY0, YYTRCP0, YYTHW0, YYTXYB0, YYTXYB0_PHY, YYTXYBDER0
+USE INTDYN_MOD, ONLY :          YYTRCP9, YYTHW9, YYTXYB9, YYTXYB9_PHY
+USE INTDYN_MOD, ONLY : TRCP, TCTY, THWIND, TXYB, TXYBDER
+#:endif
+
+USE STACK_MOD, ONLY : MALIGN
+
+#:if use_cpg_dim
+USE CPG_OPTS_TYPE_MOD, ONLY : CPG_OPTS_TYPE
+#:set nlev = "YDCPG_OPTS%KFLEVG"
+#:else
+#:set nlev = "NLEV"
+#:endif
+
+#:if use_lnhdyn
+USE YOMCT0    , ONLY : LNHDYN, LNHEE, LNHQE
+#:endif
+#:if use_ydmodel
+USE TYPE_MODEL, ONLY : MODEL
+#:endif
+#:if use_yddphy
+USE YOMDPHY, ONLY : TDPHY
+#:endif
+#:if use_ydsurf
+USE SURFACE_FIELDS_MIX, ONLY : TSURF
+#:endif
+
+CLASS (${name}$)                    :: SELF
+#:if use_llt0
+INTEGER(KIND=JPIM),           INTENT (IN)    :: KT
+#:endif
+TYPE (FIELD_REGISTRY),        INTENT (INOUT) :: REGISTRY
+#:if use_cpg_dim
+TYPE (CPG_OPTS_TYPE),         INTENT (IN)    :: YDCPG_OPTS
+#:else
+INTEGER (KIND=JPIM),          INTENT (IN)    :: NLEV
+#:endif
+#:if use_ydmodel
+TYPE (MODEL),                 INTENT (IN)    :: YDMODEL
+#:endif
+#:if use_yddphy
+TYPE (TDPHY),                 INTENT (IN)    :: YDDPHY
+#:endif
+#:if use_ydsurf
+TYPE (TSURF),                 INTENT (IN)    :: YDSURF
+#:endif
+#:if use_llmf_phys
+LOGICAL, OPTIONAL,            INTENT (IN)    :: LDMF_PHYS
+#:endif
+
+#:for var in vars
+  #:if vars[var][ISARG]
+    #:set ndim = 1 + len (vars[var][NDIMS]) + 1
+REAL(KIND=JPRB),       INTENT (IN), OPTIONAL, TARGET  :: ${argn (var)}$(${", ".join ([":"] * ndim)}$)
+  #:endif
+#:endfor
+
+#:if use_llt0
+LOGICAL :: LLT0
+#:endif
+#:if use_llmf_phys
+LOGICAL :: LLMF_PHYS
+#:endif
+
+#:if use_intdyn
+TYPE (TRCP)   , POINTER :: YLTRCP     
+TYPE (TCTY)   , POINTER :: YLTCTY     
+TYPE (THWIND) , POINTER :: YLTHW     
+TYPE (TXYB)   , POINTER :: YLTXYB     
+TYPE (TXYB)   , POINTER :: YLTXYB_PHY
+TYPE (TXYBDER), POINTER :: YLTXYBDER
+
+TYPE (TCTY),   TARGET :: YLTCTY0 
+TYPE (THWIND), TARGET :: YLTHW0, YLTHW9 
+TYPE (TRCP),   TARGET :: YLTRCP0, YLTRCP9 
+TYPE (TXYB),   TARGET :: YLTXYB0, YLTXYB0_PHY, YLTXYB9, YLTXYB9_PHY
+TYPE (TXYBDER),TARGET :: YLTXYBDER0
+
+YLTCTY0     = YYTCTY0 
+YLTHW0      = YYTHW0 
+YLTHW9      = YYTHW9 
+YLTRCP0     = YYTRCP0 
+YLTRCP9     = YYTRCP9 
+YLTXYB0     = YYTXYB0 
+YLTXYB0_PHY = YYTXYB0_PHY 
+YLTXYB9     = YYTXYB9 
+YLTXYB9_PHY = YYTXYB9_PHY
+YLTXYBDER0  = YYTXYBDER0
+#:endif
+
+#:if use_llt0
+LLT0 = KT == 0
+#:endif
+
+#:if use_intdyn
+YLTRCP     => NULL ()
+YLTCTY     => NULL ()
+YLTHW      => NULL ()
+YLTXYB     => NULL ()
+YLTXYB_PHY => NULL ()
+YLTXYBDER  => NULL ()
+
+IF (KT == 0) THEN
+  YLTRCP     => YLTRCP0
+  YLTCTY     => YLTCTY0
+  YLTHW      => YLTHW0
+  YLTXYB     => YLTXYB0
+  YLTXYB_PHY => YLTXYB0_PHY
+  YLTXYBDER  => YLTXYBDER0
+ELSEIF (KT == 9) THEN
+  YLTRCP     => YLTRCP9
+  YLTCTY     => NULL ()
+  YLTHW      => YLTHW9
+  YLTXYB     => YLTXYB9
+  YLTXYB_PHY => YLTXYB9_PHY
+ENDIF
+#:endif
+
+#:if use_llmf_phys
+LLMF_PHYS = .FALSE.
+IF (PRESENT (LDMF_PHYS)) THEN
+  LLMF_PHYS = LDMF_PHYS
+ENDIF
+#:endif
+
+SELF%ISIZE = 0
+
+#:for var in vars
+!PRINT *, "${var}$", SELF%ISIZE
+  #:set elt = vars[var]
+  #:if not elt[NCOND] is None
+    #:set ind = "  "
+IF (${elt[NCOND]}$) THEN
+  #:else
+    #:set ind = ""
+  #:endif
+  #:if (elt[NTYPE] is None) or (elt[NTYPE] == 'INTEGER')
+    #:if elt[ISARG]
+${ind}$IF (PRESENT (${argn (var)}$)) THEN
+      #:if elt[ELARG]
+${ind}$ELSE
+${ind}$  SELF%ISIZE = SELF%ISIZE + MALIGN (${size (elt[NDIMS], elt[NTYPE])}$)
+      #:endif
+${ind}$ENDIF
+    #:else
+${ind}$SELF%ISIZE = SELF%ISIZE + MALIGN (${size (elt[NDIMS], elt[NTYPE])}$)
+    #:endif
+  #:elif (NDEFS < len (elt)) and (elt[NDEFS] is not None)
+    #:set defs = elt[NDEFS]
+    #:if elt[ISARG]
+${ind}$CALL SELF%${var}$%INIT_STACK (REGISTRY, ${nlev}$, ${defs}$, ${argn (var)}$)
+IF (.NOT. PRESENT (${argn (var)}$)) THEN
+${ind}$  SELF%ISIZE = SELF%ISIZE + SELF%${var}$%SIZE_STACK ()
+ENDIF
+    #:else
+${ind}$CALL SELF%${var}$%INIT_STACK (REGISTRY, ${nlev}$, ${defs}$)
+${ind}$SELF%ISIZE = SELF%ISIZE + SELF%${var}$%SIZE_STACK ()
+    #:endif
+  #:else
+    #:if (var == "T0") or (var == "T9")
+      #:set kt = var[1] + ", "
+    #:else
+      #:set kt = ""
+    #:endif
+    #:if elt[ISARG]
+${ind}$CALL SELF%${var}$%INIT_STACK (${kt}$REGISTRY, ${nlev}$, ${argn (var)}$)
+${ind}$SELF%ISIZE = SELF%ISIZE + SELF%${var}$%SIZE_STACK ()
+    #:else
+${ind}$CALL SELF%${var}$%INIT_STACK (${kt}$REGISTRY, ${nlev}$)
+${ind}$SELF%ISIZE = SELF%ISIZE + SELF%${var}$%SIZE_STACK ()
+    #:endif
+  #:endif
+  #:if not elt[NCOND] is None
+ENDIF
+  #:endif
+
+#:endfor
+
+END SUBROUTINE ${name}$_INIT_STACK
+
+SUBROUTINE ${name}$_ALLOC_STACK (SELF &
+#:if use_llt0
+                                & , KT  &
+#:endif
+                                & , REGISTRY &
+#:if use_cpg_dim
+                                & , YDCPG_OPTS &
+#:else
+                                & , NLEV &
+#:endif
+#:if use_yddphy
+                                & , YDDPHY &
+#:endif
+#:if use_ydsurf
+                                & , YDSURF &
+#:endif
+#:if use_ydmodel
+                                & , YDMODEL &
+#:endif
+#:if use_llmf_phys
+                                & , LDMF_PHYS &
+#:endif
+#:for var in vars
+  #:if vars[var][ISARG]
+                                &, ${argn (var)}$ &
+  #:endif
+#:endfor
+                                &, YDSTACK &
+                           &)
+
+#:if use_intdyn
+USE INTDYN_MOD, ONLY : YYTCTY0, YYTRCP0, YYTHW0, YYTXYB0, YYTXYB0_PHY, YYTXYBDER0
+USE INTDYN_MOD, ONLY :          YYTRCP9, YYTHW9, YYTXYB9, YYTXYB9_PHY
+USE INTDYN_MOD, ONLY : TRCP, TCTY, THWIND, TXYB, TXYBDER
+#:endif
+
+USE STACK_MOD, ONLY : STACK
+
+#:if use_cpg_dim
+USE CPG_OPTS_TYPE_MOD, ONLY : CPG_OPTS_TYPE
+#:set nlev = "YDCPG_OPTS%KFLEVG"
+#:else
+#:set nlev = "NLEV"
+#:endif
+
+#:if use_lnhdyn
+USE YOMCT0    , ONLY : LNHDYN, LNHEE, LNHQE
+#:endif
+#:if use_ydmodel
+USE TYPE_MODEL, ONLY : MODEL
+#:endif
+#:if use_yddphy
+USE YOMDPHY, ONLY : TDPHY
+#:endif
+#:if use_ydsurf
+USE SURFACE_FIELDS_MIX, ONLY : TSURF
+#:endif
+
+CLASS (${name}$)                    :: SELF
+#:if use_llt0
+INTEGER(KIND=JPIM),           INTENT (IN)    :: KT
+#:endif
+TYPE (FIELD_REGISTRY),        INTENT (INOUT) :: REGISTRY
+#:if use_cpg_dim
+TYPE (CPG_OPTS_TYPE),         INTENT (IN)    :: YDCPG_OPTS
+#:else
+INTEGER (KIND=JPIM),          INTENT (IN)    :: NLEV
+#:endif
+#:if use_ydmodel
+TYPE (MODEL),                 INTENT (IN)    :: YDMODEL
+#:endif
+#:if use_yddphy
+TYPE (TDPHY),                 INTENT (IN)    :: YDDPHY
+#:endif
+#:if use_ydsurf
+TYPE (TSURF),                 INTENT (IN)    :: YDSURF
+#:endif
+#:if use_llmf_phys
+LOGICAL, OPTIONAL,            INTENT (IN)    :: LDMF_PHYS
+#:endif
+
+#:for var in vars
+  #:if vars[var][ISARG]
+    #:set ndim = 1 + len (vars[var][NDIMS]) + 1
+REAL(KIND=JPRB),       INTENT (IN), OPTIONAL, TARGET  :: ${argn (var)}$(${", ".join ([":"] * ndim)}$)
+  #:endif
+#:endfor
+TYPE (STACK)                                 :: YDSTACK
+
+#:if use_llt0
+LOGICAL :: LLT0
+#:endif
+#:if use_llmf_phys
+LOGICAL :: LLMF_PHYS
+#:endif
+
+#:if use_intdyn
+TYPE (TRCP)   , POINTER :: YLTRCP     
+TYPE (TCTY)   , POINTER :: YLTCTY     
+TYPE (THWIND) , POINTER :: YLTHW     
+TYPE (TXYB)   , POINTER :: YLTXYB     
+TYPE (TXYB)   , POINTER :: YLTXYB_PHY
+TYPE (TXYBDER), POINTER :: YLTXYBDER
+
+TYPE (TCTY),   TARGET :: YLTCTY0 
+TYPE (THWIND), TARGET :: YLTHW0, YLTHW9 
+TYPE (TRCP),   TARGET :: YLTRCP0, YLTRCP9 
+TYPE (TXYB),   TARGET :: YLTXYB0, YLTXYB0_PHY, YLTXYB9, YLTXYB9_PHY
+TYPE (TXYBDER),TARGET :: YLTXYBDER0
+
+YLTCTY0     = YYTCTY0 
+YLTHW0      = YYTHW0 
+YLTHW9      = YYTHW9 
+YLTRCP0     = YYTRCP0 
+YLTRCP9     = YYTRCP9 
+YLTXYB0     = YYTXYB0 
+YLTXYB0_PHY = YYTXYB0_PHY 
+YLTXYB9     = YYTXYB9 
+YLTXYB9_PHY = YYTXYB9_PHY
+YLTXYBDER0  = YYTXYBDER0
+#:endif
+
+
+#:if use_llt0
+LLT0 = KT == 0
+#:endif
+
+#:if use_intdyn
+YLTRCP     => NULL ()
+YLTCTY     => NULL ()
+YLTHW      => NULL ()
+YLTXYB     => NULL ()
+YLTXYB_PHY => NULL ()
+YLTXYBDER  => NULL ()
+
+IF (KT == 0) THEN
+  YLTRCP     => YLTRCP0
+  YLTCTY     => YLTCTY0
+  YLTHW      => YLTHW0
+  YLTXYB     => YLTXYB0
+  YLTXYB_PHY => YLTXYB0_PHY
+  YLTXYBDER  => YLTXYBDER0
+ELSEIF (KT == 9) THEN
+  YLTRCP     => YLTRCP9
+  YLTCTY     => NULL ()
+  YLTHW      => YLTHW9
+  YLTXYB     => YLTXYB9
+  YLTXYB_PHY => YLTXYB9_PHY
+ENDIF
+#:endif
+
+#:if use_llmf_phys
+LLMF_PHYS = .FALSE.
+IF (PRESENT (LDMF_PHYS)) THEN
+  LLMF_PHYS = LDMF_PHYS
+ENDIF
+#:endif
+
+#:for var in vars
+!PRINT *, "${var}$", YDSTACK%IPTR-70785, YDSTACK%IPTR
+  #:set elt = vars[var]
+  #:if not elt[NCOND] is None
+    #:set ind = "  "
+IF (${elt[NCOND]}$) THEN
+  #:else
+    #:set ind = ""
+  #:endif
+  #:if (elt[NTYPE] is None) or (elt[NTYPE] == 'INTEGER')
+    #:set ss = pdim (elt[NDIMS] + [['1']])
+    #:if elt[ISARG]
+${ind}$IF (PRESENT (${argn (var)}$)) THEN
+${ind}$ SELF%${var}$_ALL ${ss}$ => ${argn (var)}$ 
+      #:if elt[ELARG]
+${ind}$ELSE
+${ind}$  CALL YDSTACK%ALLOC (SELF%${var}$, KUBDS=[${pdimu (elt[NDIMS])}$], KLBDS=[${pdiml (elt[NDIMS])}$])
+      #:endif
+${ind}$ENDIF
+    #:else
+${ind}$  CALL YDSTACK%ALLOC (SELF%${var}$, KUBDS=[${pdimu (elt[NDIMS])}$], KLBDS=[${pdiml (elt[NDIMS])}$])
+    #:endif
+  #:elif (NDEFS < len (elt)) and (elt[NDEFS] is not None)
+    #:set defs = elt[NDEFS]
+    #:if elt[ISARG]
+${ind}$CALL SELF%${var}$%ALLOC_STACK (REGISTRY, ${nlev}$, ${defs}$, ${argn (var)}$, YDSTACK)
+    #:else
+${ind}$CALL SELF%${var}$%ALLOC_STACK (REGISTRY, ${nlev}$, ${defs}$, YDSTACK=YDSTACK)
+    #:endif
+  #:else
+    #:if (var == "T0") or (var == "T9")
+      #:set kt = var[1] + ", "
+    #:else
+      #:set kt = ""
+    #:endif
+    #:if elt[ISARG]
+${ind}$CALL SELF%${var}$%ALLOC_STACK (${kt}$REGISTRY, ${nlev}$, ${argn (var)}$, YDSTACK)
+    #:else
+${ind}$CALL SELF%${var}$%ALLOC_STACK (${kt}$REGISTRY, ${nlev}$, YDSTACK=YDSTACK)
+    #:endif
+  #:endif
+  #:if not elt[NCOND] is None
+ENDIF
+  #:endif
+
+#:endfor
+
+END SUBROUTINE ${name}$_ALLOC_STACK
+
+SUBROUTINE ${name}$_UPDATE_VIEW_STACK (SELF, BLOCK_INDEX)
+
+CLASS (${name}$)                    :: SELF
+INTEGER (KIND=JPIM), INTENT (IN)    :: BLOCK_INDEX
+
+#:for var in vars
+  #:set elt = vars[var]
+  #:if (elt[NTYPE] is None) or (elt[NTYPE] == 'INTEGER')
+    #:set ss = pdim (elt[NDIMS] + [])
+    #:set ndim = 1 + len (vars[var][NDIMS])
+    #:if elt[ISARG]
+IF (ASSOCIATED (SELF%${var}$_ALL)) THEN
+  SELF%${var}$ ${ss}$ => SELF%${var}$_ALL (${", ".join ([":"] * ndim)}$, BLOCK_INDEX)
+ENDIF
+    #:else
+    #:endif
+  #:elif (NDEFS < len (elt)) and (elt[NDEFS] is not None)
+    #:set defs = elt[NDEFS]
+    #:if elt[ISARG]
+CALL SELF%${var}$%UPDATE_VIEW_STACK (BLOCK_INDEX)
+    #:else
+CALL SELF%${var}$%UPDATE_VIEW_STACK (BLOCK_INDEX)
+    #:endif
+  #:else
+    #:if (var == "T0") or (var == "T9")
+      #:set kt = var[1] + ", "
+    #:else
+      #:set kt = ""
+    #:endif
+    #:if elt[ISARG]
+CALL SELF%${var}$%UPDATE_VIEW_STACK (BLOCK_INDEX)
+    #:else
+CALL SELF%${var}$%UPDATE_VIEW_STACK (BLOCK_INDEX)
+    #:endif
+  #:endif
+#:endfor
+
+END SUBROUTINE ${name}$_UPDATE_VIEW_STACK
+
+INTEGER (KIND=JPIB) FUNCTION ${name}$_SIZE_STACK (SELF)
+
+CLASS (${name}$)         :: SELF
+
+${name}$_SIZE_STACK = SELF%ISIZE
+
+END FUNCTION ${name}$_SIZE_STACK
+
+#:endif
 
 SUBROUTINE ${name}$_UPDATE_VIEW (SELF, BLOCK_INDEX)
 

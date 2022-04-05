@@ -4,7 +4,7 @@
 #:set gfl = config.groups['GFL'] 
 #:include "cpg_macros.fypp"
 
-#:set USE_STACK = True
+#:set USE_STACK = False
 
 #:set AS_void                 = []
 #:set AS_0_nflevg             = [ [ '0', 'NLEV' ] ]

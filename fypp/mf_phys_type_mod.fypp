@@ -2,7 +2,7 @@
 #:include "cpg_macros.fypp"
 
 
-#:set USE_STACK = True
+#:set USE_STACK = False
 
 #:set AS_void            = []
 #:set AS_0_NFLEVG        = [ [ '0', 'YDCPG_OPTS%KFLEVG' ] ]

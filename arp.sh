@@ -31,7 +31,12 @@ DATA=/scratch/work/marguina/benchmf1709-data
 
 export workdir=/scratch/work/marguina
 
+if [ "x$SLURM_JOBID" != "x" ]
+then
 export TMPDIR=$workdir/tmp/arp.$SLURM_JOBID
+else
+export TMPDIR=$workdir/tmp/arp.$$
+fi
 
 mkdir -p $TMPDIR
 
@@ -53,7 +58,7 @@ cd $NAM
 
 # Choose a pack
 
- PACK=/home/gmap/mrpm/marguina/pack/cy48t1_cpg_drv.01.MIMPIIFC1805.2y.pack
+ PACK=/home/gmap/mrpm/marguina/pack/48t1_cpg_drv.01.PGI217.cpu0
 
 # Copy data to $TMPDIR
 
@@ -83,7 +88,7 @@ done
 
 NNODE_FC=1
 NTASK_FC=4
-NOPMP_FC=8
+NOPMP_FC=1
 
 # Set the number of nodes, tasks, threads for the IO server
 
@@ -185,10 +190,12 @@ cat fort.4
 # Run the model; use your mpirun
 
 
+pack=$PACK
+#ack=/home/gmap/mrpm/marguina/pack/48t1_mainPGIdbg.01.PGI217.cpu0
 
 /opt/softs/mpiauto/mpiauto --verbose --wrap --wrap-stdeo --nouse-slurm-mpi --prefix-mpirun '/usr/bin/time -f "time=%e"' \
-    --nnp $NTASK_FC --nn $NNODE_FC --openmp $NOPMP_FC -- $PACK/bin/MASTERODB \
- -- --nnp $NTASK_IO --nn $NNODE_IO --openmp $NOPMP_IO -- $PACK/bin/MASTERODB 
+    --nnp $NTASK_FC --nn $NNODE_FC --openmp $NOPMP_FC -- $pack/bin/MASTERODB \
+ -- --nnp $NTASK_IO --nn $NNODE_IO --openmp $NOPMP_IO -- $pack/bin/MASTERODB 
 
 diffNODE.001_01 NODE.001_01 $PACK/ref/NODE.001_01.$NAM
 

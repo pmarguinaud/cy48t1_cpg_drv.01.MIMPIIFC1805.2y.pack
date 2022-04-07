@@ -74,19 +74,14 @@ CONTAINS
   SELF%P1LIMA => ZP1LIMA${t}$
 
 #:for var in vars_ydvars
-  SELF%${var}$ (LBOUND (YDVARS%${var}$%T${t}$,1):, LBOUND (YDVARS%${var}$%T${t}$,2):) => YDVARS%${var}$%T${t}$
+  SELF%${var}$ => YDVARS%${var}$%T${t}$
   SELF%F_${var}$ => YDVARS%${var}$%FT${t}$
 #:endfor
 
 #:for grp in grp_surf
   #:set ndim = grp_surf[grp][0]
   #:for var in grp_surf[grp][1]
-  SELF%Y${grp}$%${var}$ ( &
-                     &  LBOUND (YDMF_PHYS_SURF%${grp}$%P${var}$_T${t}$, 1):  &
-     #:for d in range (2, ndim+1)
-                     & ,LBOUND (YDMF_PHYS_SURF%${grp}$%P${var}$_T${t}$, ${d}$):  &
-     #:endfor
-                     &  ) => YDMF_PHYS_SURF%${grp}$%P${var}$_T${t}$
+  SELF%Y${grp}$%${var}$ => YDMF_PHYS_SURF%${grp}$%P${var}$_T${t}$
   SELF%Y${grp}$%F_${var}$ => YDMF_PHYS_SURF%${grp}$%F_${var}$_T${t}$
 
   #:endfor

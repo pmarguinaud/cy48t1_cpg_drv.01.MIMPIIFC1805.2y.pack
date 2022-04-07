@@ -58,7 +58,7 @@ cd $NAM
 
 # Choose a pack
 
- PACK=/home/gmap/mrpm/marguina/pack/48t1_cpg_drv.01.PGI217.cpu0
+ PACK=/home/gmap/mrpm/marguina/pack/cy48t1_cpg_drv.01.MIMPIIFC1805.2y.pack
 
 # Copy data to $TMPDIR
 
@@ -88,7 +88,7 @@ done
 
 NNODE_FC=1
 NTASK_FC=4
-NOPMP_FC=1
+NOPMP_FC=8
 
 # Set the number of nodes, tasks, threads for the IO server
 

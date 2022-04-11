@@ -4993,7 +4993,9 @@ IF ((.NOT.LSFORCS)) THEN
 ENDIF
 
 
-CALL MF_PHYS_CVV (YDCPG_BNDS, YDCPG_OPTS, YDVARS%CVV%T0, YDVARS%CVV%T1, YDMODEL)
+IF(YDMODEL%YRML_PHY_MF%YRPHY%LCVPGY) THEN
+  CALL MF_PHYS_CVV (YDCPG_BNDS, YDCPG_OPTS, YDVARS%CVV%T0, YDVARS%CVV%T1)
+ENDIF
 
 !        3.3  Store the model trajectory at t-dt (leap-frog) or t (sl2tl).
 !             ------------------------------------------------------------

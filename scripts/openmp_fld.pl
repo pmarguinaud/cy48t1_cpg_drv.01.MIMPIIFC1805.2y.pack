@@ -15,6 +15,71 @@ my @skip = qw (PGFL PGFLT1 PGMVT1 PGPSDT2D);
 my %skip = map { ($_, 1) } @skip;
 
 
+sub removeListElement
+{
+  my $x = shift;
+
+  my $nn = $x->nodeName;
+
+  my ($p) = $x->parentNode;
+  
+  my @cf = &F ('following-sibling::text()[contains(.,",")]', $x);   
+  my @cp = &F ('preceding-sibling::text()[contains(.,",")]', $x);   
+  
+  if (@cf)
+    {   
+      $cf[+0]->unbindNode (); 
+    }   
+  elsif (@cp)
+    {   
+      $cp[-1]->unbindNode (); 
+    }   
+  
+  $x->parentNode->appendChild (&t (' '));
+  my $l = $x->parentNode->lastChild;
+  
+  $x->unbindNode (); 
+  
+  while ($l)
+    {   
+      last if (($l->nodeName ne '#text') && ($l->nodeName ne 'cnt'));
+      $l = $l->previousSibling;
+      last unless ($l);
+      $l->nextSibling->unbindNode;
+    }   
+
+  return &F ("./$nn", $p) ? 0 : 1;
+}
+
+sub singleDecl
+{
+  my $doc = shift;
+
+  my @en_decl_lst = &F ('.//EN-decl-LT[count(./EN-decl)>1]', $doc);
+
+  for my $en_decl_lst (@en_decl_lst)
+    {
+      my $stmt = &Fxtran::stmt ($en_decl_lst);
+      my $indent = &Fxtran::getIndent ($stmt);
+      my @en_decl = &F ('./EN-decl', $en_decl_lst);
+      for my $en_decl (@en_decl)
+        {
+          my $s = $stmt->cloneNode (1);
+          my ($l) = &F ('.//EN-decl-LT', $s);
+          for ($l->childNodes ())
+            {
+              $_->unbindNode ();
+            }
+          $l->appendChild ($en_decl->cloneNode (1));
+          $stmt->parentNode->insertAfter ($s, $stmt);
+          $stmt->parentNode->insertAfter (&t ("\n" . (' ' x $indent)), $stmt);
+        }
+      $stmt->unbindNode ();
+    }
+
+}
+
+
 sub parseDirectives
 {
   my $d = shift;
@@ -343,7 +408,7 @@ sub makeParallel
 
   my @init_yl;
 
-  my @en_decl = &F ('.//EN-decl[./array-spec/shape-spec-LT[string(shape-spec="YDCPG_OPTS%KLON")]]', $doc);
+  my @en_decl = &F ('.//EN-decl[./array-spec/shape-spec-LT/shape-spec[string(.)="YDCPG_OPTS%KLON"]]', $doc);
   for my $en_decl (@en_decl)
     {
       my $stmt = &Fxtran::stmt ($en_decl);
@@ -608,8 +673,6 @@ sub callOpenMPRoutines
       next if (&F ('.//procedure-designator/named-E/R-LT', $call)); # Skip objects calling methods
       my ($proc) = &F ('./procedure-designator/named-E/N/n/text()', $call);
 
-my $dbg = $proc eq 'APLPARS';
-
       next if ($proc eq 'DR_HOOK');
 
       my $par = &n ('<parallel-call-directive/>');
@@ -622,12 +685,6 @@ my $dbg = $proc eq 'APLPARS';
       my $found = 0;
       for my $arg (@arg)
         {
-
-if ($dbg)
-  {
-    print $arg->textContent, "\n";
-  }
-
           $found++ if (grep { $_ eq $arg } @obj);
           my @ss = &F ('.//EN-decl[string(EN-N)="?"]/array-spec//shape-spec', $arg->textContent, $doc, 1);
 
@@ -780,6 +837,9 @@ sub cleanInterfaces
 my $F90 = shift;
 
 my $doc = &Fxtran::fxtran (location => $F90, fopts => [qw (-line-length 300)]);
+
+
+&singleDecl ($doc);
 
 &renameSubroutine ($doc);
 

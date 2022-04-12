@@ -76,10 +76,10 @@ sub parallel
   my $str = ' ' x $indent;
 
   my ($loop) = &Fxtran::fxtran (fragment => << "EOF");
-DO JBLK = 1, YDCPG_DIM%KGPBLKS
+DO JBLK = 1, YDCPG_OPTS%KGPBLKS
 
-${str}  YLCPG_DIM = YDCPG_DIM
-${str}  CALL YLCPG_DIM%UPDATE (JBLK)
+${str}  YLCPG_BNDS = YDCPG_BNDS
+${str}  CALL YLCPG_BNDS%UPDATE (JBLK)
 ${str}ENDDO
 EOF
 
@@ -95,13 +95,13 @@ EOF
   
   $par->appendChild ($loop);
 
-  my @expr = &F ('.//named-E/N/n[string(.)="YDCPG_DIM"]/text()', $par);
+  my @expr = &F ('.//named-E/N/n[string(.)="YDCPG_BNDS"]/text()', $par);
 
   shift (@expr) for (1 .. 2);
 
   for my $expr (@expr)
     {
-      $expr->setData ('YLCPG_DIM');
+      $expr->setData ('YLCPG_BNDS');
     }
 
 }
@@ -223,7 +223,7 @@ sub dimsFromDecl
       my @b = &F ('./ANY-bound/ANY-E', $ss);
       push @dims, [map { $_->cloneNode (1) } @b];
     }
-  push @dims, [&n ('<named-E><N><n>YDCPG_DIM</n></N><R-LT><component-R>%<ct>NBLKS</ct></component-R></R-LT></named-E>')];
+  push @dims, [&n ('<named-E><N><n>YDCPG_OPTS</n></N><R-LT><component-R>%<ct>NBLKS</ct></component-R></R-LT></named-E>')];
 
   return @dims;
 }
@@ -343,7 +343,7 @@ sub makeParallel
 
   my @init_yl;
 
-  my @en_decl = &F ('.//EN-decl[./array-spec/shape-spec-LT[string(shape-spec="YDCPG_DIM%KLON")]]', $doc);
+  my @en_decl = &F ('.//EN-decl[./array-spec/shape-spec-LT[string(shape-spec="YDCPG_OPTS%KLON")]]', $doc);
   for my $en_decl (@en_decl)
     {
       my $stmt = &Fxtran::stmt ($en_decl);
@@ -539,21 +539,7 @@ sub makeParallel
 
           my $access = $ptr2r{$ptr} && $ptr2w{$ptr} ? 'RDWR' : $ptr2r{$ptr} ? 'RDONLY' : 'WRONLY';
 
-          my $dims = $ptr2dims{$ptr};
-
-          my $dd = '';
-
-          if (grep { (@$_ == 2) && ($_->[0]->textContent ne '1') } @$dims)
-            {
-              my @dd;
-              for (@$dims)
-                {
-                  push @dd, (@$_ == 2) ? $_->[0]->textContent . ':' : '1:';
-                }
-              $dd = '(' . join (',', @dd) . ')';
-            }
-
-          my $stmt = "$ptr $dd => GET_HOST_DATA_$access ($var)";
+          my $stmt = "$ptr => GET_HOST_DATA_$access ($var)";
           $stmt = "IF (ASSOCIATED ($var)) $stmt" if ($ptr2cond{$ptr});
           $stmt = &Fxtran::fxtran (statement => $stmt);
           $par->insertBefore ($stmt, $do);
@@ -621,6 +607,9 @@ sub callOpenMPRoutines
     {
       next if (&F ('.//procedure-designator/named-E/R-LT', $call)); # Skip objects calling methods
       my ($proc) = &F ('./procedure-designator/named-E/N/n/text()', $call);
+
+my $dbg = $proc eq 'APLPARS';
+
       next if ($proc eq 'DR_HOOK');
 
       my $par = &n ('<parallel-call-directive/>');
@@ -633,13 +622,19 @@ sub callOpenMPRoutines
       my $found = 0;
       for my $arg (@arg)
         {
+
+if ($dbg)
+  {
+    print $arg->textContent, "\n";
+  }
+
           $found++ if (grep { $_ eq $arg } @obj);
           my @ss = &F ('.//EN-decl[string(EN-N)="?"]/array-spec//shape-spec', $arg->textContent, $doc, 1);
 
           # Is the actual argument a dummy argument of the current routine ?
           my $isArg = $args{$arg->textContent};
 
-          if (@ss && ('YDCPG_DIM%KLON' eq $ss[0]))
+          if (@ss && ('YDCPG_OPTS%KLON' eq $ss[0]))
             {
               $arg->replaceNode (&t (($isArg ? 'YD_' : 'YL_') . $arg->textContent));
               $found++;
@@ -802,7 +797,7 @@ my $doc = &Fxtran::fxtran (location => $F90, fopts => [qw (-line-length 300)]);
 
 &addDecl ($doc, 1, 
           'INTEGER(KIND=JPIM) :: JBLK',
-          'TYPE(CPG_DIM_TYPE) :: YLCPG_DIM');
+          'TYPE(CPG_BNDS_TYPE) :: YLCPG_BNDS');
 
 my ($parkind1) = &F ('.//use-stmt[string(module-N)="PARKIND1"]', $doc);
 

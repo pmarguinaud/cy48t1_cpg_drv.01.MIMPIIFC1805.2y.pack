@@ -73,10 +73,10 @@ sub parallel
   my $str = ' ' x $indent;
 
   my ($loop) = &Fxtran::fxtran (fragment => << "EOF");
-DO JBLK = 1, YDCPG_DIM%KGPBLKS
+DO JBLK = 1, YDCPG_OPTS%KGPBLKS
 
-${str}  YLCPG_DIM = YDCPG_DIM
-${str}  CALL YLCPG_DIM%UPDATE (JBLK)
+${str}  YLCPG_BNDS = YDCPG_BNDS
+${str}  CALL YLCPG_BNDS%UPDATE (JBLK)
 ${str}ENDDO
 EOF
 
@@ -92,13 +92,13 @@ EOF
   
   $par->appendChild ($loop);
 
-  my @expr = &F ('.//named-E/N/n[string(.)="YDCPG_DIM"]/text()', $par);
+  my @expr = &F ('.//named-E/N/n[string(.)="YDCPG_BNDS"]/text()', $par);
 
   shift (@expr) for (1 .. 2);
 
   for my $expr (@expr)
     {
-      $expr->setData ('YLCPG_DIM');
+      $expr->setData ('YLCPG_BNDS');
     }
 
 }
@@ -142,9 +142,9 @@ sub addBlkDimensionToLocals
       $ref[$i] = $r;
     }
   
-  my $ngpblks = '<named-E><N><n>YDCPG_DIM</n></N><R-LT><component-R>%<ct>KGPBLKS</ct></component-R></R-LT></named-E>';
+  my $ngpblks = '<named-E><N><n>YDCPG_OPTS</n></N><R-LT><component-R>%<ct>KGPBLKS</ct></component-R></R-LT></named-E>';
 
-  for my $en_decl (&F ('.//EN-decl[./array-spec/shape-spec-LT/shape-spec[string(.)="YDCPG_DIM%KLON"]]', $doc))
+  for my $en_decl (&F ('.//EN-decl[./array-spec/shape-spec-LT/shape-spec[string(.)="YDCPG_OPTS%KLON"]]', $doc))
     {
       my $decl = &Fxtran::stmt ($en_decl);
 
@@ -186,10 +186,15 @@ sub addBlkDimensionToLocals
               $elt->appendChild (&t (','));
               $elt->appendChild (&n ('<named-E><N><n>JBLK</n></N></named-E>'));
             }
+          elsif ($r->nodeName eq 'array-R')
+            {
+              my ($sslt) = &F ('./section-subscript-LT', $r);
+              $r->appendChild (&t (', '));
+              $r->appendChild (&n ('<section-subscript><named-E><N><n>JBLK</n></N></named-E></section-subscript>'));
+            }
           else
             {
-              # An array reference was found; add JBLK index
-              die $expr;
+              die "$expr ";
             }
         }
     }
@@ -401,7 +406,7 @@ sub callOpenMPRoutines
         {
           goto FOUND if (grep { $_ eq $arg } @obj);
           my @ss = &F ('.//EN-decl[string(EN-N)="?"]/array-spec//shape-spec', $arg, $doc, 1);
-          goto FOUND if (@ss && ('YDCPG_DIM%KLON' eq $ss[0]));
+          goto FOUND if (@ss && ('YDCPG_OPTS%KLON' eq $ss[0]));
         }
 
       next;
@@ -485,7 +490,7 @@ sub addVariables
   my $doc = shift;
   &addVariable ($doc, 1, 
                 'INTEGER(KIND=JPIM) :: JBLK',
-                'TYPE(CPG_DIM_TYPE) :: YLCPG_DIM');
+                'TYPE(CPG_BNDS_TYPE) :: YLCPG_BNDS');
 }
 
 sub reduceVariableScope
@@ -498,7 +503,7 @@ sub reduceVariableScope
       my @ss = &F ('./array-spec/shape-spec-LT/shape-spec', $en_decl);
       my @SS = map { $_->textContent } @ss;
 
-      next unless (@SS && ($SS[-1] eq 'YDCPG_DIM%KGPBLKS'));
+      next unless (@SS && ($SS[-1] eq 'YDCPG_OPTS%KGPBLKS'));
 
       my ($name) = &F ('./EN-N', $en_decl, 1);
       my ($stmt) = &Fxtran::stmt ($en_decl);
@@ -575,8 +580,8 @@ sub addOpenMPDirectives
 
           my ($arg) = &F ('.//attribute-N[string(.)="INTENT"]', $decl);
           my ($dim) = &F ('.//EN-decl[string(EN-N)="?"]/array-spec', $var, $decl);
-          my ($blk) = $dim && &F ('.//shape-spec[string(.)="YDCPG_DIM%KGPBLKS"]', $dim);
-          my ($lon) = $dim && &F ('.//shape-spec[string(.)="YDCPG_DIM%KLON"]', $dim);
+          my ($blk) = $dim && &F ('.//shape-spec[string(.)="YDCPG_OPTS%KGPBLKS"]', $dim);
+          my ($lon) = $dim && &F ('.//shape-spec[string(.)="YDCPG_OPTS%KLON"]', $dim);
           next if ($arg || $blk);
 
           my ($stmt) = &F ('.//a-stmt[./E-1/named-E[string(N)="?"]]|.//pointer-a-stmt[./E-1/named-E[string(N)="?"]]', $var, $var, $do);
@@ -625,7 +630,7 @@ sub removeUnusedArrays
   for my $en_decl (@en_decl)
     {
       my ($var) = &F ('./EN-N', $en_decl, 1);
-      next unless (&F ('.//shape-spec[string(.)="YDCPG_DIM%KLON"]', $en_decl));
+      next unless (&F ('.//shape-spec[string(.)="YDCPG_OPTS%KLON"]', $en_decl));
       next if (grep { $var eq $_ } @expr);
       my $stmt = &Fxtran::stmt ($en_decl);
       $stmt->unbindNode ();

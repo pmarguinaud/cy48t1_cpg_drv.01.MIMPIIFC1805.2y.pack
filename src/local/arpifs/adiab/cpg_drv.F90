@@ -530,8 +530,7 @@ DO JKGLO = 1, KGPCOMP, YDGEOMETRY%YRDIM%NPROMA
 
   CALL CPG(YDGEOMETRY, YLCPG_BNDS, YLCPG_OPTS, YLCPG_TMP, YLCPG_TND, YLCPG_SL1, YLCPG_SL2, YLCPG_MISC, YLCPG_GPAR,         &
   & YLCPG_PHY0, YLCPG_PHY9, YLMF_PHYS, YLCPG_DDH, YLCPG_DYN0, YLCPG_DYN9, YLMF_PHYS_SURF, YDVARS, YDMODEL, YDFIELDS,       &
-  & YLCPG_OPTS%LCONFX, YLCPG_OPTS%L_DFISTEP, YLCPG_OPTS%LFSTEP, YLCPG_OPTS%LDIAB, YLCPG_OPTS%LSLPHY,                       &
-  & YLCPG_OPTS%LUSEPB1, YLCPG_OPTS%ZDT, YLCPG_OPTS%ZDTPHY, YLCPG_OPTS%ZTE, YLCPG_OPTS%ZBETADT, YDSL, PGFLSLP(:, :, :, IBL),&
+  & YDSL, PGFLSLP(:, :, :, IBL),                                                                                           &
   & PSAVTEND(:, :, :, IBL), PGMVTNDHD_DDH(:, :, :, IBL),                                                                   &
   & PGFLTNDHD_DDH(:, :, :, IBL), PGPSDT2D(:, :, IBL), PSD_PF(:, :, :, IBL), PGMV(:, :, :, IBL), PGMVS(:, :, IBL),          &
   & PGFL(:, :, :, IBL), PGFLPC(:, :, :, IBL), PGFLPT(:, :, :, IBL), PSD_XA(:, :, :, IBL), PGMVTNDSI_DDH(:, :, :, IBL),     &

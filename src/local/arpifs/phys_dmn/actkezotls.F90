@@ -106,10 +106,6 @@ USE YOMPHY0  , ONLY : TPHY0
 
 !-----------------------------------------------------------------------
 
-#define FZH(X,Y) 1.0_JPRB+X/Y
-
-!-----------------------------------------------------------------------
-
 IMPLICIT NONE
 
 TYPE(TPHY0)       ,INTENT(IN)    :: YDPHY0
@@ -139,6 +135,9 @@ INTEGER(KIND=JPIM) :: JLON
 
 REAL(KIND=JPRB) :: ZCPVMD,ZRVMD,ZRZD,ZRZH
 REAL(KIND=JPRB) :: ZHOOK_HANDLE
+
+#include "fzh.func.h"
+
 
 !-----------------------------------------------------------------------
 IF (LHOOK) CALL DR_HOOK('ACTKEZOTLS',0,ZHOOK_HANDLE)
@@ -220,7 +219,6 @@ DO JLON=KIDIA,KFDIA
    & +PRS(JLON)*PTS(JLON))  
 ENDDO
 
-#undef FZH
 !-----------------------------------------------------------------------
 END ASSOCIATE
 IF (LHOOK) CALL DR_HOOK('ACTKEZOTLS',1,ZHOOK_HANDLE)

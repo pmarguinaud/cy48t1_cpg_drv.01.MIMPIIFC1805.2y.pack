@@ -1,5 +1,5 @@
 !OPTIONS XOPT(NOEVAL)
-SUBROUTINE ACNEBCOND ( YDRIP,YDML_PHY_MF,KIDIA,KFDIA,KLON,KTDIA,KLEV,LDREDPR,&
+SUBROUTINE ACNEBCOND ( YDCST, YDRIP,YDML_PHY_MF,KIDIA,KFDIA,KLON,KTDIA,KLEV,LDREDPR,&
  !-----------------------------------------------------------------------
  ! - INPUT  1D VERTICAL.
  & PHUC,PVETAF,&
@@ -142,17 +142,14 @@ USE MODEL_PHYSICS_MF_MOD , ONLY : MODEL_PHYSICS_MF_TYPE
 USE PARKIND1             , ONLY : JPIM     ,JPRB      ,JPRD
 USE YOMHOOK              , ONLY : LHOOK,   DR_HOOK
 
-USE YOMCST               , ONLY : RALPD    ,RDT       ,RGAMD    ,&
- &                                RV       ,RBETD    ,RCPV    ,RETV      ,RCW      ,&
- &                                RCS      ,RLVTT    ,RLSTT   ,RTT       ,RALPW    ,&
- &                                RBETW    ,RGAMW    ,RALPS   ,RBETS     ,RGAMS    ,&
- &                                RG       ,RMV      ,RMD     ,RD        ,RCPD
+USE YOMCST               , ONLY : TCST
 USE YOMRIP               , ONLY : TRIP
 !-----------------------------------------------------------------------
 
 IMPLICIT NONE
 
 TYPE(MODEL_PHYSICS_MF_TYPE),INTENT(IN):: YDML_PHY_MF
+TYPE (TCST), INTENT (IN) :: YDCST
 TYPE(TRIP)        ,INTENT(IN)    :: YDRIP
 INTEGER(KIND=JPIM),INTENT(IN)    :: KLON 
 INTEGER(KIND=JPIM),INTENT(IN)    :: KLEV 
@@ -213,8 +210,8 @@ REAL(KIND=JPRB) :: ZHOOK_HANDLE
 
 !-----------------------------------------------------------------------
 
-#include "fctdoi.func.h"
-#include "fcttrm.func.h"
+#include "fctdoi.ycst.h"
+#include "fcttrm.ycst.h"
 
 !-----------------------------------------------------------------------
 
@@ -254,7 +251,7 @@ ZEPS2=1.E-02_JPRB
 ZEPS3=1.E-20_JPRB
 ZEPS4=1.E-10_JPRB
 ZSQRT6 = SQRT(6._JPRB)
-ZRDSRV = RD/RV
+ZRDSRV = YDCST%RD/YDCST%RV
 ZWEIGHT=1.0_JPRB-EXP(-TSPHY/ADJTAU)
 
 ZQXRAL=QXRAL_ADJ
@@ -355,7 +352,7 @@ IF(LRKCDEV) THEN
   
   ZSIGMA=4.0E-04_JPRB
   ZSIGMASTAB=1.6E-02_JPRB
-  ZEPSILO=RMV/RMD
+  ZEPSILO=YDCST%RMV/YDCST%RMD
   ZSIGMAZ=1.6E-2_JPRB
 
   DO JLEV=1,KLEV
@@ -381,14 +378,14 @@ IF(LRKCDEV) THEN
 
       ZRHIN=MAX(PRHOUT(JLON,JLEV),0.05_JPRB)      
 
-      ZDRHDZ=ZRHIN*RG/(PT(JLON,JLEV)*RD)* &
-     & ( ZEPSILO*(RLVTT+PRMF(JLON,JLEV)*(RLSTT-RLVTT))/ &
-     & (RCPD*PT(JLON,JLEV)) - 1._JPRB)       
+      ZDRHDZ=ZRHIN*YDCST%RG/(PT(JLON,JLEV)*YDCST%RD)* &
+     & ( ZEPSILO*(YDCST%RLVTT+PRMF(JLON,JLEV)*(YDCST%RLSTT-YDCST%RLVTT))/ &
+     & (YDCST%RCPD*PT(JLON,JLEV)) - 1._JPRB)       
 
       ZTEST=MAX(0.0_JPRB,SIGN(1.0_JPRB,PAPHIF(JLON,JLEV)-PAPHI(JLON,KLEV)&
-     &        -RG*PBLH(JLON)))
+     &        -YDCST%RG*PBLH(JLON)))
  
-      ZZDIST2 = (PAPHI(JLON,JLEV-1)-PAPHI(JLON,JLEV))/RG
+      ZZDIST2 = (PAPHI(JLON,JLEV-1)-PAPHI(JLON,JLEV))/YDCST%RG
 
       PHCRICS(JLON,JLEV)=1.0_JPRB - 0.5_JPRB*SQRT(2.0_JPRB*ZMESH*(ZSIGMA)**2&
            &                   +(1.0_JPRB-ZTEST)*(ZZDIST2*ZDRHDZ)**2 +&
@@ -831,7 +828,7 @@ IF(LSMITH_CDEV) THEN
 
 !    1. Computation following Smith QJRMS 1990 paper: routine ACNEBSM
 
-  CALL ACNEBSM (YDML_PHY_MF%YRPHY0, KIDIA, KFDIA, KLON, KTDIA, KLEV,&
+  CALL ACNEBSM (YDCST, YDML_PHY_MF%YRPHY0, KIDIA, KFDIA, KLON, KTDIA, KLEV,&
    & PT, PQ, PQL, PQI, &
    & PAPHI, PAPRSF, PCP, PR, &
    & PGM, PVETAF, &

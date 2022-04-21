@@ -1,5 +1,5 @@
 !OPTIONS XOPT(NOEVAL)
-SUBROUTINE ACNTCLS ( KIDIA,KFDIA,KLON,KLEV,&
+SUBROUTINE ACNTCLS ( YDCST, KIDIA,KFDIA,KLON,KLEV,&
  !-----------------------------------------------------------------------
  ! - INPUT  2D .
  & PAPRS,PAPRSF,PCP,PQ,PT,PU,PV,&
@@ -126,10 +126,7 @@ USE PARKIND1  ,ONLY : JPIM     ,JPRB
 USE YOMHOOK   ,ONLY : LHOOK,   DR_HOOK
 
 USE YOMPHY   , ONLY : YRPHY
-USE YOMCST   , ONLY : RV       ,RCPD     ,RCPV     ,RETV     ,&
- & RCW      ,RCS      ,RLVTT    ,RLSTT    ,RTT      ,&
- & RALPW    ,RBETW    ,RGAMW    ,RALPS    ,RBETS    ,&
- & RGAMS    ,RALPD    ,RBETD    ,RGAMD  
+USE YOMCST   , ONLY : TCST  
 USE YOMPHY0  , ONLY : YRPHY0
 
 !-----------------------------------------------------------------------
@@ -138,6 +135,7 @@ IMPLICIT NONE
 
 INTEGER(KIND=JPIM),INTENT(IN)    :: KLON 
 INTEGER(KIND=JPIM),INTENT(IN)    :: KLEV 
+TYPE (TCST), INTENT (IN) :: YDCST
 INTEGER(KIND=JPIM),INTENT(IN)    :: KIDIA 
 INTEGER(KIND=JPIM),INTENT(IN)    :: KFDIA 
 REAL(KIND=JPRB)   ,INTENT(IN)    :: PAPRS(KLON,0:KLEV) 
@@ -179,7 +177,7 @@ REAL(KIND=JPRB) :: ZHOOK_HANDLE
 
 !-----------------------------------------------------------------------
 
-#include "fcttrm.func.h"
+#include "fcttrm.ycst.h"
 
 !-----------------------------------------------------------------------
 IF (LHOOK) CALL DR_HOOK('ACNTCLS',0,ZHOOK_HANDLE)
@@ -193,7 +191,7 @@ ASSOCIATE(VKARMN=>YRPHY0%VKARMN, &
 
 !         AUXILIARY CONSTANTS.
 
-ZCPVMD=RCPV-RCPD
+ZCPVMD=YDCST%RCPV-YDCST%RCPD
 
 !*
 !     ------------------------------------------------------------------
@@ -244,22 +242,22 @@ DO JLON=KIDIA,KFDIA
      PQCLS(JLON)=PQS(JLON)+ZIV*(PQ(JLON,KLEV)-PQS(JLON))
      PTCLS(JLON)=(PCPS(JLON)*PTS(JLON)+ZIV*(PCP(JLON,KLEV)&
      & *PT(JLON,KLEV)-PCPS(JLON)*PTS(JLON)+PDPHI(JLON))&
-     & -PDPHIT(JLON))/(RCPD+ZCPVMD*PQCLS(JLON))  
+     & -PDPHIT(JLON))/(YDCST%RCPD+ZCPVMD*PQCLS(JLON))  
   ENDIF
 
 !     CALCUL DE L'HUMIDITE RELATIVE.
 !     RELATIVE HUMIDITY COMPUTATION.
 
   IF (LNEIGE) THEN
-    ZDELTA=MAX(0.0_JPRB,SIGN(1.0_JPRB,RTT-PTCLS(JLON)))
+    ZDELTA=MAX(0.0_JPRB,SIGN(1.0_JPRB,YDCST%RTT-PTCLS(JLON)))
   ELSE
     ZDELTA=0.0_JPRB
   ENDIF
 
   PZPCLS(JLON)=PAPRS(JLON,KLEV)+ZRS*(PAPRSF(JLON,KLEV)-PAPRS(JLON,KLEV))
   ZEW= FOEW (PTCLS(JLON),ZDELTA)
-  PRHCLS(JLON)=(PZPCLS(JLON)*PQCLS(JLON)*(RETV+1.0_JPRB))/&
-   & (ZEW*(1.0_JPRB+RETV*PQCLS(JLON)))  
+  PRHCLS(JLON)=(PZPCLS(JLON)*PQCLS(JLON)*(YDCST%RETV+1.0_JPRB))/&
+   & (ZEW*(1.0_JPRB+YDCST%RETV*PQCLS(JLON)))  
 ENDDO
 
 !-----------------------------------------------------------------------

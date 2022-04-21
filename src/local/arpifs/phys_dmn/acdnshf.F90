@@ -1,4 +1,4 @@
-SUBROUTINE ACDNSHF(YDPHY,YDPHY1,KIDIA, KFDIA, KLON, &
+SUBROUTINE ACDNSHF(YDCST, YDPHY,YDPHY1,KIDIA, KFDIA, KLON, &
  & KTDIA, KLEV, &
  !---------------------------------------------------------------------
  ! - INPUT .
@@ -93,17 +93,14 @@ USE PARKIND1  ,ONLY : JPIM     ,JPRB
 USE YOMHOOK   ,ONLY : LHOOK,   DR_HOOK
 
 USE YOMPHY   , ONLY : TPHY
-USE YOMCST   , ONLY :  RSIGMA   ,RCPD     ,RV       ,&
- & RCPV     ,RCW      ,RCS      ,&
- & RBETW    ,RGAMW    ,&
- & RBETD    ,RGAMD    ,&
- & RTT , RLVTT, RLSTT, RALPW, RGAMS, RBETS, RALPS, RALPD, RETV  
+USE YOMCST   , ONLY :  TCST  
 USE YOMPHY1  , ONLY : TPHY1
 
 !     ------------------------------------------------------------------
 
 IMPLICIT NONE
 
+TYPE (TCST), INTENT (IN) :: YDCST
 TYPE(TPHY)        ,INTENT(IN)    :: YDPHY
 TYPE(TPHY1)       ,INTENT(IN)    :: YDPHY1
 INTEGER(KIND=JPIM),INTENT(IN)    :: KLON 
@@ -132,7 +129,7 @@ REAL(KIND=JPRB) :: ZHOOK_HANDLE
 
 !     ------------------------------------------------------------------
 
-#include "fcttrm.func.h"
+#include "fcttrm.ycst.h"
 
 !     ------------------------------------------------------------------
 IF (LHOOK) CALL DR_HOOK('ACDNSHF',0,ZHOOK_HANDLE)
@@ -144,9 +141,9 @@ ASSOCIATE(TMERGL=>YDPHY1%TMERGL, &
 
 !  Constantes auxiliaires.
 
-ZCPVMD=RCPV-RCPD
-ZCPVMW=RCPV-RCW
-ZCPVMS=RCPV-RCS
+ZCPVMD=YDCST%RCPV-YDCST%RCPD
+ZCPVMW=YDCST%RCPV-YDCST%RCW
+ZCPVMS=YDCST%RCPV-YDCST%RCS
 
 !  Calcul de la proportion de la surface evaporante en phase glace
 
@@ -170,7 +167,7 @@ DO JLEV=KTDIA,KLEV
 
 ! Derivee du flux de chaleur sensible
     ZZDLS(JLON)=PCHROV(JLON)*&
-     & (RCPD + ZCPVMD*PQS(JLON) +&
+     & (YDCST%RCPD + ZCPVMD*PQS(JLON) +&
      & ZCPVMD*PDQSTS(JLON)*PTS(JLON))  
 
 ! Derivee du flux de chaleur latente sur eau
@@ -184,7 +181,7 @@ DO JLEV=KTDIA,KLEV
      & FOLH(PTS(JLON),1.0_JPRB)*PDQSTS(JLON))  
 
 ! Derivee du flux de rayonnement thermique
-    ZZDRCN(JLON)=PEMIS(JLON)*4._JPRB*RSIGMA*&
+    ZZDRCN(JLON)=PEMIS(JLON)*4._JPRB*YDCST%RSIGMA*&
      & PTS(JLON)*PTS(JLON)*PTS(JLON)  
 
 ! Derivee du flux non solaire total

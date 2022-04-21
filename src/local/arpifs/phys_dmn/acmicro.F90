@@ -1,5 +1,5 @@
 !-----------------------------------------------------------------------
-SUBROUTINE ACMICRO( YDML_PHY_MF,KIDIA, KFDIA, KLON, KTDIA, KLEV,&
+SUBROUTINE ACMICRO( YDCST, YDML_PHY_MF,KIDIA, KFDIA, KLON, KTDIA, KLEV,&
  !-----------------------------------------------------------------------
  ! - INPUT -
  & PNEBST, PT  , PQL , PQI , PTS , PNEIJ , PLSM,&
@@ -90,10 +90,11 @@ USE MODEL_PHYSICS_MF_MOD , ONLY : MODEL_PHYSICS_MF_TYPE
 USE PARKIND1             , ONLY : JPIM     ,JPRB
 USE YOMHOOK              , ONLY : LHOOK,   DR_HOOK
 
-USE YOMCST               , ONLY : RTT
+USE YOMCST               , ONLY : TCST
 
 IMPLICIT NONE
 
+TYPE (TCST), INTENT (IN) :: YDCST
 TYPE(MODEL_PHYSICS_MF_TYPE),INTENT(IN):: YDML_PHY_MF
 INTEGER(KIND=JPIM),INTENT(IN)    :: KIDIA 
 INTEGER(KIND=JPIM),INTENT(IN)    :: KFDIA 
@@ -143,7 +144,7 @@ ZBETA = ZARG1 - RQICRT2 * ZALPH
  
 DO JLEV=KTDIA,KLEV
   DO JLON=KIDIA,KFDIA
-    ZDELT(JLON,JLEV) = PT(JLON,JLEV) - RTT
+    ZDELT(JLON,JLEV) = PT(JLON,JLEV) - YDCST%RTT
 
 ! Efficiency for ice conversion as a function of temperature.
 ! -----------------------------------------------------------

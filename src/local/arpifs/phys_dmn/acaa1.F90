@@ -1,5 +1,5 @@
 !OPTIONS XOPT(NOEVAL)
-SUBROUTINE ACAA1 ( YDML_PHY_MF,KIDIA,KFDIA,KLON,KTDIA,KLEV,&
+SUBROUTINE ACAA1 ( YDCST, YDML_PHY_MF,KIDIA,KFDIA,KLON,KTDIA,KLEV,&
  !-----------------------------------------------------------------------
  ! - INPUT  2D .
  & PAPRS,PCOEFN,PCP,PQL,PQI,PT,&
@@ -69,15 +69,13 @@ USE MODEL_PHYSICS_MF_MOD , ONLY : MODEL_PHYSICS_MF_TYPE
 USE PARKIND1  ,ONLY : JPIM     ,JPRB
 USE YOMHOOK   ,ONLY : LHOOK,   DR_HOOK
 
-USE YOMCST   , ONLY :  RV       ,RCPV     ,RETV     ,RCW      ,&
- & RCS      ,RLVTT    ,RLSTT    ,RTT      ,RALPW    ,RBETW    ,&
- & RGAMW    ,RALPS    ,RBETS    ,RGAMS    ,RALPD    ,RBETD    ,&
- & RGAMD    ,RDT
+USE YOMCST   , ONLY :  TCST
 
 !-----------------------------------------------------------------------
 
 IMPLICIT NONE
 
+TYPE (TCST), INTENT (IN) :: YDCST
 TYPE(MODEL_PHYSICS_MF_TYPE),INTENT(IN):: YDML_PHY_MF
 INTEGER(KIND=JPIM),INTENT(IN)    :: KLON
 INTEGER(KIND=JPIM),INTENT(IN)    :: KLEV
@@ -106,8 +104,8 @@ REAL(KIND=JPRB) :: ZHOOK_HANDLE
 
 !-----------------------------------------------------------------------
 
-#include "fcttrm.func.h"
-#include "fctdoi.func.h"
+#include "fcttrm.ycst.h"
+#include "fctdoi.ycst.h"
 
 !-----------------------------------------------------------------------
 IF (LHOOK) CALL DR_HOOK('ACAA1',0,ZHOOK_HANDLE)
@@ -131,7 +129,7 @@ DO JLEV=KTDIA,KLEV-1
     ZELSP = FOEW(ZTLI,0.0_JPRB)/PAPRS(JLON,JLEV) 
     ZQSATI = FOQS(ZEISP)
     ZQSATL = FOQS(ZELSP)
-    ZSRVCPT2=1.0_JPRB/(RV*ZTLI*ZTLI*ZCPH)
+    ZSRVCPT2=1.0_JPRB/(YDCST%RV*ZTLI*ZTLI*ZCPH)
     ZDQSATI=ZQSATI*FOLH(ZTLI,1.0_JPRB)*ZSRVCPT2
     ZDQSATL=ZQSATL*FOLH(ZTLI,0.0_JPRB)*ZSRVCPT2
     PALPHA1(JLON,JLEV)=(ZLIQ*ZDQSATL+ZICE*ZDQSATI)

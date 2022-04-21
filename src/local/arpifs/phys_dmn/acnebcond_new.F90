@@ -1,5 +1,5 @@
 !OPTIONS XOPT(NOEVAL)
-SUBROUTINE ACNEBCOND_NEW ( YDRIP,YDML_PHY_MF,KIDIA,KFDIA,KLON,KTDIA,KLEV,LDREDPR,&
+SUBROUTINE ACNEBCOND_NEW ( YDCST, YDRIP,YDML_PHY_MF,KIDIA,KFDIA,KLON,KTDIA,KLEV,LDREDPR,&
  !-----------------------------------------------------------------------
  ! - INPUT  1D VERTICAL.
  & PHUC,PVETAF,&
@@ -142,17 +142,14 @@ USE MODEL_PHYSICS_MF_MOD , ONLY : MODEL_PHYSICS_MF_TYPE
 USE PARKIND1             , ONLY : JPIM     ,JPRB      ,JPRD
 USE YOMHOOK              , ONLY : LHOOK,   DR_HOOK
 
-USE YOMCST               , ONLY : RALPD    ,RDT       ,RGAMD    ,&
- &                                RV       ,RBETD    ,RCPV    ,RETV      ,RCW      ,&
- &                                RCS      ,RLVTT    ,RLSTT   ,RTT       ,RALPW    ,&
- &                                RBETW    ,RGAMW    ,RALPS   ,RBETS     ,RGAMS    ,&
- &                                RG       ,RMV      ,RMD     ,RD        ,RCPD
+USE YOMCST               , ONLY : TCST
 USE YOMRIP               , ONLY : TRIP
 !-----------------------------------------------------------------------
 
 IMPLICIT NONE
 
 TYPE(MODEL_PHYSICS_MF_TYPE),INTENT(IN):: YDML_PHY_MF
+TYPE (TCST), INTENT (IN) :: YDCST
 TYPE(TRIP)        ,INTENT(IN)    :: YDRIP
 INTEGER(KIND=JPIM),INTENT(IN)    :: KLON 
 INTEGER(KIND=JPIM),INTENT(IN)    :: KLEV 
@@ -210,8 +207,8 @@ REAL(KIND=JPRB) :: ZHOOK_HANDLE
 
 !-----------------------------------------------------------------------
 
-#include "fctdoi.func.h"
-#include "fcttrm.func.h"
+#include "fctdoi.ycst.h"
+#include "fcttrm.ycst.h"
 
 !-----------------------------------------------------------------------
 
@@ -251,7 +248,7 @@ ZEPS2=1.E-02_JPRB
 ZEPS3=1.E-20_JPRB
 ZEPS4=1.E-10_JPRB
 ZSQRT6 = SQRT(6._JPRB)
-ZRDSRV = RD/RV
+ZRDSRV = YDCST%RD/YDCST%RV
 ZWEIGHT=1.0_JPRB-EXP(-TSPHY/ADJTAU)
 
 ZQXRAL=QXRAL_ADJ
@@ -299,7 +296,7 @@ ENDDO
 
 !    1. Computation following Smith QJRMS 1990 paper: routine ACNEBSM
 
-  CALL ACNEBSM (YDML_PHY_MF%YRPHY0, KIDIA, KFDIA, KLON, KTDIA, KLEV,&
+  CALL ACNEBSM (YDCST, YDML_PHY_MF%YRPHY0, KIDIA, KFDIA, KLON, KTDIA, KLEV,&
    & PT, PQ, PQL, PQI, &
    & PAPHI, PAPRSF, PCP, PR, &
    & PGM, PVETAF, &

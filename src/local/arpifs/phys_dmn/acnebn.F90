@@ -1,5 +1,5 @@
 !OPTIONS XOPT(NOEVAL)
-SUBROUTINE ACNEBN ( YDML_PHY_MF,KIDIA,KFDIA,KLON,KTDIA,KLEV,&
+SUBROUTINE ACNEBN ( YDCST, YDML_PHY_MF,KIDIA,KFDIA,KLON,KTDIA,KLEV,&
  !-----------------------------------------------------------------------
  ! - INPUT  2D .
  & PAPHIF,PCP,PQ,PQL,PQI,PQSAT,PT,PFPLC,PDELP,PRDELP,PAPRSF,PUNEBH,&
@@ -127,15 +127,13 @@ USE MODEL_PHYSICS_MF_MOD , ONLY : MODEL_PHYSICS_MF_TYPE
 USE PARKIND1  ,ONLY : JPIM     ,JPRB      , JPRD
 USE YOMHOOK   ,ONLY : LHOOK,   DR_HOOK
 
-USE YOMCST   , ONLY : RG       ,RV       ,RCPV     ,RETV     ,&
-            &RCW      ,RCS      ,RLVTT    ,RLSTT    ,RTT      ,&
-            &RALPW    ,RBETW    ,RGAMW    ,RALPS    ,RBETS    ,&
-            &RGAMS    ,RALPD    ,RBETD    ,RGAMD    ,RDT
+USE YOMCST   , ONLY : TCST
 
 !-----------------------------------------------------------------------
 
 IMPLICIT NONE
 
+TYPE (TCST), INTENT (IN) :: YDCST
 TYPE(MODEL_PHYSICS_MF_TYPE),INTENT(IN):: YDML_PHY_MF
 INTEGER(KIND=JPIM),INTENT(IN)    :: KLON 
 INTEGER(KIND=JPIM),INTENT(IN)    :: KLEV 
@@ -191,8 +189,8 @@ REAL(KIND=JPRB) :: ZHOOK_HANDLE
 !-----------------------------------------------------------------------
 
 #include "acnebxrs.intfb.h"
-#include "fcttrm.func.h"
-#include "fctdoi.func.h"
+#include "fcttrm.ycst.h"
+#include "fctdoi.ycst.h"
 
 !-----------------------------------------------------------------------
 IF (LHOOK) CALL DR_HOOK('ACNEBN',0,ZHOOK_HANDLE)
@@ -254,7 +252,7 @@ ELSE
     DO JLON=KIDIA,KFDIA
       ZICE = FONICE(PT(JLON,JLEV),YDPHY0%RDTFAC)
       ZQICR = RQICVMAX-(RQICVMAX-RQICVMIN)*0.5_JPRB&
-     & *(1.0_JPRB+TANH(ZALPH*(PT(JLON,JLEV)-RTT)+ZBETA))
+     & *(1.0_JPRB+TANH(ZALPH*(PT(JLON,JLEV)-YDCST%RTT)+ZBETA))
       ZQCR = RQLCV*(1.0_JPRB-ZICE)+ZQICR*ZICE
       ZSNEBC (JLON,JLEV)=1.0_JPRB/ZQCR
       ZSUSXC (JLON,JLEV)=SXNBCO*ZQCR
@@ -307,7 +305,7 @@ IF (.NOT.(LCONDWT.AND.LPROCLD).AND.(.NOT.LNEB_FP)) THEN
        DO JLON=KIDIA,KFDIA
          ZTFROID = PT(JLON,JLEV)- ZTGRAD(JLON,JLEV)
          IF (LNEIGE) THEN
-           ZDELTA=MAX(0.0_JPRB,SIGN(1.0_JPRB,RTT-ZTFROID))
+           ZDELTA=MAX(0.0_JPRB,SIGN(1.0_JPRB,YDCST%RTT-ZTFROID))
          ELSE
            ZDELTA=0.0_JPRB
          ENDIF
@@ -459,7 +457,7 @@ ELSE
           ZQSC(JLON,JLEV) = PQLI_CVP(JLON,JLEV)
         ELSE
           ZQSC(JLON,JLEV)=MAX(0.0_JPRB,PFPLC(JLON,JLEV)-PFPLC(JLON,JLEV-1))&
-           & *PRDELP(JLON,JLEV)*RG*QSSUSC
+           & *PRDELP(JLON,JLEV)*YDCST%RG*QSSUSC
           ZQSC(JLON,JLEV)=ZSUSXC(JLON,JLEV)&
            & *(1.0_JPRB-EXP(-ZQSC(JLON,JLEV)*ZFACQSC(JLON,JLEV)))
         ENDIF

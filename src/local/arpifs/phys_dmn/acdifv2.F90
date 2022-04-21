@@ -1,5 +1,5 @@
 !OPTIONS XOPT(NOEVAL)
-SUBROUTINE ACDIFV2 ( YGFL,YDML_PHY_MF,KIDIA,KFDIA,KLON,KTDIA,KLEV,&
+SUBROUTINE ACDIFV2 ( YDCST, YGFL,YDML_PHY_MF,KIDIA,KFDIA,KLON,KTDIA,KLEV,&
  !-----------------------------------------------------------------------
  ! - INPUT  2D .
  & PAPRS,&
@@ -156,8 +156,7 @@ USE MODEL_PHYSICS_MF_MOD , ONLY : MODEL_PHYSICS_MF_TYPE
 USE PARKIND1 , ONLY : JPIM, JPRB
 USE YOMHOOK  , ONLY : LHOOK, DR_HOOK
 USE YOMCT0   , ONLY : LSFORCS
-USE YOMCST   , ONLY : RV, RCPD, RCPV, RETV, RCW, RCS, RLVTT, RLSTT, RTT, RALPW, &
- & RBETW, RGAMW, RALPS, RBETS, RGAMS, RALPD, RBETD, RGAMD, RATM, RKAPPA, RDT, RG 
+USE YOMCST   , ONLY : TCST 
 USE YOM_YGFL , ONLY : TYPE_GFLD
 
 !-----------------------------------------------------------------------
@@ -165,6 +164,7 @@ USE YOM_YGFL , ONLY : TYPE_GFLD
 IMPLICIT NONE
 
 TYPE(MODEL_PHYSICS_MF_TYPE),INTENT(IN):: YDML_PHY_MF
+TYPE (TCST), INTENT (IN) :: YDCST
 TYPE(TYPE_GFLD)   ,INTENT(IN)    :: YGFL
 INTEGER(KIND=JPIM),INTENT(IN)    :: KLON 
 INTEGER(KIND=JPIM),INTENT(IN)    :: KLEV 
@@ -240,8 +240,8 @@ REAL(KIND=JPRB) :: ZHOOK_HANDLE
 
 !-----------------------------------------------------------------------
 
-#include "fcttrm.func.h"
-#include "fctdoi.func.h"
+#include "fcttrm.ycst.h"
+#include "fctdoi.ycst.h"
 
 !-----------------------------------------------------------------------
 IF (LHOOK) CALL DR_HOOK('ACDIFV2',0,ZHOOK_HANDLE)
@@ -259,8 +259,8 @@ ASSOCIATE(TSPHY=>YDML_PHY_MF%YRPHY2%TSPHY,RDTFAC=>YDML_PHY_MF%YRPHY0%RDTFAC, &
 
 !         AUXILIARY CONSTANTS.
 
-ZCPVMD=RCPV-RCPD
-ZGDT=RG*TSPHY
+ZCPVMD=YDCST%RCPV-YDCST%RCPD
+ZGDT=YDCST%RG*TSPHY
 
 !*
 !     ------------------------------------------------------------------
@@ -399,7 +399,7 @@ ENDDO
 IF (LMSE .OR. LSFORCS) THEN
 
   DO JLON=KIDIA,KFDIA
-    ZEXNER       =  (PAPRS(JLON,KLEV)/RATM)**RKAPPA
+    ZEXNER       =  (PAPRS(JLON,KLEV)/YDCST%RATM)**YDCST%RKAPPA
     PDIFTQ(JLON,KLEV) = PFEV(JLON)
     PDIFTS(JLON,KLEV) = PFCS(JLON)*ZEXNER + PFEV(JLON)*ZCPVMD*PTSN(JLON)
   ENDDO

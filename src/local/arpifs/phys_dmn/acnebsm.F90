@@ -1,4 +1,4 @@
-SUBROUTINE ACNEBSM ( YDPHY0,KIDIA, KFDIA, KLON, KTDIA, KLEV,&
+SUBROUTINE ACNEBSM ( YDCST, YDPHY0,KIDIA, KFDIA, KLON, KTDIA, KLEV,&
  !-----------------------------------------------------------------------
  ! - INPUT -
  & PT, PQ, PQL, PQI, &
@@ -106,13 +106,12 @@ SUBROUTINE ACNEBSM ( YDPHY0,KIDIA, KFDIA, KLON, KTDIA, KLEV,&
 USE PARKIND1  , ONLY : JPIM     ,JPRB      ,JPRD
 USE YOMHOOK   , ONLY : LHOOK,   DR_HOOK
 
-USE YOMCST    , ONLY : RD   , RV   , RTT  , RDT  ,&
- &                     RCS  , RCW  , RCPV , RLVTT, RLSTT, RETV , RALPW, RALPS,&
- &                     RALPD, RBETW, RBETS, RBETD, RGAMW, RGAMS, RGAMD
+USE YOMCST    , ONLY : TCST
 USE YOMPHY0   , ONLY : TPHY0
 
 IMPLICIT NONE
 
+TYPE (TCST), INTENT (IN) :: YDCST
 TYPE(TPHY0)       ,INTENT(IN)    :: YDPHY0
 INTEGER(KIND=JPIM),INTENT(IN)    :: KIDIA 
 INTEGER(KIND=JPIM),INTENT(IN)    :: KFDIA 
@@ -146,8 +145,8 @@ REAL(KIND=JPRB) :: ZESAT,ZESP,ZQSAT
 INTEGER(KIND=JPIM) :: JLON,JLEV
 REAL(KIND=JPRB) :: ZHOOK_HANDLE
 
-#include "fcttrm.func.h"
-#include "fctdoi.func.h"
+#include "fcttrm.ycst.h"
+#include "fctdoi.ycst.h"
                                                                                 
 !     ------------------------------------------------------------------
 IF (LHOOK) CALL DR_HOOK('ACNEBSM',0,ZHOOK_HANDLE)
@@ -206,7 +205,7 @@ ELSE
   ZEPS1=1.E-06_JPRB
 ENDIF
 ZSQRT6 = SQRT(6._JPRB)
-ZRDSRV = RD / RV
+ZRDSRV = YDCST%RD / YDCST%RV
 
 DO JLEV=KTDIA,KLEV
   DO JLON=KIDIA,KFDIA

@@ -241,7 +241,7 @@ IF(LMFDD) THEN
     IK=JK
     ICALL=2
     CALL CUADJTQ &
-     & ( YDEPHLI,  KIDIA,    KFDIA,    KLON,     KLEV,     IK,&
+     & ( YDTHF, YDCST, YDEPHLI,  KIDIA,    KFDIA,    KLON,     KLEV,     IK,&
      &   ZPH,      ZTENWB,   ZQENWB,   LLO2,     ICALL)  
 
 !     2.2          DO MIXING OF CUMULUS AND ENVIRONMENTAL AIR

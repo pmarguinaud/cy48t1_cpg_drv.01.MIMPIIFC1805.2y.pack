@@ -162,7 +162,7 @@ USE PARKIND1                     , ONLY : JPIM     ,JPRB
 USE YOMHOOK                      , ONLY : LHOOK,   DR_HOOK
 
 USE YOMCST                       , ONLY : TCST  
-USE YOETHF                       , ONLY : TTHF  
+USE YOETHF                       , ONLY : TTHF 
 USE YOMCT3                       , ONLY : NSTEP
 
 IMPLICIT NONE
@@ -339,7 +339,7 @@ ELSE
 ENDIF
 
 IFLAG=1
-CALL SATUR (KIDIA , KFDIA , KLON  , NJKT2 , KLEV,&
+CALL SATUR (YDTHF, YDCST, KIDIA , KFDIA , KLON  , NJKT2 , KLEV,&
  & YDML_PHY_SLIN%YREPHLI%LPHYLIN, &
  & PAP   , ZTP1  , ZQSAT , IFLAG  )  
 

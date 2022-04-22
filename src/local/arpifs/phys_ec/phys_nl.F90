@@ -140,7 +140,7 @@ DO JL = 1, KLON
 ENDDO
 
 !* Specific humidity at saturation
-CALL SATUR (IIDIA, IFDIA, KLON, ITDIA, KLEV, YDML_PHY_SLIN%YREPHLI%LPHYLIN, PP, PT, ZQSAT, 2)
+CALL SATUR (YDTHF, YDCST, IIDIA, IFDIA, KLON, ITDIA, KLEV, YDML_PHY_SLIN%YREPHLI%LPHYLIN, PP, PT, ZQSAT, 2)
 
 !* Simplified convection scheme     
 !!! this is set to a constant appropriate for T799, needs fixing !!!

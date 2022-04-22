@@ -1,0 +1,459 @@
+SUBROUTINE CUININ2AD &
+ & (YDECUMF2,KIDIA,    KFDIA,    KLON,    KLEV,&
+ & PTEN5,    PQEN5,    PQSEN5,   PUEN5,    PVEN5,&
+ & PVERVEL5, PGEO5,    PAPH5,&
+ & KLWMIN,   KLAB,&
+ & PTENH5,   PQENH5,   PQSENH5,  PGEOH5,&
+ & PTU5,     PQU5,     PTD5,     PQD5,&
+ & PUU5,     PVU5,     PUD5,     PVD5,&
+ & PLU5,&
+ & PTEN,     PQEN,     PQSEN,    PUEN,     PVEN,&
+ & PVERVEL,  PGEO,     PAPH,&
+ & PTENH,    PQENH,    PQSENH,   PGEOH,&
+ & PTU,      PQU,      PTD,      PQD,&
+ & PUU,      PVU,      PUD,      PVD,&
+ & PLU  )  
+
+!          VERSION FOR SIMPLIFIED CONVECTION SCHEME
+
+!          PURPOSE
+!          -------
+
+!          THIS ROUTINE INTERPOLATES LARGE-SCALE FIELDS OF T,Q ETC.
+!          TO HALF LEVELS (I.E. GRID FOR MASSFLUX SCHEME),
+!          DETERMINES LEVEL OF MAXIMUM VERTICAL VELOCITY
+!          AND INITIALIZES VALUES FOR UPDRAFTS AND DOWNDRAFTS
+!          (Adjoint)
+
+!          INTERFACE
+!          ---------
+!          THIS ROUTINE IS CALLED FROM *CUMASTRNAD*.
+
+!          METHOD.
+!          --------
+!          FOR EXTRAPOLATION TO HALF LEVELS SEE TIEDTKE(1989)
+
+!     PARAMETER     DESCRIPTION                                   UNITS 
+!     ---------     -----------                                   ----- 
+!     INPUT PARAMETERS (INTEGER): 
+
+!    *KIDIA*        START POINT 
+!    *KFDIA*        END POINT 
+!    *KLON*         NUMBER OF GRID POINTS PER PACKET 
+!    *KLEV*         NUMBER OF LEVELS 
+
+!    INPUT PARAMETERS (REAL): 
+
+!    *PTEN5*        PROVISIONAL ENVIRONMENT TEMPERATURE (T+1)    (Trajectory)
+!    *PQEN5*        PROVISIONAL ENVIRONMENT SPEC. HUMIDITY (T+1) (Trajectory)
+!    *PQSEN5*       ENVIRONMENT SPEC. SATURATION HUMIDITY (T+1)  (Trajectory)
+!    *PUEN5*        PROVISIONAL ENVIRONMENT U-VELOCITY (T+1)     (Trajectory)
+!    *PVEN5*        PROVISIONAL ENVIRONMENT V-VELOCITY (T+1)     (Trajectory) 
+!    *PVERVEL5*     VERTICAL VELOCITY                            (Trajectory) 
+!    *PGEO5*        GEOPOTENTIAL                                 (Trajectory) 
+!    *PGEOH5*       GEOPOTENTIAL ON HALF LEVELS                  (Trajectory) 
+!    *PAPH5*        PROVISIONAL PRESSURE ON HALF LEVELS          (Trajectory) 
+
+!    *PTEN*         PROVISIONAL ENVIRONMENT TEMPERATURE (T+1)       K 
+!    *PQEN*         PROVISIONAL ENVIRONMENT SPEC. HUMIDITY (T+1)  KG/KG 
+!    *PQSEN*        ENVIRONMENT SPEC. SATURATION HUMIDITY (T+1)   KG/KG 
+!    *PUEN*         PROVISIONAL ENVIRONMENT U-VELOCITY (T+1)       M/S
+!    *PVEN*         PROVISIONAL ENVIRONMENT V-VELOCITY (T+1)       M/S
+!    *PVERVEL*      VERTICAL VELOCITY                             PA/S
+!    *PGEO*         GEOPOTENTIAL                                  M2/S2
+!    *PGEOH*        GEOPOTENTIAL ON HALF LEVELS                   M2/S2
+!    *PAPH*         PROVISIONAL PRESSURE ON HALF LEVELS             PA
+
+!    OUTPUT PARAMETERS (INTEGER):
+
+!    *KLWMIN*       LEVEL OF MAXIMUM VERTICAL VELOCITY 
+!    *KLAB*         FLAG KLAB=1 FOR SUBCLOUD LEVELS
+!                        KLAB=2 FOR CONDENSATION LEVEL
+
+!    OUTPUT PARAMETERS (REAL):
+
+!    *PTENH5*       ENV. TEMPERATURE (T+1) ON HALF LEVELS     (Trajectory)
+!    *PQENH5*       ENV. SPEC. HUMIDITY (T+1) ON HALF LEVELS  (Trajectory)
+!    *PQSENH5*      ENV. SPEC. SATURATION HUMIDITY (T+1)      (Trajectory)
+!                   ON HALF LEVELS                       
+!    *PTU5*         TEMPERATURE IN UPDRAFTS                   (Trajectory)
+!    *PQU5*         SPEC. HUMIDITY IN UPDRAFTS                (Trajectory)
+!    *PTD5*         TEMPERATURE IN DOWNDRAFTS                 (Trajectory)
+!    *PQU5*         SPEC. HUMIDITY IN DOWNDRAFTS              (Trajectory)
+!    *PUU5*         U-VELOCITY IN UPDRAFTS                    (Trajectory)
+!    *PVU5*         V-VELOCITY IN UPDRAFTS                    (Trajectory)
+!    *PUD5*         U-VELOCITY IN DOWNDRAFTS                  (Trajectory)
+!    *PVD5*         V-VELOCITY IN DOWNDRAFTS                  (Trajectory)  
+!    *PLU5*         LIQUID WATER CONTENT IN UPDRAFTS          (Trajectory)   
+
+!    *PTENH*        ENV. TEMPERATURE (T+1) ON HALF LEVELS         K
+!    *PQENH*        ENV. SPEC. HUMIDITY (T+1) ON HALF LEVELS    KG/KG
+!    *PQSENH*       ENV. SPEC. SATURATION HUMIDITY (T+1)
+!                   ON HALF LEVELS                              KG/KG
+!    *PTU*          TEMPERATURE IN UPDRAFTS                       K
+!    *PQU*          SPEC. HUMIDITY IN UPDRAFTS                  KG/KG
+!    *PTD*          TEMPERATURE IN DOWNDRAFTS                     K
+!    *PQU*          SPEC. HUMIDITY IN DOWNDRAFTS                KG/KG
+!    *PUU*          U-VELOCITY IN UPDRAFTS                       M/S
+!    *PVU*          V-VELOCITY IN UPDRAFTS                       M/S
+!    *PUD*          U-VELOCITY IN DOWNDRAFTS                     M/S
+!    *PVD*          V-VELOCITY IN DOWNDRAFTS                     M/S
+!    *PLU*          LIQUID WATER CONTENT IN UPDRAFTS            KG/KG
+
+!          EXTERNALS
+!          ---------
+!          *CUADJTQAD* TO SPECIFY QS AT HALF LEVELS
+
+!     AUTHOR.
+!     -------
+!      J.F. MAHFOUF      E.C.M.W.F.     20/01/97
+
+!     MODIFICATIONS.
+!     --------------
+!      P. LOPEZ          E.C.M.W.F.     12/2003
+!      M.Hamrud      01-Oct-2003 CY28 Cleaning
+!----------------------------------------------------------------------
+
+USE PARKIND1 , ONLY : JPIM     ,JPRB
+USE YOMHOOK  , ONLY : LHOOK,   DR_HOOK
+
+USE YOECUMF2 , ONLY : TECUMF2
+USE YOMCST   , ONLY : RCPD, YRCST
+USE YOETHF   , ONLY : YRTHF
+
+IMPLICIT NONE
+
+TYPE(TECUMF2)     ,INTENT(INOUT) :: YDECUMF2
+INTEGER(KIND=JPIM),INTENT(IN)    :: KLON 
+INTEGER(KIND=JPIM),INTENT(IN)    :: KLEV 
+INTEGER(KIND=JPIM),INTENT(IN)    :: KIDIA 
+INTEGER(KIND=JPIM),INTENT(IN)    :: KFDIA 
+REAL(KIND=JPRB)   ,INTENT(IN)    :: PTEN5(KLON,KLEV) 
+REAL(KIND=JPRB)   ,INTENT(IN)    :: PQEN5(KLON,KLEV) 
+REAL(KIND=JPRB)   ,INTENT(IN)    :: PQSEN5(KLON,KLEV) 
+REAL(KIND=JPRB)   ,INTENT(IN)    :: PUEN5(KLON,KLEV) 
+REAL(KIND=JPRB)   ,INTENT(IN)    :: PVEN5(KLON,KLEV) 
+REAL(KIND=JPRB)   ,INTENT(IN)    :: PVERVEL5(KLON,KLEV) 
+REAL(KIND=JPRB)   ,INTENT(IN)    :: PGEO5(KLON,KLEV) 
+REAL(KIND=JPRB)   ,INTENT(IN)    :: PAPH5(KLON,KLEV+1) 
+INTEGER(KIND=JPIM),INTENT(OUT)   :: KLWMIN(KLON) 
+INTEGER(KIND=JPIM),INTENT(OUT)   :: KLAB(KLON,KLEV) 
+REAL(KIND=JPRB)   ,INTENT(INOUT) :: PTENH5(KLON,KLEV) 
+REAL(KIND=JPRB)   ,INTENT(OUT)   :: PQENH5(KLON,KLEV) 
+REAL(KIND=JPRB)   ,INTENT(INOUT) :: PQSENH5(KLON,KLEV) 
+REAL(KIND=JPRB)   ,INTENT(IN)    :: PGEOH5(KLON,KLEV+1) 
+REAL(KIND=JPRB)   ,INTENT(OUT)   :: PTU5(KLON,KLEV) 
+REAL(KIND=JPRB)   ,INTENT(OUT)   :: PQU5(KLON,KLEV) 
+REAL(KIND=JPRB)   ,INTENT(OUT)   :: PTD5(KLON,KLEV) 
+REAL(KIND=JPRB)   ,INTENT(OUT)   :: PQD5(KLON,KLEV) 
+REAL(KIND=JPRB)   ,INTENT(OUT)   :: PUU5(KLON,KLEV) 
+REAL(KIND=JPRB)   ,INTENT(OUT)   :: PVU5(KLON,KLEV) 
+REAL(KIND=JPRB)   ,INTENT(OUT)   :: PUD5(KLON,KLEV) 
+REAL(KIND=JPRB)   ,INTENT(OUT)   :: PVD5(KLON,KLEV) 
+REAL(KIND=JPRB)   ,INTENT(OUT)   :: PLU5(KLON,KLEV) 
+REAL(KIND=JPRB)   ,INTENT(INOUT) :: PTEN(KLON,KLEV) 
+REAL(KIND=JPRB)   ,INTENT(INOUT) :: PQEN(KLON,KLEV) 
+REAL(KIND=JPRB)   ,INTENT(INOUT) :: PQSEN(KLON,KLEV) 
+REAL(KIND=JPRB)   ,INTENT(INOUT) :: PUEN(KLON,KLEV) 
+REAL(KIND=JPRB)   ,INTENT(INOUT) :: PVEN(KLON,KLEV) 
+REAL(KIND=JPRB)   ,INTENT(INOUT) :: PVERVEL(KLON,KLEV) 
+REAL(KIND=JPRB)   ,INTENT(INOUT) :: PGEO(KLON,KLEV) 
+REAL(KIND=JPRB)   ,INTENT(INOUT) :: PAPH(KLON,KLEV+1) 
+REAL(KIND=JPRB)   ,INTENT(INOUT) :: PTENH(KLON,KLEV) 
+REAL(KIND=JPRB)   ,INTENT(INOUT) :: PQENH(KLON,KLEV) 
+REAL(KIND=JPRB)   ,INTENT(INOUT) :: PQSENH(KLON,KLEV) 
+REAL(KIND=JPRB)   ,INTENT(INOUT) :: PGEOH(KLON,KLEV+1) 
+REAL(KIND=JPRB)   ,INTENT(INOUT) :: PTU(KLON,KLEV) 
+REAL(KIND=JPRB)   ,INTENT(INOUT) :: PQU(KLON,KLEV) 
+REAL(KIND=JPRB)   ,INTENT(INOUT) :: PTD(KLON,KLEV) 
+REAL(KIND=JPRB)   ,INTENT(INOUT) :: PQD(KLON,KLEV) 
+REAL(KIND=JPRB)   ,INTENT(INOUT) :: PUU(KLON,KLEV) 
+REAL(KIND=JPRB)   ,INTENT(INOUT) :: PVU(KLON,KLEV) 
+REAL(KIND=JPRB)   ,INTENT(INOUT) :: PUD(KLON,KLEV) 
+REAL(KIND=JPRB)   ,INTENT(INOUT) :: PVD(KLON,KLEV) 
+REAL(KIND=JPRB)   ,INTENT(OUT)   :: PLU(KLON,KLEV) 
+REAL(KIND=JPRB) ::     ZWMAX5(KLON)
+REAL(KIND=JPRB) ::     ZPH5(KLON)
+
+REAL(KIND=JPRB) ::     ZWMAX(KLON)
+REAL(KIND=JPRB) ::     ZPH(KLON)
+LOGICAL ::  LLFLAG(KLON)
+
+REAL(KIND=JPRB) :: ZTENH55(KLON,KLEV),        ZQSENH55(KLON,KLEV)
+LOGICAL :: LLTES1(KLON,KLEV),&
+ & LLTES3(KLON,KLEV),      LLTES4(KLON,KLEV),&
+ & LLTES5(KLON,KLEV)  
+REAL(KIND=JPRB) :: Z15(KLON,KLEV), Z25(KLON,KLEV), ZZS5(KLON,KLEV)
+
+INTEGER(KIND=JPIM) :: ICALL, IK, JK, JL
+
+REAL(KIND=JPRB) :: Z1S, Z1S5, Z3S, Z3S5, ZALFA
+REAL(KIND=JPRB) :: ZRCPD, ZZS
+REAL(KIND=JPRB) :: ZHOOK_HANDLE
+
+#include "cuadjtqs.intfb.h"
+#include "cuadjtqsad.intfb.h"
+
+!-----------------------------------------------------------------------
+IF (LHOOK) CALL DR_HOOK('CUININ2AD',0,ZHOOK_HANDLE)
+ASSOCIATE(NJKT22=>YDECUMF2%NJKT22)
+!              --------  TRAJECTORY COMPUTATIONS  --------
+
+! Constant (for optimization)
+ZRCPD=1.0_JPRB/RCPD
+
+!-----------------------------------------------------------------------
+
+!*    1.           SPECIFY LARGE SCALE PARAMETERS AT HALF LEVELS
+!*                 ADJUST TEMPERATURE FIELDS IF STATICLY UNSTABLE
+!*                 FIND LEVEL OF MAXIMUM VERTICAL VELOCITY
+!                  ----------------------------------------------
+
+ZALFA=LOG(2.0_JPRB)
+DO JK=2,KLEV
+  DO JL=KIDIA,KFDIA
+!jfm      PTENH5(JL,JK)=(MAX(RCPD*PTEN5(JL,JK-1)+PGEO5(JL,JK-1),
+!jfm     1             RCPD*PTEN5(JL,JK)+PGEO5(JL,JK))-PGEOH5(JL,JK))/RCPD
+    LLTES5(JL,JK) =&
+     & (RCPD*PTEN5(JL,JK-1)+PGEO5(JL,JK-1)) > &
+     & (RCPD*PTEN5(JL,JK  )+PGEO5(JL,JK  ))  
+    IF ((RCPD*PTEN5(JL,JK-1)+PGEO5(JL,JK-1)) >&
+       & (RCPD*PTEN5(JL,JK  )+PGEO5(JL,JK  ))) THEN  
+      Z1S5 = RCPD*PTEN5(JL,JK-1)+PGEO5(JL,JK-1)
+    ELSE
+      Z1S5 = RCPD*PTEN5(JL,JK  )+PGEO5(JL,JK  )
+    ENDIF
+    PTENH5(JL,JK)=(Z1S5-PGEOH5(JL,JK))*ZRCPD
+    PQENH5(JL,JK)=PQEN5(JL,JK-1)
+    PQSENH5(JL,JK)=PQSEN5(JL,JK-1)
+    ZTENH55(JL,JK)=PTENH5(JL,JK)
+    ZQSENH55(JL,JK)=PQSENH5(JL,JK)
+    ZPH5(JL)=PAPH5(JL,JK)
+    LLFLAG(JL)=.TRUE.
+  ENDDO
+
+  IF(JK >= KLEV-1 .OR. JK < NJKT22) CYCLE
+  IK=JK
+  ICALL=0
+  CALL CUADJTQS &
+   & ( YRTHF, YRCST, KIDIA,    KFDIA,    KLON,    KLEV,&
+   & IK,&
+   & ZPH5,     PTENH5,   PQSENH5,   LLFLAG,   ICALL)  
+
+  DO JL=KIDIA,KFDIA
+!jfm      PQENH5(JL,JK)=MIN(PQEN5(JL,JK-1),PQSEN5(JL,JK-1))
+!jfm     1            +(PQSENH5(JL,JK)-PQSEN5(JL,JK-1))
+!jfm      PQENH5(JL,JK)=MAX(PQENH5(JL,JK),0.)
+    LLTES4(JL,JK)=PQEN5(JL,JK-1) > PQSEN5(JL,JK-1)
+    IF (PQEN5(JL,JK-1) > PQSEN5(JL,JK-1)) THEN
+      Z3S5 = PQSEN5(JL,JK-1)
+    ELSE
+      Z3S5 = PQEN5(JL,JK-1)
+    ENDIF
+    PQENH5(JL,JK)=Z3S5+(PQSENH5(JL,JK)-PQSEN5(JL,JK-1))
+    LLTES3(JL,JK)=PQENH5(JL,JK) < 0.0_JPRB
+    IF (PQENH5(JL,JK) < 0.0_JPRB) THEN
+      PQENH5(JL,JK) = 0.0_JPRB
+    ENDIF
+  ENDDO
+ENDDO
+
+DO JL=KIDIA,KFDIA
+  PTENH5(JL,KLEV)=(RCPD*PTEN5(JL,KLEV)+PGEO5(JL,KLEV)-PGEOH5(JL,KLEV))*ZRCPD
+  PQENH5(JL,KLEV)=PQEN5(JL,KLEV)
+  PTENH5(JL,1)=PTEN5(JL,1)
+  PQENH5(JL,1)=PQEN5(JL,1)
+  KLWMIN(JL)=KLEV
+  ZWMAX5(JL)=0.0_JPRB
+ENDDO
+
+DO JK=KLEV-1,2,-1
+  DO JL=KIDIA,KFDIA
+    Z15(JL,JK)=RCPD*PTENH5(JL,JK  )+PGEOH5(JL,JK  )
+    Z25(JL,JK)=RCPD*PTENH5(JL,JK+1)+PGEOH5(JL,JK+1)
+    IF (Z15(JL,JK) > Z25(JL,JK)) THEN
+      ZZS5(JL,JK)=Z15(JL,JK)
+    ELSE
+      ZZS5(JL,JK)=Z25(JL,JK)
+    ENDIF
+    PTENH5(JL,JK)=(ZZS5(JL,JK)-PGEOH5(JL,JK))*ZRCPD
+  ENDDO
+ENDDO
+
+DO JK=KLEV,3,-1
+!DIR$ IVDEP
+!OCL NOVREC
+  DO JL=KIDIA,KFDIA
+    LLTES1(JL,JK)=PVERVEL5(JL,JK) < ZWMAX5(JL)
+    IF(PVERVEL5(JL,JK) < ZWMAX5(JL)) THEN
+      ZWMAX5(JL)=PVERVEL5(JL,JK)
+      KLWMIN(JL)=JK
+    ENDIF
+  ENDDO
+ENDDO
+
+!-----------------------------------------------------------------------
+
+!*    2.0          INITIALIZE VALUES FOR UPDRAFTS AND DOWNDRAFTS
+!*                 ---------------------------------------------
+
+DO JK=1,KLEV
+  IK=JK-1
+  IF(JK == 1) IK=1
+  DO JL=KIDIA,KFDIA
+    PTU5(JL,JK)=PTENH5(JL,JK)
+    PTD5(JL,JK)=PTENH5(JL,JK)
+    PQU5(JL,JK)=PQENH5(JL,JK)
+    PQD5(JL,JK)=PQENH5(JL,JK)
+    PLU5(JL,JK)=0.0_JPRB
+    PUU5(JL,JK)=PUEN5(JL,IK)
+    PUD5(JL,JK)=PUEN5(JL,IK)
+    PVU5(JL,JK)=PVEN5(JL,IK)
+    PVD5(JL,JK)=PVEN5(JL,IK)
+    KLAB(JL,JK)=0
+  ENDDO
+ENDDO
+
+!------------------------------------------------------------------------
+
+!                --------  ADJOINT COMPUTATIONS  --------
+
+!------------------------------------------------------------------------
+
+!*                           INITIALISATIONS
+!                            ---------------
+
+ZWMAX(:) = 0.0_JPRB
+ZPH  (:) = 0.0_JPRB
+
+!-----------------------------------------------------------------------
+
+!*    2.0          INITIALIZE VALUES FOR UPDRAFTS AND DOWNDRAFTS
+!*                 ---------------------------------------------
+
+DO JK=KLEV,1,-1
+  IK=JK-1
+  IF(JK == 1) IK=1
+  DO JL=KIDIA,KFDIA
+    PVEN (JL,IK) = PVEN (JL,IK) + PVD (JL,JK)
+    PVD (JL,JK) = 0.0_JPRB
+    PVEN (JL,IK) = PVEN (JL,IK) + PVU (JL,JK)
+    PVU (JL,JK) = 0.0_JPRB
+    PUEN (JL,IK) = PUEN (JL,IK) + PUD (JL,JK)
+    PUD (JL,JK) = 0.0_JPRB
+    PUEN (JL,IK) = PUEN (JL,IK) + PUU (JL,JK)
+    PUU (JL,JK) = 0.0_JPRB
+    PLU (JL,JK) = 0.0_JPRB
+    PQENH (JL,JK) = PQENH (JL,JK) + PQD (JL,JK)
+    PQD (JL,JK) = 0.0_JPRB
+    PQENH (JL,JK) = PQENH (JL,JK) + PQU (JL,JK)
+    PQU (JL,JK) = 0.0_JPRB
+    PTENH (JL,JK) = PTENH (JL,JK) + PTD (JL,JK)
+    PTD (JL,JK) = 0.0_JPRB
+    PTENH (JL,JK) = PTENH (JL,JK) + PTU (JL,JK)
+    PTU (JL,JK) = 0.0_JPRB
+  ENDDO
+ENDDO
+
+!----------------------------------------------------------------------
+
+!*    1.           SPECIFY LARGE SCALE PARAMETERS AT HALF LEVELS
+!*                 ADJUST TEMPERATURE FIELDS IF STATICLY UNSTABLE
+!*                 FIND LEVEL OF MAXIMUM VERTICAL VELOCITY
+!                  ----------------------------------------------
+
+DO JK=KLEV,3,-1
+!DIR$ IVDEP
+!OCL NOVREC
+  DO JL=KIDIA,KFDIA
+    IF(LLTES1(JL,JK)) THEN
+      PVERVEL (JL,JK)=PVERVEL (JL,JK) + ZWMAX (JL)
+      ZWMAX (JL) = 0.0_JPRB
+    ENDIF
+  ENDDO
+ENDDO
+
+DO JK=2,KLEV-1
+  DO JL=KIDIA,KFDIA
+    ZZS=0.0_JPRB
+    ZZS=ZZS+ZRCPD*PTENH(JL,JK)
+    PGEOH(JL,JK)=PGEOH(JL,JK)-ZRCPD*PTENH(JL,JK)
+    PTENH(JL,JK)=0.0_JPRB
+    IF (Z15(JL,JK) > Z25(JL,JK)) THEN
+      PTENH(JL,JK)=PTENH(JL,JK)+RCPD*ZZS
+      PGEOH(JL,JK)=PGEOH(JL,JK)+ZZS
+    ELSE
+      PTENH(JL,JK+1)=PTENH(JL,JK+1)+RCPD*ZZS
+      PGEOH(JL,JK+1)=PGEOH(JL,JK+1)+ZZS
+    ENDIF 
+    ZZS=0.0_JPRB  
+  ENDDO
+ENDDO
+
+DO JL=KIDIA,KFDIA
+  ZWMAX (JL) = 0.0_JPRB
+  PQEN (JL,1) = PQEN (JL,1) + PQENH (JL,1)
+  PQENH (JL,1) = 0.0_JPRB
+  PTEN (JL,1) = PTEN (JL,1) + PTENH (JL,1)
+  PTENH (JL,1) = 0.0_JPRB
+  PQEN (JL,KLEV) = PQEN (JL,KLEV) + PQENH (JL,KLEV)
+  PQENH (JL,KLEV) = 0.0_JPRB
+  PTEN (JL,KLEV) = PTEN (JL,KLEV) + PTENH (JL,KLEV)
+  PGEO (JL,KLEV) = PGEO (JL,KLEV) + PTENH (JL,KLEV)*ZRCPD
+  PGEOH (JL,KLEV) = PGEOH (JL,KLEV) - PTENH (JL,KLEV)*ZRCPD
+  PTENH (JL,KLEV) = 0.0_JPRB
+ENDDO
+
+DO JK=KLEV,2,-1
+  IF(JK < KLEV-1 .AND. JK >= NJKT22) THEN
+    IK=JK
+    ICALL=0
+    DO JL=KIDIA,KFDIA
+      IF (LLTES3(JL,JK)) THEN
+        PQENH (JL,JK) = 0.0_JPRB
+      ENDIF
+      Z3S = 0.0_JPRB
+      Z3S = Z3S + PQENH (JL,JK)
+      PQSENH (JL,JK) = PQSENH (JL,JK) + PQENH (JL,JK)
+      PQSEN (JL,JK-1) = PQSEN (JL,JK-1) - PQENH (JL,JK)
+      PQENH (JL,JK) = 0.0_JPRB
+      IF (LLTES4(JL,JK)) THEN
+        PQSEN (JL,JK-1) = PQSEN (JL,JK-1) + Z3S
+      ELSE
+        PQEN (JL,JK-1) = PQEN (JL,JK-1) + Z3S
+      ENDIF
+      ZPH5(JL)=PAPH5(JL,JK)
+    ENDDO
+
+    CALL CUADJTQSAD &
+     & ( KIDIA,    KFDIA,    KLON,    KLEV,&
+     & IK,&
+     & ZPH5,     ZTENH55,  ZQSENH55,&
+     & ZPH,      PTENH,    PQSENH,   LLFLAG,   ICALL)  
+
+  ENDIF
+
+  DO JL=KIDIA,KFDIA
+    Z1S = 0.0_JPRB
+    PAPH (JL,JK) = PAPH (JL,JK) + ZPH(JL)
+    ZPH (JL) = 0.0_JPRB
+    PQSEN (JL,JK-1) = PQSEN (JL,JK-1) + PQSENH (JL,JK)
+    PQSENH (JL,JK) = 0.0_JPRB
+    PQEN (JL,JK-1) = PQEN (JL,JK-1) + PQENH (JL,JK)
+    PQENH (JL,JK) = 0.0_JPRB
+    Z1S = Z1S + PTENH (JL,JK)*ZRCPD
+    PGEOH (JL,JK) = PGEOH (JL,JK) - PTENH (JL,JK)*ZRCPD
+    PTENH (JL,JK) = 0.0_JPRB
+    IF (LLTES5(JL,JK)) THEN
+      PTEN (JL,JK-1) = PTEN (JL,JK-1) + Z1S*RCPD
+      PGEO (JL,JK-1) = PGEO (JL,JK-1) + Z1S
+    ELSE
+      PTEN (JL,JK  ) = PTEN (JL,JK  ) + Z1S*RCPD
+      PGEO (JL,JK  ) = PGEO (JL,JK  ) + Z1S
+    ENDIF
+  ENDDO
+
+ENDDO
+END ASSOCIATE
+IF (LHOOK) CALL DR_HOOK('CUININ2AD',1,ZHOOK_HANDLE)
+END SUBROUTINE CUININ2AD

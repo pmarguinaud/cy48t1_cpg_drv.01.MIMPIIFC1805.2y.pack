@@ -1,0 +1,1263 @@
+SUBROUTINE CUASCN2AD &
+ & ( YDCUMFS,YDECUMF2,KIDIA,    KFDIA,    KLON,    KLEV,&
+ & LDLAND,&
+ & PTEN5,    PTENH5,   PQENH5,&
+ & PGEOH5,   PQEN5,    PQSEN5,&
+ & PAPH5,    PLGLAC5,  PQPRCV5,&
+ & PBUOH5,   PWUBASE5, LDCUM,    KTYPE,&
+ & PTU5,     PQU5,     PLU5,&
+ & PMFU5,    PMFUB5,&
+ & PMFUS5,   PMFUQ5,   PMFUL5,   PLUDE5,   PDMFUP5,&
+ & KCBOT,    KCTOP,    KSTUP,&
+ & PMFUDE_RATE5, PWMEAN5, PERATEU5,&
+ & PTEN,     PTENH,    PQENH,&
+ & PGEOH,    PQEN,     PQSEN,&
+ & PAPH,     PLGLAC,   PQPRCV,&
+ & PBUOH,    PWUBASE,&
+ & PTU,      PQU,      PLU,&
+ & PMFU,     PMFUB,&
+ & PMFUS,    PMFUQ,    PMFUL,    PLUDE,    PDMFUP, &
+ & PMFUDE_RATE, PWMEAN, PERATEU)  
+
+!          THIS ROUTINE DOES THE CALCULATIONS OF THE MASS-FLUX PROFILE
+!          FOR THE SIMPLIFIED CUMULUS PARAMETERIZATION (ADJOINT VERSION)
+
+!          P.LOPEZ           E.C.M.W.F.     August 2002
+
+!          PURPOSE.
+!          --------
+!          TO PRODUCE MASS-FLUX PROFILE FOR SIMPLIFIED 
+!          CONVECTIVE PARAMETRIZATION 
+
+!          INTERFACE
+!          ---------
+
+!          THIS ROUTINE IS CALLED FROM *CUMASTRN2AD*.
+
+!          METHOD.
+!          --------
+
+!     PARAMETER     DESCRIPTION                                   UNITS
+!     ---------     -----------                                   -----
+!     INPUT PARAMETERS (LOGICAL)
+
+!    *LDLAND*       LAND SEA MASK (.TRUE. FOR LAND)
+
+!     INPUT PARAMETERS (INTEGER):
+
+!    *KIDIA*        START POINT
+!    *KFDIA*        END POINT
+!    *KLON*         NUMBER OF GRID POINTS PER PACKET
+!    *KLEV*         NUMBER OF LEVELS
+!    *KTYPE*        TYPE OF CONVECTION
+!                       1 = PENETRATIVE CONVECTION
+!                       2 = SHALLOW CONVECTION
+!                       3 = MIDLEVEL CONVECTION
+!    *KCBOT*        CLOUD BASE LEVEL
+!    *KSTUP*        LEVEL AT WHICH THE UPDRAFT STARTS 
+
+!    *PTEN5*        TEMPERATURE ON FULL LEVELS                  (Trajectory)
+!    *PTENH5*       TEMPERATURE ON HALF LEVELS                  (Trajectory) 
+!    *PQENH5*       SPECIFIC HUMIDITY ON HALF LEVELS            (Trajectory)
+!    *PGEOH5*       GEOPOTENTIAL ON HALF LEVELS                 (Trajectory)
+!    *PAPH5*        PROVISIONAL PRESSURE ON HALF LEVELS         (Trajectory)
+!    *PLGLAC5*      FROZEN CLOUD WATER CONTENT                  (Trajectory)
+!    *PQPRCV5*      CONVECTIVE PRECIPITATION CONTENT            (Trajectory)
+!    *PBUOH5*       BUOYANCY ON HALF-LEVELS                     (Trajectory)
+!    *PWUBASE5*     UPDRAUGHT VELOCITY AT CLOUD BASE            (Trajectory)
+!    *PTU5*         TEMPERATURE IN UPDRAFTS                     (Trajectory)
+!    *PQU5*         SPEC. HUMIDITY IN UPDRAFTS                  (Trajectory)
+!    *PLU5*         LIQUID WATER CONTENT IN UPDRAFTS            (Trajectory)
+
+!    *PTEN*         TEMPERATURE ON FULL LEVELS                   K 
+!    *PTENH*        TEMPERATURE ON HALF LEVELS                   K 
+!    *PQENH*        SPECIFIC HUMIDITY ON HALF LEVELS             KG/KG 
+!    *PGEOH*        GEOPOTENTIAL ON HALF LEVELS                  M2/S2
+!    *PAPH*         PROVISIONAL PRESSURE ON HALF LEVELS          Pa 
+!    *PLGLAC*       FROZEN CLOUD WATER CONTENT                   KG/KG 
+!    *PQPRCV*       CONVECTIVE PRECIPITATION CONTENT             KG/KG
+!    *PBUOH*        BUOYANCY ON HALF-LEVELS                      M/S2
+!    *PWUBASE*      UPDRAUGHT VELOCITY AT CLOUD BASE             M/S 
+!    *PTU*          TEMPERATURE IN UPDRAFTS                      K
+!    *PQU*          SPEC. HUMIDITY IN UPDRAFTS                   KG/KG
+!    *PLU*          LIQUID WATER CONTENT IN UPDRAFTS             KG/KG
+
+!    INPUT PARAMETERS (LOGICAL):
+
+!    *LDCUM*        FLAG: .TRUE. FOR CONVECTIVE POINTS 
+
+!    UPDATED PARAMETERS (INTEGER):
+
+!    *KCTOP*        CLOUD TOP LEVEL
+
+!    OUTPUT PARAMETERS (REAL):
+
+!    *PMFU5*        MASSFLUX IN UPDRAFTS                        (Trajectory)
+!    *PMFUB5*       MASSFLUX IN UPDRAFTS AT CLOUD BASE          (Trajectory)
+!    *PMFUS5*       FLUX OF DRY STATIC ENERGY IN UPDRAFTS       (Trajectory)
+!    *PMFUQ5*       FLUX OF SPEC. HUMIDITY IN UPDRAFTS          (Trajectory)
+!    *PMFUL5*       FLUX OF LIQUID WATER IN UPDRAFTS            (Trajectory)
+!    *PLUDE5*       DETRAINED LIQUID WATER                      (Trajectory)
+!    *PDMFUP5*      FLUX DIFFERENCE OF PRECIP. IN UPDRAFTS      (Trajectory)
+!    *PMFUDE_RATE5* UPDRAFT DETRAINMENT RATE                    (Trajectory)
+!    *PWMEAN5*      MEAN UPDRAFT VELOCITY                       (Trajectory)
+!    *PERATEU5*     UPDRAFT ENTRAINMENT RATE                    (Trajectory)
+
+!    *PMFU*         MASSFLUX IN UPDRAFTS                         KG/(M2*S)
+!    *PMFUB*        MASSFLUX IN UPDRAFTS AT CLOUD BASE           KG/(M2*S)
+!    *PMFUS*        FLUX OF DRY STATIC ENERGY IN UPDRAFTS         J/(M2*S)
+!    *PMFUQ*        FLUX OF SPEC. HUMIDITY IN UPDRAFTS           KG/(M2*S)
+!    *PMFUL*        FLUX OF LIQUID WATER IN UPDRAFTS             KG/(M2*S)
+!    *PLUDE*        DETRAINED LIQUID WATER                       KG/(M2*S)
+!    *PDMFUP*       FLUX DIFFERENCE OF PRECIP. IN UPDRAFTS       KG/(M2*S)
+!    *PMFUDE_RATE*  UPDRAFT DETRAINMENT RATE                     KG/(M2*S)
+!    *PWMEAN*       MEAN UPDRAFT VELOCITY                         M/S
+!    *PERATEU*      UPDRAFT ENTRAINMENT RATE                      
+
+!          EXTERNALS
+!          ---------
+
+!          REFERENCE
+!          ---------
+
+!          MODIFICATIONS
+!          -------------
+!        M.Hamrud      01-Oct-2003 CY28 Cleaning
+!        P.Lopez       01-Oct-2005 Changed entrainment/detrainment
+!        P.Lopez       19-Feb-2007 Added LREGCV switch
+!        P.Lopez       19-Oct-2007 Revised version to improve match to Tiedtke scheme
+!        P.Lopez       10-May-2016 Revised precipitation glaciation
+
+!----------------------------------------------------------------------
+
+USE PARKIND1 , ONLY : JPIM     ,JPRB
+USE YOMHOOK  , ONLY : LHOOK,   DR_HOOK
+
+USE YOMCST   , ONLY : RETV,   RG,  RCPD,  RLVTT,  RLSTT,  RTT , YRCST
+USE YOECUMF2 , ONLY : TECUMF2
+USE YOETHF   , ONLY : R2ES     ,R3LES    ,R3IES    ,R4LES    ,&
+ &                    R4IES    ,R5LES    ,R5IES   ,R5ALVCP  ,R5ALSCP  ,&
+ &                    RALVDCP  ,RALSDCP  ,RALFDCP ,RTWAT    ,RTICE    ,RTICECU  ,&
+ &                    RTWAT_RTICE_R      ,RTWAT_RTICECU_R    ,RTBER    ,RTBERCU  , YRTHF
+USE YOMCUMFS , ONLY : TCUMFS
+
+IMPLICIT NONE
+
+TYPE(TCUMFS)      ,INTENT(INOUT) :: YDCUMFS
+TYPE(TECUMF2)     ,INTENT(INOUT) :: YDECUMF2
+INTEGER(KIND=JPIM),INTENT(IN)    :: KLON 
+INTEGER(KIND=JPIM),INTENT(IN)    :: KLEV 
+INTEGER(KIND=JPIM),INTENT(IN)    :: KIDIA 
+INTEGER(KIND=JPIM),INTENT(IN)    :: KFDIA 
+LOGICAL           ,INTENT(IN)    :: LDLAND(KLON)
+REAL(KIND=JPRB)   ,INTENT(IN)    :: PTEN5(KLON,KLEV)
+REAL(KIND=JPRB)   ,INTENT(INOUT) :: PTENH5(KLON,KLEV)
+REAL(KIND=JPRB)   ,INTENT(INOUT) :: PQENH5(KLON,KLEV)
+REAL(KIND=JPRB)   ,INTENT(IN)    :: PGEOH5(KLON,KLEV+1) 
+REAL(KIND=JPRB)   ,INTENT(IN)    :: PQEN5(KLON,KLEV) 
+REAL(KIND=JPRB)   ,INTENT(IN)    :: PQSEN5(KLON,KLEV) 
+REAL(KIND=JPRB)   ,INTENT(IN)    :: PAPH5(KLON,KLEV+1)
+REAL(KIND=JPRB)   ,INTENT(INOUT) :: PLGLAC5(KLON,KLEV) 
+REAL(KIND=JPRB)   ,INTENT(INOUT) :: PQPRCV5(KLON,KLEV) 
+REAL(KIND=JPRB)   ,INTENT(INOUT) :: PBUOH5(KLON,KLEV) 
+REAL(KIND=JPRB)   ,INTENT(IN)    :: PWUBASE5(KLON) 
+LOGICAL           ,INTENT(INOUT) :: LDCUM(KLON) 
+INTEGER(KIND=JPIM),INTENT(INOUT) :: KTYPE(KLON) 
+REAL(KIND=JPRB)   ,INTENT(INOUT) :: PTU5(KLON,KLEV) 
+REAL(KIND=JPRB)   ,INTENT(INOUT) :: PQU5(KLON,KLEV) 
+REAL(KIND=JPRB)   ,INTENT(INOUT) :: PLU5(KLON,KLEV) 
+REAL(KIND=JPRB)   ,INTENT(OUT)   :: PMFU5(KLON,KLEV) 
+REAL(KIND=JPRB)   ,INTENT(IN)    :: PMFUB5(KLON) 
+REAL(KIND=JPRB)   ,INTENT(OUT)   :: PMFUS5(KLON,KLEV) 
+REAL(KIND=JPRB)   ,INTENT(OUT)   :: PMFUQ5(KLON,KLEV) 
+REAL(KIND=JPRB)   ,INTENT(OUT)   :: PMFUL5(KLON,KLEV) 
+REAL(KIND=JPRB)   ,INTENT(OUT)   :: PLUDE5(KLON,KLEV) 
+REAL(KIND=JPRB)   ,INTENT(OUT)   :: PDMFUP5(KLON,KLEV) 
+INTEGER(KIND=JPIM),INTENT(INOUT) :: KCBOT(KLON) 
+INTEGER(KIND=JPIM),INTENT(INOUT) :: KCTOP(KLON) 
+INTEGER(KIND=JPIM),INTENT(INOUT) :: KSTUP(KLON) 
+REAL(KIND=JPRB)   ,INTENT(OUT)   :: PMFUDE_RATE5(KLON,KLEV) 
+REAL(KIND=JPRB)   ,INTENT(OUT)   :: PWMEAN5(KLON) 
+REAL(KIND=JPRB)   ,INTENT(OUT)   :: PERATEU5(KLON,KLEV) 
+REAL(KIND=JPRB)   ,INTENT(INOUT) :: PTEN(KLON,KLEV)
+REAL(KIND=JPRB)   ,INTENT(INOUT) :: PTENH(KLON,KLEV)
+REAL(KIND=JPRB)   ,INTENT(INOUT) :: PQENH(KLON,KLEV)
+REAL(KIND=JPRB)   ,INTENT(INOUT) :: PQEN(KLON,KLEV) 
+REAL(KIND=JPRB)   ,INTENT(INOUT) :: PQSEN(KLON,KLEV) 
+REAL(KIND=JPRB)   ,INTENT(INOUT) :: PGEOH(KLON,KLEV+1) 
+REAL(KIND=JPRB)   ,INTENT(INOUT) :: PAPH(KLON,KLEV+1)
+REAL(KIND=JPRB)   ,INTENT(INOUT) :: PLGLAC(KLON,KLEV) 
+REAL(KIND=JPRB)   ,INTENT(INOUT) :: PQPRCV(KLON,KLEV) 
+REAL(KIND=JPRB)   ,INTENT(INOUT) :: PBUOH(KLON,KLEV) 
+REAL(KIND=JPRB)   ,INTENT(INOUT) :: PWUBASE(KLON) 
+REAL(KIND=JPRB)   ,INTENT(INOUT) :: PTU(KLON,KLEV) 
+REAL(KIND=JPRB)   ,INTENT(INOUT) :: PQU(KLON,KLEV) 
+REAL(KIND=JPRB)   ,INTENT(INOUT) :: PLU(KLON,KLEV) 
+REAL(KIND=JPRB)   ,INTENT(INOUT) :: PMFU(KLON,KLEV) 
+REAL(KIND=JPRB)   ,INTENT(INOUT) :: PMFUB(KLON) 
+REAL(KIND=JPRB)   ,INTENT(INOUT) :: PMFUS(KLON,KLEV) 
+REAL(KIND=JPRB)   ,INTENT(INOUT) :: PMFUQ(KLON,KLEV) 
+REAL(KIND=JPRB)   ,INTENT(INOUT) :: PMFUL(KLON,KLEV) 
+REAL(KIND=JPRB)   ,INTENT(INOUT) :: PLUDE(KLON,KLEV) 
+REAL(KIND=JPRB)   ,INTENT(INOUT) :: PDMFUP(KLON,KLEV) 
+REAL(KIND=JPRB)   ,INTENT(INOUT) :: PMFUDE_RATE(KLON,KLEV) 
+REAL(KIND=JPRB)   ,INTENT(INOUT) :: PWMEAN(KLON) 
+REAL(KIND=JPRB)   ,INTENT(INOUT) :: PERATEU(KLON,KLEV) 
+
+!!     LOCAL SCALAR ARRAYS
+REAL(KIND=JPRB) ::  ZWU2H(KLON,KLEV),     ZWU2H5(KLON,KLEV) 
+REAL(KIND=JPRB) ::  ZDET5(KLON,KLEV)
+REAL(KIND=JPRB) ::  ZDZ5(KLON,KLEV),      ZSENH5(KLON,KLEV)
+REAL(KIND=JPRB) ::  ZFACT2(KLON,KLEV),    ZFACT22(KLON,KLEV) 
+REAL(KIND=JPRB) ::  ZENT5(KLON,KLEV),     ZMFU15(KLON,KLEV)
+REAL(KIND=JPRB) ::  ZTU15(KLON,KLEV),     ZQU15(KLON,KLEV)
+REAL(KIND=JPRB) ::  ZEPSORG15(KLON,KLEV), ZSUH5(KLON,KLEV)
+REAL(KIND=JPRB) ::  ZERATE5(KLON,KLEV),   ZERATE(KLON,KLEV)
+REAL(KIND=JPRB) ::  ZDERATE5(KLON,KLEV),  ZDERATE(KLON,KLEV)
+REAL(KIND=JPRB) ::  ZFACT25(KLON),        ZSQRT5(KLON)
+REAL(KIND=JPRB) ::  ZDPMEAN5(KLON),       ZDPMEAN (KLON)
+REAL(KIND=JPRB) ::  ZWMEAN5(KLON),        ZEPSORG5(KLON)
+REAL(KIND=JPRB) ::  ZEPSORG25(KLON)
+
+REAL(KIND=JPRB) ::  ZSUH (KLON,KLEV),     ZSENH (KLON,KLEV)
+
+INTEGER(KIND=JPIM) :: JK, JL, IKB, JKT2, IK, ICALL
+INTEGER(KIND=JPIM) :: I_KCBOT1(KLON), I_KTYPE1(KLON)
+
+LOGICAL ::  LL_LDCUM1(KLON), LL_LTEST0(KLON,KLEV), LL_LTEST1(KLON,KLEV), LL_LTEST2(KLON)
+LOGICAL ::  LL_LTEST3(KLON), LL_LTEST4(KLON,KLEV), LL_LTEST5(KLON,KLEV)
+LOGICAL ::  LLDT(KLON,KLEV), LLTEST(KLON)
+LOGICAL ::  LL_LTEST6(KLON,KLEV)
+
+REAL(KIND=JPRB) ::  ZENT(KLON), ZDET(KLON), ZEPSORG(KLON), ZPH(KLON)
+REAL(KIND=JPRB) ::  ZDZ(KLON), ZPH5(KLON), ZQOLD(KLON)
+REAL(KIND=JPRB) :: ZRH(KLON), ZFACTQS(KLON)
+REAL(KIND=JPRB) :: ZRATQS5
+REAL(KIND=JPRB) :: ZRATQS
+REAL(KIND=JPRB) :: ZDNOPRC
+
+REAL(KIND=JPRB) :: ZBUOF5(KLON,KLEV)
+REAL(KIND=JPRB) :: ZLUOLD5(KLON,KLEV),   ZFACTQS5(KLON,KLEV)
+REAL(KIND=JPRB) :: ZPRCON5(KLON,KLEV),   ZDT5(KLON,KLEV)
+REAL(KIND=JPRB) :: ZZCO5(KLON,KLEV),     ZC5(KLON,KLEV),     ZSQRT25(KLON,KLEV)
+REAL(KIND=JPRB) :: ZLCRIT5(KLON,KLEV),   ZDFI5(KLON,KLEV),   ZDT15(KLON,KLEV)
+REAL(KIND=JPRB) :: ZLCRIT5I(KLON,KLEV),  ZCBF5I(KLON,KLEV),  ZEXP5(KLON,KLEV)
+REAL(KIND=JPRB) :: ZD5(KLON,KLEV),       ZCOND5(KLON,KLEV),  ZINT5(KLON,KLEV)
+REAL(KIND=JPRB) :: ZLNEW15(KLON,KLEV),   ZCBF5(KLON,KLEV),   ZWU5(KLON,KLEV)
+REAL(KIND=JPRB) :: ZLNEW25(KLON,KLEV),   ZLNEW35(KLON,KLEV), ZQOLD5(KLON,KLEV)
+REAL(KIND=JPRB) :: ZWU05(KLON,KLEV),     Z1ZD5(KLON,KLEV),   ZDET15(KLON,KLEV)
+REAL(KIND=JPRB) :: ZLMAX5(KLON,KLEV),    ZTVENH5(KLON,KLEV), ZTVUH5(KLON,KLEV)
+REAL(KIND=JPRB) :: ZRH5(KLON,KLEV),      ZRATW5(KLON,KLEV),  ZDETNEW5(KLON,KLEV)
+REAL(KIND=JPRB) :: ZTENH15(KLON,KLEV),   ZQENH15(KLON,KLEV), ZRHFACT5(KLON,KLEV)
+REAL(KIND=JPRB) :: ZDET25(KLON,KLEV)
+REAL(KIND=JPRB) :: ZDET05(KLON,KLEV)
+REAL(KIND=JPRB) :: ZOCUDET5(KLON,KLEV),  ZSQRATW5(KLON,KLEV)
+
+REAL(KIND=JPRB) :: ZEPS , ZBUOF , ZDEL , ZLUOLD 
+REAL(KIND=JPRB) :: ZPRCON , ZDT , ZZCO , ZC, ZRHFACT
+REAL(KIND=JPRB) :: ZDFI , ZDT1 , ZLCRIT , ZOCUDET
+REAL(KIND=JPRB) :: ZD , ZCOND , ZINT , ZLNEW , ZCBF , ZWU
+REAL(KIND=JPRB) :: ZLMAX , ZTVENH , ZTVUH , ZRATW , ZDETNEW
+
+REAL(KIND=JPRB) :: ZFACT3, ZFACT4, ZFACT6, ZFACT7
+REAL(KIND=JPRB) :: ZDMIX5
+
+! Constants
+REAL(KIND=JPRB) :: ZAW, ZBW, ZRCPD, Z_CPRC2, ZPRCDGW, ZRG, ZFAC
+REAL(KIND=JPRB) :: ZQCMAX, Z_CLCRIT, ZGLAC
+
+REAL(KIND=JPRB) :: ZHOOK_HANDLE
+
+#include "cuadjtqs.intfb.h"
+#include "cuadjtqsad.intfb.h"
+
+#include "fcttre.func.h"
+#include "fcttread.func.h"
+!----------------------------------------------------------------------
+
+IF (LHOOK) CALL DR_HOOK('CUASCN2AD',0,ZHOOK_HANDLE)
+ASSOCIATE(LREGCV=>YDCUMFS%LREGCV, &
+ & DETRPEN2=>YDECUMF2%DETRPEN2, ENTRORG2=>YDECUMF2%ENTRORG2, &
+ & ENTSHALP2=>YDECUMF2%ENTSHALP2, NJKT22=>YDECUMF2%NJKT22, &
+ & RPRCON2=>YDECUMF2%RPRCON2, LMFGLAC2=>YDECUMF2%LMFGLAC2)
+!*    1.           SPECIFY PARAMETERS
+!                  ------------------
+
+ZAW=0.5_JPRB/(1.0_JPRB+0.5_JPRB)
+ZBW=1.0_JPRB+(3._JPRB/8._JPRB)*0.506_JPRB/0.2_JPRB
+ZRG=1.0_JPRB/RG
+ZQCMAX=5.E-03_JPRB
+ZPRCDGW=RPRCON2/RG
+Z_CLCRIT=0.5E-3_JPRB
+Z_CPRC2=0.5_JPRB
+ZRCPD=1.0_JPRB/RCPD
+
+JKT2=NJKT22
+
+IF(LMFGLAC2) THEN
+  ZGLAC=1.0_JPRB
+ELSE
+  ZGLAC=0.0_JPRB
+ENDIF
+
+ZTU15(:,:)=PTU5(:,:)
+ZQU15(:,:)=PQU5(:,:)
+
+!----------------------------------------------------------------------
+
+!     2.           SET DEFAULT VALUES
+!                  ------------------
+
+DO JL=KIDIA,KFDIA
+  IF(.NOT.LDCUM(JL)) THEN
+    KCBOT(JL)=-1
+    KCTOP(JL)=-1
+    KTYPE(JL)=0
+    KSTUP(JL)=-1
+  ENDIF
+ENDDO
+
+! initialize various quantities
+DO JK=1,KLEV
+  DO JL=KIDIA,KFDIA
+    ZSENH5(JL,JK)=RCPD*PTENH5(JL,JK)+PGEOH5(JL,JK)
+  ENDDO
+ENDDO
+
+LL_LTEST0(:,:)=.FALSE.
+LL_LTEST1(:,:)=.FALSE.
+LL_LTEST2(:)=.FALSE.
+LL_LTEST3(:)=.FALSE.
+LL_LTEST4(:,:)=.FALSE.
+LL_LTEST5(:,:)=.FALSE.
+LL_LTEST6(:,:)=.FALSE.
+LLTEST(:)=.FALSE.
+
+PMFU5(:,:)=0.0_JPRB
+PMFUS5(:,:)=0.0_JPRB
+PMFUQ5(:,:)=0.0_JPRB
+PMFUL5(:,:)=0.0_JPRB
+PLUDE5(:,:)=0.0_JPRB
+PDMFUP5(:,:)=0.0_JPRB
+ZWU2H5(:,:)=0.0_JPRB
+ZMFU15(:,:)=0.0_JPRB
+PMFUDE_RATE5(:,:)=0.0_JPRB
+ZSUH5(:,:)=0.0_JPRB
+PERATEU5(:,:)=0.0_JPRB
+ZERATE5(:,:)=0.0_JPRB
+ZDERATE5(:,:)=0.0_JPRB
+ZEPSORG15(:,:)=0.0_JPRB
+ZEPSORG5(:)=0.0_JPRB
+ZEPSORG25(:)=0.0_JPRB
+
+!----------------------------------------------------------------------
+
+!     3.0          INITIALIZE VALUES AT cloud base LEVEL
+!                  -------------------------------------
+
+DO JL=KIDIA,KFDIA
+  KCTOP(JL)=KCBOT(JL)
+  PWMEAN5(JL)=0.0_JPRB
+  ZDPMEAN5(JL)=0.0_JPRB
+  IF (LDCUM(JL)) THEN
+    IKB=KCBOT(JL)
+    ZWU2H5(JL,IKB)=PWUBASE5(JL)**2
+    PMFU5(JL,IKB)=PMFUB5(JL)
+    PMFUS5(JL,IKB)=PTU5(JL,IKB)
+    PMFUQ5(JL,IKB)=PQU5(JL,IKB)
+    PMFUL5(JL,IKB)=PLU5(JL,IKB)
+    PDMFUP5(JL,IKB)=PQPRCV5(JL,IKB)*PMFU5(JL,IKB)
+    ZSUH5(JL,IKB)=RCPD*PTU5(JL,IKB)+PGEOH5(JL,IKB)
+    DO JK=1,IKB-1
+      PLU5(JL,JK)=0.0_JPRB
+      PLGLAC5(JL,JK)=0.0_JPRB 
+      PQPRCV5(JL,JK)=0.0_JPRB 
+      PBUOH5(JL,JK)=0.0_JPRB 
+    ENDDO 
+!LOP Initialise buoyancy to zero at cloud base to mimic Tietdke scheme
+    PBUOH5(JL,IKB)=0.0_JPRB 
+  ENDIF
+ENDDO
+
+!----------------------------------------------------------------------
+
+!     4.0          COMPUTE MASS-FLUX PROFILE
+!                  -------------------------
+
+DO JK=KLEV-1,JKT2,-1
+  DO JL=KIDIA,KFDIA
+    LL_LTEST0(JL,JK)=(LDCUM(JL) .AND. JK < KCBOT(JL))  
+    IF (LL_LTEST0(JL,JK)) THEN
+      IKB=KCBOT(JL)
+      ZDZ5(JL,JK)=(PGEOH5(JL,JK)-PGEOH5(JL,JK+1))*ZRG
+      ZFACT7=1.0_JPRB/PQSEN5(JL,IKB)
+      ZRATQS5=PQSEN5(JL,JK)*ZFACT7
+      ZFACTQS5(JL,JK)=MIN(1.0_JPRB,ZRATQS5)**3
+      ZFACT4=1.0_JPRB/PQSEN5(JL,JK)
+      ZRH5(JL,JK)=PQEN5(JL,JK)*ZFACT4
+    ENDIF
+    LL_LTEST1(JL,JK)=(LDCUM(JL) .AND. JK < KCBOT(JL) .AND.&
+     & PMFU5(JL,JK+1) > 0.0_JPRB .AND. ZWU2H5(JL,JK+1) > 0.0_JPRB)  
+
+    IF (LL_LTEST1(JL,JK)) THEN
+
+      ZENT5(JL,JK) = ZEPSORG5(JL)
+      IF (KTYPE(JL) >= 2) THEN
+        ZENT5(JL,JK) = ENTSHALP2 * ZENT5(JL,JK)
+        ZDET5(JL,JK) = ZENT5(JL,JK)
+      ELSE
+        ZDET5(JL,JK) = DETRPEN2 * ZDZ5(JL,JK)
+      ENDIF 
+      ZDET05(JL,JK) = ZDET5(JL,JK)
+      ZDET5(JL,JK) = ZDET5(JL,JK) * (1.6_JPRB - MIN(1.0_JPRB,ZRH5(JL,JK)))
+
+      PQU5(JL,JK) = PQU5(JL,JK+1) *(1.0_JPRB-ZENT5(JL,JK))&
+                & + PQENH5(JL,JK+1)*ZENT5(JL,JK)
+      ZSUH5(JL,JK)= ZSUH5(JL,JK+1)*(1.0_JPRB-ZENT5(JL,JK))&
+                & + ZSENH5(JL,JK+1)*ZENT5(JL,JK) 
+      ZQOLD5(JL,JK) = PQU5(JL,JK)
+      PTU5 (JL,JK) = (ZSUH5(JL,JK)-PGEOH5(JL,JK))*ZRCPD
+      ZPH5 (JL) = PAPH5(JL,JK)
+    ENDIF
+  ENDDO
+
+  DO JL=KIDIA,KFDIA
+    ZTU15(JL,JK)=PTU5(JL,JK)
+    ZQU15(JL,JK)=PQU5(JL,JK)
+    LLTEST(JL)=LL_LTEST1(JL,JK)
+  ENDDO
+
+  IK=JK
+  ICALL=1
+  CALL CUADJTQS &
+   & ( YRTHF, YRCST, KIDIA,    KFDIA,    KLON,    KLEV,     IK,&
+   &   ZPH5,     PTU5,     PQU5,    LLTEST,   ICALL)  
+
+!DIR$ IVDEP
+!OCL NOVREC
+  DO JL=KIDIA,KFDIA
+    IF(LL_LTEST1(JL,JK)) THEN
+
+      IF(LDLAND(JL)) THEN
+        ZDNOPRC=5.E-4_JPRB
+      ELSE
+        ZDNOPRC=3.E-4_JPRB
+      ENDIF
+
+! condensation 
+
+      ZCOND5(JL,JK)=MAX(ZQOLD5(JL,JK)-PQU5(JL,JK),0.0_JPRB)
+
+! microphysics
+
+      ZLUOLD5(JL,JK)=PLU5(JL,JK+1)
+      ZLMAX5(JL,JK)=MAX(ZLUOLD5(JL,JK)+ZCOND5(JL,JK),0.0_JPRB)
+
+      IF(ZLMAX5(JL,JK) > ZDNOPRC) THEN
+        ZWU05(JL,JK)=SQRT(ZWU2H5(JL,JK+1))
+        ZWU5(JL,JK)=MIN(15._JPRB,MAX(0.447_JPRB,ZWU05(JL,JK)))
+        ZPRCON5(JL,JK)= ZPRCDGW/(0.75_JPRB*ZWU5(JL,JK))
+        ZDT15(JL,JK)=RTBER-PTU5(JL,JK)
+        LLDT(JL,JK)=(ZDT15(JL,JK) > 0.0_JPRB .AND. ZDT15(JL,JK) < RTBERCU-RTICECU)
+        ZDT5(JL,JK)=MIN(RTBERCU-RTICECU,MAX(ZDT15(JL,JK),0.0_JPRB))
+        ZSQRT25(JL,JK)=SQRT(ZDT5(JL,JK))
+        ZCBF5(JL,JK)=1.0_JPRB+Z_CPRC2*ZSQRT25(JL,JK)
+        ZZCO5(JL,JK)=ZPRCON5(JL,JK)*ZCBF5(JL,JK)
+        ZCBF5I(JL,JK)=1.0_JPRB/ZCBF5(JL,JK)
+        ZLCRIT5(JL,JK)=ZDNOPRC*ZCBF5I(JL,JK)
+        ZDFI5(JL,JK)=PGEOH5(JL,JK)-PGEOH5(JL,JK+1)
+        ZC5(JL,JK)=ZLMAX5(JL,JK)-ZLUOLD5(JL,JK)
+        ZLCRIT5I(JL,JK)=1.0_JPRB/ZLCRIT5(JL,JK)
+        ZEXP5(JL,JK)=EXP(-(ZLMAX5(JL,JK)*ZLCRIT5I(JL,JK))**2)
+        ZD5(JL,JK)=ZZCO5(JL,JK)*ZDFI5(JL,JK)*(1.0_JPRB-ZEXP5(JL,JK))
+        ZINT5(JL,JK)=EXP(-ZD5(JL,JK))
+        Z1ZD5(JL,JK)=1.0_JPRB/ZD5(JL,JK)
+        ZLNEW15(JL,JK)=ZLUOLD5(JL,JK)*ZINT5(JL,JK) &
+                   & +ZC5(JL,JK)*Z1ZD5(JL,JK)*(1.0_JPRB-ZINT5(JL,JK))
+        ZLNEW25(JL,JK)=MAX(0.0_JPRB,MIN(ZLMAX5(JL,JK),ZLNEW15(JL,JK)))
+      ELSE
+        ZLNEW25(JL,JK)=ZLMAX5(JL,JK)
+      ENDIF
+
+      ZLNEW35(JL,JK)=MIN(ZQCMAX,ZLNEW25(JL,JK))
+
+      PQPRCV5(JL,JK)=MAX(0.0_JPRB,ZLMAX5(JL,JK)-ZLNEW35(JL,JK))
+      PLU5(JL,JK)=ZLNEW35(JL,JK)
+
+! frozen water
+
+      PLGLAC5(JL,JK)= ZCOND5(JL,JK)*((1.0_JPRB-FOEALFCU(PTU5(JL,JK))) &
+                  & -                (1.0_JPRB-FOEALFCU(PTU5(JL,JK+1))))  
+                  
+! add glaciation of rain
+
+      IF (RTT > PTEN5(JL,JK)) THEN
+        PLGLAC5(JL,JK) = PLGLAC5(JL,JK) + ZGLAC*FOEALFCU(PTEN5(JL,JK))*PQPRCV5(JL,JK)
+      ENDIF
+                
+! update dry static energy after condensation + freezing
+
+      ZSUH5(JL,JK) = RCPD*(PTU5(JL,JK)+RALFDCP*PLGLAC5(JL,JK))+PGEOH5(JL,JK)
+      
+! Buoyancy on half and full levels
+         
+      ZTVUH5(JL,JK) = PTU5(JL,JK)*(1.0_JPRB+RETV*PQU5(JL,JK)&
+                  & - PLU5(JL,JK+1)-PQPRCV5(JL,JK+1))&
+                  & + RALFDCP*PLGLAC5(JL,JK)  
+      ZTVENH5(JL,JK) = PTENH5(JL,JK)*(1.0_JPRB+RETV*PQENH5(JL,JK))
+      ZFACT2(JL,JK) = 1.0_JPRB/ZTVENH5(JL,JK)
+      ZFACT22(JL,JK) = ZFACT2(JL,JK)
+      PBUOH5(JL,JK) = RG*(ZTVUH5(JL,JK)-ZTVENH5(JL,JK))*ZFACT2(JL,JK)
+
+! Store trajectory for adjoint
+      ZTENH15(JL,JK)=PTENH5(JL,JK)
+      ZQENH15(JL,JK)=PQENH5(JL,JK)
+      LL_LTEST5(JL,JK)=(PBUOH5(JL,JK) < 0.0_JPRB .AND. PLU5(JL,JK) > 0.0_JPRB)
+      IF (LL_LTEST5(JL,JK)) THEN
+        PTENH5(JL,JK) = 0.5_JPRB*(PTEN5(JL,JK)+PTEN5(JL,JK-1))
+        PQENH5(JL,JK) = 0.5_JPRB*(PQEN5(JL,JK)+PQEN5(JL,JK-1))
+        ZSENH5(JL,JK) = RCPD*PTENH5(JL,JK)+PGEOH5(JL,JK)
+        ZTVENH5(JL,JK) = PTENH5(JL,JK)*(1.0_JPRB+RETV*PQENH5(JL,JK))
+        ZFACT22(JL,JK) = 1.0_JPRB/ZTVENH5(JL,JK)
+        PBUOH5(JL,JK) = RG*(ZTVUH5(JL,JK)-ZTVENH5(JL,JK))*ZFACT22(JL,JK)
+      ENDIF 
+
+! Buoyancy on full levels
+
+      ZBUOF5(JL,JK) = (PBUOH5(JL,JK) + PBUOH5(JL,JK+1))*0.5_JPRB
+
+! Solve kinetic energy equation
+
+      ZWU2H5(JL,JK) = (ZWU2H5(JL,JK+1)*(1.0_JPRB-ZBW*ZENT5(JL,JK))&
+       & + 2.0_JPRB*ZAW*ZBUOF5(JL,JK)*ZDZ5(JL,JK)) &
+       & /(1.0_JPRB+ZBW*ZENT5(JL,JK))  
+
+! Accumulate updraught kinetic energy in the vertical
+
+      PWMEAN5(JL)  = PWMEAN5(JL)  + ZWU2H5(JL,JK)*(PAPH5(JL,JK+1) - PAPH5(JL,JK))
+      ZDPMEAN5(JL) = ZDPMEAN5(JL) + PAPH5(JL,JK+1) - PAPH5(JL,JK)
+
+! Entrainment and detrainment according to variation of kinetic energy
+! on the vertical.
+
+      IF (ZWU2H5(JL,JK) >= ZWU2H5(JL,JK+1)) THEN
+        ZDET25(JL,JK)=ZDET5(JL,JK)
+        PMFU5(JL,JK) = PMFU5(JL,JK+1)*(1.0_JPRB+ZENT5(JL,JK)-ZDET5(JL,JK))
+        PLUDE5(JL,JK) = ZDET5(JL,JK)*PLU5(JL,JK+1)
+        PMFUDE_RATE5(JL,JK) = ZDET5(JL,JK)*PMFU5(JL,JK+1)
+      ELSE
+! Organised detrainment
+        LL_LTEST6(JL,JK)=(PBUOH5(JL,JK) < 0.0_JPRB .AND. PLU5(JL,JK) > 0.0_JPRB)
+        IF (LL_LTEST6(JL,JK)) THEN
+          ZFACT3 = 1.0_JPRB/ZWU2H5(JL,JK+1)
+          ZRATW5(JL,JK)=ZWU2H5(JL,JK)*ZFACT3
+          IF (ZRATW5(JL,JK) > 0.0_JPRB) THEN
+            ZSQRATW5(JL,JK)=SQRT(ZRATW5(JL,JK))
+            IF (ZRH5(JL,JK) < 1.0_JPRB) THEN
+              ZOCUDET5(JL,JK)=1.6_JPRB-ZRH5(JL,JK)
+            ELSE
+              ZOCUDET5(JL,JK)=0.6_JPRB
+            ENDIF
+            ZDETNEW5(JL,JK)=1.0_JPRB-ZOCUDET5(JL,JK)*ZSQRATW5(JL,JK)
+          ELSE
+            ZDETNEW5(JL,JK)=1.0_JPRB
+          ENDIF
+          ZDET15(JL,JK)=ZDET5(JL,JK)
+          ZDET5(JL,JK)=MAX(ZDET5(JL,JK),ZDETNEW5(JL,JK))
+        ENDIF
+        IF (ZWU2H5(JL,JK) > 0.0_JPRB) THEN
+          ZDET25(JL,JK)=ZDET5(JL,JK)
+          PMFU5(JL,JK) = PMFU5(JL,JK+1)*(1.0_JPRB+ZENT5(JL,JK)-ZDET5(JL,JK))
+          PLUDE5(JL,JK) = ZDET5(JL,JK)*PLU5(JL,JK+1)
+          PMFUDE_RATE5(JL,JK) = ZDET5(JL,JK)*PMFU5(JL,JK+1)
+        ENDIF
+      ENDIF
+ 
+      ZMFU15(JL,JK)=PMFU5(JL,JK)
+
+      IF (PMFU5(JL,JK) <= 0.0_JPRB .OR. ZWU2H5(JL,JK) <= 0.0_JPRB &
+        & .OR. ZBUOF5(JL,JK) == 0.0_JPRB) THEN
+        KCTOP(JL)=JK+1
+        PMFU5(JL,JK)=0.0_JPRB
+        PLUDE5(JL,JK)=PLU5(JL,JK+1)
+        ZDET5(JL,JK)=1.0_JPRB
+        PMFUDE_RATE5(JL,JK)=PMFU5(JL,JK+1)
+      ENDIF
+
+! Store entrainment and detrainment rates for momentum computations
+      ZERATE5 (JL,JK)=ZENT5(JL,JK)
+      ZDERATE5(JL,JK)=ZDET5(JL,JK)
+
+! Organised entrainment for next level
+      LL_LTEST4(JL,JK)=(ZBUOF5(JL,JK) > -0.2_JPRB*RG*ZFACT22(JL,JK) .AND. &
+                      & PLU5(JL,JK+1) > 0.0_JPRB)
+      IF (LL_LTEST4(JL,JK)) THEN
+        ZRHFACT5(JL,JK)=0.30_JPRB-(MIN(1.0_JPRB,ZRH5(JL,JK))-1.0_JPRB)
+        ZEPSORG5(JL)=ENTRORG2*ZRHFACT5(JL,JK)*ZDZ5(JL,JK)*ZFACTQS5(JL,JK)
+        ZEPSORG15(JL,JK)=ZEPSORG5(JL)
+        ZEPSORG5(JL)=MIN(0.4_JPRB,ZEPSORG5(JL))
+      ELSE
+        ZEPSORG5(JL)=0.0_JPRB
+      ENDIF
+
+      PMFUS5 (JL,JK)=PTU5(JL,JK)
+      PMFUQ5 (JL,JK)=PQU5(JL,JK)
+      PMFUL5 (JL,JK)=PLU5(JL,JK)
+      PDMFUP5(JL,JK)=PQPRCV5(JL,JK)*PMFU5(JL,JK)
+    ENDIF
+  ENDDO
+ENDDO
+
+! Average updraught velocity
+DO JL=KIDIA,KFDIA
+  IF(LDCUM(JL)) THEN
+    IF (ZDPMEAN5(JL) > 1.0_JPRB) THEN
+      ZWMEAN5(JL)=PWMEAN5(JL)
+      ZFACT25(JL)=1.0_JPRB/ZDPMEAN5(JL)
+      PWMEAN5(JL)=PWMEAN5(JL)*ZFACT25(JL)
+    ENDIF
+    LL_LTEST3(JL)=(PWMEAN5(JL) < 1.E-2_JPRB)
+    IF (LL_LTEST3(JL)) PWMEAN5(JL)= 1.E-2_JPRB
+    ZSQRT5(JL)=SQRT(PWMEAN5(JL))
+    PWMEAN5(JL)=ZSQRT5(JL)
+  ENDIF
+ENDDO
+
+! Store for adjoint
+I_KCBOT1(:)=KCBOT(:)
+I_KTYPE1(:)=KTYPE(:)
+LL_LDCUM1(:)=LDCUM(:)
+
+! Disregard single layer convective clouds
+! to avoid problem in CAPE closure.
+DO JL=KIDIA,KFDIA
+  LL_LTEST2(JL)=(LDCUM(JL) .AND. KCTOP(JL) == KCBOT(JL))
+  IF (LL_LTEST2(JL)) THEN
+    LDCUM(JL)=.FALSE.
+    KCTOP(JL)=-2
+    KCBOT(JL)=-2
+    KTYPE(JL)=0
+    PWMEAN5(JL)=0.0_JPRB
+    DO JK=1,KLEV
+      ZERATE5(JL,JK)=0.0_JPRB
+      ZDERATE5(JL,JK)=0.0_JPRB
+    ENDDO
+  ENDIF
+ENDDO
+
+! Updraught modified entrainment rates for momentum computations
+DO JK=1,KLEV
+  DO JL=KIDIA,KFDIA
+    IF (LDCUM(JL)) THEN
+      ZFAC=0.0_JPRB
+      IF (KTYPE(JL) == 1 .OR. KTYPE(JL) == 3) ZFAC=2.0_JPRB
+      IF (KTYPE(JL) == 1 .AND. JK <= KCTOP(JL)+2) ZFAC=3.0_JPRB
+      PERATEU5(JL,JK)=ZERATE5(JL,JK)+ZFAC*ZDERATE5(JL,JK)
+    ENDIF
+  ENDDO
+ENDDO
+
+!     -----------------------------------------------------------
+!     -----------------------------------------------------------
+
+!     *****               ADJOINT CALCULATIONS             ******
+
+!     -----------------------------------------------------------
+!     -----------------------------------------------------------
+
+!*         0.     INITIALIZATIONS
+!                 ---------------
+
+ZWU2H(:,:)=0.0_JPRB
+ZDPMEAN(:)=0.0_JPRB
+ZSUH(:,:) =0.0_JPRB
+ZSENH(:,:)=0.0_JPRB
+ZERATE(:,:)=0.0_JPRB
+ZDERATE(:,:)=0.0_JPRB
+
+! Updraught modified entrainment rates for momentum computations
+DO JK=1,KLEV
+  DO JL=KIDIA,KFDIA
+    IF (LDCUM(JL)) THEN
+      ZFAC=0.0_JPRB
+      IF (KTYPE(JL) == 1 .OR. KTYPE(JL) == 3) ZFAC=2.0_JPRB
+      IF (KTYPE(JL) == 1 .AND. JK <= KCTOP(JL)+2) ZFAC=3.0_JPRB
+      ZERATE(JL,JK) =ZERATE(JL,JK) +PERATEU(JL,JK)
+      ZDERATE(JL,JK)=ZDERATE(JL,JK)+PERATEU(JL,JK)*ZFAC
+      PERATEU(JL,JK)=0.0_JPRB
+    ENDIF
+  ENDDO
+ENDDO
+
+DO JL=KIDIA,KFDIA
+  IF (LL_LTEST2(JL)) THEN
+    DO JK=KLEV,1,-1
+      ZDERATE(JL,JK)=0.0_JPRB
+      ZERATE(JL,JK)=0.0_JPRB
+    ENDDO
+    PWMEAN(JL)=0.0_JPRB
+  ENDIF
+ENDDO
+
+! Average updraught velocity
+DO JL=KIDIA,KFDIA
+  IF(LL_LDCUM1(JL)) THEN
+    PWMEAN(JL)=PWMEAN(JL)*0.5_JPRB/ZSQRT5(JL)
+    IF (LL_LTEST3(JL)) PWMEAN(JL)=0.0_JPRB
+    IF (ZDPMEAN5(JL) > 1.0_JPRB) THEN
+      ZDPMEAN(JL)=ZDPMEAN(JL)-PWMEAN(JL)*ZWMEAN5(JL)*ZFACT25(JL)**2
+      PWMEAN(JL)=PWMEAN(JL)*ZFACT25(JL)
+    ENDIF
+  ENDIF
+ENDDO
+
+!----------------------------------------------------------------------
+
+!     4.0          COMPUTE MASS-FLUX PROFILE
+!                  -------------------------
+
+ZEPSORG(:)=0.0_JPRB
+
+DO JK=JKT2,KLEV-1
+
+  ZENT(:)=0.0_JPRB
+  ZDET(:)=0.0_JPRB
+  ZDZ(:)=0.0_JPRB
+  ZQOLD(:)=0.0_JPRB
+  ZPH(:)=0.0_JPRB
+  ZRH(:)=0.0_JPRB
+  ZFACTQS(:)=0.0_JPRB
+
+  DO JL=KIDIA,KFDIA
+    IF (LL_LTEST1(JL,JK)) THEN
+
+      ZBUOF=0.0_JPRB
+      ZLNEW=0.0_JPRB
+      ZLMAX=0.0_JPRB
+      ZLUOLD=0.0_JPRB
+      ZCOND=0.0_JPRB
+
+      PMFU(JL,JK)  =PMFU(JL,JK)  +PDMFUP(JL,JK)*PQPRCV5(JL,JK)
+      PQPRCV(JL,JK)=PQPRCV(JL,JK)+PDMFUP(JL,JK)*PMFU5(JL,JK)
+      PDMFUP(JL,JK)=0.0_JPRB
+
+      PLU(JL,JK) = PLU(JL,JK) + PMFUL(JL,JK)
+      PMFUL(JL,JK)=0.0_JPRB
+
+      PQU(JL,JK) = PQU(JL,JK) + PMFUQ(JL,JK)
+      PMFUQ(JL,JK)=0.0_JPRB
+
+      PTU(JL,JK) = PTU(JL,JK) + PMFUS(JL,JK)
+      PMFUS(JL,JK)=0.0_JPRB
+
+! Organised entrainment for next level
+      IF (LL_LTEST4(JL,JK)) THEN
+
+        IF (LREGCV) ZEPSORG(JL) = ZEPSORG(JL) * 0.1_JPRB
+
+        IF (ZEPSORG15(JL,JK) > 0.4_JPRB) ZEPSORG(JL)=0.0_JPRB
+        
+        ZRHFACT     =               ZEPSORG(JL)*ENTRORG2*ZDZ5(JL,JK)*ZFACTQS5(JL,JK) 
+        ZDZ(JL)     = ZDZ(JL)     + ZEPSORG(JL)*ENTRORG2*ZRHFACT5(JL,JK)*ZFACTQS5(JL,JK)
+        ZFACTQS(JL) = ZFACTQS(JL) + ZEPSORG(JL)*ENTRORG2*ZDZ5(JL,JK)*ZRHFACT5(JL,JK)
+        ZEPSORG(JL)=0.0_JPRB
+
+        IF (ZRH5(JL,JK) < 1.0_JPRB) THEN
+          ZRH(JL) = ZRH(JL) - ZRHFACT
+        ENDIF
+        ZRHFACT=0.0_JPRB
+
+      ELSE
+        ZEPSORG(JL)=0.0_JPRB
+      ENDIF
+
+! Store entrainment and detrainment rates for momentum computations
+      ZDET(JL)=ZDET(JL)+ZDERATE(JL,JK)
+      ZDERATE(JL,JK)=0.0_JPRB
+
+      ZENT(JL)=ZENT(JL)+ZERATE(JL,JK)
+      ZERATE(JL,JK)=0.0_JPRB
+
+      IF (ZMFU15(JL,JK) <= 0.0_JPRB .OR. ZWU2H5(JL,JK) <= 0.0_JPRB &
+        & .OR. ZBUOF5(JL,JK) == 0.0_JPRB) THEN
+
+        PMFU(JL,JK+1)=PMFU(JL,JK+1)+PMFUDE_RATE(JL,JK)
+        PMFUDE_RATE(JL,JK)=0.0_JPRB
+
+        ZDET(JL)=0.0_JPRB
+
+        PLU(JL,JK+1) =PLU(JL,JK+1) +PLUDE(JL,JK)
+        PLUDE(JL,JK)=0.0_JPRB
+
+        PMFU(JL,JK)=0.0_JPRB
+      ENDIF
+
+! Entrainment and detrainment according to variation of kinetic energy
+! on the vertical.
+
+      IF (ZWU2H5(JL,JK) >= ZWU2H5(JL,JK+1)) THEN
+        PMFU(JL,JK+1)=PMFU(JL,JK+1)+PMFUDE_RATE(JL,JK)*ZDET25(JL,JK)  
+        ZDET(JL)     =ZDET(JL)     +PMFUDE_RATE(JL,JK)*PMFU5(JL,JK+1)
+        PMFUDE_RATE(JL,JK)=0.0_JPRB
+
+        PLU (JL,JK+1) = PLU (JL,JK+1) + PLUDE(JL,JK)*ZDET25(JL,JK) 
+        ZDET(JL)      = ZDET(JL)      + PLUDE(JL,JK)*PLU5(JL,JK+1)  
+        PLUDE(JL,JK)=0.0_JPRB
+
+        PMFU(JL,JK+1)=PMFU(JL,JK+1)+PMFU(JL,JK)*(1.0_JPRB+ZENT5(JL,JK)-ZDET25(JL,JK))
+        ZENT(JL)     =ZENT(JL)     +PMFU(JL,JK)*PMFU5(JL,JK+1)
+        ZDET(JL)     =ZDET(JL)     -PMFU(JL,JK)*PMFU5(JL,JK+1)
+        PMFU(JL,JK)=0.0_JPRB
+      ELSE
+
+        IF (ZWU2H5(JL,JK) > 0.0_JPRB) THEN
+          PMFU(JL,JK+1)=PMFU(JL,JK+1)+PMFUDE_RATE(JL,JK)*ZDET25(JL,JK)  
+          ZDET(JL)     =ZDET(JL)     +PMFUDE_RATE(JL,JK)*PMFU5(JL,JK+1)
+          PMFUDE_RATE(JL,JK)=0.0_JPRB
+  
+          PLU (JL,JK+1) = PLU (JL,JK+1) + PLUDE(JL,JK)*ZDET25(JL,JK) 
+          ZDET(JL)      = ZDET(JL)      + PLUDE(JL,JK)*PLU5(JL,JK+1)  
+          PLUDE(JL,JK)=0.0_JPRB
+
+          PMFU(JL,JK+1)=PMFU(JL,JK+1)+PMFU(JL,JK)*(1.0_JPRB+ZENT5(JL,JK)-ZDET25(JL,JK))
+          ZENT(JL)     =ZENT(JL)     +PMFU(JL,JK)*PMFU5(JL,JK+1)
+          ZDET(JL)     =ZDET(JL)     -PMFU(JL,JK)*PMFU5(JL,JK+1)
+          PMFU(JL,JK)=0.0_JPRB
+        ENDIF
+
+! Organised detrainment
+        IF (LL_LTEST6(JL,JK)) THEN
+          ZDETNEW=0.0_JPRB
+          ZRATW=0.0_JPRB
+
+          IF (ZDET15(JL,JK) < ZDETNEW5(JL,JK)) THEN
+            ZDETNEW = ZDETNEW + ZDET(JL)
+            ZDET(JL)=0.0_JPRB
+          ENDIF
+
+          IF (ZRATW5(JL,JK) > 0.0_JPRB) THEN
+            ZOCUDET=0.0_JPRB
+            ZRATW   = ZRATW   - ZDETNEW *(0.5_JPRB*ZOCUDET5(JL,JK)/ZSQRATW5(JL,JK))
+            ZOCUDET = ZOCUDET - ZDETNEW *ZSQRATW5(JL,JK)
+
+            IF (ZRH5(JL,JK) < 1.0_JPRB) THEN
+              IF (LREGCV) ZOCUDET=0.0_JPRB
+              ZRH(JL) = ZRH(JL) - ZOCUDET
+            ENDIF
+            ZOCUDET =0.0_JPRB
+          ENDIF
+          ZDETNEW=0.0_JPRB
+
+          IF (LREGCV) THEN
+            ZRATW=0.0_JPRB
+          ENDIF
+
+          ZFACT3 = 1.0_JPRB/ZWU2H5(JL,JK+1)
+          ZWU2H(JL,JK)   = ZWU2H(JL,JK)   + ZRATW*ZFACT3
+          ZWU2H(JL,JK+1) = ZWU2H(JL,JK+1) - ZRATW*ZWU2H5(JL,JK)*ZFACT3**2
+          ZRATW=0.0_JPRB
+        ENDIF
+      ENDIF
+
+! Accumulate updraught kinetic energy in the vertical
+
+      PAPH(JL,JK+1) = PAPH(JL,JK+1) + ZDPMEAN(JL)
+      PAPH(JL,JK  ) = PAPH(JL,JK  ) - ZDPMEAN(JL)
+
+      PAPH(JL,JK+1) = PAPH(JL,JK+1) + ZWU2H5(JL,JK)*PWMEAN(JL)
+      PAPH(JL,JK  ) = PAPH(JL,JK  ) - ZWU2H5(JL,JK)*PWMEAN(JL)
+      ZWU2H(JL,JK)  = ZWU2H(JL,JK)  + (PAPH5(JL,JK+1)-PAPH5(JL,JK))*PWMEAN(JL)
+
+! Solve kinetic energy equation
+
+      ZDMIX5=1.0_JPRB/(1.0_JPRB+ZBW*ZENT5(JL,JK))
+
+      ZWU2H(JL,JK+1)=ZWU2H(JL,JK+1)+ZWU2H(JL,JK) &
+       & *(1.0_JPRB-ZBW*ZENT5(JL,JK))*ZDMIX5   
+      ZENT(JL)=ZENT(JL)-ZWU2H(JL,JK)*ZBW &
+       & *(ZWU2H5(JL,JK+1)+ZWU2H5(JL,JK))*ZDMIX5  
+      ZBUOF=ZBUOF+ZWU2H(JL,JK)*2.0_JPRB*ZAW*ZDZ5(JL,JK)*ZDMIX5 
+      ZDZ(JL)=ZDZ(JL)+ZWU2H(JL,JK)*2.0_JPRB*ZAW*ZBUOF5(JL,JK)*ZDMIX5
+      ZWU2H(JL,JK)=0.0_JPRB
+
+! Reduce buoyancy perturbation if required
+      IF (LREGCV) THEN
+        ZBUOF=ZBUOF*0.33_JPRB
+      ENDIF
+
+! Buoyancy on full levels
+
+      PBUOH(JL,JK  )=PBUOH(JL,JK  )+ZBUOF*0.5_JPRB
+      PBUOH(JL,JK+1)=PBUOH(JL,JK+1)+ZBUOF*0.5_JPRB
+      ZBUOF=0.0_JPRB
+
+      ZTVUH=0.0_JPRB
+      ZTVENH=0.0_JPRB
+
+      IF (LL_LTEST5(JL,JK)) THEN
+        ZTVUH  = ZTVUH  + PBUOH(JL,JK)*RG*ZFACT22(JL,JK)
+        ZTVENH = ZTVENH - PBUOH(JL,JK)*RG*ZTVUH5(JL,JK)*ZFACT22(JL,JK)**2
+        PBUOH(JL,JK)=0.0_JPRB
+
+        PTENH(JL,JK) = PTENH(JL,JK) + ZTVENH*(1.0_JPRB+RETV*PQENH5(JL,JK))
+        PQENH(JL,JK) = PQENH(JL,JK) + ZTVENH*PTENH5(JL,JK)*RETV
+        ZTVENH=0.0_JPRB
+
+        PTENH(JL,JK)=PTENH(JL,JK)+ZSENH(JL,JK)*RCPD
+        PGEOH(JL,JK)=PGEOH(JL,JK)+ZSENH(JL,JK)
+        ZSENH(JL,JK)=0.0_JPRB
+
+        PQEN(JL,JK  )=PQEN(JL,JK  )+PQENH(JL,JK)*0.5_JPRB
+        PQEN(JL,JK-1)=PQEN(JL,JK-1)+PQENH(JL,JK)*0.5_JPRB
+        PQENH(JL,JK)=0.0_JPRB
+
+        PTEN(JL,JK  )=PTEN(JL,JK  )+PTENH(JL,JK)*0.5_JPRB
+        PTEN(JL,JK-1)=PTEN(JL,JK-1)+PTENH(JL,JK)*0.5_JPRB
+        PTENH(JL,JK)=0.0_JPRB       
+      ENDIF 
+
+      ZTVUH =ZTVUH +PBUOH(JL,JK)*RG*ZFACT2(JL,JK)
+      ZTVENH=ZTVENH-PBUOH(JL,JK)*RG*ZTVUH5(JL,JK)*ZFACT2(JL,JK)**2
+      PBUOH(JL,JK)=0.0_JPRB
+
+      PTENH(JL,JK) = PTENH(JL,JK) + ZTVENH*(1.0_JPRB+RETV*ZQENH15(JL,JK))
+      PQENH(JL,JK) = PQENH(JL,JK) + ZTVENH*ZTENH15(JL,JK)*RETV
+      ZTVENH=0.0_JPRB
+
+      PQU(JL,JK)      = PQU(JL,JK)      + ZTVUH*RETV*PTU5(JL,JK)
+      PLU(JL,JK+1)    = PLU(JL,JK+1)    - ZTVUH*PTU5(JL,JK)
+      PQPRCV(JL,JK+1) = PQPRCV(JL,JK+1) - ZTVUH*PTU5(JL,JK)
+      PLGLAC(JL,JK)   = PLGLAC(JL,JK)   + ZTVUH*RALFDCP
+      PTU(JL,JK)      = PTU(JL,JK)      + ZTVUH &
+               & *(1.0_JPRB+RETV*PQU5(JL,JK)-PLU5(JL,JK+1)-PQPRCV5(JL,JK+1))
+      ZTVUH=0.0_JPRB
+
+! update dry static energy after condensation + freezing
+
+      PTU(JL,JK)   = PTU(JL,JK)    + ZSUH(JL,JK)*RCPD
+      PLGLAC(JL,JK)= PLGLAC(JL,JK) + ZSUH(JL,JK)*RCPD*RALFDCP
+      PGEOH(JL,JK) = PGEOH(JL,JK)  + ZSUH(JL,JK)
+      ZSUH(JL,JK)=0.0_JPRB
+
+! add glaciation of rain
+
+      IF (RTT > PTEN5(JL,JK)) THEN
+        PQPRCV(JL,JK) = PQPRCV(JL,JK) + ZGLAC*FOEALFCU(PTEN5(JL,JK))*PLGLAC(JL,JK) 
+        PTEN(JL,JK) = PTEN(JL,JK) + ZGLAC*PQPRCV5(JL,JK)*FOEALFCUAD(PLGLAC(JL,JK),PTEN5(JL,JK))   
+      ENDIF
+ 
+! frozen water
+
+      PTU(JL,JK)=PTU(JL,JK)-ZCOND5(JL,JK) &
+              & *FOEALFCUAD(PLGLAC(JL,JK),PTU5(JL,JK))   
+      PTU(JL,JK+1)=PTU(JL,JK+1)+ZCOND5(JL,JK) &
+                & *FOEALFCUAD(PLGLAC(JL,JK),PTU5(JL,JK+1))  
+      ZCOND=ZCOND+PLGLAC(JL,JK) &
+         & *( (1.0_JPRB-FOEALFCU(PTU5(JL,JK))) &
+         & -  (1.0_JPRB-FOEALFCU(PTU5(JL,JK+1))) )  
+      PLGLAC(JL,JK)=0.0_JPRB  
+    
+! microphysics
+
+      ZLNEW=ZLNEW+PLU(JL,JK)
+      PLU(JL,JK)=0.0_JPRB
+
+      IF (ZLMAX5(JL,JK)-ZLNEW35(JL,JK) > 0.0_JPRB) THEN      
+        ZLMAX=ZLMAX+PQPRCV(JL,JK)
+        ZLNEW=ZLNEW-PQPRCV(JL,JK)
+      ENDIF
+      PQPRCV(JL,JK)=0.0_JPRB
+    
+      IF (ZLNEW25(JL,JK) > ZQCMAX) THEN
+        ZLNEW=0.0_JPRB
+      ENDIF
+ 
+      IF(LDLAND(JL)) THEN
+        ZDNOPRC=5.E-4_JPRB
+      ELSE
+        ZDNOPRC=3.E-4_JPRB
+      ENDIF
+
+      IF (ZLMAX5(JL,JK) > ZDNOPRC) THEN
+
+        ZINT=0.0_JPRB
+        ZD=0.0_JPRB
+        ZCBF=0.0_JPRB
+        ZWU=0.0_JPRB
+        ZZCO=0.0_JPRB
+        ZDT=0.0_JPRB
+        ZDT1=0.0_JPRB
+        ZLCRIT=0.0_JPRB
+        ZDFI=0.0_JPRB
+        ZC=0.0_JPRB
+        ZPRCON=0.0_JPRB
+
+        IF (ZLMAX5(JL,JK) < ZLNEW15(JL,JK)) THEN
+          IF (ZLMAX5(JL,JK) > 0.0_JPRB) THEN
+            ZLMAX=ZLMAX+ZLNEW
+            ZLNEW=0.0_JPRB
+          ELSE
+            ZLNEW=0.0_JPRB
+          ENDIF
+        ELSE
+          IF (ZLNEW15(JL,JK) <= 0.0_JPRB) ZLNEW=0.0_JPRB
+        ENDIF
+        
+        ZLUOLD= ZLUOLD + ZLNEW * ZINT5(JL,JK)
+        ZINT  = ZINT   + ZLNEW * (ZLUOLD5(JL,JK)-ZC5(JL,JK)*Z1ZD5(JL,JK))  
+        ZC    = ZC     + ZLNEW * (1.0_JPRB-ZINT5(JL,JK))*Z1ZD5(JL,JK)
+        ZD    = ZD     - ZLNEW * ZC5(JL,JK)*(1.0_JPRB-ZINT5(JL,JK))*(Z1ZD5(JL,JK)**2)  
+        ZLNEW=0.0_JPRB
+
+        ZD=ZD-ZINT*ZINT5(JL,JK)
+        ZINT=0.0_JPRB
+
+        ZFACT6 = ZZCO5(JL,JK)*ZDFI5(JL,JK)*2.0_JPRB*ZEXP5(JL,JK)&
+            &  * ZLMAX5(JL,JK)*(ZLCRIT5I(JL,JK)**2)
+        ZZCO  = ZZCO   + ZD * ZDFI5(JL,JK)*(1.0_JPRB-ZEXP5(JL,JK))
+        ZDFI  = ZDFI   + ZD * ZZCO5(JL,JK)*(1.0_JPRB-ZEXP5(JL,JK))
+        ZLMAX = ZLMAX  + ZD * ZFACT6
+        ZLCRIT= ZLCRIT - ZD * ZFACT6*ZLMAX5(JL,JK)*ZLCRIT5I(JL,JK)
+        ZD=0.0_JPRB
+
+        ZLMAX =ZLMAX +ZC
+        ZLUOLD=ZLUOLD-ZC
+        ZC=0.0_JPRB
+
+        PGEOH(JL,JK  )=PGEOH(JL,JK  )+ZDFI
+        PGEOH(JL,JK+1)=PGEOH(JL,JK+1)-ZDFI
+        ZDFI=0.0_JPRB
+
+        ZCBF=ZCBF-ZLCRIT*ZLCRIT5(JL,JK)*ZCBF5I(JL,JK)
+        ZLCRIT=0.0_JPRB
+
+        ZPRCON=ZPRCON+ZZCO*ZCBF5(JL,JK)
+        ZCBF  =ZCBF  +ZZCO*ZPRCON5(JL,JK)
+        ZZCO=0.0_JPRB
+        
+        IF (ZDT5(JL,JK) > 0.0_JPRB) THEN
+          ZDT=ZDT+ZCBF*0.5_JPRB*Z_CPRC2/ZSQRT25(JL,JK)
+        ENDIF
+        ZCBF=0.0_JPRB
+
+        IF (LLDT(JL,JK)) THEN
+          ZDT1=ZDT1+ZDT
+        ENDIF
+        ZDT=0.0_JPRB
+
+        PTU(JL,JK)=PTU(JL,JK)-ZDT1
+        ZDT1=0.0_JPRB
+
+        ZWU=ZWU-ZPRCON*ZPRCDGW/(0.75_JPRB*ZWU5(JL,JK)**2)
+        ZPRCON=0.0_JPRB
+
+        IF (ZWU05(JL,JK) > 0.447_JPRB .AND. ZWU05(JL,JK) < 15.0_JPRB) THEN
+          IF (LREGCV) THEN
+            IF (ZWU05(JL,JK) < 0.1_JPRB) THEN
+              ZWU=0.0_JPRB  
+            ELSE      
+              ZWU=ZWU*0.1_JPRB   
+            ENDIF     
+          ENDIF
+          ZWU2H(JL,JK+1)=ZWU2H(JL,JK+1)+ZWU*0.5_JPRB/ZWU05(JL,JK)
+        ENDIF
+        ZWU=0.0_JPRB
+
+      ELSE
+        ZLMAX=ZLMAX+ZLNEW
+        ZLNEW=0.0_JPRB         
+      ENDIF
+
+      IF (ZLUOLD5(JL,JK)+ZCOND5(JL,JK) > 0.0_JPRB) THEN
+        ZLUOLD=ZLUOLD+ZLMAX
+        ZCOND=ZCOND+ZLMAX
+      ENDIF
+      ZLMAX=0.0_JPRB
+    
+      PLU(JL,JK+1)=PLU(JL,JK+1)+ZLUOLD
+      ZLUOLD=0.0_JPRB
+
+! condensation
+
+      IF (ZQOLD5(JL,JK)-PQU5(JL,JK) > 0.0_JPRB) THEN
+        ZQOLD(JL)=ZQOLD(JL)+ZCOND
+        PQU(JL,JK)=PQU(JL,JK)-ZCOND
+      ENDIF
+      ZCOND=0.0_JPRB
+
+    ENDIF
+
+! Input arrays for CUADJTQSAD
+    ZPH5(JL)= PAPH5(JL,JK)
+    LLTEST(JL)=LL_LTEST1(JL,JK)
+
+  ENDDO
+
+  IK=JK
+  ICALL=1
+
+  CALL CUADJTQSAD &
+   & ( KIDIA,    KFDIA,    KLON,    KLEV,&
+   &   IK,&
+   &   ZPH5,     ZTU15,    ZQU15,&
+   &   ZPH,      PTU,      PQU,      LLTEST,   ICALL)  
+
+  DO JL=KIDIA,KFDIA
+    IF (LL_LTEST1(JL,JK)) THEN
+
+      ZDEL=0.0_JPRB
+      ZEPS=0.0_JPRB
+
+      PAPH(JL,JK)=PAPH(JL,JK)+ZPH(JL) 
+      ZPH(JL)=0.0_JPRB
+
+      ZSUH(JL,JK)=ZSUH(JL,JK)+PTU(JL,JK)*ZRCPD
+      PGEOH(JL,JK)=PGEOH(JL,JK)-PTU(JL,JK)*ZRCPD
+      PTU(JL,JK)=0.0_JPRB
+  
+      PQU(JL,JK)=PQU(JL,JK)+ZQOLD(JL)
+      ZQOLD(JL)=0.0_JPRB
+
+      ZSUH(JL,JK+1) = ZSUH(JL,JK+1)  + (1.0_JPRB-ZENT5(JL,JK))*ZSUH(JL,JK)
+      ZSENH(JL,JK+1)= ZSENH(JL,JK+1) +           ZENT5(JL,JK) *ZSUH(JL,JK)
+      ZENT(JL) = ZENT(JL) + (ZSENH5(JL,JK+1) - ZSUH5(JL,JK+1))*ZSUH(JL,JK)
+      ZSUH(JL,JK)=0.0_JPRB
+
+      PQU(JL,JK+1)  = PQU(JL,JK+1)   + (1.0_JPRB-ZENT5(JL,JK))*PQU(JL,JK)
+      PQENH(JL,JK+1)= PQENH(JL,JK+1) +           ZENT5(JL,JK) *PQU(JL,JK)
+      ZENT(JL)  = ZENT(JL) + (PQENH5(JL,JK+1) - PQU5(JL,JK+1))*PQU(JL,JK)
+      PQU(JL,JK)=0.0_JPRB
+
+      IF (ZRH5(JL,JK) < 1.0_JPRB) THEN
+        ZRH(JL)  = ZRH(JL) - ZDET(JL) * ZDET05(JL,JK)
+        ZDET(JL) = ZDET(JL) * (1.6_JPRB - ZRH5(JL,JK))
+      ELSE
+        ZDET(JL) = ZDET(JL) * 0.6_JPRB
+      ENDIF
+
+      IF (KTYPE(JL) >= 2) THEN
+        ZENT(JL)=ZENT(JL)+ZDET(JL)
+        ZDET(JL)=0.0_JPRB
+
+        ZENT(JL)=ENTSHALP2*ZENT(JL)
+      ELSE
+        ZDZ(JL)=ZDZ(JL)+DETRPEN2*ZDET(JL)
+        ZDET(JL)=0.0_JPRB
+      ENDIF 
+
+      ZEPSORG(JL)=ZEPSORG(JL)+ZENT(JL)
+      ZENT(JL)=0.0_JPRB
+
+    ENDIF
+
+    IF (LL_LTEST0(JL,JK)) THEN
+      ZRATQS=0.0_JPRB
+
+      IKB=I_KCBOT1(JL)   
+   
+      ! Local trajectory re-computations.
+      ZFACT4=1.0_JPRB/PQSEN5(JL,JK)
+      ZFACT7=1.0_JPRB/PQSEN5(JL,IKB)
+      ZRATQS5=PQSEN5(JL,JK)*ZFACT7
+
+      PQEN(JL,JK) = PQEN(JL,JK)  + ZRH(JL)*ZFACT4
+      PQSEN(JL,JK)= PQSEN(JL,JK) - ZRH(JL)*ZRH5(JL,JK)*ZFACT4
+      ZRH(JL)=0.0_JPRB        
+
+      IF (ZRATQS5 < 1.0_JPRB) THEN
+        ZRATQS=ZRATQS+ZFACTQS(JL)*3.0_JPRB*ZRATQS5**2
+      ENDIF
+      ZFACTQS(JL)=0.0_JPRB
+
+      PQSEN(JL,JK)  = PQSEN(JL,JK)  + ZRATQS*ZFACT7
+      PQSEN(JL,IKB) = PQSEN(JL,IKB) - ZRATQS*ZRATQS5*ZFACT7
+      ZRATQS=0.0_JPRB
+
+      PGEOH(JL,JK  )=PGEOH(JL,JK  )+ZDZ(JL)*ZRG
+      PGEOH(JL,JK+1)=PGEOH(JL,JK+1)-ZDZ(JL)*ZRG
+      ZDZ(JL)=0.0_JPRB
+    ENDIF
+
+  ENDDO
+ENDDO
+
+!----------------------------------------------------------------------
+
+!     3.0          INITIALIZE VALUES AT cloud base LEVEL
+!                  -------------------------------------
+
+DO JL=KIDIA,KFDIA
+  IF (LL_LDCUM1(JL)) THEN
+    IKB=I_KCBOT1(JL)
+   
+!LOP Initialise buoyancy to zero at cloud base to mimic Tietdke scheme
+    PBUOH (JL,IKB)=0.0_JPRB 
+
+    DO JK=IKB-1,1,-1
+      PLU (JL,JK)=0.0_JPRB
+      PLGLAC (JL,JK)=0.0_JPRB 
+      PQPRCV (JL,JK)=0.0_JPRB 
+      PBUOH (JL,JK)=0.0_JPRB 
+    ENDDO 
+
+    PTU(JL,IKB)=PTU(JL,IKB)+RCPD*ZSUH(JL,IKB)
+    PGEOH(JL,IKB)=PGEOH(JL,IKB)+ZSUH(JL,IKB)
+    ZSUH(JL,IKB)=0.0_JPRB 
+
+    PQPRCV(JL,IKB)=PQPRCV(JL,IKB)+PDMFUP(JL,IKB)*PMFU5(JL,IKB) 
+    PMFU(JL,IKB)  =PMFU(JL,IKB)  +PDMFUP(JL,IKB)*PQPRCV5(JL,IKB)
+    PDMFUP(JL,IKB)=0.0_JPRB
+
+    PLU(JL,IKB)=PLU(JL,IKB)+PMFUL(JL,IKB)
+    PMFUL(JL,IKB)=0.0_JPRB
+
+    PQU(JL,IKB)=PQU(JL,IKB)+PMFUQ(JL,IKB)
+    PMFUQ(JL,IKB)=0.0_JPRB
+
+    PTU(JL,IKB)=PTU(JL,IKB)+PMFUS(JL,IKB)
+    PMFUS(JL,IKB)=0.0_JPRB
+
+    PMFUB(JL)=PMFUB(JL)+PMFU(JL,IKB)
+    PMFU(JL,IKB)=0.0_JPRB
+
+    PWUBASE(JL)=PWUBASE(JL)+ZWU2H(JL,IKB)*2.0_JPRB*PWUBASE5(JL)
+    ZWU2H(JL,IKB)=0.0_JPRB
+
+  ENDIF
+  PWMEAN(JL)=0.0_JPRB
+  ZDPMEAN(JL)=0.0_JPRB
+ENDDO  
+
+!----------------------------------------------------------------------
+
+! initialize various quantities
+
+DO JK=1,KLEV
+  DO JL=KIDIA,KFDIA
+    PMFUDE_RATE(JL,JK)=0.0_JPRB
+    ZWU2H(JL,JK)=0.0_JPRB
+    PDMFUP(JL,JK)=0.0_JPRB
+    PLUDE(JL,JK)=0.0_JPRB
+    PMFUL(JL,JK)=0.0_JPRB
+    PMFUQ(JL,JK)=0.0_JPRB
+    PMFUS(JL,JK)=0.0_JPRB
+    PMFU(JL,JK)=0.0_JPRB
+
+    PTENH(JL,JK)=PTENH(JL,JK)+RCPD*ZSENH(JL,JK)
+    PGEOH(JL,JK)=PGEOH(JL,JK)+ZSENH(JL,JK)
+    ZSENH(JL,JK)=0.0_JPRB 
+
+    ZSUH(JL,JK)=0.0_JPRB
+    PERATEU(JL,JK)=0.0_JPRB
+    ZERATE(JL,JK)=0.0_JPRB
+    ZDERATE(JL,JK)=0.0_JPRB
+  ENDDO
+ENDDO
+
+DO JL=KIDIA,KFDIA
+  ZEPSORG(JL)=0.0_JPRB
+ENDDO
+
+END ASSOCIATE
+IF (LHOOK) CALL DR_HOOK('CUASCN2AD',1,ZHOOK_HANDLE)
+END SUBROUTINE CUASCN2AD

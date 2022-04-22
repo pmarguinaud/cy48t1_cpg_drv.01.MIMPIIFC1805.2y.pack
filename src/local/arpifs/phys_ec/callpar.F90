@@ -224,11 +224,11 @@ USE YOMHOOK            , ONLY : LHOOK, DR_HOOK
 USE YOMCT0             , ONLY : LTWOTL, LSLAG, LIFSMIN, NUNDEFLD
 USE YOMCT3             , ONLY : NSTEP
 USE YOMCST             , ONLY : RG       ,RLVTT    ,RLSTT    ,RTT      ,&
- &                              RCPD, RHOUR
+ &                              RCPD, RHOUR, YRCST
 USE YOETHF             , ONLY : R2ES     ,R3LES    ,R3IES    ,R4LES    ,&
  &                              R4IES    ,R5LES    ,R5IES    ,R5ALVCP  ,R5ALSCP  ,&
  &                              RALVDCP  ,RALSDCP  ,RTWAT    ,RTICE    ,RTICECU  ,&
- &                              RTWAT_RTICE_R      ,RTWAT_RTICECU_R    ,RVTMP2  
+ &                              RTWAT_RTICE_R      ,RTWAT_RTICECU_R    ,RVTMP2 , YRTHF
 USE YOECLDP            , ONLY : NCLDQR,NCLDQS,NCLDQI,NCLDQL
 USE YOMSEKF            , ONLY : N_SEKF_PT, LUSEKF_REF,&
  &                              FKF_SURF_SO, FKF_SURF_TH, FKF_SURF_CR, FKF_SURF_LR,&
@@ -710,7 +710,7 @@ IF ( LERADI ) THEN
   ENDIF
 
   IFLAG=2
-  CALL SATUR (KDIM%KIDIA, KDIM%KFDIA, KDIM%KLON, KDIM%KTDIA, KDIM%KLEV, YDMODEL%YRML_PHY_SLIN%YREPHLI%LPHYLIN, &
+  CALL SATUR (YRTHF, YRCST, KDIM%KIDIA, KDIM%KFDIA, KDIM%KLON, KDIM%KTDIA, KDIM%KLEV, YDMODEL%YRML_PHY_SLIN%YREPHLI%LPHYLIN, &
    & PAUX%PAPRSF, STATE_T0%T, PDIAG%PQSAT, IFLAG)  
 
   !*         2.3 CALCULATE CLOUD COVER DIAGNOSTICS

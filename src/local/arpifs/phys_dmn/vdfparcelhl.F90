@@ -124,10 +124,12 @@ USE YOETHF   , ONLY : R2ES     , R3LES    , R3IES    , &
                      &R4LES    , R4IES    , R5LES    , R5IES     , & 
                      &RALVDCP  , RALSDCP  , &
                      &RTWAT    , RTICE    , RTICECU  , R5ALVCP   , R5ALSCP , & 
-                     &RTWAT_RTICE_R       , RTWAT_RTICECU_R
+                     &RTWAT_RTICE_R       , RTWAT_RTICECU_R, YRTHF
                      
-USE YOMCST   , ONLY : RG  , RLSTT , RCPD , RLVTT , RETV ,RTT         
+USE YOMCST   , ONLY : RG  , RLSTT , RCPD , RLVTT , RETV ,RTT, YRCST
 USE YOMPARAR , ONLY : TPARAR
+USE YOETHF   , ONLY : YRTHF
+
 
 
 IMPLICIT NONE
@@ -283,7 +285,7 @@ ENDDO
     ZPH(JL)            = PAPHM1(JL,JKMAX+1)
   ENDDO
   CALL CUADJTQ&
-     & (YDEPHLI,KIDIA,KFDIA,KLON,KLEV,&
+     & (YRTHF, YRCST, YDEPHLI,KIDIA,KFDIA,KLON,KLEV,&
      & JKMAX+1,&
      &   ZPH,ZTTEMP,ZQTEMP,LLDOIT,4)
 
@@ -441,7 +443,7 @@ DO IITER=1,INITER
 
 
     CALL CUADJTQ&
-     & (YDEPHLI,KIDIA,KFDIA,KLON,KLEV,&
+     & (YRTHF, YRCST, YDEPHLI,KIDIA,KFDIA,KLON,KLEV,&
      & JK,&
      &   ZPH,ZTTEMP,ZQTEMP,LLDOIT,4)
 

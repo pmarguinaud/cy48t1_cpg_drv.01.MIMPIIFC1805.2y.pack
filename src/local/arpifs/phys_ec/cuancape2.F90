@@ -1,0 +1,274 @@
+SUBROUTINE CUANCAPE2(YDECUMF,YDEPHLI, KIDIA,  KFDIA,  KLON,  KLEV,&
+                   &PAP,    PAPH,   PT,    PQ,     PCAPE,   PCIN)
+
+!***** CUANCAPE2 - COMPUTE APPROXIMATE CAPE,CIN  USING THETAE AND THETAES
+
+!     E. HOLM + P. BECHTOLD     E.C.M.W.F.     13/10/2005
+
+!     PURPOSE 
+!     -------
+!                 ESTIMATE CAPE FIRST FOR A MIXED-LAYER PARCEL, THEN
+!                 LOOP OVER SUBSEQUENT DEPARTURE LAYERS IN LOWEST 350 hPa
+!                 Theta_e =Theta*exp[L q_v/(C_p T)] 
+!                         = T*(P0/P)**(R_d/C_p) * exp[L q_v/(C_p T)]
+!                 -> THIS WILL BE THE UPDRAUGHT PARCEL (CONSERVING ITS
+!                 PROPERTIES)  (no entrainment)
+!                 CAPE    = Int ( g dTheta_v/Theta_v dz ) = 
+!                   aprox = Int ( g (Theta_e_up-Theta_e_sat)/Theta_e_sat ) dz
+!                 WITH THIS FORMULATION THE ACTUAL CAPE IS OVERESTIMATED  BY
+!                 ROUGHLY 20%. DEEP CONVECTION CAN BE CONSIDERED FOR CAPE
+!                 VALUES ABOVE 200-500 J/KG            
+
+
+!     PARAMETER     DESCRIPTION                              UNITS
+!     ---------     -----------                              -----
+!     INPUT PARAMETERS (INTEGER):
+
+!    *KIDIA*        START POINT
+!    *KFDIA*        END POINT
+!    *KLON*         NUMBER OF GRID POINTS PER PACKET
+!    *KLEV*         NUMBER OF LEVELS
+
+!    INPUT PARAMETERS (REAL):
+
+!    *PAP*          PRESSURE ON FULL LEVELS                    PA
+!    *PAPH*         PRESSURE ON HALF LEVELS                    PA
+!    *PT*           TEMPERATURE ON FULL LEVELS                 K   
+!    *PQ*           SPECIFIC HUMIDITY ON FULL LEVELS          KG/KG
+
+!    OUTPUT PARAMETERS (REAL):
+
+!    *PCAPE*        CONVECTIVE AVAILABLE POT. ENERGY          J/KG
+!    *PCIN*         CONVECTIVE INHIBITION                     J/KG
+
+!          MODIFICATIONS
+!          -------------
+!     24-06-2011 P. Bechtold :  Add CIN 
+!     01-03-2019 P. Bechtold and I. Tsonevski:  Do computations correctly above LCL
+!                                    enable accurate computations using Theta_v
+
+!-------------------------------------------------------------------------------
+
+USE PARKIND1 , ONLY : JPIM, JPRB
+USE YOMHOOK  , ONLY : LHOOK, DR_HOOK
+USE YOETHF   , ONLY : R2ES, R3LES, R3IES, R4LES, R4IES, R5LES, R5IES, &
+ &                    R5ALVCP, R5ALSCP, RALVDCP, RALSDCP, RTWAT, RTICE, RTICECU, &
+ &                    RTWAT_RTICE_R, RTWAT_RTICECU_R, YRTHF
+USE YOMCST   , ONLY : RETV, RLVTT, RLSTT, RTT, RD, RKAPPA, RATM, RESTT, RCPD, RV, YRCST
+USE YOECUMF  , ONLY : TECUMF
+USE YOEPHLI  , ONLY : TEPHLI
+
+IMPLICIT NONE
+
+TYPE(TECUMF)      ,INTENT(IN)    :: YDECUMF
+TYPE(TEPHLI)      ,INTENT(IN)    :: YDEPHLI
+INTEGER(KIND=JPIM),INTENT(IN)    :: KLON
+INTEGER(KIND=JPIM),INTENT(IN)    :: KLEV
+INTEGER(KIND=JPIM),INTENT(IN)    :: KIDIA
+INTEGER(KIND=JPIM),INTENT(IN)    :: KFDIA
+REAL(KIND=JPRB)   ,INTENT(IN)    :: PAP(KLON,KLEV)
+REAL(KIND=JPRB)   ,INTENT(IN)    :: PAPH(KLON,KLEV+1)
+REAL(KIND=JPRB)   ,INTENT(IN)    :: PT(KLON,KLEV)
+REAL(KIND=JPRB)   ,INTENT(IN)    :: PQ(KLON,KLEV)
+REAL(KIND=JPRB)   ,INTENT(OUT)   :: PCAPE(KLON)
+REAL(KIND=JPRB)   ,INTENT(OUT)   :: PCIN(KLON)
+
+INTEGER(KIND=JPIM) :: JL, JK, JKK, JDEP(KLON)
+
+REAL(KIND=JPRB), DIMENSION(KLON) :: ZPMIX, ZTMIX, ZTHVMIX, ZTHETEU, ZP
+REAL(KIND=JPRB)                  :: ZCAPE(KLON,KLEV), ZCIN(KLON,KLEV),ZCIN2(KLON),&
+                                   &ZTHMIX(KLON,KLEV), ZQMIX(KLON,KLEV),&
+                                   &ZPLCL(KLON,KLEV), ZEXN(KLON,KLEV)
+REAL(KIND=JPRB) :: ZDP, ZTHETES, ZTH, ZDZ, ZTEMP, ZTVEMP, ZRPAP, ZORKAPPA,&
+                  &ZTD, ZTLCL,  ZCST
+
+REAL(KIND=JPRB) :: ZTHETAD(KLON,KLEV), ZTHV(KLON,KLEV), ZZDZ(KLON,KLEV), ZTU(KLON,KLEV), ZQS(KLON,KLEV)
+LOGICAL         :: LLCAPE_REC=.true.,LLZ(KLON), LLPAP(KLON,KLEV), LLDEP(KLON)
+
+REAL(KIND=JPRB) :: ZHOOK_HANDLE
+
+#include "fcttre.func.h"
+#include "cuadjtq.intfb.h"
+!-------------------------------------------------------------------------------
+IF (LHOOK) CALL DR_HOOK('CUANCAPE2',0,ZHOOK_HANDLE)
+ASSOCIATE(NJKT1=>YDECUMF%NJKT1, NJKT2=>YDECUMF%NJKT2, RMINCIN=>YDECUMF%RMINCIN)
+
+ZORKAPPA=1.0_JPRB/RKAPPA
+ZCST=1.0_JPRB/(RESTT*RD/RV)
+
+DO JL=KIDIA,KFDIA
+  PCAPE(JL)=0.0_JPRB
+  PCIN(JL) =0.0_JPRB
+  ZCIN2(JL)=RMINCIN
+ENDDO
+  DO JK=KLEV-1,NJKT2,-1
+     DO JL=KIDIA,KFDIA
+       LLPAP(JL,JK)=( PAP(JL,JK)>80.E2_JPRB )
+       IF(LLPAP(JL,JK)) THEN
+          ZRPAP=1.0_JPRB/PAP(JL,JK)
+          ZQS(JL,JK) = FOEEWM(PT(JL,JK))*ZRPAP
+          ZQS(JL,JK) = MAX(1.E-8_JPRB,ZQS(JL,JK))
+          ZQS(JL,JK) = ZQS(JL,JK)/(1.0_JPRB-RETV*ZQS(JL,JK)) ! small correction
+          ZEXN(JL,JK)=(RATM*ZRPAP)**RKAPPA
+          ZTH = PT(JL,JK)*ZEXN(JL,JK)
+          ZTHETES=ZTH*EXP( FOELDCP(PT(JL,JK))*ZQS(JL,JK)/PT(JL,JK) ) 
+          ZTHETAD(JL,JK)=1.0_JPRB/ZTHETES
+          ZTHV(JL,JK)=1.0_JPRB/(ZTH*(1.0_JPRB+RETV*PQ(JL,JK)))
+       ENDIF
+     ENDDO
+  ENDDO
+
+  DO JK=NJKT2,KLEV-1
+    DO JL=KIDIA,KFDIA
+      ZRPAP=1.0_JPRB/PAP(JL,JK)
+      ZZDZ(JL,JK)=(PAPH(JL,JK+1)-PAPH(JL,JK))*ZRPAP*RD*PT(JL,JK)*&
+             &(1.0_JPRB+RETV*PQ(JL,JK))
+    ENDDO
+  ENDDO
+
+
+DO JKK=KLEV-1,NJKT1,-1
+
+  DO JL=KIDIA,KFDIA
+    ZCAPE(JL,JKK)=0.0_JPRB
+    ZCIN(JL,JKK) =0.0_JPRB
+    IF (PAPH(JL,KLEV+1)-PAPH(JL,JKK-1)<60.E2_JPRB) THEN
+      ZTMIX(JL)=0.0_JPRB
+      ZTHMIX(JL,JKK)=0.0_JPRB
+      ZQMIX(JL,JKK)=0.0_JPRB
+      ZPMIX(JL)=0.0_JPRB
+      DO JK=JKK+1,JKK-1,-1
+        IF(ZPMIX(JL)<30.E2_JPRB) THEN
+          ZDP=PAPH(JL,JK+1)-PAPH(JL,JK)
+          ZPMIX(JL)=ZPMIX(JL)+ZDP
+          ZTHMIX(JL,JKK)=ZTHMIX(JL,JKK)+PT(JL,JK)*ZDP*(RATM/PAP(JL,JK))**RKAPPA
+          ZQMIX(JL,JKK)=ZQMIX(JL,JKK)+PQ(JL,JK)*ZDP
+        ENDIF
+      ENDDO
+      ZDP=1.0_JPRB/ZPMIX(JL)
+      ZQMIX(JL,JKK)=ZQMIX(JL,JKK)*ZDP
+      ZPMIX(JL)=PAPH(JL,JKK+2)-0.5_JPRB*ZPMIX(JL)
+      ZTHMIX(JL,JKK)=ZTHMIX(JL,JKK)*ZDP
+      ZTMIX(JL)=ZTHMIX(JL,JKK)*(ZPMIX(JL)/RATM)**RKAPPA
+    ELSE
+      ZQMIX(JL,JKK)=PQ(JL,JKK)
+      ZPMIX(JL)=PAP(JL,JKK)
+      ZTMIX(JL)=PT(JL,JKK)
+      ZTHMIX(JL,JKK)=PT(JL,JKK)*(RATM/ZPMIX(JL))**RKAPPA
+    ENDIF
+    ZTHETEU(JL)=ZTHMIX(JL,JKK)*&
+               &EXP( FOELDCP(ZTMIX(JL))*ZQMIX(JL,JKK)/ZTMIX(JL) )
+    ZTHVMIX(JL)=ZTHMIX(JL,JKK)*(1.0_JPRB+RETV*ZQMIX(JL,JKK))
+    LLZ(JL)=(PAPH(JL,KLEV+1)-PAPH(JL,JKK))<350.E2_JPRB
+
+    ! dewpoint temperature
+    ZTEMP = LOG(MAX(1.E-4_JPRB,ZQMIX(JL,JKK))*ZPMIX(JL)*ZCST)
+    ZTD = (R4LES*ZTEMP-R3LES*RTT)/(ZTEMP-R3LES)
+    ! adiabatic saturation temperature
+    ZTLCL  = ZTD - ( .212_JPRB + 1.571E-3_JPRB * ( ZTD - RTT )      &
+               - 4.36E-4_JPRB* ( ZTMIX(JL) - RTT ) ) * ( ZTMIX(JL) - ZTD )
+    ZTLCL  = MAX(160.0_JPRB,MIN( ZTLCL, ZTMIX(JL) ))
+    ZPLCL(JL,JKK)  = RATM * ( ZTLCL / ZTHMIX(JL,JKK) ) ** ZORKAPPA
+  ENDDO
+
+  DO JK=JKK,NJKT2,-1
+     DO JL=KIDIA,KFDIA
+       IF(LLPAP(JL,JK) .AND. LLZ(JL)) THEN
+          ZTEMP=ZTHETEU(JL)*ZTHETAD(JL,JK)-1.0_JPRB
+          ZTVEMP=ZTHVMIX(JL)*ZTHV(JL,JK)-1.0_JPRB
+          ZDZ=ZZDZ(JL,JK)
+          IF(PAP(JL,JK)>=ZPLCL(JL,JKK)) THEN
+ !          IF(ZTVEMP < 0.0_JPRB.AND.ZCAPE(JL,JKK)<100.0_JPRB) THEN
+            ! ZCIN(JL,JKK)=ZCIN(JL,JKK)+ZTVEMP*ZDZ
+              ZCIN(JL,JKK)=ZCIN(JL,JKK)+MIN(ZTVEMP,0.0_JPRB)*ZDZ
+ !          ENDIF
+          ELSE
+            IF(ZTEMP > 0.0_JPRB)THEN
+               ZCAPE(JL,JKK)=ZCAPE(JL,JKK)+ZTEMP*ZDZ
+            ELSEIF(ZTEMP < 0.0_JPRB.AND.ZCAPE(JL,JKK)<100.0_JPRB) THEN
+               ZCIN(JL,JKK)=ZCIN(JL,JKK)+ZTEMP*ZDZ
+            ENDIF
+          ENDIF
+       ENDIF
+     ENDDO
+  ENDDO
+  
+ENDDO
+
+      ! chose maximum CAPE and CIN values
+JDEP(:)=KLEV-1
+DO JK=KLEV-1,NJKT1,-1
+  DO JL=KIDIA,KFDIA
+    IF(ZCAPE(JL,JK)>PCAPE(JL)) THEN
+      PCAPE(JL)=ZCAPE(JL,JK)
+      JDEP(JL)=JK
+    END IF
+    IF(ZCIN(JL,JK)>ZCIN2(JL).AND.ZCIN(JL,JK)<0.0_JPRB) THEN
+      ZCIN2(JL)=ZCIN(JL,JK)
+    END IF
+  ENDDO
+ENDDO
+
+DO JL=KIDIA,KFDIA
+  JKK=JDEP(JL)
+  PCIN(JL) =-MAX(RMINCIN,ZCIN(JL,JKK))
+! PCIN(JL) =-ZCIN2(JL)
+ENDDO
+
+      ! recompute most unstable CAPE/CIN using theta_v
+IF(LLCAPE_REC) THEN
+  JK=KLEV-1
+  DO JL=KIDIA,KFDIA
+     ZCIN2(JL)=0.0_JPRB
+     PCIN(JL)=RMINCIN
+     JKK=JDEP(JL)
+     ZTU(JL,JK)=ZTHMIX(JL,JKK)/ZEXN(JL,JK)
+     ZQS(JL,JK)=ZQMIX(JL,JKK)
+     ZCAPE(JL,JKK)=0.0_JPRB
+  ENDDO
+  DO JK=KLEV-2,NJKT2,-1
+     DO JL=KIDIA,KFDIA
+       JKK=JDEP(JL)
+       LLZ(JL)=LLPAP(JL,JK) .AND. PAP(JL,JK)<ZPLCL(JL,JKK)
+       LLDEP(JL)=LLPAP(JL,JK).AND.JK<=JKK
+     ENDDO
+     DO JL=KIDIA,KFDIA
+       IF(LLPAP(JL,JK)) THEN
+         ZTU(JL,JK)=ZTU(JL,JK+1)*ZEXN(JL,JK+1)/ZEXN(JL,JK)
+         ZQS(JL,JK)=ZQS(JL,JK+1)
+       ENDIF
+     ENDDO
+
+     CALL CUADJTQ &
+     & ( YRTHF, YRCST, YDEPHLI, KIDIA,    KFDIA,    KLON,    KLEV, JK,&
+     &   PAP(:,JK),   ZTU,   ZQS,     LLZ,   1)
+
+     DO JL=KIDIA,KFDIA
+       IF(LLDEP(JL)) THEN
+         JKK=JDEP(JL)
+         ZTVEMP=ZTU(JL,JK)*ZEXN(JL,JK)*(1.0_JPRB+RETV*ZQS(JL,JK))*ZTHV(JL,JK)-1.0_JPRB
+         IF(PAP(JL,JK)<=ZPLCL(JL,JKK)) THEN
+           ZCAPE(JL,JKK)=ZCAPE(JL,JKK)+MAX(0.0_JPRB,ZTVEMP)*ZZDZ(JL,JK)
+         ENDIF
+         IF(ZTVEMP<0.0_JPRB.AND.ZCAPE(JL,JKK)<20.0_JPRB) THEN
+           ZCIN2(JL)=ZCIN2(JL)+ZTVEMP*ZZDZ(JL,JK)
+         ENDIF
+       ENDIF
+     ENDDO
+  ENDDO
+
+  DO JL=KIDIA,KFDIA
+    JKK=JDEP(JL)
+    PCIN(JL) =-MAX(RMINCIN,ZCIN2(JL))
+ ! only modify CIN at the moment
+ !  PCAPE(JL)=ZCAPE(JL,JKK)
+  ENDDO
+
+ENDIF
+
+
+!-------------------------------------------------------------------------------
+  
+END ASSOCIATE
+IF (LHOOK) CALL DR_HOOK('CUANCAPE2',1,ZHOOK_HANDLE)
+END SUBROUTINE CUANCAPE2

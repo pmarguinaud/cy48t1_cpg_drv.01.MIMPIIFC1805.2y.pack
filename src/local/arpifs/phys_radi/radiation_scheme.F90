@@ -61,7 +61,8 @@ USE PARKIND1       , ONLY : JPIM, JPRB, JPRD
 USE YOMHOOK        , ONLY : LHOOK, DR_HOOK
 USE YOMRIP0        , ONLY : NINDAT
 USE YOMCT3         , ONLY : NSTEP
-USE YOMCST         , ONLY : RPI, RSIGMA ! Stefan-Boltzmann constant
+USE YOMCST         , ONLY : RPI, RSIGMA, YRCST ! Stefan-Boltzmann constant
+USE YOETHF         , ONLY : YRTHF
 USE YOMLUN         , ONLY : NULERR
 USE SPP_MOD        , ONLY : YSPP_CONFIG, YSPP
 USE MPL_MYRANK_MOD , ONLY : MPL_MYRANK
@@ -328,7 +329,7 @@ THERMODYNAMICS%TEMPERATURE_HL(KIDIA:KFDIA,KLEV+1)&
 ! Compute saturation specific humidity, used to hydrate aerosols. The
 ! "2" for the last argument indicates that the routine is not being
 ! called from within the convection scheme.
-CALL SATUR(KIDIA, KFDIA, KLON, 1, KLEV, YDMODEL%YRML_PHY_SLIN%YREPHLI%LPHYLIN, &
+CALL SATUR(YRTHF, YRCST, KIDIA, KFDIA, KLON, 1, KLEV, YDMODEL%YRML_PHY_SLIN%YREPHLI%LPHYLIN, &
      &  PPRESSURE, PTEMPERATURE, THERMODYNAMICS%H2O_SAT_LIQ, 2)  
 ! Alternative approximate version using temperature and pressure from
 ! the thermodynamics structure

@@ -1,5 +1,5 @@
 SUBROUTINE CULIGHT &
- & ( YDEPHY,  YGFL,    KIDIA ,  KFDIA,   KLON,    KLEV,  PGAW, PGELAT, &
+ & ( YDTHF, YDCST, YDEPHY,  YGFL,    KIDIA ,  KFDIA,   KLON,    KLEV,  PGAW, PGELAT, &
  &   PAP,     PAPH  ,  PAPHI,   PAPHIF,  LDLAND,&
  &   PT    ,  PLU   ,  PMFU,    PCAPE, &
  &   PFPLCL,  PFPLCN,&
@@ -103,12 +103,8 @@ SUBROUTINE CULIGHT &
 USE PARKIND1  , ONLY : JPIM     ,JPRB
 USE YOMHOOK   , ONLY : LHOOK,   DR_HOOK
 
-USE YOMCST    , ONLY : RG       ,RLVTT    ,RLSTT    ,RTT      ,&
-                     & RD       ,RPI      ,RA       ,RDAYI
-USE YOETHF    , ONLY : R2ES     ,R3LES    ,R3IES    ,R4LES    ,&
-                     & R4IES    ,R5LES    ,R5IES    ,R5ALVCP  ,R5ALSCP  ,&
-                     & RALVDCP  ,RALSDCP  ,RTWAT    ,RTICE    ,RTICECU  ,&
-                     & RTWAT_RTICE_R      ,RTWAT_RTICECU_R  
+USE YOMCST    , ONLY : TCST
+USE YOETHF    , ONLY : TTHF  
 USE YOMDYNCORE, ONLY : RPLRG
 USE YOEPHY    , ONLY : TEPHY
 USE YOM_YGFL  , ONLY : TYPE_GFLD
@@ -117,6 +113,8 @@ USE YOM_YGFL  , ONLY : TYPE_GFLD
 
 IMPLICIT NONE
 
+TYPE(TTHF)        ,INTENT(IN)    :: YDTHF
+TYPE(TCST)        ,INTENT(IN)    :: YDCST
 TYPE(TEPHY)       ,INTENT(IN)    :: YDEPHY
 TYPE(TYPE_GFLD)   ,INTENT(IN)    :: YGFL
 INTEGER(KIND=JPIM),INTENT(IN)    :: KLON 
@@ -165,7 +163,7 @@ REAL(KIND=JPRB) :: ZQGRAUP, ZQSNOW, ZBETA, ZPFROZEN, ZCOLDDPT, ZHBMAX
 REAL(KIND=JPRB) :: ZHOOK_HANDLE   
 
 
-#include "fcttre.func.h"
+#include "fcttre.ycst.h"
 
 !----------------------------------------------------------------------
 
@@ -177,7 +175,7 @@ ASSOCIATE(NLIMODE=>YDEPHY%NLIMODE, NCHEM=>YGFL%NCHEM)
 !----------------------------------------------------------------------
 
 ZHBMAX=1.8_JPRB
-Z1G=1.0_JPRB/RG
+Z1G=1.0_JPRB/YDCST%RG
 ZGEO2KM=0.001_JPRB*Z1G
 
 ! Initializations
@@ -196,7 +194,7 @@ ZCBASEH(:)=-99.0_JPRB
 LDLINOX(:)=.FALSE.
 
 ! grid box size in km**2 
-ZAREA(KIDIA:KFDIA)=1.0E-6_JPRB*4.0_JPRB*RPI*RA*RA*PGAW(KIDIA:KFDIA)
+ZAREA(KIDIA:KFDIA)=1.0E-6_JPRB*4.0_JPRB*YDCST%RPI*YDCST%RA*YDCST%RA*PGAW(KIDIA:KFDIA)
 ! see Allen and Pickering JGR, 2002, 2.0 x 2.5 reference grid box centred at 30 deg latitude.
 !LOP:Incorrect ZAREA_REF=(20000.0/FLOAT(90))*(20000.0/FLOAT(72)) 
 ZAREA_REF=(20015.1_JPRB/90.0_JPRB)*(17333.6_JPRB/72.0_JPRB) 
@@ -233,9 +231,9 @@ DO JL=KIDIA,KFDIA
       IFREEZ25=-1
       IFREEZ15=-1
       DO JK=KLEV,1,-1
-        IF (PT(JL,JK) <= RTT .AND. IFREEZ == -1) IFREEZ=JK  ! below 0C
-        IF (PT(JL,JK) <= RTT - 25.0_JPRB  .AND. IFREEZ25 == -1) IFREEZ25=JK ! below -25C
-        IF (PT(JL,JK) <= RTT - 15.0_JPRB  .AND. IFREEZ15 == -1) IFREEZ15=JK ! below -15C
+        IF (PT(JL,JK) <= YDCST%RTT .AND. IFREEZ == -1) IFREEZ=JK  ! below 0C
+        IF (PT(JL,JK) <= YDCST%RTT - 25.0_JPRB  .AND. IFREEZ25 == -1) IFREEZ25=JK ! below -25C
+        IF (PT(JL,JK) <= YDCST%RTT - 15.0_JPRB  .AND. IFREEZ15 == -1) IFREEZ15=JK ! below -15C
       ENDDO
 
       ! Total cloud depth
@@ -252,7 +250,7 @@ DO JL=KIDIA,KFDIA
         ZDEPTH=0.0_JPRB
         DO JK=KCTOP(JL),KCBOT(JL)
           IF (PMFU(JL,JK) > 0.0_JPRB) THEN
-            ZRHO=PAP(JL,JK)/(RD*PT(JL,JK))
+            ZRHO=PAP(JL,JK)/(YDCST%RD*PT(JL,JK))
             ZDEPTH=ZDEPTH+(PAPHI(JL,JK-1)-PAPHI(JL,JK))
             PWMFU(JL)=PWMFU(JL)+PMFU(JL,JK)*(PAPHI(JL,JK-1)-PAPHI(JL,JK))/ZRHO
           ENDIF
@@ -293,7 +291,7 @@ DO JL=KIDIA,KFDIA
 
         ! Electric charge production rate.
         DO JK=ILEVTOPG,ILEVBOTG
-          ZRHO = PAP(JL,JK)/(RD*PT(JL,JK))
+          ZRHO = PAP(JL,JK)/(YDCST%RD*PT(JL,JK))
           ! Fraction of frozen precipitation flux in the form of graupel inside this layer.
           ZPFROZEN = MAX(0.0_JPRB, PFPLCN(JL,JK))
           ZQGRAUP = ZBETA * ZPFROZEN / (ZRHO * 3.0_JPRB)
@@ -350,9 +348,9 @@ DO JL=KIDIA,KFDIA
         ! TM5 Meijer 2001.
         IF ( PCTOPH(JL) > 5.0_JPRB .AND. IFREEZ25 > 0 ) THEN
           IF (LDLAND(JL)) THEN
-            PLIGH_TOT(JL)= 5.0_JPRB * 4.0E6_JPRB * PFPLCL(JL,KLEV) * 1.0E-9_JPRB * RDAYI 
+            PLIGH_TOT(JL)= 5.0_JPRB * 4.0E6_JPRB * PFPLCL(JL,KLEV) * 1.0E-9_JPRB * YDCST%RDAYI 
           ELSE
-            PLIGH_TOT(JL)= 0.1_JPRB * (5.0_JPRB * 4.0E6_JPRB * PFPLCL(JL,KLEV) * 1.0E-9_JPRB * RDAYI) 
+            PLIGH_TOT(JL)= 0.1_JPRB * (5.0_JPRB * 4.0E6_JPRB * PFPLCL(JL,KLEV) * 1.0E-9_JPRB * YDCST%RDAYI) 
           ENDIF
         ENDIF
 

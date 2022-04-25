@@ -1,5 +1,5 @@
 SUBROUTINE CUCALLN_MF &
- & (YDTHF, YDCST, YDERAD,  YDML_PHY_SLIN,      YDML_PHY_EC,  YGFL,&
+ & (KSTEP,   YDTHF, YDCST, YDERAD,  YDML_PHY_SLIN,      YDML_PHY_EC,  YGFL,&
  & KIDIA,    KFDIA,    KLON,     KSMAX,   KLEV, PDX, KSPPN2D,&
  & LDLAND, LDSLPHY,&
  & PTSPHY,PVDIFTS,&
@@ -163,10 +163,11 @@ USE YOMHOOK                      , ONLY : LHOOK,   DR_HOOK
 
 USE YOMCST                       , ONLY : TCST  
 USE YOETHF                       , ONLY : TTHF 
-USE YOMCT3                       , ONLY : NSTEP
 
 IMPLICIT NONE
 
+
+INTEGER(KIND=JPIM),INTENT(IN)    :: KSTEP
 TYPE(TTHF)                         ,INTENT(IN) :: YDTHF
 TYPE(TCST)                         ,INTENT(IN) :: YDCST
 TYPE(TERAD)                        ,INTENT(IN) :: YDERAD
@@ -375,7 +376,7 @@ CALL CUMASTRN &
 CALL CUCCDIA &
  & (YDERAD,  YDML_PHY_SLIN%YREPHLI,  YDML_PHY_EC%YREPHY,&
  & KIDIA,    KFDIA,    KLON,   KLEV,&
- & NSTEP,    KCBOT,    KCTOP,&
+ & KSTEP,    KCBOT,    KCTOP,&
  & LDCUM,    ZQU,      PLU,      PMFU,    ZRAIN,&
  & PARPRC,   KTOPC,    KBASEC                   )  
 

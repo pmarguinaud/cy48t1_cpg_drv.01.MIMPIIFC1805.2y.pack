@@ -1,5 +1,5 @@
 SUBROUTINE CUBASEN &
- & (YDEPHLI, YDECLDP,  YDECUMF,&
+ & (YDTHF, YDCST, YDEPHLI, YDECLDP,  YDECUMF,&
  & KIDIA,    KFDIA,    KLON,     KLEV, KSPPN2D,   KINDEX,  LDMIXS,&
  & PTENH,    PQENH,    PGEOH,    PAPH,&
  & PQHFL,    PAHFS,    PGP2DSPP, PKMFL,&
@@ -116,13 +116,11 @@ SUBROUTINE CUBASEN &
 USE YOEPHLI   , ONLY : TEPHLI
 USE PARKIND1  , ONLY : JPIM, JPRB
 USE YOMHOOK   , ONLY : LHOOK, DR_HOOK
-USE YOMCST    , ONLY : RCPD, RETV, RD, RG, RLVTT, RLSTT, RTT  , YRCST
+USE YOMCST    , ONLY : TCST
 USE PARPHY    , ONLY : RKAP
 USE YOECUMF   , ONLY : TECUMF
 USE YOECLDP   , ONLY : TECLDP
-USE YOETHF    , ONLY : R2ES, R3LES, R3IES, R4LES, R4IES, R5LES, R5IES, &
- &                     R5ALVCP, R5ALSCP, RALVDCP, RALSDCP, RALFDCP, RTWAT, RTICE, RTICECU, &
- &                     RTWAT_RTICECU_R, RTWAT_RTICE_R  , YRTHF
+USE YOETHF    , ONLY : TTHF
 USE YOMDYNCORE, ONLY : RPLRG, RPLDARE
 USE SPP_MOD   , ONLY : YSPP_CONFIG, YSPP
 
@@ -130,6 +128,8 @@ IMPLICIT NONE
 
 TYPE(TECLDP)      ,INTENT(IN)    :: YDECLDP
 TYPE(TECUMF)      ,INTENT(IN)    :: YDECUMF
+TYPE(TTHF)        ,INTENT(IN)    :: YDTHF
+TYPE(TCST)        ,INTENT(IN)    :: YDCST
 TYPE(TEPHLI)      ,INTENT(IN)    :: YDEPHLI
 INTEGER(KIND=JPIM),INTENT(IN)    :: KLON 
 INTEGER(KIND=JPIM),INTENT(IN)    :: KLEV 
@@ -205,7 +205,7 @@ REAL(KIND=JPRB) :: ZXENTRORG, ZMU
 REAL(KIND=JPRB) :: ZHOOK_HANDLE
 
 #include "cuadjtq.intfb.h"
-#include "fcttre.func.h"
+#include "fcttre.ycst.h"
 
 !----------------------------------------------------------------------
 !     0.           INITIALIZE CONSTANTS AND FIELDS
@@ -228,8 +228,8 @@ ENDDO
 
 JKT1=KINDEX
 JKT2=NJKT2
-ZRG=1.0_JPRB/RG
-ZRCPD=1.0_JPRB/RCPD
+ZRG=1.0_JPRB/YDCST%RG
+ZRCPD=1.0_JPRB/YDCST%RCPD
 
 DO JK=1,KLEV
   DO JL=KIDIA,KFDIA
@@ -260,9 +260,9 @@ DO JK=1,KLEV
   DO JL=KIDIA,KFDIA
     PWU2H(JL,JK)=0.0_JPRB
     ZWU2H(JL,JK)=0.0_JPRB
-    ZS   (JL,JK) = RCPD*PTEN(JL,JK) + PGEO(JL,JK)
+    ZS   (JL,JK) = YDCST%RCPD*PTEN(JL,JK) + PGEO(JL,JK)
     ZQENH(JL,JK) = PQENH(JL,JK)
-    ZSENH(JL,JK) = RCPD*PTENH(JL,JK)+PGEOH(JL,JK)
+    ZSENH(JL,JK) = YDCST%RCPD*PTENH(JL,JK)+PGEOH(JL,JK)
   ENDDO
 ENDDO
 
@@ -296,8 +296,8 @@ DO JKK=KLEV,JKT1,-1 ! Big external loop for level testing:
       ZQEXC=1.E-4_JPRB
       DO JL=KIDIA,KFDIA
         IF (LLGO_ON(JL)) THEN
-          ZRHO  = PAPH(JL,JKK+1)/(RD*(PTEN(JL,JKK)*(1.0_JPRB+RETV*PQEN(JL,JKK))))
-          ZKHVFL= (PAHFS(JL,JKK+1)*ZRCPD+RETV*PTEN(JL,JKK)*PQHFL(JL,JKK+1))/(ZRHO*RPLRG*RPLDARE)
+          ZRHO  = PAPH(JL,JKK+1)/(YDCST%RD*(PTEN(JL,JKK)*(1.0_JPRB+YDCST%RETV*PQEN(JL,JKK))))
+          ZKHVFL= (PAHFS(JL,JKK+1)*ZRCPD+YDCST%RETV*PTEN(JL,JKK)*PQHFL(JL,JKK+1))/(ZRHO*RPLRG*RPLDARE)
           ZUST  = MAX( SQRT(PKMFL(JL)), 0.1_JPRB )
           ZWS   = ZUST**3._JPRB - 1.5_JPRB*RKAP*ZKHVFL*(PGEOH(JL,KLEV)-PGEOH(JL,KLEV+1))/PTEN(JL,KLEV)
           ZTEX(JL)= 0.0_JPRB
@@ -305,10 +305,10 @@ DO JKK=KLEV,JKT1,-1 ! Big external loop for level testing:
           IF( ZKHVFL < 0.0_JPRB ) THEN
             ZWS =1.2_JPRB*ZWS**.3333_JPRB
             ILAB(JL,JKK)= 1
-            ZTEX(JL)   = MAX(-1.5_JPRB*PAHFS(JL,JKK+1)/(ZRHO*ZWS*RCPD*RPLRG*RPLDARE),ZTEXC)
+            ZTEX(JL)   = MAX(-1.5_JPRB*PAHFS(JL,JKK+1)/(ZRHO*ZWS*YDCST%RCPD*RPLRG*RPLDARE),ZTEXC)
             ZQEX(JL)   = MAX(-1.5_JPRB*PQHFL(JL,JKK+1)/(ZRHO*ZWS*RPLRG*RPLDARE),ZQEXC)
             ZQU (JL,JKK) = ZQENH(JL,JKK) + ZQEX(JL)
-            ZSUH (JL,JKK)= ZSENH(JL,JKK) + RCPD*ZTEX(JL)
+            ZSUH (JL,JKK)= ZSENH(JL,JKK) + YDCST%RCPD*ZTEX(JL)
             ZTU (JL,JKK) = (ZSENH(JL,JKK)-PGEOH(JL,JKK))*ZRCPD + ZTEX(JL)
             ZLU (JL,JKK) = 0.0_JPRB
             ZWU2H(JL,JKK) = ZWS**2
@@ -316,10 +316,10 @@ DO JKK=KLEV,JKT1,-1 ! Big external loop for level testing:
         !
         !  determine buoyancy at lowest half level
         !
-            ZTVENH            = (1.0_JPRB+RETV*ZQENH(JL,JKK)) &
+            ZTVENH            = (1.0_JPRB+YDCST%RETV*ZQENH(JL,JKK)) &
              & *(ZSENH(JL,JKK)-PGEOH(JL,JKK))*ZRCPD  
-            ZTVUH             = (1.0_JPRB+RETV*ZQU(JL,JKK))*ZTU(JL,JKK)
-            ZBUOH(JL,JKK) = (ZTVUH-ZTVENH)*RG/ZTVENH
+            ZTVUH             = (1.0_JPRB+YDCST%RETV*ZQU(JL,JKK))*ZTU(JL,JKK)
+            ZBUOH(JL,JKK) = (ZTVUH-ZTVENH)*YDCST%RG/ZTVENH
           ELSE
             LLGO_ON(JL)=.FALSE.      ! non-convective point
           ENDIF
@@ -330,7 +330,7 @@ DO JKK=KLEV,JKT1,-1 ! Big external loop for level testing:
 
       DO JL=KIDIA,KFDIA
         IF (LLGO_ON(JL)) THEN
-          ZRHO  = PAPH(JL,JKK+1)/(RD*(PTEN(JL,JKK)*(1.+RETV*PQEN(JL,JKK))))
+          ZRHO  = PAPH(JL,JKK+1)/(YDCST%RD*(PTEN(JL,JKK)*(1.+YDCST%RETV*PQEN(JL,JKK))))
           ILAB(JL,JKK)= 1
           ZTEXC=0.2_JPRB
           ZQEXC=1.E-4_JPRB
@@ -341,7 +341,7 @@ DO JKK=KLEV,JKT1,-1 ! Big external loop for level testing:
             ZQEXC=MIN(ZQEXC, 5.E-4_JPRB)
           ENDIF
           ZQU (JL,JKK) = ZQENH(JL,JKK) + ZQEXC
-          ZSUH (JL,JKK) = ZSENH(JL,JKK) + RCPD*ZTEXC
+          ZSUH (JL,JKK) = ZSENH(JL,JKK) + YDCST%RCPD*ZTEXC
           ZTU (JL,JKK) = (ZSENH(JL,JKK)-PGEOH(JL,JKK))*ZRCPD + ZTEXC
           ZLU (JL,JKK) = 0.0_JPRB
          ! construct mixed layer for parcels emanating in lowest 60 hPa
@@ -358,7 +358,7 @@ DO JKK=KLEV,JKT1,-1 ! Big external loop for level testing:
               ENDIF
             ENDDO
             ZQU(JL,JKK) =ZQU(JL,JKK) /ZWORK1+ZQEXC
-            ZSUH(JL,JKK)=ZSUH(JL,JKK)/ZWORK1+RCPD*ZTEXC
+            ZSUH(JL,JKK)=ZSUH(JL,JKK)/ZWORK1+YDCST%RCPD*ZTEXC
             ZTU(JL,JKK) =(ZSUH(JL,JKK)-PGEOH(JL,JKK))*ZRCPD+ZTEXC
           ENDIF
           ZWU2H(JL,JKK) = 1.0_JPRB
@@ -367,10 +367,10 @@ DO JKK=KLEV,JKT1,-1 ! Big external loop for level testing:
       !
       !  determine buoyancy at lowest half level
       !
-          ZTVENH            = (1.0_JPRB+RETV*ZQENH(JL,JKK)) &
+          ZTVENH            = (1.0_JPRB+YDCST%RETV*ZQENH(JL,JKK)) &
            & *(ZSENH(JL,JKK)-PGEOH(JL,JKK))*ZRCPD  
-          ZTVUH             = (1.0_JPRB+RETV*ZQU(JL,JKK))*ZTU(JL,JKK)
-          ZBUOH(JL,JKK) = (ZTVUH-ZTVENH)*RG/ZTVENH
+          ZTVUH             = (1.0_JPRB+YDCST%RETV*ZQU(JL,JKK))*ZTU(JL,JKK)
+          ZBUOH(JL,JKK) = (ZTVUH-ZTVENH)*YDCST%RG/ZTVENH
         ENDIF
       ENDDO
    
@@ -449,7 +449,7 @@ DO JKK=KLEV,JKT1,-1 ! Big external loop for level testing:
     ICALL=1
      
     CALL CUADJTQ &
-     & ( YRTHF, YRCST, YDEPHLI,  KIDIA,    KFDIA,    KLON,    KLEV,      IK,&
+     & ( YDTHF, YDCST, YDEPHLI,  KIDIA,    KFDIA,    KLON,    KLEV,      IK,&
      &   ZPH,      ZTU,      ZQU,     LLGO_ON,   ICALL)  
    
    !DIR$ IVDEP
@@ -475,16 +475,16 @@ DO JKK=KLEV,JKT1,-1 ! Big external loop for level testing:
    
    ! update dry static energy after condensation + freezing
    
-        ZTU(JL,JK)     = ZTU(JL,JK)+RALFDCP*ZLGLAC
-        ZSUH(JL,JK)    = RCPD*ZTU(JL,JK)+PGEOH(JL,JK)
+        ZTU(JL,JK)     = ZTU(JL,JK)+YDTHF%RALFDCP*ZLGLAC
+        ZSUH(JL,JK)    = YDCST%RCPD*ZTU(JL,JK)+PGEOH(JL,JK)
          
    ! Buoyancy on half and full levels
             
-        ZTVUH           = (1.0_JPRB+RETV*ZQU(JL,JK)-ZLU(JL,JK))*ZTU(JL,JK)&
-         & +RALFDCP*ZLGLAC  
-        ZTVENH          = (1.0_JPRB+RETV*ZQENH(JL,JK)) &
+        ZTVUH           = (1.0_JPRB+YDCST%RETV*ZQU(JL,JK)-ZLU(JL,JK))*ZTU(JL,JK)&
+         & +YDTHF%RALFDCP*ZLGLAC  
+        ZTVENH          = (1.0_JPRB+YDCST%RETV*ZQENH(JL,JK)) &
          & *(ZSENH(JL,JK)-PGEOH(JL,JK))*ZRCPD  
-        ZBUOH(JL,JK)   = (ZTVUH-ZTVENH)*RG/ZTVENH
+        ZBUOH(JL,JK)   = (ZTVUH-ZTVENH)*YDCST%RG/ZTVENH
 
         ZBUOF          = (ZBUOH(JL,JK) + ZBUOH(JL,JK+1))*0.5_JPRB
    
@@ -510,16 +510,16 @@ DO JKK=KLEV,JKT1,-1 ! Big external loop for level testing:
           ZQSU=FOEEWM(ZTU(JL,IK))/PAPH(JL,IK)
           ZESDP=ZQSU
           ZQSU=MIN(0.5_JPRB,ZQSU)
-          ZCOR=1.0_JPRB/(1.0_JPRB-RETV  *ZQSU)
+          ZCOR=1.0_JPRB/(1.0_JPRB-YDCST%RETV  *ZQSU)
           ZQSU=ZQSU*ZCOR
           ZDQ=MIN(0._JPRB,ZQU(JL,IK)-ZQSU)
           ZALFAW=FOEALFA(ZTU(JL,IK))
-          ZFACW=R5LES/((ZTU(JL,IK)-R4LES)**2)
-          ZFACI=R5IES/((ZTU(JL,IK)-R4IES)**2)
+          ZFACW=YDTHF%R5LES/((ZTU(JL,IK)-YDTHF%R4LES)**2)
+          ZFACI=YDTHF%R5IES/((ZTU(JL,IK)-YDTHF%R4IES)**2)
           ZFAC=ZALFAW*ZFACW+(1.-ZALFAW)*ZFACI
-          ZCOR=1.0_JPRB/(1.0_JPRB-RETV*ZESDP)
+          ZCOR=1.0_JPRB/(1.0_JPRB-YDCST%RETV*ZESDP)
           ZDQSDT=ZFAC*ZCOR*ZQSU
-          ZDTDP=RD*ZTU(JL,IK)/(RCPD*PAPH(JL,IK))
+          ZDTDP=YDCST%RD*ZTU(JL,IK)/(YDCST%RCPD*PAPH(JL,IK))
           ZDP=ZDQ/(ZDQSDT*ZDTDP)
           ZCBASE(JL)=PAPH(JL,IK)+ZDP
            

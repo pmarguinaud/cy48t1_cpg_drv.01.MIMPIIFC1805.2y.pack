@@ -1,0 +1,1039 @@
+SUBROUTINE EINCLI5(YDGEOMETRY,YDGFL,YDEPHY,YDML_PHY_MF)
+
+!**** *EINCLI5*
+
+!     PURPOSE
+!     -------
+!     This routine modifies climatological fields describing land surface
+!     on a limited rectangular domain of the globe, in 1 climatological file.
+!     Any of the fields computed in EINCLI2 and EINCLI4 may be changed, if
+!     the corresponding high resolution data are available. Fields derived
+!     in EINCLI1 (i.e. related to topography) or EINCLI3 cannot.
+
+!**   INTERFACE
+!     ---------
+
+!     CALL EINCLI5
+
+!     METHOD
+!     ------
+!     This routine modifies up to 17 fields wich characterize vegetation and
+!     soil :
+!      - percentage of vegetation
+!      - max. percentage of vegetation
+!      - land use type
+!      - leaf area index
+!      - minimum surface resistance of vegetation
+!      - useful soil depth
+!      - bare ground albedo
+!      - albedo
+!      - albedo of vegetation
+!      - emissivity
+!      - roughness length (cinetic + thermal)
+!      - percentage of clay
+!      - percentage of sand
+!      - maximum soil depth
+!     The target grid is a regular grid (geographical or in plane projection).
+!     The source grid can be any regular rectangular latitude by longitude
+!     grid, the first point being at the NW edge, longitudes going eastwards,
+!     and latitude going southwards (the NE edge is before the SW edge).
+!     The earth is supposed to be flat, i.e. the periodicity of the longitudes
+!     as well as the symmetry of the latitudes is ignored; this program can be
+!     used for a global source grid (although it has not been designed for
+!     this task), but the interpolation at the boundaries will not be optimal.
+!     Inside the input domain, the variables are averaged in a rectangular
+!     latitude x longitude box around each point of the target grid; the size
+!     of the box is approximately twice the distance between two points in the
+!     target grid.
+!     The missing data have a negative value, and it is assumed that the
+!     location of missing data is the same for each field. Outside the domain
+!     and over parts where data are missing, the original value is kept. At
+!     the boundaries of the domain, a linear combination of the old and new
+!     values is performed. Values are not modified if the corresponding file
+!     is not available.
+!     Input data are units 10 to 23 :
+!     -mask describing missing data    (unit 10,file msk_HR)
+!       -9999. -> missing  1. -> available
+!     -bare ground albedo              (unit 11,file als_HR)
+!     -emissivity                      (unit 12,file emi_HR)
+!     -percentage of clay              (unit 13,file arg_HR)
+!     -percentage of sand              (unit 14,file sab_HR)
+!     -maximum soil depth              (unit 15,file dps_HR)
+!     -dominant land use type          (unit 16,file itp_HR)
+!     -maximum vegetation cover        (unit 17,file vgx_HR)
+!     -current vegetation cover        (unit 18,file veg_HR)
+!     -leaf area index                 (unit 19,file lai_HR)
+!     -miminum surface resistance      (unit 21,file rsm_HR)
+!     -roughness length of vegetation  (unit 22,file z0v_HR)
+!     -albedo of vegetation            (unit 23,file alv_HR)
+!     -root depth                      (unit 24,file dpr_HR)
+!     Coherence between fields computed in EINCLI1,EINCLI2,EINCLI3 and EINCLI4
+!     could be checked (not yet).
+!     The output fields are added to or modified in the ARPEGE file.
+
+!     EXTERNALS
+!     ---------
+!     ABOR1
+!     CCHIEN
+!     ELECI
+!     EBICLI (previously EBIEN)
+!     ECHK923
+!     FA-LFI package (FAITOU,LFILAF,FACILE,FAIRME)
+
+!     AUTHORS
+!     -------
+!     L. Gerard 3/06/1997 from INCLI5 and EINCLIC
+
+!     MODIFICATIONS
+!     -------------
+!     R. El Khatib : 01-12-06 Cleaning sm variables
+!     M.Hamrud 03-10-01 CY28 Cleaning
+!     D. Giard 04-09-15 cleaning
+!     D. Giard 05-04-07 : no packing for roughness lengths, new EBICLI
+!     F. Taillefer 09-06-02 add LZ0THER
+!     O. Marsden: June 2015 CY42 YRGMV, YRGFL, YRSURF, YRGMV5, and YRGFL5 are now passed by argument
+!------------------------------------------------------------------------
+
+USE MODEL_PHYSICS_MF_MOD , ONLY : MODEL_PHYSICS_MF_TYPE
+USE YOEPHY       , ONLY : TEPHY
+USE GEOMETRY_MOD , ONLY : GEOMETRY
+USE PARKIND1  ,ONLY : JPIM, JPRB, JPRD
+USE YOMHOOK   ,ONLY : LHOOK,   DR_HOOK
+
+USE YOMCLI   , ONLY : YRCLI
+USE YOMCST   , ONLY : RPI      ,RG
+USE YOMLUN   , ONLY : NULOUT   ,NULERR
+USE YOM_YGFL , ONLY : TYPE_GFLD
+
+!------------------------------------------------------------------------
+
+IMPLICIT NONE
+
+TYPE(GEOMETRY), INTENT(INOUT)   :: YDGEOMETRY
+TYPE(TYPE_GFLD)    ,INTENT(INOUT):: YDGFL
+TYPE(TEPHY)    ,INTENT(INOUT)   :: YDEPHY
+TYPE(MODEL_PHYSICS_MF_TYPE),INTENT(INOUT):: YDML_PHY_MF
+INTEGER(KIND=JPIM) :: JPTYVE
+REAL(KIND=JPRB) :: PPONDER
+
+PARAMETER (PPONDER=.25_JPRB,JPTYVE=5)
+
+! Input grid arrays:
+REAL(KIND=JPRB) :: ZALS0(YRCLI%NDATX,YRCLI%NDATY),ZALV0(YRCLI%NDATX,YRCLI%NDATY),ZARG0(YRCLI%NDATX,YRCLI%NDATY)&
+ & ,ZDPR0(YRCLI%NDATX,YRCLI%NDATY),ZDPS0(YRCLI%NDATX,YRCLI%NDATY),ZEMI0(YRCLI%NDATX,YRCLI%NDATY)&
+ & ,ZITP0(YRCLI%NDATX,YRCLI%NDATY),ZLAI0(YRCLI%NDATX,YRCLI%NDATY),ZMSK0(YRCLI%NDATX,YRCLI%NDATY)&
+ & ,ZRSM0(YRCLI%NDATX,YRCLI%NDATY),ZSAB0(YRCLI%NDATX,YRCLI%NDATY),ZVEG0(YRCLI%NDATX,YRCLI%NDATY)&
+ & ,ZVGX0(YRCLI%NDATX,YRCLI%NDATY),ZZ0V0(YRCLI%NDATX,YRCLI%NDATY)  
+! Output grid arrays (C+I):
+REAL(KIND=JPRB) :: ZALB1((YDGEOMETRY%YRDIM%NDGUXG-YDGEOMETRY%YRDIM%NDGUNG+1)*(YDGEOMETRY%YRDIM%NDLUXG-YDGEOMETRY%YRDIM%NDLUNG+1))&
+ & ,ZALS1((YDGEOMETRY%YRDIM%NDGUXG-YDGEOMETRY%YRDIM%NDGUNG+1)*(YDGEOMETRY%YRDIM%NDLUXG-YDGEOMETRY%YRDIM%NDLUNG+1))&
+ & ,ZALV1((YDGEOMETRY%YRDIM%NDGUXG-YDGEOMETRY%YRDIM%NDGUNG+1)*(YDGEOMETRY%YRDIM%NDLUXG-YDGEOMETRY%YRDIM%NDLUNG+1))&
+ & ,ZARG1((YDGEOMETRY%YRDIM%NDGUXG-YDGEOMETRY%YRDIM%NDGUNG+1)*(YDGEOMETRY%YRDIM%NDLUXG-YDGEOMETRY%YRDIM%NDLUNG+1))&
+ & ,ZDEP1((YDGEOMETRY%YRDIM%NDGUXG-YDGEOMETRY%YRDIM%NDGUNG+1)*(YDGEOMETRY%YRDIM%NDLUXG-YDGEOMETRY%YRDIM%NDLUNG+1))&
+ & ,ZDPS1((YDGEOMETRY%YRDIM%NDGUXG-YDGEOMETRY%YRDIM%NDGUNG+1)*(YDGEOMETRY%YRDIM%NDLUXG-YDGEOMETRY%YRDIM%NDLUNG+1))&
+ & ,ZEMI1((YDGEOMETRY%YRDIM%NDGUXG-YDGEOMETRY%YRDIM%NDGUNG+1)*(YDGEOMETRY%YRDIM%NDLUXG-YDGEOMETRY%YRDIM%NDLUNG+1))&
+ & ,ZGZ01((YDGEOMETRY%YRDIM%NDGUXG-YDGEOMETRY%YRDIM%NDGUNG+1)*(YDGEOMETRY%YRDIM%NDLUXG-YDGEOMETRY%YRDIM%NDLUNG+1))&
+ & ,ZGZR1((YDGEOMETRY%YRDIM%NDGUXG-YDGEOMETRY%YRDIM%NDGUNG+1)*(YDGEOMETRY%YRDIM%NDLUXG-YDGEOMETRY%YRDIM%NDLUNG+1))&
+ & ,ZGZV1((YDGEOMETRY%YRDIM%NDGUXG-YDGEOMETRY%YRDIM%NDGUNG+1)*(YDGEOMETRY%YRDIM%NDLUXG-YDGEOMETRY%YRDIM%NDLUNG+1))&
+ & ,ZGZT1((YDGEOMETRY%YRDIM%NDGUXG-YDGEOMETRY%YRDIM%NDGUNG+1)*(YDGEOMETRY%YRDIM%NDLUXG-YDGEOMETRY%YRDIM%NDLUNG+1))&
+ & ,ZLSM1((YDGEOMETRY%YRDIM%NDGUXG-YDGEOMETRY%YRDIM%NDGUNG+1)*(YDGEOMETRY%YRDIM%NDLUXG-YDGEOMETRY%YRDIM%NDLUNG+1))&
+ & ,ZITP1((YDGEOMETRY%YRDIM%NDGUXG-YDGEOMETRY%YRDIM%NDGUNG+1)*(YDGEOMETRY%YRDIM%NDLUXG-YDGEOMETRY%YRDIM%NDLUNG+1))&
+ & ,ZLAI1((YDGEOMETRY%YRDIM%NDGUXG-YDGEOMETRY%YRDIM%NDGUNG+1)*(YDGEOMETRY%YRDIM%NDLUXG-YDGEOMETRY%YRDIM%NDLUNG+1))&
+ & ,ZLND1((YDGEOMETRY%YRDIM%NDGUXG-YDGEOMETRY%YRDIM%NDGUNG+1)*(YDGEOMETRY%YRDIM%NDLUXG-YDGEOMETRY%YRDIM%NDLUNG+1))&
+ & ,ZRSM1((YDGEOMETRY%YRDIM%NDGUXG-YDGEOMETRY%YRDIM%NDGUNG+1)*(YDGEOMETRY%YRDIM%NDLUXG-YDGEOMETRY%YRDIM%NDLUNG+1))&
+ & ,ZSAB1((YDGEOMETRY%YRDIM%NDGUXG-YDGEOMETRY%YRDIM%NDGUNG+1)*(YDGEOMETRY%YRDIM%NDLUXG-YDGEOMETRY%YRDIM%NDLUNG+1))&
+ & ,ZURB1((YDGEOMETRY%YRDIM%NDGUXG-YDGEOMETRY%YRDIM%NDGUNG+1)*(YDGEOMETRY%YRDIM%NDLUXG-YDGEOMETRY%YRDIM%NDLUNG+1))&
+ & ,ZVEG1((YDGEOMETRY%YRDIM%NDGUXG-YDGEOMETRY%YRDIM%NDGUNG+1)*(YDGEOMETRY%YRDIM%NDLUXG-YDGEOMETRY%YRDIM%NDLUNG+1))&
+ & ,ZVGX1((YDGEOMETRY%YRDIM%NDGUXG-YDGEOMETRY%YRDIM%NDGUNG+1)*(YDGEOMETRY%YRDIM%NDLUXG-YDGEOMETRY%YRDIM%NDLUNG+1))  
+! Writing arrays (C+I+E)
+REAL(KIND=JPRB) :: ZEXT(YDGEOMETRY%YRDIM%NDGLG*YDGEOMETRY%YRDIM%NDLON,0:18)
+REAL(KIND=JPRD) ,ALLOCATABLE :: ZAUX1(:), ZAUX2(:)
+REAL(KIND=JPRB) :: ZITP(JPTYVE)
+REAL(KIND=JPRB) :: ZALS, ZALV, ZALVO, ZARG, ZCV, ZD, ZDLA, ZDLO,&
+ & ZDPR, ZDPRO, ZDPS, ZEMI, ZEPS, ZFZ0, ZITPM, ZITPN,&
+ & ZLAI, ZLAT, ZLIS, ZLON, ZLSR, ZMIS, ZMSK, ZPTL,&
+ & ZRSM, ZSAB, ZSUM, ZURBO, ZVEG, ZVEGO, ZVGX, ZVGXO,&
+ & ZW1, ZW2, ZZ0V, ZZ0VO, ZZARG, ZZDL, ZZSAB
+REAL(KIND=JPRB) :: ZHOOK_HANDLE
+
+CHARACTER :: CLFORM*12,CLNOMC*16,CLNOMF*10
+CHARACTER :: CLPREF(0:18)*8,CLSUFF(0:18)*12
+
+INTEGER(KIND=JPIM) :: INIVL(0:18)
+INTEGER(KIND=JPIM) :: IADL(YDGEOMETRY%YRDIM%NDGLG)
+INTEGER(KIND=JPIM) :: I, I1LA, I1LO, I2LA, I2LO, IALS, IALV, IARG,&
+ & IARI, IARP, IC, IDLA, IDLO, IDPR, IDPS, IEMI,&
+ & IFLD, IINF, IITP, ILAI, ILAT, ILON, IM, IMES,&
+ & INDEX1, INDEX2, INIV, INUM, IOS, IPTL, IREP,&
+ & IRSM, ISAB, IT, ITFING, IVEG, IVGX, IXFING,&
+ & IYFING, IZ, IZ0V, J, JC, JJ, JLA, JLO, JT, JX, JY  
+
+LOGICAL :: LLBIP(0:18),LLWRI(0:18),LLPAC(0:18)
+LOGICAL :: LLALS, LLALV, LLARG, LLCOSP, LLDPR, LLDPS,&
+ & LLEMI, LLIMST, LLITP, LLLAI, LLMSK, LLOPEN,&
+ & LLRSM, LLSAB, LLVEG, LLVEGC, LLVGX, LLZ0V  
+
+!------------------------------------------------------------------------
+
+#include "abor1.intfb.h"
+#include "cchien.intfb.h"
+#include "ebicli.intfb.h"
+#include "echk923.intfb.h"
+#include "eleci.intfb.h"
+
+!------------------------------------------------------------------------
+
+IF (LHOOK) CALL DR_HOOK('EINCLI5',0,ZHOOK_HANDLE)
+
+ASSOCIATE(NDGUNG=>YDGEOMETRY%YRDIM%NDGUNG, NDGUXG=>YDGEOMETRY%YRDIM%NDGUXG, NDLUNG=>YDGEOMETRY%YRDIM%NDLUNG, &
+        & YRGSGEOM_NB=>YDGEOMETRY%YRGSGEOM_NB, &
+        & NDLUXG=>YDGEOMETRY%YRDIM%NDLUXG, NDGLG=>YDGEOMETRY%YRDIM%NDGLG, NDLON=>YDGEOMETRY%YRDIM%NDLON, NTSTAGP=>YDGEOMETRY%YRGEM%NTSTAGP)
+!------------------------------------------------------------------------
+
+!     1. SET INITIAL VALUES.
+!        -------------------
+
+!     1.1 Miscellaneous
+
+! Final grid geometry:
+
+IXFING=NDLUXG-NDLUNG+1
+IYFING=NDGUXG-NDGUNG+1
+ITFING=IXFING*IYFING
+
+ZCV= 180._JPRB/RPI
+ZEPS= 1.E-10_JPRB
+ZFZ0= YRCLI%SFCZ0*RG
+ZLIS= 1.0_JPRB/REAL(YRCLI%NPINT,JPRB)
+ZMIS= YRCLI%SMANQ - 1.0_JPRB
+
+IADL(1:NDGLG)=NTSTAGP(1:NDGLG)-1
+
+!     1.2 Type of data files
+
+IF (YRCLI%LIEEE) THEN
+  CLFORM='UNFORMATTED'
+ELSE
+  CLFORM='FORMATTED'
+ENDIF
+
+!     1.3 Missing data
+
+!  Default is missing data
+LLMSK=.FALSE.
+LLALS=.FALSE.
+LLEMI=.FALSE.
+LLARG=.FALSE.
+LLSAB=.FALSE.
+LLDPS=.FALSE.
+LLITP=.FALSE.
+LLVGX=.FALSE.
+LLVEG=.FALSE.
+LLLAI=.FALSE.
+LLRSM=.FALSE.
+LLZ0V=.FALSE.
+LLALV=.FALSE.
+LLDPR=.FALSE.
+IALS= 0
+IEMI= 0
+IARG= 0
+ISAB= 0
+IDPS= 0
+IITP= 0
+IVGX= 0
+IVEG= 0
+ILAI= 0
+IRSM= 0
+IZ0V= 0
+IALV= 0
+IDPR= 0
+ZMSK0(:,:)= ZMIS
+ZALS0(:,:)= ZMIS
+ZEMI0(:,:)= ZMIS
+ZARG0(:,:)= ZMIS
+ZSAB0(:,:)= ZMIS
+ZDPS0(:,:)= ZMIS
+ZITP0(:,:)= ZMIS
+ZVGX0(:,:)= ZMIS
+ZVEG0(:,:)= ZMIS
+ZLAI0(:,:)= ZMIS
+ZRSM0(:,:)= ZMIS
+ZZ0V0(:,:)= ZMIS
+ZALV0(:,:)= ZMIS
+ZDPR0(:,:)= ZMIS
+
+!     1.4 Final biperiodization and writing
+
+DO J=0,18
+  LLBIP(J)=.TRUE.
+  LLWRI(J)=.TRUE.
+  LLPAC(J)=.TRUE.
+  INIVL(J)=0
+ENDDO
+LLBIP(0)=.FALSE.
+LLBIP(1)=.FALSE.
+LLWRI(0)=.FALSE.
+LLPAC(7)=.FALSE.
+LLPAC(8)=.FALSE.
+LLPAC(9)=.FALSE.
+
+DO JC=0,18
+  DO J=1,NDGLG*NDLON
+    ZEXT(J,JC)=0.0_JPRB
+  ENDDO
+ENDDO
+
+DO J=0,18
+  CLPREF(J)='SURF'
+ENDDO
+CLSUFF( 0)='IND.TERREMER'
+CLSUFF( 1)='IND.VEG.DOMI'
+CLSUFF( 2)='PROP.VEGETAT'
+CLSUFF( 3)='PROP.VEG.MAX'
+CLSUFF( 4)='IND.FOLIAIRE'
+CLSUFF( 5)='RESI.STO.MIN'
+CLSUFF( 6)='EPAIS.SOL   '
+CLSUFF( 7)='Z0.FOIS.G   '
+CLSUFF( 8)='Z0VEG.FOIS.G'
+CLSUFF( 9)='GZ0.THERM   '
+CLSUFF(10)='ALBEDO      '
+CLSUFF(11)='ALBEDO.SOLNU'
+CLSUFF(12)='EMISSIVITE  '
+CLSUFF(13)='PROP.ARGILE '
+CLSUFF(14)='PROP.SABLE  '
+CLSUFF(15)='EPAI.SOL.MAX'
+CLSUFF(16)='ALBEDO.VEG  '
+CLSUFF(17)='PROP.URBANIS'
+CLSUFF(18)='ALBEDO.COMPL'
+
+!     ------------------------------------------------------------------
+
+!     2. CHECK AND READ DATASETS.
+!        ------------------------
+
+!     2.1 Check which files are available
+
+!  Common mask
+LLOPEN=.FALSE.
+IOS= 0
+INQUIRE(FILE='msk_HR',IOSTAT=IOS,EXIST=LLMSK,OPENED=LLOPEN)
+LLMSK= LLMSK .AND. (IOS == 0) .AND. .NOT.LLOPEN
+IF (.NOT.LLMSK) THEN
+  WRITE(NULERR,'('' ERROR IN EINCLI5 :'',&
+   & '' THE COMMON MASK (DEFINING MISSING DATA) IS NOT GIVEN !'')')  
+  CALL ABOR1('EINCLI5 : THE COMMON MASK (DEFINING MISSING DATA) IS NOT GIVEN !')
+ENDIF
+!  Bare ground albedo
+INQUIRE(FILE='als_HR',IOSTAT=IOS,EXIST=LLALS,OPENED=LLOPEN)
+LLALS= LLALS .AND. (IOS == 0) .AND. .NOT.LLOPEN
+!  Emissivity
+INQUIRE(FILE='emi_HR',IOSTAT=IOS,EXIST=LLEMI,OPENED=LLOPEN)
+LLEMI= LLEMI .AND. (IOS == 0) .AND. .NOT.LLOPEN
+!  Soil texture : percentages of clay and sand
+INQUIRE(FILE='arg_HR',IOSTAT=IOS,EXIST=LLARG,OPENED=LLOPEN)
+LLARG= LLARG .AND. (IOS == 0) .AND. .NOT.LLOPEN
+INQUIRE(FILE='sab_HR',IOSTAT=IOS,EXIST=LLSAB,OPENED=LLOPEN)
+LLSAB= LLSAB .AND. (IOS == 0) .AND. .NOT.LLOPEN
+!  Maximum soil depth
+INQUIRE(FILE='dps_HR',IOSTAT=IOS,EXIST=LLDPS,OPENED=LLOPEN)
+LLDPS= LLDPS .AND. (IOS == 0) .AND. .NOT.LLOPEN
+!  Land use type
+INQUIRE(FILE='itp_HR',IOSTAT=IOS,EXIST=LLITP,OPENED=LLOPEN)
+LLITP= LLITP .AND. (IOS == 0) .AND. .NOT.LLOPEN
+!  Maximum and current vegetation cover
+INQUIRE(FILE='vgx_HR',IOSTAT=IOS,EXIST=LLVGX,OPENED=LLOPEN)
+LLVGX= LLVGX .AND. (IOS == 0) .AND. .NOT.LLOPEN
+INQUIRE(FILE='veg_HR',IOSTAT=IOS,EXIST=LLVEG,OPENED=LLOPEN)
+LLVEG= LLVEG .AND. (IOS == 0) .AND. .NOT.LLOPEN
+!  Leaf area index and miminum surface resistance
+INQUIRE(FILE='lai_HR',IOSTAT=IOS,EXIST=LLLAI,OPENED=LLOPEN)
+LLLAI= LLLAI .AND. (IOS == 0) .AND. .NOT.LLOPEN
+INQUIRE(FILE='rsm_HR',IOSTAT=IOS,EXIST=LLRSM,OPENED=LLOPEN)
+LLRSM= LLRSM .AND. (IOS == 0) .AND. .NOT.LLOPEN
+!  Roughness length of vegetation
+INQUIRE(FILE='z0v_HR',IOSTAT=IOS,EXIST=LLZ0V,OPENED=LLOPEN)
+LLZ0V= LLZ0V .AND. (IOS == 0) .AND. .NOT.LLOPEN
+!  Albedo of vegetation
+INQUIRE(FILE='alv_HR',IOSTAT=IOS,EXIST=LLALV,OPENED=LLOPEN)
+LLALV= LLALV .AND. (IOS == 0) .AND. .NOT.LLOPEN
+!  Root depth
+INQUIRE(FILE='dpr_HR',IOSTAT=IOS,EXIST=LLDPR,OPENED=LLOPEN)
+LLDPR= LLDPR .AND. (IOS == 0) .AND. .NOT.LLOPEN
+
+!     2.2 Check which fields will be modified
+
+IF (.NOT. (LLARG.AND.LLSAB)) THEN
+  LLARG= .FALSE.
+  LLSAB= .FALSE.
+ENDIF
+IF (.NOT. (LLVEG.AND.LLVGX)) THEN
+  LLVEG= .FALSE.
+  LLVGX= .FALSE.
+ENDIF
+IF (.NOT. (LLLAI.AND.LLRSM)) THEN
+  LLLAI= .FALSE.
+  LLRSM= .FALSE.
+ENDIF
+
+LLVEGC=LLLAI.AND.LLZ0V.AND.LLALV.AND.LLDPR.AND.LLEMI
+IF (LLVEG .AND. .NOT. LLVEGC) THEN
+  WRITE(NULERR,'('' CAUTION :'',&
+   & '' IF VEGETATION FRACTION IS MODIFIED BY EINCLI5,'',&
+   & '' ALL VEGETATION CHARACTERISTICS SHOULD BE MODIFIED !'')')  
+  WRITE(NULOUT,'('' CAUTION :'',&
+   & '' IF VEGETATION FRACTION IS MODIFIED BY EINCLI5,'',&
+   & '' ALL VEGETATION CHARACTERISTICS SHOULD BE MODIFIED !'')')  
+ENDIF
+IF (LLITP .AND. .NOT. LLVEGC) THEN
+  WRITE(NULERR,'('' CAUTION :'',&
+   & '' IF LAND USE TYPE IS MODIFIED BY EINCLI5,'',&
+   & '' ALL VEGETATION CHARACTERISTICS SHOULD BE MODIFIED !'')')  
+  WRITE(NULOUT,'('' CAUTION :'',&
+   & '' IF LAND USE TYPE IS MODIFIED BY EINCLI5,'',&
+   & '' ALL VEGETATION CHARACTERISTICS SHOULD BE MODIFIED !'')')  
+ENDIF
+
+IF ((LLDPS.OR.LLDPR).AND..NOT.LLARG) THEN
+  WRITE(NULERR,'('' CAUTION :'',&
+   & '' SOIL DEPTH MODIFIED BY EINCLI5 BUT NOT SOIL TEXTURE'')')  
+  WRITE(NULOUT,'('' CAUTION :'',&
+   & '' SOIL DEPTH MODIFIED BY EINCLI5 BUT NOT SOIL TEXTURE'')')  
+ENDIF
+IF (LLARG.AND..NOT.(LLDPS.OR.LLDPR)) THEN
+  WRITE(NULERR,'('' CAUTION :'',&
+   & '' SOIL TEXTURE MODIFIED BY EINCLI5 BUT NOT SOIL DEPTH'')')  
+  WRITE(NULOUT,'('' CAUTION :'',&
+   & '' SOIL TEXTURE MODIFIED BY EINCLI5 BUT NOT SOIL DEPTH'')')  
+ENDIF
+
+IF (LLVEG.AND..NOT.LLITP) WRITE(NULERR,'('' CAUTION :'',&
+ & '' VEGET. COVER MODIFIED BY EINCLI5 BUT NOT VEGETATION TYPE'')')  
+IF (LLLAI.AND..NOT.LLITP) WRITE(NULERR,'('' CAUTION :'',&
+ & '' LAI, RSMIN MODIFIED BY EINCLI5 BUT NOT VEGETATION TYPE'')')  
+IF (LLZ0V.AND..NOT.LLITP) WRITE(NULERR,'('' CAUTION :'',&
+ & '' Z0 OF VEGET. MODIFIED BY EINCLI5 BUT NOT VEGETATION TYPE'')')  
+IF (LLALV.AND..NOT.LLITP) WRITE(NULERR,'('' CAUTION :'',&
+ & '' VEG. ALBEDO MODIFIED BY EINCLI5 BUT NOT VEGETATION TYPE'')')  
+IF (LLDPR.AND..NOT.LLITP) WRITE(NULERR,'('' CAUTION :'',&
+ & '' ROOT DEPTH MODIFIED BY EINCLI5 BUT NOT VEGETATION TYPE'')')  
+
+IF (.NOT.(LLALS.OR.LLEMI.OR.LLARG.OR.LLDPS.OR.LLITP.OR.&
+ & LLVEG.OR.LLLAI.OR.LLZ0V.OR.LLALV.OR.LLDPR))&
+ & CALL ABOR1('ERROR IN EINCLI5 : NO FIELDS TO MODIFY !')  
+
+!     2.3 Read and check the mask (missing)
+
+IF (YRCLI%LIEEE) THEN
+  ALLOCATE (ZAUX1(YRCLI%NDATX*YRCLI%NDATY))
+  IF (LLARG.OR.LLVEG.OR.LLLAI) THEN
+    ALLOCATE (ZAUX2(YRCLI%NDATX*YRCLI%NDATY))
+  ENDIF
+ENDIF
+
+OPEN(UNIT=10,FILE='msk_HR',FORM=CLFORM)
+IF (YRCLI%LIEEE) THEN
+  READ(10)ZAUX1
+  DO JJ=YRCLI%NDATY,1,-1
+    DO J=1,YRCLI%NDATX
+      IZ=J+(YRCLI%NDATY-JJ)*YRCLI%NDATX
+      ZMSK0(J,JJ)=ZAUX1(IZ)
+    ENDDO
+  ENDDO
+ELSE
+  READ(10,*) ((ZMSK0(J,JJ),J=1,YRCLI%NDATX),JJ=YRCLI%NDATY,1,-1)
+ENDIF
+CLOSE(10)
+DO JJ=1,YRCLI%NDATY
+  DO J=1,YRCLI%NDATX
+    IF ((ZMSK0(J,JJ) > YRCLI%SMANQ) .AND. (ABS(ZMSK0(J,JJ)-1.0_JPRB) > ZEPS))&
+     & CALL ABOR1(' ERROR IN EINCLI5 : UNEXPECTED MASK VALUE !')  
+  ENDDO
+ENDDO
+
+!     2.4 Read new data
+
+!  Bare ground albedo
+IF (LLALS) THEN
+  OPEN(UNIT=11,FILE='als_HR',FORM=CLFORM)
+  IF (YRCLI%LIEEE) THEN
+    READ(11)ZAUX1
+    DO JJ=YRCLI%NDATY,1,-1
+      DO J=1,YRCLI%NDATX
+        IZ=J+(YRCLI%NDATY-JJ)*YRCLI%NDATX
+        ZALS0(J,JJ)=ZAUX1(IZ)
+      ENDDO
+    ENDDO
+  ELSE
+    READ(11,*) ((ZALS0(J,JJ),J=1,YRCLI%NDATX),JJ=YRCLI%NDATY,1,-1)
+  ENDIF
+  CLOSE(11)
+  IALS= 1
+ENDIF
+!  Emissivity
+IF (LLEMI) THEN
+  OPEN(UNIT=12,FILE='emi_HR',FORM=CLFORM)
+  IF (YRCLI%LIEEE) THEN
+    READ(12)ZAUX1
+    DO JJ=YRCLI%NDATY,1,-1
+      DO J=1,YRCLI%NDATX
+        IZ=J+(YRCLI%NDATY-JJ)*YRCLI%NDATX
+        ZEMI0(J,JJ)=ZAUX1(IZ)
+      ENDDO
+    ENDDO
+  ELSE
+    READ(12,*) ((ZEMI0(J,JJ),J=1,YRCLI%NDATX),JJ=YRCLI%NDATY,1,-1)
+  ENDIF
+  CLOSE(12)
+  IEMI= 1
+ENDIF
+!  Soil texture : percentages of clay and sand
+IF (LLARG) THEN
+  OPEN(UNIT=13,FILE='arg_HR',FORM=CLFORM)
+  OPEN(UNIT=14,FILE='sab_HR',FORM=CLFORM)
+  IF (YRCLI%LIEEE) THEN
+    READ(13)ZAUX1
+    READ(14)ZAUX2
+    DO JJ=YRCLI%NDATY,1,-1
+      DO J=1,YRCLI%NDATX
+        IZ=J+(YRCLI%NDATY-JJ)*YRCLI%NDATX
+        ZARG0(J,JJ)=ZAUX1(IZ)
+        ZSAB0(J,JJ)=ZAUX2(IZ)
+      ENDDO
+    ENDDO
+  ELSE
+    READ(13,*) ((ZARG0(J,JJ),J=1,YRCLI%NDATX),JJ=YRCLI%NDATY,1,-1)
+    READ(14,*) ((ZSAB0(J,JJ),J=1,YRCLI%NDATX),JJ=YRCLI%NDATY,1,-1)
+  ENDIF
+  CLOSE(13)
+  CLOSE(14)
+  IARG= 1
+  ISAB= 1
+ENDIF
+!  Maximum soil depth
+IF (LLDPS) THEN
+  OPEN(UNIT=15,FILE='dps_HR',FORM=CLFORM)
+  IF (YRCLI%LIEEE) THEN
+    READ(15)ZAUX1
+    DO JJ=YRCLI%NDATY,1,-1
+      DO J=1,YRCLI%NDATX
+        IZ=J+(YRCLI%NDATY-JJ)*YRCLI%NDATX
+        ZDPS0(J,JJ)=ZAUX1(IZ)
+      ENDDO
+    ENDDO
+  ELSE
+    READ(15,*) ((ZDPS0(J,JJ),J=1,YRCLI%NDATX),JJ=YRCLI%NDATY,1,-1)
+  ENDIF
+  CLOSE(15)
+  IDPS= 1
+ENDIF
+!  Land use type
+IF (LLITP) THEN
+  OPEN(UNIT=16,FILE='itp_HR',FORM=CLFORM)
+  IF (YRCLI%LIEEE) THEN
+    READ(16)ZAUX1
+    DO JJ=YRCLI%NDATY,1,-1
+      DO J=1,YRCLI%NDATX
+        IZ=J+(YRCLI%NDATY-JJ)*YRCLI%NDATX
+        ZITP0(J,JJ)=ZAUX1(IZ)
+      ENDDO
+    ENDDO
+  ELSE
+    READ(16,*) ((ZITP0(J,JJ),J=1,YRCLI%NDATX),JJ=YRCLI%NDATY,1,-1)
+  ENDIF
+  CLOSE(16)
+  IITP= 1
+ENDIF
+!  Maximum and current vegetation cover
+IF (LLVEG) THEN
+  OPEN(UNIT=17,FILE='vgx_HR',FORM=CLFORM)
+  OPEN(UNIT=18,FILE='veg_HR',FORM=CLFORM)
+  IF (YRCLI%LIEEE) THEN
+    READ(17)ZAUX1
+    READ(18)ZAUX2
+    DO JJ=YRCLI%NDATY,1,-1
+      DO J=1,YRCLI%NDATX
+        IZ=J+(YRCLI%NDATY-JJ)*YRCLI%NDATX
+        ZVGX0(J,JJ)=ZAUX1(IZ)
+        ZVEG0(J,JJ)=ZAUX2(IZ)
+      ENDDO
+    ENDDO
+  ELSE
+    READ(17,*) ((ZVGX0(J,JJ),J=1,YRCLI%NDATX),JJ=YRCLI%NDATY,1,-1)
+    READ(18,*) ((ZVEG0(J,JJ),J=1,YRCLI%NDATX),JJ=YRCLI%NDATY,1,-1)
+  ENDIF
+  CLOSE(17)
+  CLOSE(18)
+  IVGX= 1
+  IVEG= 1
+ENDIF
+!  Leaf area index and miminum surface resistance
+IF (LLLAI) THEN
+  OPEN(UNIT=19,FILE='lai_HR',FORM=CLFORM)
+  OPEN(UNIT=21,FILE='rsm_HR',FORM=CLFORM)
+  IF (YRCLI%LIEEE) THEN
+    READ(19)ZAUX1
+    READ(21)ZAUX2
+    DO JJ=YRCLI%NDATY,1,-1
+      DO J=1,YRCLI%NDATX
+        IZ=J+(YRCLI%NDATY-JJ)*YRCLI%NDATX
+        ZLAI0(J,JJ)=ZAUX1(IZ)
+        ZRSM0(J,JJ)=ZAUX2(IZ)
+      ENDDO
+    ENDDO
+  ELSE
+    READ(19,*) ((ZLAI0(J,JJ),J=1,YRCLI%NDATX),JJ=YRCLI%NDATY,1,-1)
+    READ(21,*) ((ZRSM0(J,JJ),J=1,YRCLI%NDATX),JJ=YRCLI%NDATY,1,-1)
+  ENDIF
+  CLOSE(19)
+  CLOSE(21)
+  ILAI= 1
+  IRSM= 1
+ENDIF
+!  Roughness length of vegetation
+IF (LLZ0V) THEN
+  OPEN(UNIT=22,FILE='z0v_HR',FORM=CLFORM)
+  IF (YRCLI%LIEEE) THEN
+    READ(22)ZAUX1
+    DO JJ=YRCLI%NDATY,1,-1
+      DO J=1,YRCLI%NDATX
+        IZ=J+(YRCLI%NDATY-JJ)*YRCLI%NDATX
+        ZZ0V0(J,JJ)=ZAUX1(IZ)
+      ENDDO
+    ENDDO
+  ELSE
+    READ(22,*) ((ZZ0V0(J,JJ),J=1,YRCLI%NDATX),JJ=YRCLI%NDATY,1,-1)
+  ENDIF
+  CLOSE(22)
+  IZ0V= 1
+ENDIF
+!  Albedo of vegetation
+IF (LLALV) THEN
+  OPEN(UNIT=23,FILE='alv_HR',FORM=CLFORM)
+  IF (YRCLI%LIEEE) THEN
+    READ(23)ZAUX1
+    DO JJ=YRCLI%NDATY,1,-1
+      DO J=1,YRCLI%NDATX
+        IZ=J+(YRCLI%NDATY-JJ)*YRCLI%NDATX
+        ZALV0(J,JJ)=ZAUX1(IZ)
+      ENDDO
+    ENDDO
+  ELSE
+    READ(23,*) ((ZALV0(J,JJ),J=1,YRCLI%NDATX),JJ=YRCLI%NDATY,1,-1)
+  ENDIF
+  CLOSE(23)
+  IALV= 1
+ENDIF
+!  Root depth
+IF (LLDPR) THEN
+  OPEN(UNIT=24,FILE='dpr_HR',FORM=CLFORM)
+  IF (YRCLI%LIEEE) THEN
+    READ(24)ZAUX1
+    DO JJ=YRCLI%NDATY,1,-1
+      DO J=1,YRCLI%NDATX
+        IZ=J+(YRCLI%NDATY-JJ)*YRCLI%NDATX
+        ZDPR0(J,JJ)=ZAUX1(IZ)
+      ENDDO
+    ENDDO
+  ELSE
+    READ(24,*) ((ZDPR0(J,JJ),J=1,YRCLI%NDATX),JJ=YRCLI%NDATY,1,-1)
+  ENDIF
+  CLOSE(24)
+  IDPR= 1
+ENDIF
+
+!  Deallocate temporary space
+IF (YRCLI%LIEEE) THEN
+  DEALLOCATE (ZAUX1)
+  IF (LLARG.OR.LLVEG.OR.LLLAI) THEN
+    DEALLOCATE (ZAUX2)
+  ENDIF
+ENDIF
+
+IC= IALS + IEMI + IARG + ISAB + IDPS + IITP + IVGX&
+ & + IVEG + ILAI + IRSM + IZ0V + IALV + IDPR  
+
+!     ------------------------------------------------------------------
+
+!     3. READ ARPEGE FIELDS.
+!        -------------------
+
+INUM=3
+IREP=0
+IARI=0
+IARP=31
+IMES=1
+CLNOMF='Const.Clim'
+CLNOMC='Const.Clim.Surfa'
+LLIMST=.TRUE.
+
+IINF=-1
+INIV=0
+LLCOSP=.FALSE.
+
+CALL FAITOU(IREP,INUM,.TRUE.,CLNOMF,'OLD',.TRUE.,LLIMST,&
+ & IMES,IARP,IARI,CLNOMC)  
+CALL CCHIEN(YDGEOMETRY,CLNOMC,INUM,IINF)
+
+CALL ELECI(YDGEOMETRY%YRDIM,IREP,INUM,'SURF',INIV,'IND.TERREMER',ZLSM1,NULOUT)
+CALL ELECI(YDGEOMETRY%YRDIM,IREP,INUM,'SURF',INIV,'PROP.TERRE  ',ZLND1,NULOUT)
+CALL ELECI(YDGEOMETRY%YRDIM,IREP,INUM,'SURF',INIV,'PROP.URBANIS',ZURB1,NULOUT)
+CALL ELECI(YDGEOMETRY%YRDIM,IREP,INUM,'SURF',INIV,'PROP.VEGETAT',ZVEG1,NULOUT)
+CALL ELECI(YDGEOMETRY%YRDIM,IREP,INUM,'SURF',INIV,'PROP.VEG.MAX',ZVGX1,NULOUT)
+CALL ELECI(YDGEOMETRY%YRDIM,IREP,INUM,'SURF',INIV,'IND.VEG.DOMI',ZITP1,NULOUT)
+CALL ELECI(YDGEOMETRY%YRDIM,IREP,INUM,'SURF',INIV,'IND.FOLIAIRE',ZLAI1,NULOUT)
+CALL ELECI(YDGEOMETRY%YRDIM,IREP,INUM,'SURF',INIV,'RESI.STO.MIN',ZRSM1,NULOUT)
+CALL ELECI(YDGEOMETRY%YRDIM,IREP,INUM,'SURF',INIV,'EPAIS.SOL   ',ZDEP1,NULOUT)
+CALL ELECI(YDGEOMETRY%YRDIM,IREP,INUM,'SURF',INIV,'Z0.FOIS.G   ',ZGZ01,NULOUT)
+CALL ELECI(YDGEOMETRY%YRDIM,IREP,INUM,'SURF',INIV,'Z0REL.FOIS.G',ZGZR1,NULOUT)
+CALL ELECI(YDGEOMETRY%YRDIM,IREP,INUM,'SURF',INIV,'Z0VEG.FOIS.G',ZGZV1,NULOUT)
+CALL ELECI(YDGEOMETRY%YRDIM,IREP,INUM,'SURF',INIV,'GZ0.THERM   ',ZGZT1,NULOUT)
+CALL ELECI(YDGEOMETRY%YRDIM,IREP,INUM,'SURF',INIV,'ALBEDO      ',ZALB1,NULOUT)
+CALL ELECI(YDGEOMETRY%YRDIM,IREP,INUM,'SURF',INIV,'ALBEDO.SOLNU',ZALS1,NULOUT)
+CALL ELECI(YDGEOMETRY%YRDIM,IREP,INUM,'SURF',INIV,'ALBEDO.VEG  ',ZALV1,NULOUT)
+CALL ELECI(YDGEOMETRY%YRDIM,IREP,INUM,'SURF',INIV,'EMISSIVITE  ',ZEMI1,NULOUT)
+CALL ELECI(YDGEOMETRY%YRDIM,IREP,INUM,'SURF',INIV,'PROP.ARGILE ',ZARG1,NULOUT)
+CALL ELECI(YDGEOMETRY%YRDIM,IREP,INUM,'SURF',INIV,'PROP.SABLE  ',ZSAB1,NULOUT)
+CALL ELECI(YDGEOMETRY%YRDIM,IREP,INUM,'SURF',INIV,'EPAI.SOL.MAX',ZDPS1,NULOUT)
+
+! Put land-sea mask for EBICLI
+ZEXT(1:ITFING,0)=ZLSM1(1:ITFING)
+
+!     ------------------------------------------------------------------
+
+!     4. LOOP ON THE ALADIN GRID.
+!        ------------------------
+
+! ALADIN GEOMETRY: zone C+I
+!   NDGUNG to NDGUXG, NDLUNG to NDLUXG
+!   I = index of the element in the final grid
+
+I=0
+IM=0
+IT=0
+DO JJ=1,IYFING
+  DO J=1,IXFING
+    I=I+1
+
+!  Only land points are considered here :
+    IF (ZLSM1(I) <= YRCLI%SMASK) GO TO 410
+    IT=IT+1
+
+!  Check the position of the point relative to the dataset and define the
+!  interpolation box if required. Only points inside the domain or close to
+!  its boundary are considered here.
+!   ILAT/ILON : latitude/longitude of the nearest point in the input grid
+!   IDLA/IDLO : latitude/longitude radius of the box
+!   I1LA/I2LA/I1LO/I2LO : north/south/west/east edges of the box
+!  The size of the box inside which input data are considered and averaged 
+!  is by default twice the model mesh-size if each direction. This can be 
+!  reduced (to keep sharp gradients) by increasing the namelist variable 
+!  NPINT (1 by default), i.e. decreasing ZLIS.
+
+!  Check the latitude
+    ZLAT= YRGSGEOM_NB%GELAT(J+IADL(JJ))*ZCV
+    ILAT= NINT(0.5_JPRB+(ZLAT-YRCLI%ELATSW)/YRCLI%EDLAT)
+!  Latitude mesh size evaluation (including projected grids) (in degrees):
+    IF (JJ < IYFING.AND.JJ > 1) THEN
+      ZZDL= (YRGSGEOM_NB%GELAT(J+IADL(JJ+1))-YRGSGEOM_NB%GELAT(J+IADL(JJ-1)))*ZCV/2.0_JPRB
+    ELSEIF(JJ < IYFING) THEN
+      ZZDL= (YRGSGEOM_NB%GELAT(J+IADL(JJ+1))-YRGSGEOM_NB%GELAT(J+IADL(JJ  )))*ZCV
+    ELSE
+      ZZDL= (YRGSGEOM_NB%GELAT(J+IADL(JJ  ))-YRGSGEOM_NB%GELAT(J+IADL(JJ-1)))*ZCV
+    ENDIF
+    ZDLA= ZLIS*ZZDL/YRCLI%EDLAT
+    IDLA= INT(ZDLA)
+    IF (ILAT < (1-IDLA) .OR. ILAT > (YRCLI%NDATY+IDLA)) GO TO 410
+    I1LA= MAX(1    ,ILAT-IDLA)
+    I2LA= MIN(YRCLI%NDATY,ILAT+IDLA)
+!  Check the longitude
+    ZLON= YRGSGEOM_NB%GELAM(J+IADL(JJ))*ZCV
+    ZZDL=MOD(ZLON-YRCLI%ELONSW,360._JPRB)
+    IF (ZZDL < 0) ZZDL=ZZDL+360._JPRB
+    ILON= NINT(0.5_JPRB+(ZZDL)/YRCLI%EDLON)
+
+    IF (ILON <= 0.0_JPRB.OR.ILON > YRCLI%NDATX) GOTO 410
+!  Longitude mesh size evaluation (including projected grids) (in degrees):
+    IF (J < IXFING.AND.J > 1) THEN
+      ZZDL= (YRGSGEOM_NB%GELAM(J+1+IADL(JJ))-YRGSGEOM_NB%GELAM(J-1+IADL(JJ)))*ZCV/2.0_JPRB
+      IF (ZZDL < 0.0_JPRB) ZZDL=ZZDL+180._JPRB
+    ELSE
+      IF(J < IXFING) THEN
+        ZZDL= (YRGSGEOM_NB%GELAM(J+1+IADL(JJ))-YRGSGEOM_NB%GELAM(  J+IADL(JJ)))*ZCV
+      ELSE
+        ZZDL= (YRGSGEOM_NB%GELAM(  J+IADL(JJ))-YRGSGEOM_NB%GELAM(J-1+IADL(JJ)))*ZCV
+      ENDIF
+!  ZZDL MUST be >0:
+      ZZDL=MOD(ZZDL,360._JPRB)
+      IF (ZZDL < 0.0_JPRB) ZZDL=ZZDL+360._JPRB
+    ENDIF
+    ZDLO= ZLIS*ZZDL/YRCLI%EDLON
+    IDLO= MIN(INT(ZDLO),YRCLI%NDATX/4)
+    I1LO=MAX(ILON-IDLO,1)
+    I2LO=MIN(ILON+IDLO,YRCLI%NDATX)
+
+!  Initialize new fields
+    ZMSK= 0.0_JPRB
+    ZALS= 0.0_JPRB
+    ZEMI= 0.0_JPRB
+    ZARG= 0.0_JPRB
+    ZSAB= 0.0_JPRB
+    ZDPS= 0.0_JPRB
+    ZVGX= 0.0_JPRB
+    ZVEG= 0.0_JPRB
+    ZLAI= 0.0_JPRB
+    ZLSR= 0.0_JPRB
+    ZZ0V= 0.0_JPRB
+    ZALV= 0.0_JPRB
+    ZDPR= 0.0_JPRB
+    DO JT=1,JPTYVE
+      ZITP(JT)= 0.0_JPRB
+    ENDDO
+
+!  Save previous fields
+    ZVEGO= ZVEG1(I)
+    ZVGXO= ZVGX1(I)
+    ZURBO= ZURB1(I)
+    ZZ0VO= ZGZV1(I)/ZFZ0
+    ZALVO= ZALB1(I)
+    ZDPRO= ZDEP1(I)
+    IF (ZVEGO >= YRCLI%SVEG) THEN
+      ZALVO= (ZALB1(I)-(1.0_JPRB-ZVEGO)*ZALS1(I))/ZVEGO
+      ZZ0VO= (ZZ0VO - ZURBO*YRCLI%SZZ0U - (1.0_JPRB-ZURBO-ZVEGO)*YRCLI%SZZ0D)/ZVEGO
+    ENDIF
+    IF (ZVGXO >= YRCLI%SVEG) THEN
+      ZDPRO= (ZDEP1(I)-(1.0_JPRB-ZVGXO)*ZDPS1(I))/ZVGXO
+    ENDIF
+
+!  Compute new values
+    IPTL=0
+    DO JLA=I1LA,I2LA
+      DO JLO=I1LO,I2LO
+!  Mask
+        ZMSK= ZMSK + MAX(0.0_JPRB,ZMSK0(JLO,JLA))
+!  Land use type
+        DO JT=1,JPTYVE
+          IF (NINT(ZITP0(JLO,JLA)) == JT) ZITP(JT)= ZITP(JT) + 1.0_JPRB
+        ENDDO
+!  Bare ground albedo, emissivity
+        ZALS= ZALS + MAX(0.0_JPRB,ZALS0(JLO,JLA))
+        ZEMI= ZEMI + MAX(0.0_JPRB,ZEMI0(JLO,JLA))
+!  Soil texture and depth
+        ZARG= ZARG + MAX(0.0_JPRB,ZARG0(JLO,JLA))
+        ZSAB= ZSAB + MAX(0.0_JPRB,ZSAB0(JLO,JLA))
+        ZDPS= ZDPS + MAX(0.0_JPRB,ZDPS0(JLO,JLA))
+!  Vegetation cover
+        ZVGX= ZVGX + MAX(0.0_JPRB,ZVGX0(JLO,JLA))
+        ZVEG= ZVEG + MAX(0.0_JPRB,ZVEG0(JLO,JLA))
+!  Leaf area index and minimum surface resistance
+        ZLAI= ZLAI + MAX(0.0_JPRB,ZLAI0(JLO,JLA))
+        IF (ZRSM0(JLO,JLA) > ZEPS) THEN
+          ZLSR= ZLSR + MAX(0.0_JPRB,ZLAI0(JLO,JLA))/ZRSM0(JLO,JLA)
+        ENDIF
+!  Roughness length and albedo of vegetation
+        ZZ0V= ZZ0V + MAX(0.0_JPRB,ZZ0V0(JLO,JLA))
+        ZALV= ZALV + MAX(0.0_JPRB,ZALV0(JLO,JLA))
+        ZDPR= ZDPR + MAX(0.0_JPRB,ZDPR0(JLO,JLA))
+!  Number of points in the box:
+        IPTL=IPTL+1
+      ENDDO
+    ENDDO
+!  End of the two loops in the rectangular latitude x longitude box
+!  ZMSK : Number of non-missing data in the box
+!  ZPTL : Maximum number of land points in the box
+!         (including the part of the box outside the domain)
+    IF (ZMSK < ZEPS) GO TO 410
+    IM=IM+1
+!c This cannot work with the borders' cut
+!c      ZPTL=REAL((2*IDLA+1)*(2*IDLO+1),KIND(ZPTL))*ZLND1(I)
+    ZPTL=IPTL*ZLND1(I)
+    ZPTL=MAX(ZMSK,ZPTL)
+
+!  Compute new fields
+!  Choice of the dominant type of vegetation. The dominant vegetation must
+!  exceed 25%, otherwise the old type is kept.
+    ZITPN= ZITP1(I)
+    ZITPM= PPONDER*ZPTL
+    DO JT=1,JPTYVE
+      IF ((JT /= YRCLI%NTPMER).AND.(JT /= YRCLI%NTPLAC).AND.(ZITP(JT) >= ZITPM)) THEN
+        ZITPN= REAL(JT,JPRB)
+        ZITPM= ZITP(JT)
+      ENDIF
+    ENDDO
+    ZITP1(I)= ZITPN*IITP + ZITP1(I)*(1-IITP)
+!  For the other parameters, a linear combination is done with the weights
+!  ZW1 for the input data and ZW2 for the initial data, provided data are not
+!  missing (Ixxx=1). Else (Ixxx=0), the previous value is kept.
+    ZW1=1.0_JPRB/ZPTL
+    ZW2=1.0_JPRB-ZMSK*ZW1
+!  Bare ground albedo, emissivity
+    ZALS1(I)= (ZW1*ZALS + ZW2*ZALS1(I))*IALS + ZALS1(I)*(1-IALS)
+    ZEMI1(I)= (ZW1*ZEMI + ZW2*ZEMI1(I))*IEMI + ZEMI1(I)*(1-IEMI)
+!  Soil texture and depth
+    ZARG1(I)= (ZW1*ZARG + ZW2*ZARG1(I))*IARG + ZARG1(I)*(1-IARG)
+    ZSAB1(I)= (ZW1*ZSAB + ZW2*ZSAB1(I))*ISAB + ZSAB1(I)*(1-ISAB)
+    ZDPS1(I)= (ZW1*ZDPS + ZW2*ZDPS1(I))*IDPS + ZDPS1(I)*(1-IDPS)
+!  Vegetation cover
+    ZVGX= MAX(0.0_JPRB,MIN(ZMSK,ZVGX*ZLND1(I)))
+    ZVEG= MAX(0.0_JPRB,MIN(ZVGX,ZVEG*ZLND1(I)))
+    ZVGX1(I)= (ZW1*ZVGX + ZW2*ZVGX1(I))*IVGX + ZVGX1(I)*(1-IVGX)
+    ZVEG1(I)= (ZW1*ZVEG + ZW2*ZVEG1(I))*IVEG + ZVEG1(I)*(1-IVEG)
+    ZURB1(I)= MIN(1.0_JPRB-ZVGX1(I),ZURB1(I))
+!  Leaf area index and minimum surface resistance
+    ZLSR= ZW1*ZLSR + ZW2*ZLAI1(I)/MAX(ZEPS,ZRSM1(I))
+    ZLAI= MAX(0.0_JPRB,ZLAI)
+    ZLAI1(I)= (ZW1*ZLAI + ZW2*ZLAI1(I))*ILAI + ZLAI1(I)*(1-ILAI)
+    IF (ZLSR > ZEPS) THEN
+      ZRSM= ZLAI1(I)/ZLSR
+    ELSE
+      ZRSM= YRCLI%SRSMX
+    ENDIF
+    ZRSM1(I)= ZRSM*IRSM + ZRSM1(I)*(1-IRSM)
+!  Roughness lengths
+    ZZ0V= (ZW1*ZZ0V + ZW2*ZZ0VO)*IZ0V + ZZ0VO*(1-IZ0V)
+    ZZ0V= ZVEG1(I)*ZZ0V+ZURB1(I)*YRCLI%SZZ0U+(1.0_JPRB-ZURB1(I)-ZVEG1(I))*YRCLI%SZZ0D
+    ZGZV1(I)= ZFZ0*ZZ0V
+    ZGZ01(I)= SQRT( ZGZR1(I)**2 + ZGZV1(I)**2 )
+    IF (YRCLI%LZ0THER) THEN
+      ZGZT1(I)= ZGZ01(I)*YRCLI%STHER
+    ELSE
+      ZGZT1(I)= ZGZV1(I)*YRCLI%STHER
+    ENDIF
+!  Albedos (total, vegetation)
+    ZALV1(I)= (ZW1*ZALV + ZW2*ZALVO)*IALV + ZALVO*(1-IALV)
+    ZALB1(I)= ZVEG1(I)*ZALV1(I) + (1.0_JPRB-ZVEG1(I))*ZALS1(I)
+!  Useful soil depth
+    ZDPR= (ZW1*ZDPR + ZW2*ZDPRO)*IDPR + ZDPRO*(1-IDPR)
+    ZDEP1(I)= ZVGX1(I)*ZDPR + (1.0_JPRB-ZVGX1(I))*ZDPS1(I)
+
+! Corrections according to land use type
+!  Ice
+    IF (NINT(ZITP1(I)) == YRCLI%NTPGLA) THEN
+      ZALS1(I)= YRCLI%SALBG
+      ZEMI1(I)= YRCLI%SEMIG
+      ZARG1(I)= YRCLI%SARGN
+      ZSAB1(I)= YRCLI%SSABN
+      ZDPS1(I)= YRCLI%SDEPN
+      ZDEP1(I)= YRCLI%SDEPN
+      ZVGX1(I)= 0.0_JPRB
+      ZVEG1(I)= 0.0_JPRB
+    ENDIF
+!  Desert
+    IF (ZVGX1(I) < YRCLI%SVEG*ZLND1(I)) THEN
+      ZVGX1(I)= 0.0_JPRB
+      ZDEP1(I)= ZDPS1(I)
+    ENDIF
+    IF (ZVEG1(I) < YRCLI%SVEG*ZLND1(I)) THEN
+      ZVEG1(I)= 0.0_JPRB
+      ZLAI1(I)= 0.0_JPRB
+      ZRSM1(I)= YRCLI%SRSMX
+      ZALV1(I)= YRCLI%SALBN
+      ZALB1(I)= ZALS1(I)
+      ZGZV1(I)= ZFZ0*(ZURB1(I)*YRCLI%SZZ0U+(1.0_JPRB-ZURB1(I))*YRCLI%SZZ0D)
+      ZGZ01(I)= SQRT( ZGZR1(I)**2 + ZGZV1(I)**2 )
+      IF (YRCLI%LZ0THER) THEN
+        ZGZT1(I)= ZGZ01(I)*YRCLI%STHER
+      ELSE
+        ZGZT1(I)= ZGZV1(I)*YRCLI%STHER
+      ENDIF
+    ENDIF
+!  Extrema
+    ZALS1(I)= MIN(YRCLI%SALBX,MAX(YRCLI%SALBN,ZALS1(I)))
+    ZALV1(I)= MIN(YRCLI%SALBX,MAX(YRCLI%SALBN,ZALV1(I)))
+    ZALB1(I)= MIN(YRCLI%SALBX,MAX(YRCLI%SALBN,ZALB1(I)))
+    ZEMI1(I)= MIN(YRCLI%SEMIX,MAX(YRCLI%SEMIN,ZEMI1(I)))
+    ZDPS1(I)= MIN(YRCLI%SDEPX,MAX(YRCLI%SDEPN,ZDPS1(I)))
+    ZDEP1(I)= MIN(YRCLI%SDEPX,MAX(YRCLI%SDEPN,ZDEP1(I)))
+    ZRSM1(I)= MIN(YRCLI%SRSMX,MAX(YRCLI%SRSMN,ZRSM1(I)))
+    ZGZV1(I)= MAX(YRCLI%SZZ0N*ZFZ0,ZGZV1(I))
+    ZGZ01(I)= MAX(YRCLI%SZZ0N*ZFZ0,ZGZ01(I))
+    ZGZT1(I)= MAX(YRCLI%SZZ0N*ZFZ0*YRCLI%STHER,ZGZT1(I))
+    ZZARG= MIN(YRCLI%SARGX,MAX(YRCLI%SARGN,ZARG1(I)))
+    ZZSAB= MIN(YRCLI%SSABX,MAX(YRCLI%SSABN,ZSAB1(I)))
+    ZSUM=MAX(100._JPRB,ZZARG+ZZSAB)/100._JPRB
+    ZARG1(I)= ZZARG/ZSUM
+    ZSAB1(I)= ZZSAB/ZSUM
+
+410 CONTINUE
+  ENDDO
+ENDDO
+
+IF (IM == 0) CALL ABOR1(' ERROR IN EINCLI5 : NO MODIFICATION !')
+WRITE(NULOUT,'(I6,''/'',I6,'' POINTS MODIFIED BY EINCLI5'')')IM,IT
+WRITE(NULOUT,'(I2,'' FIELDS MODIFIED BY EINCLI5'')') IC
+
+!     ------------------------------------------------------------------
+
+!     5. BIPER + WRITING THE CLIM FILE.
+!        ------------------------------
+
+! Special case for land-use type: no biperiodization
+! Find out the Globally dominant type:
+DO JT=1,JPTYVE
+  ZITP(JT)=0.0_JPRB
+ENDDO
+DO JJ=1,ITFING
+  IT=NINT(ZITP1(JJ))
+  ZITP(IT)=ZITP(IT)+1
+ENDDO
+IT=0
+ZD=0.0_JPRB
+DO JT=1,JPTYVE
+  IF (ZD < ZITP(JT))THEN
+    IT=JT
+    ZD=ZITP(JT)
+  ENDIF
+ENDDO
+! Now use this type IT to fill the Extension zone
+INDEX1=0
+INDEX2=0
+DO JY=1,IYFING
+  DO JX=1,IXFING
+    ZEXT(JX+INDEX2,1)=ZITP1(JX+INDEX1)
+  ENDDO
+  DO JX=IXFING+1,NDLON
+    ZEXT(JX+INDEX2,1)=IT
+  ENDDO
+  INDEX1=INDEX1+IXFING
+  INDEX2=INDEX2+NDLON
+ENDDO
+DO JY=IYFING+1,NDGLG
+  DO JX=1,NDLON
+    ZEXT(JX+INDEX2,1)=IT
+  ENDDO
+  INDEX2=INDEX2+NDLON
+ENDDO
+
+! Biperiodization and storing for other fields:
+
+DO J=1,ITFING
+  ZEXT(J, 2)= ZVEG1(J)
+  ZEXT(J, 3)= ZVGX1(J)
+  ZEXT(J, 4)= ZLAI1(J)
+  ZEXT(J, 5)= ZRSM1(J)
+  ZEXT(J, 6)= ZDEP1(J)
+  ZEXT(J, 7)= ZGZ01(J)
+  ZEXT(J, 8)= ZGZV1(J)
+  ZEXT(J, 9)= ZGZT1(J)
+  ZEXT(J,10)= ZALB1(J)
+  ZEXT(J,11)= ZALS1(J)
+  ZEXT(J,12)= ZEMI1(J)
+  ZEXT(J,13)= ZARG1(J)
+  ZEXT(J,14)= ZSAB1(J)
+  ZEXT(J,15)= ZDPS1(J)
+  ZEXT(J,16)= ZALV1(J)
+  ZEXT(J,17)= ZURB1(J)
+  ZEXT(J,18)= ZALS1(J)
+ENDDO
+IFLD=18+1
+CALL EBICLI(YDGEOMETRY,YDGFL,YDEPHY,YDML_PHY_MF,IFLD,INIVL,CLPREF,CLSUFF,INUM,ZEXT,LLBIP,LLWRI,LLPAC)
+
+CALL ECHK923(YDGEOMETRY%YRDIM,INUM)
+
+CALL LFILAF(IREP,INUM,.FALSE.)
+CALL FAIRME(IREP,INUM,'KEEP')
+
+!     ------------------------------------------------------------------
+
+END ASSOCIATE
+IF (LHOOK) CALL DR_HOOK('EINCLI5',1,ZHOOK_HANDLE)
+END SUBROUTINE EINCLI5

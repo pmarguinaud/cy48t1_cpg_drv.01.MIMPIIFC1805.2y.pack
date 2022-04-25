@@ -1,4 +1,4 @@
-SUBROUTINE CPPHINP(YDGEOMETRY,YDMODEL,KST,KEND,&
+SUBROUTINE CPPHINP(LDVERTFE,YDGEOMETRY,YDMODEL,KST,KEND,&
  & PGEMU,PGELAM,&
  & PUT0,PVT0,PQT0,PQT0L,PQT0M,PQSLT0L,PQSLT0M,&
  & PRDELP0,PEVEL0,PCVGQSL,&
@@ -49,12 +49,11 @@ USE YOMHOOK  , ONLY : LHOOK, DR_HOOK
 USE TYPE_MODEL   , ONLY : MODEL
 USE GEOMETRY_MOD , ONLY : GEOMETRY
 
-USE YOMCVER  , ONLY : LVERTFE
-
 !     ------------------------------------------------------------------
 
 IMPLICIT NONE
 
+LOGICAL           ,INTENT(IN)    :: LDVERTFE
 TYPE(GEOMETRY)    ,INTENT(IN)    :: YDGEOMETRY
 TYPE(MODEL)       ,INTENT(IN)    :: YDMODEL
 INTEGER(KIND=JPIM),INTENT(IN)    :: KST 
@@ -232,7 +231,7 @@ IF (LLCOMPUTE_CVGQ) THEN
     ENDIF
 
     ! b/ Vertical part of the moisture convergence:
-    IF (LVERTFE) THEN
+    IF (LDVERTFE) THEN
 
       ! * "pevel0" contains full-layer "etadot (d prehyd / d eta)"
       !   The current discretisation of the vertical advection of a variable X

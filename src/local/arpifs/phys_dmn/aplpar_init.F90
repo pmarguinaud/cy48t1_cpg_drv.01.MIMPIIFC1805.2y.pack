@@ -1,7 +1,7 @@
 SUBROUTINE APLPAR_INIT &
  !---------------------------------------------------------------------
  ! - INPUT .
- & (KIDIA , KFDIA  , KLON   , KLEV   , KSGST  , KCSS   ,&
+ & (LDAROME, KIDIA , KFDIA  , KLON   , KLEV   , KSGST  , KCSS   ,&
  & PVEG0  ,&
  !---------------------------------------------------------------------
  ! - OUTPUT .
@@ -18,7 +18,6 @@ SUBROUTINE APLPAR_INIT &
 
 USE PARKIND1  ,ONLY : JPIM     ,JPRB
 USE YOMHOOK   ,ONLY : LHOOK,   DR_HOOK
-USE YOMCT0    ,ONLY : LAROME
 USE YOMARPHY  ,ONLY : TARPHY
 
 !**** *APLPAR_INIT*
@@ -352,6 +351,7 @@ USE YOMARPHY  ,ONLY : TARPHY
 
 IMPLICIT NONE
 
+LOGICAL,           INTENT(IN)    :: LDAROME
 INTEGER(KIND=JPIM),INTENT(IN)    :: KLON
 INTEGER(KIND=JPIM),INTENT(IN)    :: KLEV
 INTEGER(KIND=JPIM),INTENT(IN)    :: KSGST
@@ -408,7 +408,7 @@ PQW    (:,:) = 0.0_JPRB
 PTW    (:,:) = 0.0_JPRB
 PLH    (:,:) = 0.0_JPRB
 
-IF (.NOT.LAROME) THEN
+IF (.NOT.LDAROME) THEN
   PVEG    (:) = PVEG0(:)
 ELSE
   PVEG    (:) = 0.0_JPRB

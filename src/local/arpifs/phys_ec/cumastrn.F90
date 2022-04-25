@@ -384,7 +384,7 @@ ENDDO
 !                  ---------------------------------------------------
 
 CALL CUININ &
- & ( YDML_PHY_SLIN%YREPHLI,  YDML_PHY_EC%YRECUMF,&
+ & (YDCST, YDML_PHY_SLIN%YREPHLI,  YDML_PHY_EC%YRECUMF,&
  & KIDIA,    KFDIA,    KLON,     KLEV,&
  & PTEN,     PQEN,     PQSEN,    PUEN,     PVEN,&
  & PGEO,     PAPH,&

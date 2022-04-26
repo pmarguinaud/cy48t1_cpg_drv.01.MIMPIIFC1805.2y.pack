@@ -162,6 +162,7 @@ USE CPG_TYPE_MOD, ONLY : CPG_DYN_TYPE,  CPG_PHY_TYPE, CPG_TND_TYPE, &
 USE CPG_OPTS_TYPE_MOD, ONLY : CPG_BNDS_TYPE, CPG_OPTS_TYPE
 USE MF_PHYS_TYPE_MOD, ONLY : MF_PHYS_TYPE
 USE OML_MOD, ONLY: OML_MAX_THREADS, OML_MY_THREAD
+USE SPP_MOD, ONLY : YSPP, YSPP_CONFIG
 !     ------------------------------------------------------------------
 
 IMPLICIT NONE
@@ -517,7 +518,7 @@ DO JKGLO = 1, KGPCOMP, YDGEOMETRY%YRDIM%NPROMA
   & PGFLTNDHD_DDH(:, :, :, IBL), PGPSDT2D(:, :, IBL), PSD_PF(:, :, :, IBL), PGMV(:, :, :, IBL), PGMVS(:, :, IBL),                &
   & PGFL(:, :, :, IBL), PGFLPC(:, :, :, IBL), PGFLPT(:, :, :, IBL), PSD_XA(:, :, :, IBL), PGMVTNDSI_DDH(:, :, :, IBL),           &
   & IWSETTLOFF(:, IBL), PB1, PGMVT1(:, :, :, IBL), PGMVT1S(:, :, IBL), PGFLT1(:, :, :, IBL), PEXTRA(:, :, :, IBL),               &
-  & PGMVTNDSL_DDH(:, :, :, IBL), PGFLTNDSL_DDH(:, :, :, IBL), ZTRAJEC_PHYS, ZTRAJEC_SLAG, YDDDH, CDPART='XXX'                    &
+  & PGMVTNDSL_DDH(:, :, :, IBL), PGFLTNDSL_DDH(:, :, :, IBL), ZTRAJEC_PHYS, ZTRAJEC_SLAG, YDDDH, YSPP, YSPP_CONFIG, CDPART='XXX' &
   &                 )
 
 ENDDO

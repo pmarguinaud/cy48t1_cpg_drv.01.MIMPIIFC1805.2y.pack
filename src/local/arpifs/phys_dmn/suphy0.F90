@@ -514,6 +514,8 @@ LOGICAL , POINTER ::  LCAPCIN
 LOGICAL , POINTER ::  LCORSEDIM
 REAL(KIND=JPRB) :: ZDELTA
 INTEGER(KIND=JPIM) :: JLEV
+REAL(KIND=JPRB) :: ZRHORAIN ! RTTOVSCATT fixed density for rain
+REAL(KIND=JPRB) :: ZRHOSNOW ! RTTOVSCATT fixed density of snow
 
 #include "namphy0.nam.h"
 
@@ -1682,6 +1684,20 @@ YDPHY0%RSRC1D = &
  & 0.8413813_JPRB    ,  0.933222E+00_JPRB ,  0.9772662_JPRB    ,   0.993797E+00_JPRB,&
  & 0.9986521_JPRB    ,  0.999768E+00_JPRB ,  0.9999684_JPRB    ,   0.999997E+00_JPRB,&
  & 1.0000000_JPRB    ,  1.000000_JPRB     /)
+
+
+! Convert from flux [kg/m2/s] to density [kg/m3] using old RTTOV-SCATT
+!  a    b         ! RR = a * LWC^b, [RR]=mm/h, [LWC]=g/m^3
+! 20.89 1.15      ! rain
+! 29.51 1.10      ! snow
+ZRHORAIN     = 1.0_JPRB
+ZRHOSNOW     = 0.1_JPRB
+
+YDPHY0%RCOEFRAIN(1) = ((1.0_JPRB / 20.89_JPRB) * 3600.0_JPRB) / ZRHORAIN
+YDPHY0%RCOEFRAIN(2) = (1.0_JPRB / 1.15_JPRB)
+YDPHY0%RCOEFSNOW(1) = ((1.0_JPRB / 29.51_JPRB) * 3600.0_JPRB) / ZRHOSNOW
+YDPHY0%RCOEFSNOW(2) = (1.0_JPRB / 1.10_JPRB)
+
 
 
 !     ------------------------------------------------------------------

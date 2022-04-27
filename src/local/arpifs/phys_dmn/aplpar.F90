@@ -492,10 +492,6 @@ REAL(KIND=JPRB) :: ZTMPPRODTH(YDCPG_OPTS%KLON,0:YDCPG_OPTS%KFLEVG) ! temporary a
 
 !!for BAYRAD
 REAL(KIND=JPRB) :: ZDE2MR(YDCPG_OPTS%KLON,YDCPG_OPTS%KFLEVG) ! temporary array for conversion of density to mixing ratio
-REAL(KIND=JPRB) :: ZCOEFRAIN(2) ! RTTOVSCATT coefficients to convert flux to density for rain
-REAL(KIND=JPRB) :: ZCOEFSNOW(2) ! RTTOVSCATT coefficients to convert flux to density for snow
-REAL(KIND=JPRB) :: ZRHORAIN ! RTTOVSCATT fixed density for rain
-REAL(KIND=JPRB) :: ZRHOSNOW ! RTTOVSCATT fixed density of snow
 !-----------------------------------------------------------------
 
 ! - 2D (0:KLEV) .
@@ -4583,13 +4579,6 @@ IF ( (.NOT. LGPCMT) ) THEN
    !  a    b         ! RR = a * LWC^b, [RR]=mm/h, [LWC]=g/m^3
    ! 20.89 1.15      ! rain
    ! 29.51 1.10      ! snow
-   ZRHORAIN     = 1.0_JPRB
-   ZRHOSNOW     = 0.1_JPRB
-
-   ZCOEFRAIN(1) = ((1.0_JPRB / 20.89_JPRB) * 3600.0_JPRB) / ZRHORAIN
-   ZCOEFRAIN(2) = (1.0_JPRB / 1.15_JPRB)
-   ZCOEFSNOW(1) = ((1.0_JPRB / 29.51_JPRB) * 3600.0_JPRB) / ZRHOSNOW
-   ZCOEFSNOW(2) = (1.0_JPRB / 1.10_JPRB)
 
    ZBAY_QRCONV(YDCPG_BNDS%KIDIA:YDCPG_BNDS%KFDIA,:) =  0.0_JPRB
    ZBAY_QSCONV(YDCPG_BNDS%KIDIA:YDCPG_BNDS%KFDIA,:) =  0.0_JPRB
@@ -4597,8 +4586,8 @@ IF ( (.NOT. LGPCMT) ) THEN
 
    DO JLEV=1,YDCPG_OPTS%KFLEVG
      DO JLON= YDCPG_BNDS%KIDIA, YDCPG_BNDS%KFDIA
-       ZBAY_QRCONV(JLON,JLEV)  = 0.001_JPRB * ( (ABS(YDMF_PHYS%OUT%FPLCL(JLON,JLEV)) * ZCOEFRAIN(1)) ** ZCOEFRAIN(2) )
-       ZBAY_QSCONV(JLON,JLEV)  = 0.001_JPRB * ( (ABS(YDMF_PHYS%OUT%FPLCN(JLON,JLEV)) * ZCOEFSNOW(1)) ** ZCOEFSNOW(2) )    
+       ZBAY_QRCONV(JLON,JLEV)  = 0.001_JPRB * ( (ABS(YDMF_PHYS%OUT%FPLCL(JLON,JLEV)) * YDPHY0%RCOEFRAIN(1)) ** YDPHY0%RCOEFRAIN(2) )
+       ZBAY_QSCONV(JLON,JLEV)  = 0.001_JPRB * ( (ABS(YDMF_PHYS%OUT%FPLCN(JLON,JLEV)) * YDPHY0%RCOEFSNOW(1)) ** YDPHY0%RCOEFSNOW(2) )    
      ENDDO
    ENDDO
 

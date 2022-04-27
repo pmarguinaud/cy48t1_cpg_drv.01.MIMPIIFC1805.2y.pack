@@ -17,3 +17,22 @@
 #define _RV_    RV
 
 #include "fcttrm.base.h"
+
+#undef _RALPD_ 
+#undef _RALPS_ 
+#undef _RALPW_ 
+#undef _RBETD_ 
+#undef _RBETS_ 
+#undef _RBETW_ 
+#undef _RCPV_  
+#undef _RCS_   
+#undef _RCW_   
+#undef _RETV_  
+#undef _RGAMD_ 
+#undef _RGAMS_ 
+#undef _RGAMW_ 
+#undef _RLSTT_ 
+#undef _RLVTT_ 
+#undef _RTT_   
+#undef _RV_    
+

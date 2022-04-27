@@ -3,3 +3,6 @@
 
 #include "fctdoi.base.h"
 
+#undef _RTT_ 
+#undef _RDT_ 
+

@@ -37,3 +37,40 @@
 
 
 #include "fcttre.base.h"
+
+#undef _RALPD_           
+#undef _RALPS_           
+#undef _RALPW_           
+#undef _RBETD_           
+#undef _RBETS_           
+#undef _RBETW_           
+#undef _RCPV_            
+#undef _RCS_             
+#undef _RCW_             
+#undef _RETV_            
+#undef _RGAMD_           
+#undef _RGAMS_           
+#undef _RGAMW_           
+#undef _RLSTT_           
+#undef _RLVTT_           
+#undef _RTT_             
+#undef _RV_              
+
+#undef _R2ES_            
+#undef _R3LES_           
+#undef _R3IES_           
+#undef _R4LES_           
+#undef _R4IES_           
+#undef _R5LES_           
+#undef _R5IES_           
+#undef _RVTMP2_          
+#undef _R5ALVCP_         
+#undef _R5ALSCP_         
+#undef _RALVDCP_         
+#undef _RALSDCP_         
+#undef _RTWAT_           
+#undef _RTICE_           
+#undef _RTICECU_         
+#undef _RTWAT_RTICECU_R_ 
+#undef _RTWAT_RTICE_R_   
+

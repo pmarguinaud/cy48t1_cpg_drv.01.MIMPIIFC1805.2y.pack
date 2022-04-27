@@ -754,7 +754,7 @@ IF (LSMITH_CDEV) THEN
    & KIDIA, KFDIA, KLON, KTDIA, KLEV, &
    & PT, PQ, PQL, PQI, &
    & PAPHI, PAPRSF, PCP, PR, &
-   & PGM, YDSTA%SVETAF, &
+   & PGM, YDSTA, &
    & ZQCS, ZNEBCOND, PHCRICS, PRMF ,PQSATS )
 
  ! protection of convective condensate, using changed distribution

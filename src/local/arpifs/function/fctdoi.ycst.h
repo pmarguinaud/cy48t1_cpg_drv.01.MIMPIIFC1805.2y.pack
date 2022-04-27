@@ -1,8 +1,4 @@
-#define _RTT_ YDCST%RTT
-#define _RDT_ YDCST%RDT
-
+#define _PREFIX_ YDCST%
 #include "fctdoi.base.h"
-
-#undef _RTT_ 
-#undef _RDT_ 
+#undef _PREFIX_
 

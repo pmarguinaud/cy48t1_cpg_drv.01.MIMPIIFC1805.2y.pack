@@ -2,7 +2,7 @@
 SUBROUTINE ACNEBCOND ( YDCST, YDRIP,YDML_PHY_MF,KIDIA,KFDIA,KLON,KTDIA,KLEV,LDREDPR,&
  !-----------------------------------------------------------------------
  ! - INPUT  1D VERTICAL.
- & PHUC,PVETAF,&
+ & PHUC,YDSTA,&
  !-----------------------------------------------------------------------
  ! - INPUT  2D .
  & PAPHI,PAPHIF,PAPRSF,PCP,PR,PDELP,PRH,PBLH,PQ,PQI,PQL,PQW,PT,&
@@ -144,6 +144,7 @@ USE YOMHOOK              , ONLY : LHOOK,   DR_HOOK
 
 USE YOMCST               , ONLY : TCST
 USE YOMRIP               , ONLY : TRIP
+USE YOMSTA               , ONLY : TSTA
 !-----------------------------------------------------------------------
 
 IMPLICIT NONE
@@ -158,7 +159,7 @@ INTEGER(KIND=JPIM),INTENT(IN)    :: KFDIA
 INTEGER(KIND=JPIM),INTENT(IN)    :: KTDIA
 LOGICAL, INTENT(IN)              :: LDREDPR
 REAL(KIND=JPRB)   ,INTENT(IN)    :: PHUC(KLEV) 
-REAL(KIND=JPRB)   ,INTENT(IN)    :: PVETAF(KLEV) 
+TYPE(TSTA)        ,INTENT(IN)    :: YDSTA
 REAL(KIND=JPRB)   ,INTENT(IN)    :: PAPHI(KLON,0:KLEV) 
 REAL(KIND=JPRB)   ,INTENT(IN)    :: PAPHIF(KLON,KLEV) 
 REAL(KIND=JPRB)   ,INTENT(IN)    :: PAPRSF(KLON,KLEV) 
@@ -336,8 +337,8 @@ IF(LSMGCDEV) THEN
   DO JLEV=1,KLEV
 !DEC$ IVDEP
     DO JLON=KIDIA,KFDIA
-      PHCRICS(JLON,JLEV)=RHCRIT2+PVETAF(JLEV)*(ZC(JLON)+PVETAF(JLEV) &
-                       & *(ZB(JLON)+PVETAF(JLEV)*ZA(JLON)))
+      PHCRICS(JLON,JLEV)=RHCRIT2+YDSTA%SVETAF(JLEV)*(ZC(JLON)+YDSTA%SVETAF(JLEV) &
+                       & *(ZB(JLON)+YDSTA%SVETAF(JLEV)*ZA(JLON)))
     ENDDO
   ENDDO
 
@@ -831,7 +832,7 @@ IF(LSMITH_CDEV) THEN
   CALL ACNEBSM (YDCST, YDML_PHY_MF%YRPHY0, KIDIA, KFDIA, KLON, KTDIA, KLEV,&
    & PT, PQ, PQL, PQI, &
    & PAPHI, PAPRSF, PCP, PR, &
-   & PGM, PVETAF, &
+   & PGM, YDSTA%SVETAF, &
    & PQCS, PNEBCOND, PHCRICS, PRMF ,PQSATS )
 
   IF (L3MT) THEN

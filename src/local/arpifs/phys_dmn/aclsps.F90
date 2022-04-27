@@ -127,7 +127,6 @@ REAL(KIND=JPRB)   ,INTENT(OUT)   :: PFCSQN(KLON,0:KLEV)
 
 !-----------------------------------------------------------------------
 
-REAL(KIND=JPRB) :: ZVETAF(KLEV) 
 REAL(KIND=JPRB) :: ZQCS(KLON,KLEV)
 REAL(KIND=JPRB) :: ZNEIJ(KLON) 
 REAL(KIND=JPRB) :: ZNEBS(KLON,KLEV)
@@ -168,13 +167,6 @@ ASSOCIATE(RDTFAC=>YDPHY0%RDTFAC, &
  & STPRE=>YDSTA%STPRE)
 !-----------------------------------------------------------------------
 
-!0/ computation of ZVETAF
-
-DO JLEV=KTDIA,JLEV
-  ZVETAF(JLEV)=STPRE(JLEV)/VP00
-ENDDO
-
-
 !1/ CALL TO ACNEBSM 
 
 !1-a PRELIMINARY COMPUTATIONS  
@@ -198,7 +190,7 @@ ENDDO
 CALL ACNEBSM(YDCST,YDPHY0,KIDIA,KFDIA,KLON,KTDIA,KLEV,&
                & ZTL,ZQT,ZERO,ZERO,&
                & PAPHI,PAPRSF,PCP,PR,&
-               & PGM,ZVETAF,&
+               & PGM,YDGEOMETRY%YRSTA%SVETAF,&
                & ZQCS,ZNEBS,ZHCRICS,ZRMF,ZQSATS)
 
 !1-c COMPUTATION OF RR FLUXES: CREATION OF QL AND QI

@@ -180,20 +180,25 @@ sub getIndent
       return 0;
     }    
 
+
   if (($n->nodeName eq '#text') && ($n->data =~ m/\n/o))
     {    
       (my $t = $n->data) =~ s/^.*\n//gsmo;
       return length ($t);
     }    
 
-  if ($n = $n->lastChild)
+  if (my $m = $n->lastChild)
     {
-      if (($n->nodeName eq '#text') && ($n->data =~ m/\n/o))
+      if (($m->nodeName eq '#text') && ($m->data =~ m/\n/o))
         {    
-          (my $t = $n->data) =~ s/^.*\n//gsmo;
+          (my $t = $m->data) =~ s/^.*\n//gsmo;
           return length ($t);
         }    
-      return &getIndent ($n);
+      return &getIndent ($m);
+    }
+  elsif (($n->nodeName eq '#text') && ($n->data =~ m/^\s*$/o) && $n->parentNode)
+    {
+      return length ($n->data) + &getIndent ($n->parentNode);
     }
 
   return 0;

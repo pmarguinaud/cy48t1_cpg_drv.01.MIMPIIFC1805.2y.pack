@@ -136,38 +136,43 @@ sub parallel
   shift;
   my ($par, $doc) = @_;
 
-  my $indent = &Fxtran::getIndent ($par);
+  my ($stmt) = &F ('.//ANY-stmt', $par);
+
+  my $indent = &Fxtran::getIndent ($stmt);
+
 
   my $str = ' ' x $indent;
 
   my ($loop) = &Fxtran::fxtran (fragment => << "EOF");
 DO JBLK = 1, YDCPG_OPTS%KGPBLKS
-
 ${str}  YLCPG_BNDS = YDCPG_BNDS
 ${str}  CALL YLCPG_BNDS%UPDATE (JBLK)
 ${str}ENDDO
 EOF
+
 
   my ($enddo) = &F ('.//end-do-stmt', $loop);
   my $p = $enddo->parentNode;
 
   for my $node ($par->childNodes ())
     {
-      $p->insertBefore (&t (' ' x ($indent + 2)), $enddo);
-      &Fxtran::reIndent ($node, $indent + 2);
+      $p->insertBefore (&t (' ' x (2)), $enddo);
+      &Fxtran::reIndent ($node, 2);
       $p->insertBefore ($node, $enddo);
     }
+  $p->insertBefore (&t (' ' x $indent), $enddo);
   
   $par->appendChild ($loop);
 
   my @expr = &F ('.//named-E/N/n[string(.)="YDCPG_BNDS"]/text()', $par);
 
-  shift (@expr) for (1 .. 2);
+  shift (@expr);
 
   for my $expr (@expr)
     {
       $expr->setData ('YLCPG_BNDS');
     }
+
 
 }
 
@@ -244,6 +249,7 @@ sub getObjectDecl
 
   unless ($decl{$key}) 
     {
+      $h->{$key} or die $key;
       ($decl{$key}) = &Fxtran::fxtran (statement => $h->{$key});
     }
 
@@ -594,7 +600,11 @@ sub makeParallel
       
 
       my ($do) = &F ('./do-construct', $par);
-      my $indent = &Fxtran::getIndent ($do);
+
+      $par->normalize ();
+
+      my $enddo = $do->lastChild;
+      my $indent = &Fxtran::getIndent ($enddo, 1);
 
       for my $ptr (sort keys (%ptr2vars))
         {
@@ -607,8 +617,8 @@ sub makeParallel
           my $stmt = "$ptr => GET_HOST_DATA_$access ($var)";
           $stmt = "IF (ASSOCIATED ($var)) $stmt" if ($ptr2cond{$ptr});
           $stmt = &Fxtran::fxtran (statement => $stmt);
-          $par->insertBefore ($stmt, $do);
           $par->insertBefore (&t ("\n" . (' ' x $indent)), $do);
+          $par->insertBefore ($stmt, $do);
         }
       $par->insertBefore (&t ("\n" . (' ' x $indent)), $do);
  
@@ -768,13 +778,19 @@ sub manageFields
 
       $par2 = $par2[-1];
 
+      my ($stmt1) = &F ('.//ANY-stmt', $par1);
+      my ($stmt2) = &F ('.//ANY-stmt', $par2);
 
-      my $ind1 = &Fxtran::getIndent ($par1);
-      my $ind2 = &Fxtran::getIndent ($par2);
+      my $ind1 = &Fxtran::getIndent ($stmt1);
+      my $ind2 = &Fxtran::getIndent ($stmt2);
 
-      $par1->insertBefore (&t ("\n" . (' ' x $ind1)), $par1->firstChild);
+      if ($par1->firstChild->nodeName =~ m/-stmt$/o)
+        {
+          $par1->insertBefore (&t ("\n" . (' ' x $ind1)), $par1->firstChild) for (1 .. 2);
+        }
 
       my @dd;
+
 
       for my $d (@{ $dim })
         {
@@ -806,7 +822,9 @@ sub manageFields
       $args .= ", NDIM=$dd[2]"  if (@dd > 3);
       $args .= ", NDIM2=$dd[3]" if (@dd > 4);
 
+
       $par1->insertBefore (&Fxtran::fxtran (statement => "IF (.NOT. ASSOCIATED (YL_$name)) YL_$name => CREATE_TEMPORARY (YDGEOMETRY, PERSISTENT=.TRUE.$args)"), $par1->firstChild);
+      $par1->insertBefore (&t ("\n" . (' ' x $ind1)), $par1->firstChild);
 
       $par2->insertAfter (&t ("\n" . (' ' x $ind2)), $par2->lastChild) unless ($par2->lastChild->nodeName eq 'deallocate-stmt');
 

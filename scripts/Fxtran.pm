@@ -439,6 +439,14 @@ sub stmt
   return $stmt;
 }
 
+sub expr
+{
+  my $e = shift;
+  my @anc = reverse &f ('./ancestor::*', $e);
+  my ($expr) = grep { $_->nodeName =~ m/-E$/o } @anc;
+  return $expr;
+}
+
 # Index files in pack
 
 sub scanpack

@@ -17,6 +17,9 @@ my %skip = map { ($_, 1) } @skip;
 
 sub removeListElement
 {
+
+# Remove element from list, take care of removing comma before or after the element
+
   my $x = shift;
 
   my $nn = $x->nodeName;
@@ -53,7 +56,12 @@ sub removeListElement
 
 sub singleDecl
 {
+
+# Single declaration statement per entity
+
   my $doc = shift;
+
+# Select all entity lists with several entities
 
   my @en_decl_lst = &F ('.//EN-decl-LT[count(./EN-decl)>1]', $doc);
 
@@ -82,6 +90,9 @@ sub singleDecl
 
 sub parseDirectives
 {
+
+# Add tags for each section
+
   my $d = shift;
 
   my @C = &F ('//C[starts-with(string (.),"!=")]', $d);
@@ -128,11 +139,17 @@ sub parseDirectives
 
 sub serial
 {
+
+# Do nothing
+
   shift;
 }
 
 sub parallel
 {
+
+# Add a loop on blocks
+
   shift;
   my ($par, $doc) = @_;
 
@@ -178,6 +195,9 @@ EOF
 
 sub skip
 {
+
+# Remove node
+
   shift;
   $_[0]->unbindNode ();
 }
@@ -225,6 +245,9 @@ sub renameSubroutine
 
 sub cleanParallelDirectives
 {
+
+# Remove parallel tags
+
   my $doc = shift;
   my @par = &F ('.//parallel-directive|.//parallel-call-directive|.//serial-directive', $doc);
   for my $par (@par)
@@ -390,7 +413,6 @@ sub makeParallel
 {
   my $doc = shift;
 
-
   # Argument list
   
   my @args = &F ('.//subroutine-stmt/dummy-arg-LT/arg-N/N/n/text()', $doc);
@@ -400,17 +422,13 @@ sub makeParallel
   
   my %obj = map { ($_, 1) } @obj;
   
-  # Record array dimensions
-  
-  my %dims;
-  
-  # Record array names
-
-  my %arr;
-  my %arr2fld;
+  my %dims;     # Array dimensions
+  my %arr;      # True if this is a NPROMA array
+  my %arr2fld;  # Field object associated to this array
 
   # Local arrays: turn them into CONTIGUOUS POINTERs with an extra dimension
   # For each local array ZARR, add a FIELD object (YL_ZARR)
+  # For each argument array PARR, add a FIELD object (YD_PARR)
 
   my @init_yl;
 
@@ -427,8 +445,12 @@ sub makeParallel
 
       my ($sslt) = &F ('./array-spec/shape-spec-LT', $en_decl);
 
+# TODO : Create a symbol table and use it
+
       my @dims = &dimsFromDecl ($stmt);
       $dims{$N} = \@dims;
+
+# Turn array declaration into a POINTER declaration with an extra dimension
 
       my @ss = &F ('./shape-spec', $sslt);
 
@@ -476,7 +498,7 @@ sub makeParallel
 
   &addInit ($doc, @init_yl);
 
-  my %ptr2decl;
+  my %ptr2decl; # For each pointer, the type declaration statement, with type, kind and dimensions
 
   my @par = &F ('.//parallel-directive', $doc);
   for my $par (@par)
@@ -496,13 +518,15 @@ sub makeParallel
 
           my $nd;
 
+          # This comes from a NPROMA array
           if ($arr{$N})
             {
               $nd = scalar (@{ $dims{$N} }) - 1;
-              $ptr2vars{$N} = $arr2fld{$N};
+              $ptr2vars{$N} = $arr2fld{$N};                                # Field for pointer
               $ptr2dims{$N} = $dims{$N};
               $ptr2cond{$N} = 0;
             }
+          # Here we deal with members of objects, such a YDVARS
           elsif ($obj{$N})
             {
               # Change expression using the POINTER instead of the object and members
@@ -521,7 +545,7 @@ sub makeParallel
 
               $ptr2decl{$ptr} = &getObjectDecl ($key);
               $ptr2dims{$ptr} = \@dims;
-              $ptr2vars{$ptr} = &getFieldFromObjectComponents ($N, @ctl);
+              $ptr2vars{$ptr} = &getFieldFromObjectComponents ($N, @ctl);  # Field for pointer
               $ptr2cond{$ptr} = 1;
 
               $nd = scalar (@dims) - 1;
@@ -665,6 +689,12 @@ sub makeParallel
 
 sub callOpenMPRoutines
 {
+
+# Process CALL statements outside PARALLEL sections; add a parallel-call-directive node
+# - suffix procedure designator with a `_OPENMP'
+# - suffix procedure designator in interface include with a `_openmp'
+# - replace NPROMA array arguments by field descriptor arguments; no array section allowed
+
   my $doc = shift;
  
   # Argument list
@@ -685,24 +715,31 @@ sub callOpenMPRoutines
 
       next if ($proc eq 'DR_HOOK');
 
+      my $text = $call->textContent;
+
       my $par = &n ('<parallel-call-directive/>');
       $call->replaceNode ($par);
       $par->appendChild ($call);
-      
 
       my @arg = &F ('./arg-spec/arg/named-E/N/n/text()', $call);
 
       my $found = 0;
       for my $arg (@arg)
         {
+
           $found++ if (grep { $_ eq $arg } @obj);
-          my @ss = &F ('.//EN-decl[string(EN-N)="?"]/array-spec//shape-spec', $arg->textContent, $doc, 1);
+
+# TODO : build a symbol table and use it to check whether $arg is a NPROMA array
+
+          my @ss = &F ('.//EN-decl[string(EN-N)="?"]/array-spec//shape-spec', $arg->textContent, $doc, 1); 
 
           # Is the actual argument a dummy argument of the current routine ?
           my $isArg = $args{$arg->textContent};
 
           if (@ss && ('YDCPG_OPTS%KLON' eq $ss[0]))
             {
+              my ($expr) = &Fxtran::expr ($arg);
+              die ("No array reference allowed in CALL statement:\n$text\n") if (&F ('./R-LT', $expr));
               $arg->replaceNode (&t (($isArg ? 'YD_' : 'YL_') . $arg->textContent));
               $found++;
             }
@@ -712,6 +749,7 @@ sub callOpenMPRoutines
 
       $proc{$proc->textContent} = 1;
       $proc->setData ($proc->textContent . $suf);
+
     }
 
   my @proc = sort keys (%proc);
@@ -839,6 +877,9 @@ sub manageFields
 
 sub cleanInterfaces
 {
+
+# Remove unused included interfaces (.intfb.h)
+
   my $doc = shift;
   my @include = &F ('.//include', $doc);
   for my $include (@include)

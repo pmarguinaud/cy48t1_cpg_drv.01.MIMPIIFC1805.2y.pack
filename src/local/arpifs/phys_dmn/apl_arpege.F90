@@ -2,196 +2,12 @@ SUBROUTINE APL_ARPEGE(YDMF_PHYS_BASE_STATE, YDMF_PHYS_NEXT_STATE, YDGEOMETRY, YD
 & YDCPG_MISC, YDCPG_GPAR, YDCPG_PHY0, YDMF_PHYS, YDCPG_DYN0, YDMF_PHYS_SURF, YDCPG_SL2, YDVARS,       &
 & YDMODEL, YDDDH, YDSPP, YDSPP_CONFIG)
 
-!**** *APLPAR * - APPEL DES PARAMETRISATIONS PHYSIQUES.
+!**** *APL_ARPEGE*  - Call ARPEGE physics
 
-!     Sujet.
-!     ------
-!     - APPEL DES SOUS-PROGRAMMES DE PARAMETRISATION
-!       INTERFACE AVEC LES PARAMETRISATIONS PHYSIQUES (IALPP).
-!     - CALL THE SUBROUTINES OF THE E.C.M.W.F. PHYSICS PACKAGE.
-
-!**   Interface.
-!     ----------
-!        *CALL* *APLPAR*
-
-!-----------------------------------------------------------------------
-
-! - 2D (1:KLEV) .
-
-! PKOZO      : CHAMPS POUR LA PHOTOCHIMIE DE L'OZONE (KVCLIS CHAMPS).
-! PKOZO      : FIELDS FOR PHOTOCHEMISTERY OF OZONE   (KVCLIS FIELDS).
-
-! PGPAR       : BUFFER FOR 2D FIELDS - CONTAINS PRECIP, ALBEDO, EMISS, TS
-!             : SURFACE FLUXES
-! - INPUT/OUTPUT 1D
-! YDDDH      : DDH superstructure
-
-!-----------------------------------------------------------------------
-
-!     Externes.
-!     ---------
-
-!     Methode.
-!     --------
-!     - TERMINE LES INITIALISATIONS.
-!     - APPELLE LES SS-PRGMS TAMPONS SUIVANT LA LOGIQUE TROUVEE
-!        DANS /YOMPHY/. EUX MEMES VONT DECLARER LES TABLEAUX DE TRAVAIL
-!        ET APPELER LES PARAMETRISATIONS ELLES MEMES.
-!     - FINISH UP THE INITIALIZATION.
-!     - CALL THE BUFFER SUBROUTINES FOLLOWING /YOEPHY/ REQUIREMENTS
-!        WHICH IN TURN CALL THE ACTUAL PHYSICS SUBROUTINES
-!        (THIS LAST POINT NOT PARTIALLY DONE)
-
-!     Auteur.
-!     -------
-!     90-09-28: A. Joly, *CNRM*.
-
-!     Modifications.
-!     --------------
-!     2007-02-01 M.Janousek : Introduction of 3MT routines
-!     2007-02-19 R.Brozkova : Cleaning obsolet features (LSRCON, LSRCONT, LNEBT,
-!                             pre-ISBA, modularisation and racionalisation.
-!     2007-04-17 S.Ivatek-S : Over dimensioning of PGPAR (KLON,NGPAR+1) is used
-!                             boundary checking bf
-!     2007-05-10 E. Bazile  : Introduction of the AROME shallow convection (LCVPPKF)
-!     2007-03-21 A. Alias   : Modifications for SURFEX (IGFL_EXT)
-!     2007-05-07 F. Bouyssel: Several modifications for SURFEX
-!     2007-05-07 F. Bouyssel: New argument in ACCOEFK
-!     2007-06-27 A. Alias   : Use NGFL_EXT instead of IGFL_EXT
-!     2008-02-18 F. Bouyssel: New acdifv1 & acdifv2 & arp_ground_param
-!     2008-02-21 E. Bazile  : Cleaning for the call of the AROME shallow convection (LCVPPKF)
-!     4-Mar-2008 Y. Seity : Cleaning IR and WV similated sat radiances
-!                            (replaced by Fullpos Calculations)
-!     2008-03-14 Y. Bouteloup: Store diffusion coefficients from non-linear model
-!     2007-10-11 A. Alias   : New Call to ACHMT/ACNEBR/ACPBLH (P. Marquet/JF. Gueremy)
-!     2008-02-01 P. Marquet : modify ZALBD/ZALBP and PFRSODS if LRAYFM15 (idem V4)
-!     2008-03-26 F. Bouyssel: Intrduction of LACDIFUS
-!     2008-04-28 E. Bazile  : Introduction of ZPROTH_CVPP for the TKE scheme
-!     2008-05-09, J.F. Gueremy : Flux MEMO sur mer (ACFLUSO/LFLUSO) +
-!            and  P. Marquet   : ZCEROV as new argument in ACDIFUS
-!     2008-06-01 F. Bouyssel: Interface of radozc (ECMWF ozone)
-!     2008-09-02 F. Vana  : Better split of ACPTKE and ACDIFV1 code
-!     2008-10-01 F. Bouyssel: Call of radozcmf instead of radozc (ECMWF ozone)
-!     2008-10-05 E. Bazile : Computation of the PBL height from the TKE.
-!     03-Oct-2008 J. Masek    parameters for NER statistical model via namelist
-!     2009-Jan-21 F. Vana : new mixing lengths for pTKE + few fixes
-!     2008-11    C. Payan: Neutral Wind (new arg in the call of ACHMT)
-!     2008-11-15 F. Bouyssel: Correction of negative humidities
-!     2009-05-01 Y. Bouteloup : Store radiative cloud water and ice in GFL (YIRAD and YLRAD)
-!     2009-05-25 F. Bouyssel: Cleaning
-!     K. Yessad (Jul 2009): remove CDLOCK + some cleanings
-!     2009-08-07 A. Alias   : LCALLSFX introduced to call only once SURFEX at NSTEP=0
-!                             Computation of ZRTI (INVERSE DE R*T) added (after ACHMTLS)-not done
-!                             Negatives humidity correction PFCQVNG in acdifus (J.F. Gueremy)
-!                             add ZAESUL/ZAEVOL to CALL RADAER
-!     2009-09-21  D. Banciu: complete the cascade within 3MT frame;
-!            prepare the environment for Rash and Kristjansson condensation (RK) scheme
-!            remove some arguments of ACPUM and ACUPD (LUDEN option was removed)
-!     12-Oct-2009 F. Vana : optimization + update of mixing lengths for p/eTKE
-!     2009-10-15 Y. Bouteloup : Store radiative cloud water and ice in GFL (YIRAD and YLRAD)
-!     2009-10-23 O.Riviere Intro. of LGWDSPNL for GWD in simpl. phys.
-!     2010-01-21 S. Riette: PU, PV and ZDEPTH_HEIGHT in 3D for ARO_GROUND_DIAG
-!     2010-05-11 F. Bouyssel : Use of PINDX, PINDY
-!     2010-06-20 Y. Seity : Use AROCLDIA to compute PBLH
-!     2010-10    A. Alias Compute Sunshine duration
-!     2010-10    A. Alias modify ZALBD/ZALBP and PEMIS if LRAYFM for CLIMAT (JF Gueremy)
-!     2010-08-10 P.marguinaud : Cleaning
-!     2011-01-10 F. Bouyssel: Intro. of LADJCLD and some cleaning.
-!     2010-12-01 E. Bazile: TKE1 for AROCLDIA and contributions terms of the
-!          TKE equations for DDH.
-!     2010-12 S. Riette: aro_ground_diag interface modified to add snow cover
-!     2010-12    B. Decharme  : modify the radiative coupling with surfex (SW per band in ACRADIN and RADHEAT)
-!     2011-02    A. Alias     : Computation of ZRTI (INVERSE DE R*T) added (after ACHMTLS)
-!     2011-02    A. Voldoire : add ZAERINDS to CALL RADAER and ACRADIN
-!                              for sulfate indirect effect computation
-!     L. Bengtsson-Sedlar & F. Vana 18-Feb-2011 : CA scheme for convection
-!     I. Bastak-Duran, F. Vana & R. Brozkova  16-Mar-2011: TOUCANS, version 0
-!     2011-02-01 M. Mokhtari: Several modifications for aplpar and introduction of the key LMDUST
-!                             (treatment of the desert aerosols)
-!     2011-02-24 Y. Bouteloup : EDKF + Surface forcing for MUSC
-!     2011-03-26 F. Bouyssel: Intro. of PSPSG (snow cover with surfex)
-!     2011-09-07 J.M. Piriou: PCMT convection scheme.
-!     2011-11-17 J.F. Gueremy: ZQLI_CVP diagnostic convective water content
-!     2011-06: M. Jerczynski - some cleaning to meet norms
-!     2011-11-29 K-I. Ivarsson, L. Bengtsson: RK-scheme modifications   
-!     26-Jan-2012: F. Vana + I. Bastak-Duran - TOUCANS update + bugfixes 
-!     2012-04-24 F. Bouyssel: Bug correction on surface water fluxes with surfex
-!     2012-06-09 M. Mile: Bug correction for undefined z0;z0h at 0th step CALL ARO_GROUND_DIAG_Z0
-!     2012-09-11 : P.Marguinaud : Add control threshold for
-!     2013-06-17 J.M. Piriou: evaporation for PCMT scheme.
-!     T. Wilhelmsson (Sept 2013) Geometry and setup refactoring.
-!     2013-11-08 Y. Bouteloup New version of ACDIFV1 and ACDIFV2 for "full implicit PMMC09 scheme"
-!     F. Vana  28-Nov-2013 : Redesigned trajectory handling.
-!     2013-11, J. Masek: Introduction of ACRANEB2 scheme, externalized
-!                        computation of direct albedo for ACRANEB/ACRANEB2.
-!                        Phasing to cy40t1.
-!     K. Yessad (July 2014): Move some variables.
-!     2014-09, C. Wastl: Adaptations for orographic shadowing
-!     2014-10, R. Brozkova: phasing TOUCANS.
-!     2016-03, E. Bazile: phasing MUSC for surf_ideal_flux
-!     2016-03, L. Gerard: LNSDO AND LCVCSD
-!     2016-04, J. Masek: Exponential-random cloud overlap with variable
-!                        decorrelation depth.
-!     2016-09, J. Masek: Proper diagnostics of sunshine duration in ACRANEB2.
-!     2016-09, M. Mokhtari & A. Ambar: preliminary calculation for passive scalar
-!     2016-10, P. Marguinaud : Port to single precision
-!     K. Yessad (Dec 2016): Prune obsolete options.
-!     2016-06, F.Taillefer: add of aro_ground_diag_2isba call
-!     2017-09, Y.Bouteloup: Phased Francoise's modification on cy45
-!     2017-09, J. Masek: Fix for protected convective cloudiness,
-!                        shifted dimensioning of PGMU0.
-!     R. El Khatib 05-Feb-2018 fix bounds violations
-!     2018-09, F. Duruisseau: Add PQRCONV1 and PQSCONV1 out (BAYRAD)
-!     2018-09, D. St-Martin: Add non-orographic GWD scheme (ACNORGWD)
-!     2018-09, R. Roehrig: add ACTKE input/output (ZQLC/ZQIC and ZKQROV/ZKQLROV) (from JF Guérémy)
-!     2018-09, M. Michou: Add call to chem_main to activate ARPEGE-Climat chemistry scheme
-!     2018-09, R. Brozkova: Fixes in thermodynamic adjustment - deep convective
-!                           condensates protection. Passing of diagnostic hail.
-!     2018-09, J. Masek: Calculation of snow fractions over bare ground and
-!                        vegetation moved to ACSOL (case LVGSN=T). Coding of
-!                        ALARO-1 fixes for LZ0HSREL=T. Diagnostics of global
-!                        normal irradiance and mean radiant temperature.
-!     2018-11, J.M. Piriou: correct 2010 historical bug about adding cloud sedimentation to resolved surface precipitation.
-!     R. Hogan     24-Jan-2019 Removed radiation scheme from cycle 15
-!     R. El Khatib 30-Apr-2019 fix uninitialized variable
-!     2018-10, I. Etchevers : add Visibilities
-!     2019-01, I. Etchevers, Y. Seity : add Precipitation Type
-!     2019-05, J.M. Piriou: LCVRESDYN + LADJCLD.
-!     2019-09, M. Hrastinski: Dataflow for TKE and TTE terms in ALARO DDH (PFTCNS).
-!     2019-09, L. Gerard: Modified call to ACNSDO.
-!     2019-09, R. Brozkova: Introduction of new NDIFFNEB options.
-!     2019-09, J. Masek: Introduction of ETKE_MIN, efficient ACRANEB2 clearsky
-!                        computations.
-!    2019-10, I. Etchevers : Visibilities in ACVISIH, AROCLDIA=>ACCLDIA
-!    2019-10, Y.Bouteloup : New anti-GPS in accvimp.F90 
-!    2019-10, Y.Bouteloup and M. Bouzghaiam : Radiation modifications. Remove of FMR15, remove acradin.F90 direct
-!                   call to recmwf.F90 and add interface to ecrad (in recmwf !)
-!    2020-07, J.M. Piriou and O. Jaron: lightning flash density.
-!    2020-10, J. Masek : modified call to ACCLDIA
-!    2020-10, M. Hrastinski: Reorganized computation of the moist gustiness
-!             correction. Modified call of ACMRIP and ACMIXELEN subroutines.
-!    2020-11, Y.Bouteloup : Interface to IFS deep convection scheme under LCVTDK key
-!    2020-12, U.Andrae : Introduce SPP for HARMONIE-AROME
-! End Modifications
-!-------------------------------------------------------------------------------
-
-!-----------------------------------------------------------------------
-!     ******************************************************************
-!     ****** IDIOSYNCRASIES *** IDIOSYNCRASIES *** IDIOSYNCRASIES ******
-!     ******************************************************************
-!     ***  HEALTH WARNING:                                           ***
-!     ***  ===============                                           ***
-!     ***  NOTE THAT WITHIN THE E.C.M.W.F. PHYSICS HALF-LEVELS       ***
-!     ***  ARE INDEXED FROM 1 TO NFLEVG+1 WHILE THEY ARE BETWEEN     ***
-!     ***  0 AND NFLEVG IN THE REST OF THE MODEL. THE CHANGE IS TAKEN***
-!     ***  CARE OF IN THE CALL TO THE VARIOUS SUBROUTINES OF THE     ***
-!     ***  PHYSICS PACKAGE                                           ***
-!     ***                                                            ***
-!     ***    THIS IS SUPPOSED TO BE A "TEMPORARY" FEATURE TO BE      ***
-!     ***    STRAIGHTENED OUT IN THE "NEAR" FUTURE                   ***
-!     ******************************************************************
-
-!     ------------------------------------------------------------------
+!     Author. 
+!     ------- 
+!      Philippe Marguinaud *METEO-FRANCE*
+!      Original : 28-04-2021
 
 USE GEOMETRY_MOD       , ONLY : GEOMETRY
 USE MF_PHYS_TYPE_MOD   , ONLY : MF_PHYS_TYPE
@@ -210,7 +26,6 @@ USE TYPE_MODEL         , ONLY : MODEL
 
 USE PARKIND1           , ONLY : JPIM     ,JPRB
 USE YOMHOOK            , ONLY : LHOOK    ,DR_HOOK
-USE YOMVERT            , ONLY : VP00
 USE DDH_MIX            , ONLY : TYP_DDH
 
 USE SPP_MOD            , ONLY : TSPP_CONFIG, TSPP_DATA
@@ -240,7 +55,6 @@ TYPE(TSPP_CONFIG),              INTENT(IN)    :: YDSPP_CONFIG
 TYPE(TYP_DDH),                  INTENT(INOUT) :: YDDDH
 
 
-!     ------------------------------------------------------------------
 LOGICAL :: LL_SAVE_PHSURF
 INTEGER(KIND=JPIM) :: INSTEP_DEB,INSTEP_FIN
 INTEGER(KIND=JPIM) :: JROF, JSPP
@@ -249,183 +63,106 @@ REAL(KIND=JPRB) :: ZDIFEXT(YDCPG_OPTS%KLON,0:YDCPG_OPTS%KFLEVG,YDMODEL%YRML_GCON
 
 REAL(KIND=JPRB) :: ZGP2DSPP(YDCPG_OPTS%KLON,YDSPP%N2D)
 
-!     ------------------------------------------------------------------
-!        ATTENTION SI KVCLIG < 7 LES CHAMPS SUIVANTS NE SONT
-!        PAS REELLEMENT ALLOUES EN MEMOIRE.
-!*
-!     ------------------------------------------------------------------
-!     DECLARATION DES TABLEAUX LOCAUX-GLOBAUX DES PARAMETRISATIONS
 INTEGER(KIND=JPIM) :: INLAB_CVPP(YDCPG_OPTS%KLON,YDCPG_OPTS%KFLEVG)
-
-!     ------------------------------------------------------------------
-!     ARE DIMENSIONNED 0:KLEV ONLY IN ORDER TO KEEP IN MIND
-!     THAT THEY ARE COMPUTED AT "HALF LEVELS".
-!     THEY ARE USED HOWEVER FROM 1 TO KLEV.
 
 REAL(KIND=JPRB) :: ZXTROV(YDCPG_OPTS%KLON,0:YDCPG_OPTS%KFLEVG),ZXUROV(YDCPG_OPTS%KLON,0:YDCPG_OPTS%KFLEVG)
 REAL(KIND=JPRB) :: ZMRIPP(YDCPG_OPTS%KLON,0:YDCPG_OPTS%KFLEVG)
 
-! ZMRIMC     : M(C) from P. Marquet's moist Ri computation - for TKE correction after TOMs
-! ZMRICTERM  : Rv/R.F(C)-1/M(C).T/Tv from P. Marquet's moist Ri computation - for TKE correction after TOMs
-
-!DISSIPATION TIME SCALE TAU  -FOR TOM's CALCULATION
 REAL(KIND=JPRB) :: ZKTROV(YDCPG_OPTS%KLON,0:YDCPG_OPTS%KFLEVG),ZKUROV(YDCPG_OPTS%KLON,0:YDCPG_OPTS%KFLEVG),ZNBVNO(YDCPG_OPTS%KLON,0:YDCPG_OPTS%KFLEVG)
 REAL(KIND=JPRB) :: ZKQROV(YDCPG_OPTS%KLON,0:YDCPG_OPTS%KFLEVG),ZKQLROV(YDCPG_OPTS%KLON,0:YDCPG_OPTS%KFLEVG)
 
-!     ------------------------------------------------------------------
-
-REAL(KIND=JPRB) :: ZNEBS(YDCPG_OPTS%KLON,YDCPG_OPTS%KFLEVG),ZQLIS(YDCPG_OPTS%KLON,YDCPG_OPTS%KFLEVG)
-REAL(KIND=JPRB) :: ZNEBS0(YDCPG_OPTS%KLON,YDCPG_OPTS%KFLEVG),ZQLIS0(YDCPG_OPTS%KLON,YDCPG_OPTS%KFLEVG)
-REAL(KIND=JPRB) :: ZNEBC0(YDCPG_OPTS%KLON,YDCPG_OPTS%KFLEVG)   !Nebulosite convective radiative
-REAL(KIND=JPRB) :: ZNEBDIFF(YDCPG_OPTS%KLON,YDCPG_OPTS%KFLEVG) !Nebulosite: calcul de la diffusion
-REAL(KIND=JPRB) :: ZNEBCH(YDCPG_OPTS%KLON,YDCPG_OPTS%KFLEVG)   !Nebulosite convective condensation
-REAL(KIND=JPRB) :: ZUNEBH(YDCPG_OPTS%KLON,YDCPG_OPTS%KFLEVG)   !Nebulosite convective histo
+REAL(KIND=JPRB) :: ZNEBS(YDCPG_OPTS%KLON,YDCPG_OPTS%KFLEVG)
+REAL(KIND=JPRB) :: ZQLIS(YDCPG_OPTS%KLON,YDCPG_OPTS%KFLEVG)
+REAL(KIND=JPRB) :: ZNEBS0(YDCPG_OPTS%KLON,YDCPG_OPTS%KFLEVG)
+REAL(KIND=JPRB) :: ZQLIS0(YDCPG_OPTS%KLON,YDCPG_OPTS%KFLEVG)
+REAL(KIND=JPRB) :: ZNEBC0(YDCPG_OPTS%KLON,YDCPG_OPTS%KFLEVG)          ! Nebulosite convective radiative
+REAL(KIND=JPRB) :: ZNEBDIFF(YDCPG_OPTS%KLON,YDCPG_OPTS%KFLEVG)        ! Nebulosite: calcul de la diffusion
+REAL(KIND=JPRB) :: ZNEBCH(YDCPG_OPTS%KLON,YDCPG_OPTS%KFLEVG)          ! Nebulosite convective condensation
+REAL(KIND=JPRB) :: ZUNEBH(YDCPG_OPTS%KLON,YDCPG_OPTS%KFLEVG)          ! Nebulosite convective histo
 REAL(KIND=JPRB) :: ZFPCOR(YDCPG_OPTS%KLON,0:YDCPG_OPTS%KFLEVG)
-REAL(KIND=JPRB) :: ZTW(YDCPG_OPTS%KLON,YDCPG_OPTS%KFLEVG)    ! Temporar storage for updated PTW)
-REAL(KIND=JPRB) :: ZPOID(YDCPG_OPTS%KLON,YDCPG_OPTS%KFLEVG)  ! DP/(YDMODEL%YRCST%RG*DT) FOR A GIVEN LEVEL AND A GIVEN TIME STEP.
-REAL(KIND=JPRB) :: ZQV(YDCPG_OPTS%KLON,YDCPG_OPTS%KFLEVG)    ! corrected (for negative values) vapour
-REAL(KIND=JPRB) :: ZQI(YDCPG_OPTS%KLON,YDCPG_OPTS%KFLEVG)    ! corrected (for negative values) cloud ice
-REAL(KIND=JPRB) :: ZQL(YDCPG_OPTS%KLON,YDCPG_OPTS%KFLEVG)    ! corrected (for negative values) cloud liquid
-REAL(KIND=JPRB) :: ZQR(YDCPG_OPTS%KLON,YDCPG_OPTS%KFLEVG)    ! corrected (for negative values) rain
-REAL(KIND=JPRB) :: ZQS(YDCPG_OPTS%KLON,YDCPG_OPTS%KFLEVG)    ! corrected (for negative values) snow
+REAL(KIND=JPRB) :: ZTW(YDCPG_OPTS%KLON,YDCPG_OPTS%KFLEVG)             ! Temporar storage for updated PTW)
+REAL(KIND=JPRB) :: ZPOID(YDCPG_OPTS%KLON,YDCPG_OPTS%KFLEVG)           ! DP/(YDMODEL%YRCST%RG*DT) FOR A GIVEN LEVEL AND A GIVEN TIME STEP.
+REAL(KIND=JPRB) :: ZQV(YDCPG_OPTS%KLON,YDCPG_OPTS%KFLEVG)             ! corrected (for negative values) vapour
+REAL(KIND=JPRB) :: ZQI(YDCPG_OPTS%KLON,YDCPG_OPTS%KFLEVG)             ! corrected (for negative values) cloud ice
+REAL(KIND=JPRB) :: ZQL(YDCPG_OPTS%KLON,YDCPG_OPTS%KFLEVG)             ! corrected (for negative values) cloud liquid
+REAL(KIND=JPRB) :: ZQR(YDCPG_OPTS%KLON,YDCPG_OPTS%KFLEVG)             ! corrected (for negative values) rain
+REAL(KIND=JPRB) :: ZQS(YDCPG_OPTS%KLON,YDCPG_OPTS%KFLEVG)             ! corrected (for negative values) snow
 REAL(KIND=JPRB) :: ZTENHA(YDCPG_OPTS%KLON,YDCPG_OPTS%KFLEVG)
 REAL(KIND=JPRB) :: ZTENQVA(YDCPG_OPTS%KLON,YDCPG_OPTS%KFLEVG)
-REAL(KIND=JPRB) :: ZCP(YDCPG_OPTS%KLON,YDCPG_OPTS%KFLEVG)    ! new cp for turbulent diffusion
-REAL(KIND=JPRB) :: ZFPLSL(YDCPG_OPTS%KLON,0:YDCPG_OPTS%KFLEVG) ! total liquid water flux: diff+sedi+rain
-REAL(KIND=JPRB) :: ZFPLSN(YDCPG_OPTS%KLON,0:YDCPG_OPTS%KFLEVG) ! total solid water flux: diff+sedi+snow
-REAL(KIND=JPRB) :: ZSEDIQL(YDCPG_OPTS%KLON,0:YDCPG_OPTS%KFLEVG) ! sedimentation flux of cloud liquid water
-REAL(KIND=JPRB) :: ZSEDIQI(YDCPG_OPTS%KLON,0:YDCPG_OPTS%KFLEVG) ! sedimentation flux of cloud ice water
-REAL(KIND=JPRB) :: ZDIFCVPPQ(YDCPG_OPTS%KLON,0:YDCPG_OPTS%KFLEVG) ! Flux de CVPP (KFB or EDKF) sur Qv
-REAL(KIND=JPRB) :: ZDIFCVPPS(YDCPG_OPTS%KLON,0:YDCPG_OPTS%KFLEVG) ! Flux de CVPP (KFB or EDKF) sur CpT
-REAL(KIND=JPRB) :: ZDIFCVPPU(YDCPG_OPTS%KLON,0:YDCPG_OPTS%KFLEVG) ! Flux de CVPP (EDKF) sur U
-REAL(KIND=JPRB) :: ZDIFCVPPV(YDCPG_OPTS%KLON,0:YDCPG_OPTS%KFLEVG) ! Flux de CVPP (EDKF) sur V
-REAL(KIND=JPRB) :: ZEDMFQ(YDCPG_OPTS%KLON,0:YDCPG_OPTS%KFLEVG) ! Mass flux part of EDMF flux for Qv
-REAL(KIND=JPRB) :: ZEDMFS(YDCPG_OPTS%KLON,0:YDCPG_OPTS%KFLEVG) ! Mass flux part of EDMF flux for CpT
-REAL(KIND=JPRB) :: ZEDMFU(YDCPG_OPTS%KLON,0:YDCPG_OPTS%KFLEVG) ! Mass flux part of EDMF flux for U
-REAL(KIND=JPRB) :: ZEDMFV(YDCPG_OPTS%KLON,0:YDCPG_OPTS%KFLEVG) ! Mass flux part of EDMF flux for V
-REAL(KIND=JPRB) :: ZMF_UP(YDCPG_OPTS%KLON,0:YDCPG_OPTS%KFLEVG) ! Mass flux for implicit formulation of EDMF equation (LEDMFI)
-REAL(KIND=JPRB) :: ZCONDCVPPL(YDCPG_OPTS%KLON,0:YDCPG_OPTS%KFLEVG) ! Flux de condensation liquide du a CVVPP (KFB)
-REAL(KIND=JPRB) :: ZCONDCVPPI(YDCPG_OPTS%KLON,0:YDCPG_OPTS%KFLEVG) ! Flux de condensation glace du a CVVPP (KFB)
-REAL(KIND=JPRB) :: ZPRODTH_CVPP(YDCPG_OPTS%KLON,0:YDCPG_OPTS%KFLEVG) ! Flux de production thermique de TKE du a CVPP(KFB)
+REAL(KIND=JPRB) :: ZCP(YDCPG_OPTS%KLON,YDCPG_OPTS%KFLEVG)             ! new cp for turbulent diffusion
+REAL(KIND=JPRB) :: ZFPLSL(YDCPG_OPTS%KLON,0:YDCPG_OPTS%KFLEVG)        ! total liquid water flux: diff+sedi+rain
+REAL(KIND=JPRB) :: ZFPLSN(YDCPG_OPTS%KLON,0:YDCPG_OPTS%KFLEVG)        ! total solid water flux: diff+sedi+snow
+REAL(KIND=JPRB) :: ZSEDIQL(YDCPG_OPTS%KLON,0:YDCPG_OPTS%KFLEVG)       ! sedimentation flux of cloud liquid water
+REAL(KIND=JPRB) :: ZSEDIQI(YDCPG_OPTS%KLON,0:YDCPG_OPTS%KFLEVG)       ! sedimentation flux of cloud ice water
+REAL(KIND=JPRB) :: ZDIFCVPPQ(YDCPG_OPTS%KLON,0:YDCPG_OPTS%KFLEVG)     ! Flux de CVPP (KFB or EDKF) sur Qv
+REAL(KIND=JPRB) :: ZDIFCVPPS(YDCPG_OPTS%KLON,0:YDCPG_OPTS%KFLEVG)     ! Flux de CVPP (KFB or EDKF) sur CpT
+REAL(KIND=JPRB) :: ZDIFCVPPU(YDCPG_OPTS%KLON,0:YDCPG_OPTS%KFLEVG)     ! Flux de CVPP (EDKF) sur U
+REAL(KIND=JPRB) :: ZDIFCVPPV(YDCPG_OPTS%KLON,0:YDCPG_OPTS%KFLEVG)     ! Flux de CVPP (EDKF) sur V
+REAL(KIND=JPRB) :: ZEDMFQ(YDCPG_OPTS%KLON,0:YDCPG_OPTS%KFLEVG)        ! Mass flux part of EDMF flux for Qv
+REAL(KIND=JPRB) :: ZEDMFS(YDCPG_OPTS%KLON,0:YDCPG_OPTS%KFLEVG)        ! Mass flux part of EDMF flux for CpT
+REAL(KIND=JPRB) :: ZEDMFU(YDCPG_OPTS%KLON,0:YDCPG_OPTS%KFLEVG)        ! Mass flux part of EDMF flux for U
+REAL(KIND=JPRB) :: ZEDMFV(YDCPG_OPTS%KLON,0:YDCPG_OPTS%KFLEVG)        ! Mass flux part of EDMF flux for V
+REAL(KIND=JPRB) :: ZMF_UP(YDCPG_OPTS%KLON,0:YDCPG_OPTS%KFLEVG)        ! Mass flux for implicit formulation of EDMF equation (LEDMFI)
+REAL(KIND=JPRB) :: ZCONDCVPPL(YDCPG_OPTS%KLON,0:YDCPG_OPTS%KFLEVG)    ! Flux de condensation liquide du a CVVPP (KFB)
+REAL(KIND=JPRB) :: ZCONDCVPPI(YDCPG_OPTS%KLON,0:YDCPG_OPTS%KFLEVG)    ! Flux de condensation glace du a CVVPP (KFB)
+REAL(KIND=JPRB) :: ZPRODTH_CVPP(YDCPG_OPTS%KLON,0:YDCPG_OPTS%KFLEVG)  ! Flux de production thermique de TKE du a CVPP(KFB)
+REAL(KIND=JPRB) :: ZDE2MR(YDCPG_OPTS%KLON,YDCPG_OPTS%KFLEVG)          ! temporary array for conversion of density to mixing ratio
 
-!!for BAYRAD
-REAL(KIND=JPRB) :: ZDE2MR(YDCPG_OPTS%KLON,YDCPG_OPTS%KFLEVG) ! temporary array for conversion of density to mixing ratio
-!-----------------------------------------------------------------
-
-REAL(KIND=JPRB) :: ZXDROV(YDCPG_OPTS%KLON),ZXHROV(YDCPG_OPTS%KLON)
-REAL(KIND=JPRB) :: ZUGST(YDCPG_OPTS%KLON),ZVGST(YDCPG_OPTS%KLON)
-REAL(KIND=JPRB) :: ZCDROV(YDCPG_OPTS%KLON),ZCHROV(YDCPG_OPTS%KLON),ZDQSTS(YDCPG_OPTS%KLON),ZGWDCS(YDCPG_OPTS%KLON),&
- & ZHQ(YDCPG_OPTS%KLON),ZHU(YDCPG_OPTS%KLON),ZHTR(YDCPG_OPTS%KLON),&
- & ZRTI(YDCPG_OPTS%KLON),ZDPHI(YDCPG_OPTS%KLON),ZPRS(YDCPG_OPTS%KLON),ZSTAB(YDCPG_OPTS%KLON)
-REAL(KIND=JPRB) :: ZWFC(YDCPG_OPTS%KLON),ZWPMX(YDCPG_OPTS%KLON),ZWLMX(YDCPG_OPTS%KLON),ZWSEQ(YDCPG_OPTS%KLON),&
- & ZWSMX(YDCPG_OPTS%KLON),ZWWILT(YDCPG_OPTS%KLON),&
- & ZC3(YDCPG_OPTS%KLON),ZCG(YDCPG_OPTS%KLON),ZCN(YDCPG_OPTS%KLON),&
- & ZNEIJG(YDCPG_OPTS%KLON),ZNEIJV(YDCPG_OPTS%KLON)
+REAL(KIND=JPRB) :: ZXDROV(YDCPG_OPTS%KLON)
+REAL(KIND=JPRB) :: ZXHROV(YDCPG_OPTS%KLON)
+REAL(KIND=JPRB) :: ZUGST(YDCPG_OPTS%KLON)
+REAL(KIND=JPRB) :: ZVGST(YDCPG_OPTS%KLON)
+REAL(KIND=JPRB) :: ZCDROV(YDCPG_OPTS%KLON)                            ! ZCDROV     : PCD RENORME EN DENSITE FOIS VITESSE.
+REAL(KIND=JPRB) :: ZCHROV(YDCPG_OPTS%KLON)                            ! ZCHROV     : PCH RENORME EN DENSITE FOIS VITESSE.
+REAL(KIND=JPRB) :: ZDQSTS(YDCPG_OPTS%KLON)                            ! ZDQSTS     : DERIVEE DE PQSATS PAR RAPPORT A LA TEMPERATURE.
+REAL(KIND=JPRB) :: ZGWDCS(YDCPG_OPTS%KLON)                            ! ZGWDCS     : VARIABLE DE SURFACE POUR LE DRAG OROGRAPHIQUE (RHO*N0/G).
+REAL(KIND=JPRB) :: ZHQ(YDCPG_OPTS%KLON)                               ! ZHQ        : POIDS DE L'HUMIDITE DE L'AIR DANS L'HUMIDITE DE SURFACE.
+REAL(KIND=JPRB) :: ZHU(YDCPG_OPTS%KLON)                               ! ZHU        : POIDS DE L'HUMIDITE SATURANTE DANS L'HUMIDITE DE SURFACE.
+REAL(KIND=JPRB) :: ZHTR(YDCPG_OPTS%KLON)                              ! ZHTR       : RESISTANCE A LA TRANSPIRATION DU COUVERT VEGETAL. /  FOLIAGE TRANSPIRATION RESISTANCE.
+REAL(KIND=JPRB) :: ZRTI(YDCPG_OPTS%KLON)                              ! ZRTI       : INVERSE DE R*T.
+REAL(KIND=JPRB) :: ZDPHI(YDCPG_OPTS%KLON)                             ! ZDPHI      : EPAISSEUR EN GEOPOTENTIEL DU NIVEAU DE SURFACE.
+REAL(KIND=JPRB) :: ZPRS(YDCPG_OPTS%KLON)                              ! ZPRS       : CONSTANTE DES GAZ POUR L'AIR AU SOL.
+REAL(KIND=JPRB) :: ZSTAB(YDCPG_OPTS%KLON)                             ! ZSTAB      : INDICE DE STABILITE A LA SURFACE.
+REAL(KIND=JPRB) :: ZWFC(YDCPG_OPTS%KLON)                              ! ZWFC       : TENEUR EN EAU A LA CAPACITE AUX CHAMPS. /  FIELD CAPACITY WATER CONTENT.
+REAL(KIND=JPRB) :: ZWPMX(YDCPG_OPTS%KLON)                             ! ZWPMX      : TENEUR EN EAU MAXIMALE DU RESERVOIR PROFOND.  / MAXIMUM WATER CONTENT OF THE DEEP WATER-TANK.
+REAL(KIND=JPRB) :: ZWLMX(YDCPG_OPTS%KLON)                             ! ZWLMX      : TENEUR EN EAU MAXIMALE DU RESERVOIR D'INTERCEPTION. / MAXIMUM WATER CONTENT OF THE INTERCEPTION WATER-TANK.
+REAL(KIND=JPRB) :: ZWSEQ(YDCPG_OPTS%KLON)                             ! ZWSEQ      : TENEUR EN EAU A L'EQUILIBRE (EQUILIBRE ENTRE GRAVITE ET CAPILLARITE) EN SURFACE.  / SURFACE WATER CONTENT FOR THE BALANCE BETWEEN GRAVITY AND CAPILLARITY
+REAL(KIND=JPRB) :: ZWSMX(YDCPG_OPTS%KLON)                             ! ZWSMX      : TENEUR EN EAU MAXIMALE DU RESERVOIR SUPERFICIEL.  / MAXIMUM WATER CONTENT FOR THE SUPERFICIAL WATER-TANK.
+REAL(KIND=JPRB) :: ZWWILT(YDCPG_OPTS%KLON)                            ! ZWWILT     : TENEUR EN EAU AU POINT DE FLETRISSEMENT.  / WATER CONTENT AT THE WILTING POINT.
+REAL(KIND=JPRB) :: ZC3(YDCPG_OPTS%KLON)                               ! ZC3        : COEFFICIENT UTILE POUR LE CALCUL DU DRAINAGE
+REAL(KIND=JPRB) :: ZCG(YDCPG_OPTS%KLON)                               ! ZCG        : COEFFICIENT THERMIQUE DU SOL NU.  / THERMICAL COEFFICIENT OF BARE GROUND.
+REAL(KIND=JPRB) :: ZCN(YDCPG_OPTS%KLON)                               ! ZCN        : COEFFICIENT THERMIQUE DE LA NEIGE./ THERMICAL COEFFICIENT OF SNOW.
+REAL(KIND=JPRB) :: ZNEIJG(YDCPG_OPTS%KLON)                            ! ZNEIJG     : FRACTION DE NEIGE RECOUVRANT LE SOL.
+REAL(KIND=JPRB) :: ZNEIJV(YDCPG_OPTS%KLON)                            ! ZNEIJV     : FRACTION DE NEIGE RECOUVRANT LA VEGETATION.
 REAL(KIND=JPRB) :: ZPCLS(YDCPG_OPTS%KLON)
-
-
-! - 1D (DIAGNOSTIQUE) .
-
-! ZCDROV     : PCD RENORME EN DENSITE FOIS VITESSE.
-! ZCDNH      : COEFFICIENT NEUTRE D'ECHANGE EN SURFACE POUR LA CHALEUR.
-! ZCDNH      : EXCHANGE COEFF. AT SURFACE LEVEL IN NEUTRAL CONDITIONS FOR HEAT.
-! ZCG        : COEFFICIENT THERMIQUE DU SOL NU.
-! ZCG        : THERMICAL COEFFICIENT OF BARE GROUND.
-! ZCN        : COEFFICIENT THERMIQUE DE LA NEIGE.
-! ZCN        : THERMICAL COEFFICIENT OF SNOW.
-! ZCHROV     : PCH RENORME EN DENSITE FOIS VITESSE.
-! ZC3        : COEFFICIENT UTILE POUR LE CALCUL DU DRAINAGE
-! ZDQSTS     : DERIVEE DE PQSATS PAR RAPPORT A LA TEMPERATURE.
-! ZGWDCS     : VARIABLE DE SURFACE POUR LE DRAG OROGRAPHIQUE (RHO*N0/G).
-! ZHQ        : POIDS DE L'HUMIDITE DE L'AIR DANS L'HUMIDITE DE SURFACE.
-! ZHTR       : RESISTANCE A LA TRANSPIRATION DU COUVERT VEGETAL.
-! ZHTR       : FOLIAGE TRANSPIRATION RESISTANCE.
-! ZHU        : POIDS DE L'HUMIDITE SATURANTE DANS L'HUMIDITE DE SURFACE.
-! ZNEIJG     : FRACTION DE NEIGE RECOUVRANT LE SOL.
-! ZNEIJV     : FRACTION DE NEIGE RECOUVRANT LA VEGETATION.
-! ZRTI       : INVERSE DE R*T.
-! ZDPHI      : EPAISSEUR EN GEOPOTENTIEL DU NIVEAU DE SURFACE.
-! ZPRS       : CONSTANTE DES GAZ POUR L'AIR AU SOL.
-! ZSTAB      : INDICE DE STABILITE A LA SURFACE.
-! INND       : INDICE DE PRECIPITATIONS CONVECTIVES.
-! ZWFC       : TENEUR EN EAU A LA CAPACITE AUX CHAMPS.
-! ZWFC       : FIELD CAPACITY WATER CONTENT.
-! ZWPMX      : TENEUR EN EAU MAXIMALE DU RESERVOIR PROFOND.
-! ZWPMX      : MAXIMUM WATER CONTENT OF THE DEEP WATER-TANK.
-! ZWLMX      : TENEUR EN EAU MAXIMALE DU RESERVOIR D'INTERCEPTION.
-! ZWLMX      : MAXIMUM WATER CONTENT OF THE INTERCEPTION WATER-TANK.
-! ZWSEQ      : TENEUR EN EAU A L'EQUILIBRE (EQUILIBRE ENTRE GRAVITE ET
-!              CAPILLARITE) EN SURFACE.
-! ZWSEQ      : SURFACE WATER CONTENT FOR THE BALANCE BETWEEN GRAVITY
-!              AND CAPILLARITY
-! ZWSMX      : TENEUR EN EAU MAXIMALE DU RESERVOIR SUPERFICIEL.
-! ZWSMX      : MAXIMUM WATER CONTENT FOR THE SUPERFICIAL WATER-TANK.
-! ZWWILT     : TENEUR EN EAU AU POINT DE FLETRISSEMENT.
-! ZWWILT     : WATER CONTENT AT THE WILTING POINT.
-! ZSSO_STDEV : OROGRAPHY STANDARD DEVIATION
-! ZTWSNOW    : SNOW COVER FROM SURFEX
-! ZTOWNS     : FRACTION OF TOWN FROM SURFEX
 REAL(KIND=JPRB) :: ZBLH(YDCPG_OPTS%KLON)
-REAL(KIND=JPRB) :: ZQO3(YDCPG_OPTS%KLON,0:YDCPG_OPTS%KFLEVG)
+REAL(KIND=JPRB) :: ZQO3(YDCPG_OPTS%KLON,0:YDCPG_OPTS%KFLEVG)          ! ZQO3    : RAPPORT DE MELANGE MASSIQUE D'OZONE MOYEN AU-DESSUS DU MODELE / OZONE MIXING RATIO (MASS) AVERAGED-ABOVE
 REAL(KIND=JPRB) :: ZAER(YDCPG_OPTS%KLON,YDCPG_OPTS%KFLEVG,6)
 REAL(KIND=JPRB) :: ZAERINDS(YDCPG_OPTS%KLON,YDCPG_OPTS%KFLEVG)
 REAL(KIND=JPRB) :: ZDPHIV(YDCPG_OPTS%KLON),ZDPHIT(YDCPG_OPTS%KLON)
-
-! - (PROFILS DIAGNOSTIQUES)
-!   ZQO3    : RAPPORT DE MELANGE MASSIQUE D'OZONE
-!        (0):     "         "    MOYEN AU-DESSUS DU MODELE
-!   ZQO3    : OZONE MIXING RATIO (MASS).
-!        (0):AVERAGED-ABOVE      "         " .
-!   ZQCO2   : RAPPORT MASSIQUE LOCAL DU CO2.
-!   ZQCO2   : CO2 MIXING RATIO (MASS).
-
-! IJN        : DIMENSION TABLEAUX ETENDUS POUR CYCLE DIURNE RAYONNEMENT
-!              IJN AU PLUSL A KLON
-
-!* INPUT ARGUMENTS FOR ACRADIN ( RAYT ECMWF POUR CLIMAT )
-
-!            1-D ARRAYS
-!            ----------
-
 REAL(KIND=JPRB) :: ZTRSOD(YDCPG_OPTS%KLON)
-
-!            2-D ARRAYS
-!            ----------
-
-!* OUTPUT ARGUMENTS FOR THE ECMWF PHYSICS
-
-!            0.2  LOCAL ARRAYS FOR ECMWF PHYSICS PACKAGE
-!                 --------------------------------------
 
 REAL(KIND=JPRB) :: ZCEMTR(YDCPG_OPTS%KLON,0:1) , ZCTRSO(YDCPG_OPTS%KLON,0:1)
 REAL(KIND=JPRB) :: ZALBD(YDCPG_OPTS%KLON,YDCPG_OPTS%KSW), ZALBP(YDCPG_OPTS%KLON,YDCPG_OPTS%KSW)
 REAL(KIND=JPRB) :: ZSFSWDIR (YDCPG_OPTS%KLON,YDCPG_OPTS%KSW), ZSFSWDIF (YDCPG_OPTS%KLON,YDCPG_OPTS%KSW)
 REAL(KIND=JPRB) :: ZTRSODIR (YDCPG_OPTS%KLON,YDCPG_OPTS%KSW), ZTRSODIF (YDCPG_OPTS%KLON,YDCPG_OPTS%KSW)
 
-!            1-D ARRAYS
-!            ----------
-
 REAL(KIND=JPRB) :: ZSUDU(YDCPG_OPTS%KLON) 
 REAL(KIND=JPRB) :: ZTHETAVS(YDCPG_OPTS%KLON)
-
-!            2-D ARRAYS
-!            ----------
 
 REAL(KIND=JPRB) :: ZGEOSLC(YDCPG_OPTS%KLON,YDCPG_OPTS%KFLEVG)
 REAL(KIND=JPRB) :: ZTENT(YDCPG_OPTS%KLON,YDCPG_OPTS%KFLEVG)
 REAL(KIND=JPRB) :: ZTHETAV(YDCPG_OPTS%KLON,YDCPG_OPTS%KFLEVG)
 
-!            LOCAL ARRAYS FOR TKE
-! ZCOEFN : COEFFICIENT STATISTIQUE POUR LES FLUX D'EAUX CONDENSEES.
 
-REAL(KIND=JPRB) :: ZCOEFN(YDCPG_OPTS%KLON,YDCPG_OPTS%KFLEVG)
+REAL(KIND=JPRB) :: ZCOEFN(YDCPG_OPTS%KLON,YDCPG_OPTS%KFLEVG)          ! ZCOEFN : COEFFICIENT STATISTIQUE POUR LES FLUX D'EAUX CONDENSEES.
 
-!            LOCAL ARRAYS FOR ACVPPKF
+! LOCAL ARRAYS FOR ACVPPKF
 REAL(KIND=JPRB) :: ZQLI_CVPP(YDCPG_OPTS%KLON,YDCPG_OPTS%KFLEVG)
 REAL(KIND=JPRB) :: ZNEB_CVPP(YDCPG_OPTS%KLON,YDCPG_OPTS%KFLEVG)
 
 INTEGER(KIND=JPIM) :: JCHA, JLEV, JLON, JSG
- ! useful size of klon arrays for mesonh physics
+
 LOGICAL :: LLCLS, LLHMT, LLREDPR
 
 REAL(KIND=JPRB) :: ZAEN, ZEPS0, ZEPSNEB
@@ -433,70 +170,76 @@ REAL(KIND=JPRB) :: ZAEN, ZEPS0, ZEPSNEB
 ! Implicit coupling coefficients
 REAL(KIND=JPRB) :: ZCFBTH(YDCPG_OPTS%KLON,YDCPG_OPTS%KFLEVG)
 REAL(KIND=JPRB) :: ZDTMSE,ZRHGMT,ZSTATI
-REAL(KIND=JPRB) :: &
- & ZCFATH(YDCPG_OPTS%KLON,YDCPG_OPTS%KFLEVG),ZCFAU(YDCPG_OPTS%KLON,YDCPG_OPTS%KFLEVG),&
- & ZCFBU(YDCPG_OPTS%KLON,YDCPG_OPTS%KFLEVG),ZCFBV(YDCPG_OPTS%KLON,YDCPG_OPTS%KFLEVG)
+REAL(KIND=JPRB) :: ZCFATH(YDCPG_OPTS%KLON,YDCPG_OPTS%KFLEVG)
+REAL(KIND=JPRB) :: ZCFAU(YDCPG_OPTS%KLON,YDCPG_OPTS%KFLEVG)
+REAL(KIND=JPRB) :: ZCFBU(YDCPG_OPTS%KLON,YDCPG_OPTS%KFLEVG)
+REAL(KIND=JPRB) :: ZCFBV(YDCPG_OPTS%KLON,YDCPG_OPTS%KFLEVG)
 
-REAL(KIND=JPRB) :: ZSRAIN(YDCPG_OPTS%KLON), ZSSNOW(YDCPG_OPTS%KLON), ZSGROUPEL(YDCPG_OPTS%KLON)
+REAL(KIND=JPRB) :: ZSRAIN(YDCPG_OPTS%KLON)
+REAL(KIND=JPRB) :: ZSSNOW(YDCPG_OPTS%KLON)
+REAL(KIND=JPRB) :: ZSGROUPEL(YDCPG_OPTS%KLON)
 REAL(KIND=JPRB) :: ZTSN(YDCPG_OPTS%KLON)
-! FOR Hv
-! FOR DUST
 
- ! SCOND MEMBRE POUR LES SCALAIRES PASSIFS
+! Second membre pour les scalaires passifs
 REAL(KIND=JPRB) :: ZINVG
 
-! TRAITEMENT DES SCALAIRES PASSIFS
+! Traitement des scalaires passifs
 
 REAL(KIND=JPRB) :: ZDZZ(YDCPG_OPTS%KLON,1,YDCPG_OPTS%KFLEVG)
 REAL(KIND=JPRB) :: ZZZ (YDCPG_OPTS%KLON,1,YDCPG_OPTS%KFLEVG)
 
 !         ACFLUSO (ECUME) local variable
 !-------------------------------------------
-REAL(KIND=JPRB) :: ZCE(YDCPG_OPTS%KLON), ZCEROV(YDCPG_OPTS%KLON), ZCRTI(YDCPG_OPTS%KLON)
+REAL(KIND=JPRB) :: ZCE(YDCPG_OPTS%KLON)
+REAL(KIND=JPRB) :: ZCEROV(YDCPG_OPTS%KLON)
+REAL(KIND=JPRB) :: ZCRTI(YDCPG_OPTS%KLON)
 
 !        New ACDIFV1 local variable
 !--------------------------------------------
-REAL(KIND=JPRB)   :: ZXURO(YDCPG_OPTS%KLON,0:YDCPG_OPTS%KFLEVG)
-REAL(KIND=JPRB)   :: ZXQRO(YDCPG_OPTS%KLON,0:YDCPG_OPTS%KFLEVG)
-REAL(KIND=JPRB)   :: ZXTRO(YDCPG_OPTS%KLON,0:YDCPG_OPTS%KFLEVG)
+REAL(KIND=JPRB) :: ZXURO(YDCPG_OPTS%KLON,0:YDCPG_OPTS%KFLEVG)
+REAL(KIND=JPRB) :: ZXQRO(YDCPG_OPTS%KLON,0:YDCPG_OPTS%KFLEVG)
+REAL(KIND=JPRB) :: ZXTRO(YDCPG_OPTS%KLON,0:YDCPG_OPTS%KFLEVG)
 
 !        New ACNORGWD local variables
 !--------------------------------------------
 
-REAL(KIND=JPRB) :: ZFLX_LOTT_GWU(YDCPG_OPTS%KLON,0:YDCPG_OPTS%KFLEVG), ZFLX_LOTT_GWV(YDCPG_OPTS%KLON,0:YDCPG_OPTS%KFLEVG)
-
+REAL(KIND=JPRB) :: ZFLX_LOTT_GWU(YDCPG_OPTS%KLON,0:YDCPG_OPTS%KFLEVG)
+REAL(KIND=JPRB) :: ZFLX_LOTT_GWV(YDCPG_OPTS%KLON,0:YDCPG_OPTS%KFLEVG)
 
 !    TKE+ for ACCLDIA
-REAL(KIND=JPRB)   :: ZTKE1(YDCPG_OPTS%KLON,YDCPG_OPTS%KFLEVG)
+REAL(KIND=JPRB) :: ZTKE1(YDCPG_OPTS%KLON,YDCPG_OPTS%KFLEVG)
 
 !   For ACVISIH
-REAL(KIND=JPRB)   :: ZQGM(YDCPG_OPTS%KLON,YDCPG_OPTS%KFLEVG)
+REAL(KIND=JPRB) :: ZQGM(YDCPG_OPTS%KLON,YDCPG_OPTS%KFLEVG)
 
 
 !        New ARP_GROUND_PARAM local variable
 !------------------------------------------------
 
-REAL(KIND=JPRB)   :: ZALPHA1(YDCPG_OPTS%KLON,0:YDCPG_OPTS%KFLEVG)
-REAL(KIND=JPRB)   :: ZCOEFA (YDCPG_OPTS%KLON,0:YDCPG_OPTS%KFLEVG)
-REAL(KIND=JPRB)   :: ZLVT   (YDCPG_OPTS%KLON,0:YDCPG_OPTS%KFLEVG)
-REAL(KIND=JPRB)   :: ZQICE  (YDCPG_OPTS%KLON,0:YDCPG_OPTS%KFLEVG)
-REAL(KIND=JPRB)   :: ZDIFWQ (YDCPG_OPTS%KLON)
-REAL(KIND=JPRB)   :: ZDIFWS (YDCPG_OPTS%KLON)
-REAL(KIND=JPRB)   :: ZSC_FEVI (YDCPG_OPTS%KLON),ZSC_FEVN(YDCPG_OPTS%KLON),ZSC_FCLL(YDCPG_OPTS%KLON),ZSC_FCLN(YDCPG_OPTS%KLON)
+REAL(KIND=JPRB) :: ZALPHA1(YDCPG_OPTS%KLON,0:YDCPG_OPTS%KFLEVG)
+REAL(KIND=JPRB) :: ZCOEFA (YDCPG_OPTS%KLON,0:YDCPG_OPTS%KFLEVG)
+REAL(KIND=JPRB) :: ZLVT   (YDCPG_OPTS%KLON,0:YDCPG_OPTS%KFLEVG)
+REAL(KIND=JPRB) :: ZQICE  (YDCPG_OPTS%KLON,0:YDCPG_OPTS%KFLEVG)
+REAL(KIND=JPRB) :: ZDIFWQ (YDCPG_OPTS%KLON)
+REAL(KIND=JPRB) :: ZDIFWS (YDCPG_OPTS%KLON)
+REAL(KIND=JPRB) :: ZSC_FEVI (YDCPG_OPTS%KLON)
+REAL(KIND=JPRB) :: ZSC_FEVN(YDCPG_OPTS%KLON)
+REAL(KIND=JPRB) :: ZSC_FCLL(YDCPG_OPTS%KLON)
+REAL(KIND=JPRB) :: ZSC_FCLN(YDCPG_OPTS%KLON)
 
 !           TRAJECTORY (For diffusion !) local VARIABLES
 !           ----------------------------
 REAL(KIND=JPRB) :: ZTRAJGWD(YDCPG_OPTS%KLON,0:YDCPG_OPTS%KFLEVG) !Traj buffer saved for TL/AD (YDMODEL%YRML_PHY_MF%YRSIMPHL%LGWDSPNL)
 
-REAL(KIND=JPRB)    :: ZRVMD
-LOGICAL            :: LLAERO
-REAL(KIND=JPRB)    :: ZAIPCMT(YDCPG_OPTS%KLON) ! Activity Index of PCMT: 1. if PCMT is active, 0. else case.
+REAL(KIND=JPRB) :: ZRVMD
+LOGICAL         :: LLAERO
+REAL(KIND=JPRB) :: ZAIPCMT(YDCPG_OPTS%KLON) ! Activity Index of PCMT: 1. if PCMT is active, 0. else case.
 
 
-REAL(KIND=JPRB)    :: ZQIC(YDCPG_OPTS%KLON,YDCPG_OPTS%KFLEVG),ZQLC(YDCPG_OPTS%KLON,YDCPG_OPTS%KFLEVG)
-REAL(KIND=JPRB)    :: ZQLI_CVP(YDCPG_OPTS%KLON,YDCPG_OPTS%KFLEVG)
-REAL(KIND=JPRB)    :: ZQC_DET_PCMT(YDCPG_OPTS%KLON,YDCPG_OPTS%KFLEVG)
-REAL(KIND=JPRB)    :: ZFPLS(YDCPG_OPTS%KLON,0:YDCPG_OPTS%KFLEVG),ZFPLC(YDCPG_OPTS%KLON,0:YDCPG_OPTS%KFLEVG)
+REAL(KIND=JPRB) :: ZQIC(YDCPG_OPTS%KLON,YDCPG_OPTS%KFLEVG),ZQLC(YDCPG_OPTS%KLON,YDCPG_OPTS%KFLEVG)
+REAL(KIND=JPRB) :: ZQLI_CVP(YDCPG_OPTS%KLON,YDCPG_OPTS%KFLEVG)
+REAL(KIND=JPRB) :: ZQC_DET_PCMT(YDCPG_OPTS%KLON,YDCPG_OPTS%KFLEVG)
+REAL(KIND=JPRB) :: ZFPLS(YDCPG_OPTS%KLON,0:YDCPG_OPTS%KFLEVG),ZFPLC(YDCPG_OPTS%KLON,0:YDCPG_OPTS%KFLEVG)
 
 REAL(KIND=JPRB) :: ZDCAPE(YDCPG_OPTS%KLON) ! Descending CAPE for gusts.
 
@@ -559,8 +302,6 @@ REAL(KIND=JPRB)     :: ZSAV_UDOM (YDCPG_OPTS%KLON, 1:YDCPG_OPTS%KFLEVG)
 REAL(KIND=JPRB)     :: ZSAV_UNEBH (YDCPG_OPTS%KLON, 1:YDCPG_OPTS%KFLEVG)
 
 REAL(KIND=JPRB) :: ZHOOK_HANDLE
-
-!     ------------------------------------------------------------------
 
 #include "accldia.intfb.h"
 #include "acclph.intfb.h"
@@ -658,17 +399,6 @@ CALL MF_PHYS_FPL_PART1 (YDCPG_BNDS, YDCPG_OPTS, ZPFL_FPLCH, ZPFL_FPLSH, YDVARS%C
 & YDMODEL)
 
 
-! * In some cases, some pseudo-historic surface buffers (like z0) should
-!   not be modified between the entrance and the output of APLPAR
-!   (this is the case for example if LDCONFX=T).
-!   For the time being, we must save:
-!   - HV (group VV) : resistance to evapotranspiration
-!   - Z0F (group VD): gravity * surface roughness length
-!   - Z0H (group VV): gravity * roughness length for heat
-!   - PBLH (group VH): PBL height
-!   - SPSH (group VH):
-!   - QSH (group VH):
-
 LL_SAVE_PHSURF=YDCPG_OPTS%LCONFX
 IF (LL_SAVE_PHSURF) THEN
   CALL MF_PHYS_SAVE_PHSURF_PART1 (YDCPG_BNDS, YDCPG_OPTS, ZSAV_DDAL, ZSAV_DDOM, ZSAV_ENTCH,                           &
@@ -687,48 +417,24 @@ CALL APLPAR_INIT (YDCPG_OPTS%LAROME, YDCPG_BNDS%KIDIA, YDCPG_BNDS%KFDIA, YDCPG_O
 & ZMSC_LSCPE, ZFLU_QSAT, ZMSC_QW, ZMSC_TW, ZFLU_CD, ZFLU_CDN, ZFLU_CH, ZDSA_C1, ZDSA_C2, ZFLU_EMIS, ZFLU_FEVI, ZPFL_FTKE, &
 & ZPFL_FTKEI, ZPFL_FEFB1, ZPFL_FEFB2, ZPFL_FEFB3, ZFLU_NEIJ, ZFLU_VEG, ZFLU_QSATS, IMOC_CLPH)
 
-!*       2.    Complete physics.
-!              -----------------
-
-!        2.2  Complete physics.
-!             -----------------
-
-! PAS DE TEMPS DE LA PHYSIQUE (/YOMPHY2/)
-! Dans le cas des iterations de l'initialisation par modes normaux,
-! le pas de temps pour la physique ne peux pas etre nul pour APLPAR et
-! CPATY (par contre c'est bien PDTPHY qui est passe en argument aux autres
-! sous-prog. de la physique). Ceci est du a l'impossibilite de prendre en
-! compte des flux qui deviennent infinis pour TSPHY=0 (flux de masse du au
-! reajustement des sursaturations par exemple...). Mais les tendances phys.
-! sont bien nulles dans le cas de la configuration 'E' (Modes Normaux).
-! PHYSICS TIME STEP (/YOMPHY2/)
-! In case of normal mode initialisation iterations, the physics time
-! step cannot be zero for APLPAR and CPATY (nevertheless it is PDTPHY
-! which is passed to other physics subroutines). This is due to the
-! impossibility to take into account fluxes which are infinite for TSPHY=0
-! (e.g.: mass flux due to oversaturation...).
-
-! CALL PARAMETERISATIONS
-
 DO JROF=YDCPG_BNDS%KIDIA,YDCPG_BNDS%KFDIA
   YDMF_PHYS_SURF%GSD_VF%PLSM(JROF)=REAL(NINT(YDMF_PHYS_SURF%GSD_VF%PLSM(JROF)),JPRB)
 ENDDO
 
-!
 !-------------------------------------------------
 ! Check magnitude of model variables.
 !-------------------------------------------------
-!
+
 IF(LGCHECKMV) CALL CHECKMV(YDCPG_OPTS%NINDAT, YDMODEL%YRCST, YDRIP, YDPHY0, YDPHY2, YDCPG_BNDS%KIDIA, YDCPG_BNDS%KFDIA,       &
               & YDCPG_OPTS%KLON, YDCPG_OPTS%KFLEVG, YDCPG_OPTS%KSTEP, PAPHI, PAPHIF, PAPRS, PAPRSF, YDVARS%GEOMETRY%GELAM%T0, &
               & YDVARS%GEOMETRY%GEMU%T0, ZRDG_MU0, YDMF_PHYS_SURF%GSD_VF%PLSM, PT, YDMF_PHYS_BASE_STATE%Q,                    &
               & YDMF_PHYS_BASE_STATE%YGSP_RR%T                                                                                &
               &                                                                       )
-!     ------------------------------------------------------------------
+
 
 LLREDPR=.FALSE.
 ZRVMD=YDMODEL%YRCST%RV-YDMODEL%YRCST%RD
-! SURFEX  and passive scalar
+
 IF (YDCPG_OPTS%LCONFX) THEN
   ZDTMSE=0.01_JPRB
   ZSTATI=RSTATI-ZDTMSE/2._JPRB
@@ -750,19 +456,9 @@ CALL APL_ARPEGE_INIT (YDMODEL%YRCST, YDMF_PHYS_BASE_STATE, YDCPG_BNDS, YDCPG_OPT
 & ZTRSOD, ZTRSODIF, ZTRSODIR, ZUNEBH, ZXDROV, ZXHROV, ZXQRO, ZXTRO, ZXTROV, ZXURO, ZXUROV)
 
 
-!*
-!     ------------------------------------------------------------------
-!     4.- CALCULS THERMODYNAMIQUES
-!     ----------------------------
-  
 CALL ACTQSAT (YDMODEL%YRCST, YDPHY, YDCPG_BNDS%KIDIA, YDCPG_BNDS%KFDIA, YDCPG_OPTS%KLON, NTQSAT, YDCPG_OPTS%KFLEVG, &
 & PAPRSF, PCP, ZQV, PT, ZGEOSLC, ZMSC_LH, ZMSC_LSCPE, ZFLU_QSAT, ZMSC_QW, YDCPG_MISC%RH, ZMSC_TW)
   
-
-!*
-!     ------------------------------------------------------------------
-!     4.BIS. COEFFICIENTS THERMO-HYDRIQUES DU SOL
-!     -------------------------------------------
 
 IF ( .NOT.LMSE ) THEN
   IF ( LSOLV ) THEN
@@ -775,8 +471,6 @@ IF ( .NOT.LMSE ) THEN
     & YDMF_PHYS_BASE_STATE%YGSP_RR%IC, LLHMT, ZDSA_C1, ZDSA_C2, ZC3, ZCG, ZCN, YDMF_PHYS%OUT%CT,                                                 &
     & ZNEIJG, ZNEIJV, ZWFC, ZWPMX, ZWSEQ, ZWSMX, ZWWILT)
   ELSE
-
-!            INITIALISATION DE L'INERTIE THERMIQUE DU SOL.
 
 !DEC$ IVDEP
     DO JLON = YDCPG_BNDS%KIDIA,YDCPG_BNDS%KFDIA
@@ -791,20 +485,10 @@ ENDIF
 CALL APL_ARPEGE_INIT_SURFEX (YDMF_PHYS_BASE_STATE, YDGEOMETRY, YDCPG_BNDS, YDCPG_OPTS, YDCPG_MISC, &
 & YDCPG_GPAR, YDMF_PHYS, YDVARS, YDMODEL, ZALBD, ZALBP, ZFLU_EMIS, ZSGROUPEL, ZSRAIN, ZSSNOW, ZTSN)
 
-!*
-!     ------------------------------------------------------------------
-!     5.- STRUCTURE ET CHAMPS DANS LA COUCHE LIMITE DE SURFACE
-!     ------------------------------------------------------------------
-
-!        INITIALISATION DES HAUTEURS "METEO".
-
-  
 DO JLON=YDCPG_BNDS%KIDIA,YDCPG_BNDS%KFDIA
   ZDPHIV(JLON)=YDMODEL%YRCST%RG*HVCLS
   ZDPHIT(JLON)=YDMODEL%YRCST%RG*HTCLS
 ENDDO
-  
-
   
 LLCLS=.TRUE.
 LLHMT=.TRUE.
@@ -813,7 +497,6 @@ IF (LMSE) THEN
   & PAPHI, PAPHIF, PAPRS, PAPRSF, PR, PT, PU, PV, YDMF_PHYS_BASE_STATE%YGSP_RR%T, YDCPG_MISC%QS,                            &
   & ZDPHIT, YDMF_PHYS%OUT%GZ0, YDMF_PHYS%OUT%GZ0H, LLCLS, ZNBVNO, ZMRIPP, ZDSA_CPS, ZGWDCS, ZDSA_LHS,                       &
   & ZPCLS, ZFLU_CD, ZFLU_CDN)
-!       Computation of ZRTI
   DO JLON=YDCPG_BNDS%KIDIA,YDCPG_BNDS%KFDIA
     ZDPHI(JLON)=PAPHIF(JLON,YDCPG_OPTS%KFLEVG)-PAPHI(JLON,YDCPG_OPTS%KFLEVG)
     ZPRS(JLON)=YDMODEL%YRCST%RD+ZRVMD*YDCPG_MISC%QS(JLON)
@@ -835,10 +518,6 @@ ENDIF
     
 ZCP(YDCPG_BNDS%KIDIA:YDCPG_BNDS%KFDIA,1:YDCPG_OPTS%KFLEVG) = PCP(YDCPG_BNDS%KIDIA:YDCPG_BNDS%KFDIA,1:YDCPG_OPTS%KFLEVG)
 
-    ! COMPUTATION OF 'DRY' mixing lengths : lm_d lh_d
-    ! COMPUTATION OF ZPBLH - PBL HEIGHT
-
-    
 DO JLEV=YDCPG_OPTS%KTDIA,YDCPG_OPTS%KFLEVG
   DO JLON=YDCPG_BNDS%KIDIA,YDCPG_BNDS%KFDIA
     ZTHETAV(JLON,JLEV)=PT(JLON,JLEV)*(1.0_JPRB+YDMODEL%YRCST%RETV*ZQV(JLON,JLEV))&
@@ -871,11 +550,6 @@ CALL APL_ARPEGE_SHALLOW_CONVECTION_AND_TURBULENCE (YDMF_PHYS_BASE_STATE, YDCPG_B
 & ZKQROV, ZKTROV, ZKUROV, ZMSC_LSCPE, ZNBVNO, ZNEBS, ZNEBS0, ZNEB_CVPP, ZPFL_FPLCH, ZPFL_FTKE,        &
 & ZPFL_FTKEI, ZPRODTH_CVPP, ZQI, ZQIC, ZQL, ZQLC, ZQLIS, ZQLIS0, ZQLI_CVPP, ZQV, ZTKE1, ZXTROV, ZXUROV)
 
-!**
-
-!      7.1 Albedo et emissivite en presence de neige
-!          Albedo and emissivity with snow
-
 CALL APL_ARPEGE_ALBEDO_COMPUTATION (YDMF_PHYS_BASE_STATE, YDCPG_BNDS, YDCPG_OPTS, YDMF_PHYS, &
 & YDMF_PHYS_SURF, YDMODEL, ZALBD, ZALBP, ZEPS0, ZFLU_EMIS, ZFLU_NEIJ, ZRDG_MU0)
 
@@ -892,39 +566,21 @@ CALL APL_ARPEGE_RADIATION (YDMF_PHYS_BASE_STATE, YDGEOMETRY, YDCPG_BNDS, YDCPG_O
 & ZCTRSO, ZFLU_EMIS, ZFLU_QSAT, ZQO3, ZQR, ZQS, ZQV, ZRDG_MU0, ZRDG_MU0LU, ZRDG_MU0M, ZSFSWDIF,  &
 & ZSFSWDIR, ZSUDU, ZTENT, ZTRSOD, ZTRSODIF, ZTRSODIR)
 
-!*
-!     ------------------------------------------------------------------
-
-!     7.BIS. BILAN HYDRIQUE DU SOL
-!     ----------------------------
-!     CALCUL DES RESISTANCES A L'EVAPOTRANSPIRATION HV ET
-!     A LA TRANSPIRATION
-!     ------------------------------------------------------------------
-!     HTR DU COUVERT VEGETAL
-!     ----------------------
-
 CALL APL_ARPEGE_SOIL_HYDRO (YDMF_PHYS_BASE_STATE, YDCPG_BNDS, YDCPG_OPTS, YDMF_PHYS, YDMF_PHYS_SURF, &
 & YDMODEL, ZCHROV, ZFLU_NEIJ, ZFLU_QSAT, ZFLU_QSATS, ZFLU_VEG, ZGWDCS, ZHQ, ZHTR, ZHU, ZQV, ZWFC,    &
 & ZWLMX, ZWWILT)
 
-!     ------------------------------------------------------------------
-!     8.- DIFFUSION VERTICALE TURBULENTE
-!     ----------------------------------
-  
-CALL APL_ARPEGE_SURFACE (YDMF_PHYS_BASE_STATE, YDGEOMETRY, YDCPG_BNDS, YDCPG_OPTS, YDCPG_MISC,       &
-& YDCPG_GPAR, YDMF_PHYS, YDMF_PHYS_SURF, YDVARS, YDMODEL, YDCPG_OPTS%LCONFX, ZALBD, ZALBP, ZALPHA1, ZCDROV,    &
-& ZCEROV, ZCFATH, ZCFAU, ZCFBTH, ZCFBU, ZCFBV, ZCHROV, ZCOEFA, ZCOEFN, ZCP, ZDIFEXT, ZDIFWQ, ZDIFWS, &
-& ZDQSTS, ZDSA_CPS, ZDSA_LHS, ZDTMSE, ZEDMFQ, ZEDMFS, ZEDMFU, ZEDMFV, ZFLU_CD, ZFLU_CDN, ZFLU_EMIS,  &
-& ZFLU_FEVI, ZFLU_NEIJ, ZFLU_QSATS, ZFLU_VEG, ZHQ, ZHTR, ZHU, ZKQLROV, ZKQROV, ZKTROV, ZKUROV, ZLVT, &
-& ZMF_UP, ZNEBCH, ZNEBDIFF, ZNEBS, ZPOID, ZQI, ZQICE, ZQL, ZQV, ZRDG_MU0, ZRDG_MU0N, ZRHGMT,         &
-& ZSC_FCLL, ZSC_FCLN, ZSC_FEVI, ZSC_FEVN, ZSFSWDIF, ZSFSWDIR, ZSGROUPEL, ZSRAIN, ZSSNOW, ZSTATI,     &
+CALL APL_ARPEGE_SURFACE (YDMF_PHYS_BASE_STATE, YDGEOMETRY, YDCPG_BNDS, YDCPG_OPTS, YDCPG_MISC,              &
+& YDCPG_GPAR, YDMF_PHYS, YDMF_PHYS_SURF, YDVARS, YDMODEL, YDCPG_OPTS%LCONFX, ZALBD, ZALBP, ZALPHA1, ZCDROV, &
+& ZCEROV, ZCFATH, ZCFAU, ZCFBTH, ZCFBU, ZCFBV, ZCHROV, ZCOEFA, ZCOEFN, ZCP, ZDIFEXT, ZDIFWQ, ZDIFWS,        &
+& ZDQSTS, ZDSA_CPS, ZDSA_LHS, ZDTMSE, ZEDMFQ, ZEDMFS, ZEDMFU, ZEDMFV, ZFLU_CD, ZFLU_CDN, ZFLU_EMIS,         &
+& ZFLU_FEVI, ZFLU_NEIJ, ZFLU_QSATS, ZFLU_VEG, ZHQ, ZHTR, ZHU, ZKQLROV, ZKQROV, ZKTROV, ZKUROV, ZLVT,        &
+& ZMF_UP, ZNEBCH, ZNEBDIFF, ZNEBS, ZPOID, ZQI, ZQICE, ZQL, ZQV, ZRDG_MU0, ZRDG_MU0N, ZRHGMT,                &
+& ZSC_FCLL, ZSC_FCLN, ZSC_FEVI, ZSC_FEVN, ZSFSWDIF, ZSFSWDIR, ZSGROUPEL, ZSRAIN, ZSSNOW, ZSTATI,            &
 & ZTSN, ZXDROV, ZXHROV, ZXQRO, ZXTRO, ZXTROV, ZXURO, ZXUROV)
     
 
-!-----------------------------------------------------------------------------
-!   THE DEEP CONVECTION WILL SEE THE SHALLOW PART FROM KFB AS IT IS WITH LOUIS
-!   SCHEME AND THE MODIFIED RI
-!----------------------------------------------------------------------------
+! The deep convection will see the shallow part from KFB as it is with Louis scheme and the modified RI
     
 DO JLEV=YDCPG_OPTS%KTDIA,YDCPG_OPTS%KFLEVG
   DO JLON=YDCPG_BNDS%KIDIA,YDCPG_BNDS%KFDIA
@@ -934,11 +590,8 @@ DO JLEV=YDCPG_OPTS%KTDIA,YDCPG_OPTS%KFLEVG
     YDMF_PHYS%OUT%STRTV   (JLON,JLEV) = YDMF_PHYS%OUT%STRTV(JLON,JLEV) + ZDIFCVPPV(JLON,JLEV)
   ENDDO
 ENDDO
-    
 
-
-!     DIAGNOSTIC SUPPLEMENTAIRE FLUX DE RAYONNEMENT (PFRTHDS ET PFRSOPT)
-!     ADDITIONAL DIAGNOSTICS OF RADIATIVE FLUXES (PFRTHDS AND PFRSOPT)
+! Additional diagnostics of radiative fluxes (PFRTHDS and PFRSOPT)
 
 !DEC$ IVDEP
 DO JLON=YDCPG_BNDS%KIDIA,YDCPG_BNDS%KFDIA
@@ -950,8 +603,7 @@ DO JLON=YDCPG_BNDS%KIDIA,YDCPG_BNDS%KFDIA
   ENDIF
 ENDDO
 
-! ADDITIONAL DIAGNOSTIC OF THE DERIVATIVE OF THE NON SOLAR SURFACE
-! HEAT FLUX WITH RESPECT TO SURFACE TEMPERATURE (PDERNSHF)
+! Additional diagnostic of the derivative of the non solar surface; heat flux with respect to surface temperature 
 
 IF(LMCC03)THEN
   CALL ACDNSHF(YDMODEL%YRCST, YDPHY, YDPHY1, YDCPG_BNDS%KIDIA, YDCPG_BNDS%KFDIA, YDCPG_OPTS%KLON, YDCPG_OPTS%KTDIA,          &
@@ -959,27 +611,11 @@ IF(LMCC03)THEN
   & ZCHROV, ZDQSTS, YDMF_PHYS%OUT%DRNSHF)
 ENDIF
 
-!*
-!     ------------------------------------------------------------------
-!     9.- TRAINEE DES ONDES DE GRAVITE INDUITES PAR LE RELIEF
-!     ------------------------------------------------------------------
-
-! GRAVITY WAVE DRAG  
 CALL ACDRAG (YDMODEL%YRCST, YDMODEL%YRML_PHY_MF, YDCPG_BNDS%KIDIA, YDCPG_BNDS%KFDIA, YDCPG_OPTS%KLON, NTDRAG, YDCPG_OPTS%KFLEVG, &
 & PAPRS, PAPRSF, PDELP, ZNBVNO, YDMF_PHYS_BASE_STATE%YCPG_PHY%XYB%RDELP, PU, PV, YDVARS%GEOMETRY%RCORI%T0,                       &
 & YDMF_PHYS_SURF%GSD_VF%PGETRL, ZGWDCS, YDMF_PHYS_SURF%GSD_VF%PVRLAN, YDMF_PHYS_SURF%GSD_VF%PVRLDI, YDMF_PHYS%OUT%STRDU,         &
 & YDMF_PHYS%OUT%STRDV, ZTRAJGWD)
   
- ! SAVE FOR TL/NL COEFS FROM VERT. DIFF AND GWD
-
-  
-
-!     ------------------------------------------------------------------
-!     10.- PRECIPITATIONS STRATIFORMES.
-!     ---------------------------------
-
-  
-! ALARO PRECIPITATION SCHEME
 IF ( LSTRAS ) THEN
   CALL ACPLUIS (YDMODEL%YRCST, YDMODEL%YRML_PHY_MF, YDCPG_BNDS%KIDIA, YDCPG_BNDS%KFDIA, YDCPG_OPTS%KLON, NTPLUI, YDCPG_OPTS%KFLEVG, &
   & PAPRSF, PDELP, ZNEBS, ZQV, ZQLIS, ZMSC_QW, PR, PT, YDMF_PHYS%OUT%FCSQL, YDMF_PHYS%OUT%FCSQN, YDMF_PHYS%OUT%FPLSL,               &
@@ -997,10 +633,6 @@ CALL APL_ARPEGE_PRECIPITATION (YDMF_PHYS_BASE_STATE, YDCPG_BNDS, YDCPG_OPTS, YDM
 ZFLX_LOTT_GWU(:, :) = 0.0_JPRB
 ZFLX_LOTT_GWV(:, :) = 0.0_JPRB
 
-!*
-!     ------------------------------------------------------------------
-!         SAUVEGARDE DES FLUX DE PRECIPITATION CONVECTIVE ET STRATIFORME.
-
 IF(LNEBN.OR.LRRGUST) THEN
   DO JLEV=YDCPG_OPTS%KTDIA-1,YDCPG_OPTS%KFLEVG
     DO JLON=YDCPG_BNDS%KIDIA,YDCPG_BNDS%KFDIA
@@ -1017,9 +649,8 @@ IF(LRRGUST) THEN
   ENDDO
 ENDIF
 
-  ! - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  ! UPDATE TRANSPORT FLUXES DUE TO SEDIMENTATION OF CLOUDS.
-  ! - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+! Update transport fluxes due to sedimentation of clouds.
 
 DO JLEV=YDCPG_OPTS%KTDIA,YDCPG_OPTS%KFLEVG
   DO JLON=YDCPG_BNDS%KIDIA,YDCPG_BNDS%KFDIA
@@ -1030,11 +661,7 @@ DO JLEV=YDCPG_OPTS%KTDIA,YDCPG_OPTS%KFLEVG
   ENDDO
 ENDDO
   
-
-  ! - - - - - - - - - - - - - - - - -
-  ! CORRECT NEGATIVE WATER CONTENTS.
-  ! - - - - - - - - - - - - - - - - -
-
+! Correct negative water contents.
   
 CALL QNGCOR (YDMODEL%YRCST, YDPHY2, YDCPG_BNDS%KIDIA, YDCPG_BNDS%KFDIA, YDCPG_OPTS%KLON, NTPLUI, YDCPG_OPTS%KFLEVG,&
 & ZQV, ZQL, ZQI, YDMF_PHYS_BASE_STATE%YCPG_PHY%XYB%RDELP, YDMF_PHYS%OUT%DIFCQ, YDMF_PHYS%OUT%DIFCQN,               &
@@ -1043,44 +670,25 @@ CALL QNGCOR (YDMODEL%YRCST, YDPHY2, YDCPG_BNDS%KIDIA, YDCPG_BNDS%KFDIA, YDCPG_OP
 & YDMF_PHYS%OUT%FPFPCL, YDMF_PHYS%OUT%FPFPCN, YDMF_PHYS%OUT%FCCQL, YDMF_PHYS%OUT%FCCQN, YDMF_PHYS%OUT%FCSQL,       &
 & YDMF_PHYS%OUT%FCSQN, YDMF_PHYS%OUT%FCQNG )
 
-!*
-!     ------------------------------------------------------------------
-!     12. - BILAN HYDRIQUE DU SOL
-!     ---------------------------
+! Bilan hydrique du sol
 
 CALL APL_ARPEGE_HYDRO_BUDGET (YDMF_PHYS_BASE_STATE, YDCPG_BNDS, YDCPG_OPTS, YDCPG_GPAR, YDMF_PHYS, &
 & YDMF_PHYS_SURF, YDMODEL, ZC3, ZCN, ZDSA_C1, ZDSA_C2, ZFLU_FEVI, ZFLU_NEIJ, ZFLU_VEG, ZFPLSL,     &
 & ZFPLSN, ZWFC, ZWLMX, ZWPMX, ZWSEQ, ZWSMX)
 
-!*
-!-  --------------------------------------------------------------------
-!     13.- DRAG MESOSPHERIQUE POUR UN MODELE POSSEDANT DES NIVEAUX
-!               AU-DESSUS DE 50 KM (I.E. DANS LA MESOSPHERE)
-!     ------------------------------------------------------------------
+! Drag mesospherique pour un modele possedant des niveaux au-dessus de 50 km (i.e. dans la mesosphere)
 
-! 
-! MESOSPHERIC DRAG  
 CALL ACDRME ( YDMODEL%YRCST, YDSTA, YDPHY2, YDTOPH, YDCPG_BNDS%KIDIA, YDCPG_BNDS%KFDIA, YDCPG_OPTS%KLON,      &
 & NTDRME, YDCPG_OPTS%KFLEVG, PCP, PDELP, PT, ZQV, PU, PV, YDMF_PHYS%OUT%FRMH, ZMSC_FRMQ, YDMF_PHYS%OUT%STRMU, &
 & YDMF_PHYS%OUT%STRMV)
   
-!     ------------------------------------------------------------------
-
-  ! STORE THE PSEUDO-HISTORIC SURFACE PRECIPITATION SENSIBLE HEAT FLUX
-  ! -------------------------------------------------------------------
-
-   !LPHSPSH
-
 ! Store radiative cloudiness in GFL structure for ISP, Historical files or PostProcessing
 IF (YIRAD%LGP) YDVARS%IRAD%T1(YDCPG_BNDS%KIDIA:YDCPG_BNDS%KFDIA,:) = YDCPG_MISC%QICE(YDCPG_BNDS%KIDIA:YDCPG_BNDS%KFDIA,:)
 IF (YLRAD%LGP) YDVARS%LRAD%T1(YDCPG_BNDS%KIDIA:YDCPG_BNDS%KFDIA,:) = YDCPG_MISC%QLI (YDCPG_BNDS%KIDIA:YDCPG_BNDS%KFDIA,:)
 IF (YA%LGP)    YDVARS%A%T1(YDCPG_BNDS%KIDIA:YDCPG_BNDS%KFDIA,:) = YDCPG_MISC%NEB (YDCPG_BNDS%KIDIA:YDCPG_BNDS%KFDIA,:)
 
 
-!*
-!     -----------------------------------------------------------------------
-!     16.- DDH FLEXIBLES POUR LES CHAMPS DE SURFACE VARIABLES/FLUX/TENDANCES.
-!     -----------------------------------------------------------------------
+! DDH flexibles pour les champs de surface variables/flux/tendances.
 
 IF (YDMODEL%YRML_DIAG%YRLDDH%LFLEXDIA) THEN
   CALL APLPAR_FLEXDIA (YDCPG_BNDS, YDCPG_OPTS, YDCPG_MISC, YDMF_PHYS, YDMF_PHYS_SURF, YDMODEL, YDDDH, &
@@ -1088,7 +696,7 @@ IF (YDMODEL%YRML_DIAG%YRLDDH%LFLEXDIA) THEN
 ENDIF
 
 IF (LRAFTKE) THEN
-     ! DCAPE due to precipitation evaporation.
+! DCAPE due to precipitation evaporation.
   CALL ACEVADCAPE(YDMODEL%YRML_PHY_MF%YRPHY2, YDMODEL%YRCST, YDCPG_BNDS%KIDIA, YDCPG_BNDS%KFDIA, YDCPG_OPTS%KLON, YDCPG_OPTS%KFLEVG, YDMF_PHYS%OUT%FPLSL, &
   & YDMF_PHYS%OUT%FPLSN, YDMF_PHYS%OUT%FPLCL, YDMF_PHYS%OUT%FPLCN, PAPRS, PAPRSF, PT, PCP, PAPHIF,                            &
   & PAPHI, ZDCAPE)
@@ -1121,8 +729,8 @@ DO JLEV=1,YDCPG_OPTS%KFLEVG
   ENDDO
 ENDDO
 
-   ! Convert density [kg/m3] to mixing ratio [kg/kg]
-   ! R_dry (dry air constant)
+! Convert density [kg/m3] to mixing ratio [kg/kg]
+! R_dry (dry air constant)
 
 ZDE2MR(YDCPG_BNDS%KIDIA:YDCPG_BNDS%KFDIA,:)  = YDMODEL%YRCST%RD * PT(YDCPG_BNDS%KIDIA:YDCPG_BNDS%KFDIA,:) / PAPRSF(YDCPG_BNDS%KIDIA:YDCPG_BNDS%KFDIA,:)
 ZBAY_QRCONV(YDCPG_BNDS%KIDIA:YDCPG_BNDS%KFDIA,:) = ZBAY_QRCONV(YDCPG_BNDS%KIDIA:YDCPG_BNDS%KFDIA,:) * ZDE2MR(YDCPG_BNDS%KIDIA:YDCPG_BNDS%KFDIA,:)
@@ -1131,15 +739,13 @@ ZBAY_QSCONV(YDCPG_BNDS%KIDIA:YDCPG_BNDS%KFDIA,:) = ZBAY_QSCONV(YDCPG_BNDS%KIDIA:
 ! Precipitation Type
 
 ! Compute wet-bulb temperature at 2 meters (suppose homogeneity of qv/ql/qi )
-!ZPCLS(KIDIA:KFDIA)=PAPRS(KIDIA:KFDIA,KLEV)-2._JPRB/ZZZF(KIDIA:KFDIA,1,KLEV)*&
-!                 &(PAPRS(KIDIA:KFDIA,KLEV)-PAPRSF(KIDIA:KFDIA,KLEV))
+
 CALL PPWETPOINT(YDMODEL%YRCST, YDPHY, YDCPG_BNDS%KIDIA, YDCPG_BNDS%KFDIA, YDCPG_OPTS%KLON, ZPCLS, YDMF_PHYS%OUT%TCLS,                       &
 & YDMF_PHYS_BASE_STATE%Q(:, YDCPG_OPTS%KFLEVG), YDMF_PHYS_BASE_STATE%L(:, YDCPG_OPTS%KFLEVG), YDMF_PHYS_BASE_STATE%I(:, YDCPG_OPTS%KFLEVG), &
 & YDMF_PHYS%OUT%TPWCLS)
 
-   ! Defined precipitation type
-   !
-   ! Compute wet-bulb temperature
+! Compute wet-bulb temperature
+
 DO JLEV=1,YDCPG_OPTS%KFLEVG
   CALL PPWETPOINT(YDMODEL%YRCST, YDPHY, YDCPG_BNDS%KIDIA, YDCPG_BNDS%KFDIA, YDCPG_OPTS%KLON, PAPRSF(:, JLEV), PT(:, JLEV), &
   & YDMF_PHYS_BASE_STATE%Q(:, JLEV), YDMF_PHYS_BASE_STATE%L(:, JLEV), YDMF_PHYS_BASE_STATE%I(:, JLEV),      &
@@ -1152,14 +758,14 @@ DO JLON=1,YDCPG_OPTS%KLON
   ZFPLSG(JLON,YDCPG_OPTS%KFLEVG)=0._JPRB
 ENDDO
 
-  !initialisation de ZZZ
+! Initialisation de ZZZ
 DO JLEV = 1,YDCPG_OPTS%KFLEVG
   DO JLON = YDCPG_BNDS%KIDIA,YDCPG_BNDS%KFDIA
     ZZZ(JLON,1,JLEV)=PAPHI(JLON,JLEV)*ZINVG
   ENDDO
 ENDDO
 
-  !initialisation de ZDZZ
+! Initialisation de ZDZZ
 DO JLEV = 2, YDCPG_OPTS%KFLEVG
   DO JLON = YDCPG_BNDS%KIDIA,YDCPG_BNDS%KFDIA
     ZDZZ(JLON,1,JLEV)=ZZZ(JLON,1,JLEV-1)-ZZZ(JLON,1,JLEV)
@@ -1174,15 +780,13 @@ CALL DPRECIPS (YDMODEL%YRCST, YDPHY%YRDPRECIPS, YDCPG_BNDS%KIDIA, YDCPG_BNDS%KFD
 & ZFPLC(:, YDCPG_OPTS%KFLEVG), ZFPLS(:, YDCPG_OPTS%KFLEVG), ZFPLSG(:, YDCPG_OPTS%KFLEVG), ZPRC_DPRECIPS(:, YDCPG_OPTS%NDTPRECCUR)&
 &             )
   
- !Idem for an other time step and an other period
+! Idem for an other time step and an other period
 
 CALL DPRECIPS(YDMODEL%YRCST, YDPHY%YRDPRECIPS, YDCPG_BNDS%KIDIA, YDCPG_BNDS%KFDIA, YDCPG_OPTS%KLON, YDCPG_OPTS%KFLEVG,             &
 & YDVARS%GEOMETRY%OROG%T0, YDMF_PHYS%OUT%TPWCLS, YDMF_PHYS%OUT%DIAGH, PAPHIF, ZDZZ, ZTW, YDMF_PHYS_BASE_STATE%L,                   &
 & ZFPLC(:, YDCPG_OPTS%KFLEVG), ZFPLS(:, YDCPG_OPTS%KFLEVG), ZFPLSG(:, YDCPG_OPTS%KFLEVG), ZPRC_DPRECIPS2(:, YDCPG_OPTS%NDTPRECCUR2)&
 & )
 
-!        2.3  Computes MOCON in the CLP.
-!             --------------------------
 CALL MF_PHYS_MOCON (YDCPG_BNDS, YDCPG_OPTS, YDMF_PHYS%OUT%MOCON, ZRDG_LCVQ, IMOC_CLPH, &
 & YDMF_PHYS_BASE_STATE)
 
@@ -1193,15 +797,12 @@ IF (YDCPG_OPTS%LCORWAT) THEN
   & YDMF_PHYS_SURF%GSD_VH%PPCN, YDMF_PHYS_SURF%GSD_VH%PPSL, YDMF_PHYS_SURF%GSD_VH%PPSN)
 ENDIF
 
-!        2.6   surface specific humidity necessary to compute the vertical
-!              advection of q in the case "delta m=1" (unlagged physics only).
-!              ---------------------------------------------------------------
+! Surface specific humidity necessary to compute the vertical advection of q in the case "delta m=1" (unlagged physics only).
 
 IF (NDPSFI == 1) THEN
   CALL CPQSOL(YDMODEL%YRCST, YDGEOMETRY%YRDIMV, YDPHY, YDCPG_OPTS%KLON, YDCPG_BNDS%KIDIA, YDCPG_BNDS%KFDIA, YDCPG_PHY0%PREHYD, &
   & YDMF_PHYS_SURF%GSP_RR%PT_T0, YDCPG_MISC%QS, ZFLU_QSATS, YDCPG_MISC%QSOL)
 ENDIF
-
 
 CALL APL_ARPEGE_ATMOSPHERE_UPDATE (YDMF_PHYS_BASE_STATE, YDMF_PHYS_NEXT_STATE, YDGEOMETRY,            &
 & YDCPG_BNDS, YDCPG_OPTS, YDCPG_MISC, YDMF_PHYS, YDCPG_DYN0, YDMF_PHYS_SURF, YDVARS, YDMODEL,         &
@@ -1211,14 +812,7 @@ CALL APL_ARPEGE_ATMOSPHERE_UPDATE (YDMF_PHYS_BASE_STATE, YDMF_PHYS_NEXT_STATE, Y
 CALL MF_PHYS_FPL_PART2 (YDCPG_BNDS, YDCPG_OPTS, ZPFL_FPLCH, ZPFL_FPLSH, YDVARS%CPF%T1, YDVARS%SPF%T1, &
 & YDMODEL)
 
-!       2.9b Prognostic convection etc.
-!            --------------------------
-
-! TRANSFER NOT ADVECTED VARIABLES INTO PGFLT1
 CALL MF_PHYS_TRANSFER (YDCPG_BNDS, YDCPG_OPTS, YDVARS, YDMODEL%YRML_PHY_MF%YRPHY, YDMODEL%YRML_GCONF%YGFL)
-
-!        2.10  Surface variables.
-!              ------------------
 
 CALL APL_ARPEGE_SURFACE_UPDATE (YDCPG_BNDS, YDCPG_OPTS, YDCPG_GPAR, YDMF_PHYS, YDMF_PHYS_SURF, &
 & YDMODEL, YDCPG_OPTS%LCONFX, YDCPG_OPTS%ZDTPHY, ZDSA_C1, ZDSA_C2, ZFLU_FEVI, ZFLU_VEG)
@@ -1228,11 +822,8 @@ IF(YDMODEL%YRML_PHY_MF%YRPHY%LCVPGY) THEN
 ENDIF
 
 
-!*       5.    Final calculations.
-!              -------------------
+! Restore the initial value of some pseudo-historical surface buffers if relevant.
 
-! * Restore the initial value of some pseudo-historical surface buffers
-!   if relevant.
 IF (LL_SAVE_PHSURF) THEN
   CALL MF_PHYS_SAVE_PHSURF_PART2 (YDCPG_BNDS, YDCPG_OPTS, ZSAV_DDAL, ZSAV_DDOM, ZSAV_ENTCH,                           &
   & ZSAV_FHPS, ZSAV_GZ0F, ZSAV_GZ0HF, ZSAV_HV, ZSAV_PBLH, ZSAV_QSH, ZSAV_UDAL, ZSAV_UDGRO, ZSAV_UDOM,                 &

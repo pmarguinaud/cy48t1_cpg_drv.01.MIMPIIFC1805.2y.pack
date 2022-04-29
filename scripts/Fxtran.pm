@@ -163,6 +163,47 @@ use base qw (Exporter);
 our @EXPORT = qw (F f n t TRUE FALSE);
 
 
+sub removeListElement
+{
+
+# Remove element from list, take care of removing comma before or after the element
+
+  my $x = shift;
+
+  my $nn = $x->nodeName;
+
+  my ($p) = $x->parentNode;
+  
+  my @cf = &F ('following-sibling::text()[contains(.,",")]', $x);   
+  my @cp = &F ('preceding-sibling::text()[contains(.,",")]', $x);   
+  
+  if (@cf)
+    {   
+      $cf[+0]->unbindNode (); 
+    }   
+  elsif (@cp)
+    {   
+      $cp[-1]->unbindNode (); 
+    }   
+  
+  $x->parentNode->appendChild (&t (' '));
+  my $l = $x->parentNode->lastChild;
+  
+  $x->unbindNode (); 
+  
+  while ($l)
+    {   
+      last if (($l->nodeName ne '#text') && ($l->nodeName ne 'cnt'));
+      $l = $l->previousSibling;
+      last unless ($l);
+      $l->nextSibling->unbindNode;
+    }   
+
+  return &F ("./$nn", $p) ? 0 : 1;
+}
+
+
+
 sub getIndent
 {
   my $stmt = shift;

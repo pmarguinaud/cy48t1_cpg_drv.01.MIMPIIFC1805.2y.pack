@@ -131,9 +131,9 @@ sub fieldifyDecl
 
 sub makeParallel
 {
-# Add a loop on blocks
-
   my ($par, $t) = @_;
+
+  # Add a loop nest on blocks
 
   my ($stmt) = &F ('.//ANY-stmt', $par);
 
@@ -171,12 +171,17 @@ EOF
       $expr->setData ('YLCPG_BNDS');
     }
 
+  my %intent;
+
+  # Process each expression (only NPROMA local arrays and FIELD API backed data) in the parallel section
+
   for my $expr (&F ('.//named-E', $par))
     {
       my ($N) = &F ('./N', $expr, 1);
       my $s = $t->{$N};
       next if ($s->{skip});
 
+      # Object wrapping fields : replace by a pointer to data with all blocks
       if ($s->{object})
         {
           my ($name) = &F ('./N/n/text()', $expr); 
@@ -206,25 +211,44 @@ EOF
                              as => $as,
                              nd => $nd,
                              field => &Object::getFieldFromObjectComponents ($N, @ctl),
-                             undefined => 1,
+                             object_based => 1, # postpone pointer declaration
                            };
             }
           $N = $ptr;
           $s = $t->{$ptr};
         }
+      # Local NPROMA array
       elsif ($s->{nproma})
         {
         }
+      # Other: skip
       else
         {
           next;
         }
 
-
-
       &addExtraIndex ($expr, &n ("<named-E><N><n>JBLK</n></N></named-E>"), $s);
 
+      &SymbolTable::grokIntent ($expr, \$intent{$N});
     }
+
+  my %intent2access = qw (IN RDONLY INOUT RDWR OUT WRONLY);
+
+  for my $ptr (reverse (sort keys (%intent)))
+    {
+      my $s = $t->{$ptr};
+      my $access = $intent2access{$intent{$ptr}};
+      my $var = $s->{field}->textContent;
+      my $stmt = &Fxtran::fxtran (statement => "$ptr => GET_HOST_DATA_$access ($var)");
+      $par->insertBefore ($stmt, $loop);
+      $par->insertBefore (&t ("\n" . (' ' x $indent)), $loop);
+
+      $par->insertAfter (&s ("$ptr => NULL ()"), $loop);
+      $par->insertAfter (&t ("\n" . (' ' x $indent)), $loop);
+    }
+  $par->insertBefore (&t ("\n" . (' ' x $indent)), $loop);
+  $par->insertAfter (&t ("\n" . (' ' x $indent)), $loop);
+
 }
 
 sub addExtraIndex
@@ -317,6 +341,70 @@ sub removeUnusedIncludes
     }
 }
 
+sub setupLocalFields
+{
+# Use CREATE_TEMPORARY at the beginning of the routine (after the call to DR_HOOK) to create
+# FIELD API objects backing local NPROMA arrays
+# Use DELETE_TEMPORARY to delete these FIELD API objects
+
+  my ($doc, $t) = @_;
+
+  my @drhook = &F ('.//if-stmt[.//call-stmt[string(.//procedure-designator)="DR_HOOK"]]', $doc);
+  @drhook = @drhook[0,-1];
+
+  my ($drhook1, $drhook2) = @drhook;
+  my ($ind1, $ind2) = map { &Fxtran::getIndent ($_) } ($drhook1, $drhook2);
+  my ($p1  , $p2  ) = map { $_->parentNode          } ($drhook1, $drhook2);
+
+  while (my ($n, $s) = each (%$t))
+    {
+      next unless ($s->{nproma});
+      next if ($s->{object_based});
+      my @ss = &F ('./shape-spec-LT/shape-spec', $s->{as});
+
+      shift (@ss); # Drop NPROMA dimension
+
+      # CREATE_TEMPORARY argument names
+      my @argn = qw (NLEV NDIM NDIM2);
+      # CREATE_TEMPORARY first arguments
+      my @args = ('YDGEOMETRY', 'PERSISTENT=.TRUE.');
+
+      die "Too many dimensions ($s->{nd}) for CREATE_TEMPORARY (variable $n)" if ($s->{nd}-1 >= scalar (@argn));
+
+      for my $i (0 .. $#ss)
+        {
+          my $ss = $ss[$i];
+          my @b = &F ('./ANY-bound', $ss);
+          my ($b0, $b1) = map { $_->textContent } @b;
+          if ((@b == 1) || ($b0 eq '1'))
+            {
+              push @args, $argn[$i] . '=' . $b0;
+            }
+          elsif ($b0 eq '0')
+            {
+              push @args, $argn[$i] . "=$b1+1";
+              push @args, $argn[$i] . "0=$b0";
+            }
+          else
+            {
+              push @args, $argn[$i] . "=($b1)-($b0)+1";
+              push @args, $argn[$i] . "0=$b0";
+            }
+        }
+      
+      my $f = $s->{field}->textContent;
+
+      $p1->insertAfter (&s ("$f => CREATE_TEMPORARY (" . join (', ', @args) . ")"), $drhook1);
+      $p1->insertAfter (&t ("\n" . (' ' x $ind1)), $drhook1);
+
+      $p2->insertBefore (&s ("IF (ASSOCIATED ($f)) CALL DELETE_TEMPORARY ($f)"), $drhook2);
+      $p2->insertBefore (&t ("\n" . (' ' x $ind2)), $drhook2);
+      
+
+    }
+
+}
+
 
 my $suffix = '_parallel';
 
@@ -344,7 +432,12 @@ my $doc = &Fxtran::fxtran (location => $F90, fopts => [qw (-line-length 300)]);
 
 my $t = &SymbolTable::getSymbolTable ($doc);
 
+
+# Transform NPROMA fields into a pair of (FIELD API object, Fortran pointer)
+
 &fieldifyDecl ($doc, $t);
+
+# Process parallel sections
 
 my @par = &F ('.//parallel-section', $doc);
 
@@ -352,6 +445,8 @@ for my $par (@par)
   {
     &makeParallel ($par, $t);
   }
+
+# Process call to parallel routines
 
 my @call = &F ('.//call-stmt[not(ancestor::parallel-section)]' # Skip calls in parallel sections
             . '[not(string(procedure-designator)="DR_HOOK")]'  # Skip DR_HOOK calls
@@ -382,24 +477,24 @@ my @decl;
 
 while (my ($n, $s) = each (%$t))
   {
-    next unless ($s->{undefined});
+    next unless ($s->{object_based});
     my $decl = &Fxtran::fxtran (statement => $s->{ts}->textContent . ", POINTER :: " . $n . "(" . join (',', (':') x ($s->{nd} + 1)) . ")");
     push @decl, $decl;
   }
 
 &SymbolTable::addDecl ($doc, 0, @decl);
 
+# Create/delete fields for local arrays
 
-
-
+&setupLocalFields ($doc, $t);
 
 
 shift (@par);
 shift (@call);
 
 for (
-     @par,
-     @call,
+#    @par,
+#    @call,
      &F ('.//skip-section', $doc), 
     )
   {

@@ -160,7 +160,7 @@ use Carp qw (croak);
 use strict;
 
 use base qw (Exporter);
-our @EXPORT = qw (F f n t TRUE FALSE);
+our @EXPORT = qw (s e F f n t TRUE FALSE);
 
 
 sub removeListElement
@@ -469,6 +469,15 @@ sub t
   'XML::LibXML::Text'->new ($_[0]);
 }
 
+sub s
+{
+  &Fxtran::fxtran (statement => $_[0]);
+}
+
+sub e
+{
+  &Fxtran::fxtran (expr => $_[0]);
+}
 
 # Returns the statement the element belongs to
 
@@ -1431,12 +1440,12 @@ EOF
   elsif ($args{expr})
     {
       my $program = << "EOF";
-$args{expr} = X
+X = $args{expr}
 END
 EOF
       my $xml = &fxtran::run ('-line-length', 300, $program);
       my $doc = 'XML::LibXML'->load_xml (string => $xml, @xopts);
-      my $n = $doc->documentElement->firstChild->firstChild->firstChild->firstChild;
+      my $n = $doc->documentElement->firstChild->firstChild->lastChild->firstChild;
       return $n;
     }
   elsif (my $f = $args{location})

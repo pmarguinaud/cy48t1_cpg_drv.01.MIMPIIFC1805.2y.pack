@@ -156,5 +156,108 @@ sub addDecl
      }
 }
 
+sub getSubroutineInterface
+{
+# Should cache the interfaces
+
+  my $proc = shift;
+  $proc = lc ($proc);
+
+# Should look at src/main, etc.
+
+  my $dir = 'src/local/.intfb/arpifs';
+
+  my $code = do { local $/ = undef; my $fh = 'FileHandle'->new ("<$dir/$proc.intfb.h"); <$fh> };
+
+  my ($intf) = &Fxtran::fxtran (fragment => $code);
+
+  return $intf;
+}
+
+sub getArgumentIntent
+{
+  my ($call, $expr) = @_;
+  my @args = &F ('./arg-spec/arg/ANY-E', $call);
+
+  my $rank;
+  for my $i (0 .. $#args)
+    {
+      if ($expr->isEqual ($args[$i]))
+        {
+          $rank = $i;
+          last;
+        }
+    }
+
+  return unless ($rank);
+
+  my ($proc) = &F ('./procedure-designator', $call, 1);
+
+  my $intf = &getSubroutineInterface ($proc);
+
+  my ($unit) = &F ('.//program-unit[./subroutine-stmt[string(subroutine-N)="?"]]', $proc, $intf);
+
+  my ($stmt) = &F ('./subroutine-stmt', $unit);
+
+  @args = &F ('./dummy-arg-LT/arg-N', $stmt, 1);
+
+  die unless ($rank < @args);
+
+  my ($intent) = &F ('.//T-decl-stmt[.//EN-decl[string(EN-N)="?"]]//intent-spec', $args[$rank], $unit, 1);
+
+  return $intent;
+}
+
+sub grokIntent
+{
+  my ($expr, $pintent) = @_;
+  
+  my ($r, $w);
+
+  if ($expr->parentNode->nodeName eq 'E-1')
+    {
+      $w = 1;
+    }
+  elsif ($expr->parentNode->nodeName eq 'arg')
+    {
+      my $stmt = &Fxtran::stmt ($expr);
+      if ($stmt->nodeName eq 'call-stmt')
+        {
+          my $intent = &getArgumentIntent ($stmt, $expr) || 'INOUT';
+          if ($intent =~ m/IN/o)
+            {
+              $r = 1;
+            }
+          if ($intent =~ m/OUT/o)
+            {
+              $w = 1;
+            }
+        }
+      else
+        {
+          $r = 1;
+        }
+    }
+  
+  if (defined ($$pintent))
+    {
+      $$pintent = 'INOUT' if ($w);
+    }
+  else
+    {
+      if ($r)
+        {
+          $$pintent = 'IN';
+        }
+      if ($w)
+        {
+          $$pintent = 'INOUT';
+        }
+    }
+
+  $$pintent ||= 'INOUT';
+
+}
+
 
 1;

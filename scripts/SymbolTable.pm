@@ -3,6 +3,12 @@ package SymbolTable;
 use strict;
 use Fxtran;
 
+my @object = qw (YDMF_PHYS_BASE_STATE YDMF_PHYS_NEXT_STATE YDCPG_MISC YDCPG_PHY9
+                 YDCPG_PHY0 YDMF_PHYS YDCPG_DYN9 YDCPG_DYN0 YDMF_PHYS_SURF YDVARS);
+my %object = map { ($_, 1) } @object;
+my @skip = qw (PGFL PGFLT1 PGMVT1 PGPSDT2D);
+my %skip = map { ($_, 1) } @skip;
+
 sub getSymbolTable
 {
   my $doc = shift;
@@ -23,6 +29,9 @@ sub getSymbolTable
       my @ss = $as ? &F ('./shape-spec-LT/shape-spec', $as) : ();
       my $nd = scalar (@ss);
       $t{$N} = {
+                 object => $object{$N},
+                 skip => $skip{$N},
+                 nproma => $as && $ss[0]->textContent eq 'YDCPG_OPTS%KLON',
                  arg => $args{$N} || 0, 
                  ts => $ts->cloneNode (1), 
                  as => $as ? $as->cloneNode (1) : undef, 
@@ -65,13 +74,17 @@ sub removeAttributes
 {
   my ($stmt, @attr) = @_;
 
+  my @v;
+
   for my $attr (@attr)
     {
       next unless (my ($x) = &F ('.//attribute-N[string(.)="?"]', $attr, $stmt));
+      push @v, $x->parentNode;
       $x->parentNode->previousSibling->unbindNode ();
       $x->parentNode->unbindNode ();
     }
 
+  return @v;
 }
 
 sub getFieldType
@@ -128,5 +141,20 @@ sub renameSubroutine
     }
   
 }
+
+sub addDecl
+{
+  my ($doc, $cr, @decl) = @_;
+  my ($zhook_decl) = &F ('.//T-decl-stmt[string(.//EN-N)="ZHOOK_HANDLE"]', $doc);
+
+  for my $decl (@decl)
+    {
+      my $stmt = ref ($decl) ? $decl : &Fxtran::fxtran (statement => $decl);
+      $zhook_decl->parentNode->insertBefore ($stmt, $zhook_decl);
+      $zhook_decl->parentNode->insertBefore (&t ("\n"), $zhook_decl);
+      $zhook_decl->parentNode->insertBefore (&t ("\n"), $zhook_decl) if ($cr);
+     }
+}
+
 
 1;

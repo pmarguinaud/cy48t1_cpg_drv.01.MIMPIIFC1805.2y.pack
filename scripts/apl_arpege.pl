@@ -9,15 +9,10 @@ use List::MoreUtils qw (uniq all);
 use lib $Bin;
 use Fxtran;
 use Decl;
+use Object;
+use Loop;
 use SymbolTable;
 use Associate;
-
-my @obj = qw (YDMF_PHYS_BASE_STATE YDMF_PHYS_NEXT_STATE YDCPG_MISC YDCPG_PHY9
-              YDCPG_PHY0 YDMF_PHYS YDCPG_DYN9 YDCPG_DYN0 YDMF_PHYS_SURF YDVARS);
-my @skip = qw (PGFL PGFLT1 PGMVT1 PGPSDT2D);
-my %skip = map { ($_, 1) } @skip;
-
-
 
 sub parseDirectives
 {
@@ -68,7 +63,7 @@ sub parseDirectives
     }
 }
 
-sub fielFifyDecl
+sub fieldifyDecl
 {
   my ($doc, $t) = @_;
 
@@ -79,8 +74,8 @@ sub fielFifyDecl
 
   for my $N (keys (%$t))
     {
-      next if ($skip{$N});
       my $s = $t->{$N};
+      next if ($s->{skip});
   
       next unless (my $nd = $s->{nd});
   
@@ -114,16 +109,16 @@ sub fielFifyDecl
   
       if ($s->{arg})
         {
-          my ($intent) = &SymbolTable::removeAttributes ('INTENT');
-          &SymbolTable::removeAttributes ($stmt, 'INTENT');
+          my ($intent) = &SymbolTable::removeAttributes ($stmt, 'INTENT');
           $s->{arg}->setData ("YD_$N");
-          ($decl_fld) = &Fxtran::fxtran (statement => "TYPE ($type_fld), INTENT(" . $intent->textContent . ") :: YD_$N");
-          $s->{field} = "YD_$N";
+          die $N unless ($intent);
+          ($decl_fld) = &Fxtran::fxtran (statement => "TYPE ($type_fld), " . $intent->textContent . " :: YD_$N");
+          $s->{field} = &n ("<named-E><N><n>YD_$N</n></N></named-E>");
         }
       else
         {
           ($decl_fld) = &Fxtran::fxtran (statement => "TYPE ($type_fld), POINTER :: YL_$N");
-          $s->{field} = "YL_$N";
+          $s->{field} = &n ("<named-E><N><n>YL_$N</n></N></named-E>");
         }
   
       $stmt->parentNode->insertBefore ($decl_fld, $stmt);
@@ -134,6 +129,196 @@ sub fielFifyDecl
 
 }
 
+sub makeParallel
+{
+# Add a loop on blocks
+
+  my ($par, $t) = @_;
+
+  my ($stmt) = &F ('.//ANY-stmt', $par);
+
+  my $indent = &Fxtran::getIndent ($stmt);
+
+  my $str = ' ' x $indent;
+
+  my ($loop) = &Fxtran::fxtran (fragment => << "EOF");
+DO JBLK = 1, YDCPG_OPTS%KGPBLKS
+${str}  YLCPG_BNDS = YDCPG_BNDS
+${str}  CALL YLCPG_BNDS%UPDATE (JBLK)
+${str}ENDDO
+EOF
+
+
+  my ($enddo) = &F ('.//end-do-stmt', $loop);
+  my $p = $enddo->parentNode;
+
+  for my $node ($par->childNodes ())
+    {
+      $p->insertBefore (&t (' ' x (2)), $enddo);
+      &Fxtran::reIndent ($node, 2);
+      $p->insertBefore ($node, $enddo);
+    }
+  $p->insertBefore (&t (' ' x $indent), $enddo);
+  
+  $par->appendChild ($loop);
+
+  my @expr = &F ('.//named-E/N/n[string(.)="YDCPG_BNDS"]/text()', $par);
+
+  shift (@expr);
+
+  for my $expr (@expr)
+    {
+      $expr->setData ('YLCPG_BNDS');
+    }
+
+  for my $expr (&F ('.//named-E', $par))
+    {
+      my ($N) = &F ('./N', $expr, 1);
+      my $s = $t->{$N};
+      next if ($s->{skip});
+
+      if ($s->{object})
+        {
+          my ($name) = &F ('./N/n/text()', $expr); 
+          my @ctl = &F ('./R-LT/component-R/ct', $expr, 1);
+          my $e = $expr->cloneNode (1);
+          my @r = &F ('./R-LT/component-R', $expr);
+          $_->unbindNode for (@r);
+          my $ptr = join ('_', 'Z', $N, @ctl);
+          $name->setData ($ptr);
+
+          # Create new entry in symbol table 
+          # we record the pointer wich will be used to access the object component
+          unless ($t->{$ptr})
+            {
+              my $key = join ('%', &Object::getObjectType ($s, $N), @ctl);
+              my $decl = &Object::getObjectDecl ($key);
+              my ($as) = &F ('.//array-spec', $decl);
+              my ($ts) = &F ('./_T-spec_/*', $decl);
+              my @ss = &F ('./shape-spec-LT/shape-spec', $as);
+              my $nd = scalar (@ss);
+              $t->{$ptr} = {
+                             object => 0,
+                             skip => 0,
+                             nproma => 1,
+                             arg => 0,
+                             ts => $ts,
+                             as => $as,
+                             nd => $nd,
+                             field => &Object::getFieldFromObjectComponents ($N, @ctl),
+                             undefined => 1,
+                           };
+            }
+          $N = $ptr;
+          $s = $t->{$ptr};
+        }
+      elsif ($s->{nproma})
+        {
+        }
+      else
+        {
+          next;
+        }
+
+
+
+      &addExtraIndex ($expr, &n ("<named-E><N><n>JBLK</n></N></named-E>"), $s);
+
+    }
+}
+
+sub addExtraIndex
+{
+  my ($expr, $ind, $s) = @_;
+
+  # Add reference list if needed
+  
+  my ($rlt) = &F ('./R-LT', $expr);
+  unless ($rlt)
+    {
+      $expr->appendChild ($rlt = &n ('<R-LT/>'));
+    }
+
+  # Add array reference if needed
+
+  my $r = $rlt->lastChild;
+  unless ($r)
+    {
+      $rlt->appendChild ($r = &n ('<array-R>(<section-subscript-LT>' . join (',', ('<section-subscript>:</section-subscript>') x $s->{nd}) 
+                                . '</section-subscript-LT>)</array-R>'));
+    }
+
+  # Add extra block dimension
+
+  if ($r->nodeName eq 'array-R')
+    {
+      my ($sslt) = &F ('./section-subscript-LT', $r);
+      $sslt->appendChild (&t (','));
+      $sslt->appendChild (&n ('<section-subscript><lower-bound><named-E><N><n>JBLK</n></N></named-E></lower-bound></section-subscript>'));
+    }
+  elsif ($r->nodeName eq 'parens-R')
+    {
+      my ($elt) = &F ('./element-LT', $r);
+      $elt->appendChild (&t (','));
+      $elt->appendChild (&n ('<named-E><N><n>JBLK</n></N></named-E>'));
+    }
+  else
+    {
+      die $r;
+    }
+
+
+}
+
+sub callParallelRoutine
+{
+# Process CALL statement outside PARALLEL sections
+# Replace NPROMA array arguments by field descriptor arguments; no array section allowed
+
+  my ($call, $t) = @_;
+
+  my $text = $call->textContent;
+
+  my @arg = &F ('./arg-spec/arg/named-E/N/n/text()', $call);
+
+  my $found = 0;
+  for my $arg (@arg)
+    {
+      my $s = $t->{$arg};
+      $found++ if ($s->{object});
+
+      # Is the actual argument a dummy argument of the current routine ?
+      my $isArg = $s->{arg};
+
+      if ($s->{nproma})
+        {
+          my ($expr) = &Fxtran::expr ($arg);
+          die ("No array reference allowed in CALL statement:\n$text\n") if (&F ('./R-LT', $expr));
+          $expr->replaceNode ($s->{field}->cloneNode (1));
+          $found++;
+        }
+    }
+
+  return $found;
+}
+
+sub removeUnusedIncludes
+{
+  my $doc = shift;
+  for my $include (&F ('.//include', $doc))
+    {
+      my ($filename) = &F ('./filename', $include, 2);
+      (my $name = $filename) =~ s/\.intfb.h$//o;
+      $name = uc ($name);
+      next if (&F ('.//call-stmt[string(procedure-designator)="?"]', $name, $doc));
+      my $next = $include->nextSibling;
+      $next->unbindNode () if ($next->textContent eq "\n");
+      $include->unbindNode ();
+    }
+}
+
+
+my $suffix = '_parallel';
 
 my $F90 = shift;
 
@@ -143,6 +328,7 @@ my $doc = &Fxtran::fxtran (location => $F90, fopts => [qw (-line-length 300)]);
 
 &Associate::resolveAssociates ($doc);
 &Decl::forceSingleDecl ($doc);
+&Loop::arraySyntaxLoop ($doc);
 
 &parseDirectives ($doc);
 
@@ -150,22 +336,81 @@ my $doc = &Fxtran::fxtran (location => $F90, fopts => [qw (-line-length 300)]);
 
 &SymbolTable::useModule ($doc, qw (FIELD_MODULE FIELD_REGISTRY_MOD));
 
+# Add local variables
+
+&SymbolTable::addDecl ($doc, 1, 
+          'INTEGER(KIND=JPIM) :: JBLK',
+          'TYPE(CPG_BNDS_TYPE) :: YLCPG_BNDS');
+
 my $t = &SymbolTable::getSymbolTable ($doc);
 
-&fielFifyDecl ($doc, $t);
+&fieldifyDecl ($doc, $t);
 
 my @par = &F ('.//parallel-section', $doc);
 
+for my $par (@par)
+  {
+    &makeParallel ($par, $t);
+  }
+
+my @call = &F ('.//call-stmt[not(ancestor::parallel-section)]' # Skip calls in parallel sections
+            . '[not(string(procedure-designator)="DR_HOOK")]'  # Skip DR_HOOK calls
+            . '[not(procedure-designator/named-E/R-LT)]'       # Skip objects calling methods
+            . '[not(ancestor::serial-section)]', $doc);        # Skip calls in serial sections
+
+my %seen;
+
+for my $call (@call)
+  {
+    if (&callParallelRoutine ($call, $t))
+      {
+        # Add include for the parallel CALL
+        my ($name) = &F ('./procedure-designator/named-E/N/n/text()', $call);
+        unless ($seen{$name->textContent}++)
+          {
+            my ($include) = &F ('.//include[./filename[string(.)="?"]]', lc ($name) . '.intfb.h', $doc);
+            $include->parentNode->insertAfter (&n ('<include>#include "<filename>' . lc ($name) . '_parallel.intfb.h</filename>"</include>'), $include);
+            $include->parentNode->insertAfter (&t ("\n"), $include);
+          }
+        $name->setData ($name->data . uc ($suffix));
+      }
+  }
+
+# Declare pointers required for parallel sections
+
+my @decl;
+
+while (my ($n, $s) = each (%$t))
+  {
+    next unless ($s->{undefined});
+    my $decl = &Fxtran::fxtran (statement => $s->{ts}->textContent . ", POINTER :: " . $n . "(" . join (',', (':') x ($s->{nd} + 1)) . ")");
+    push @decl, $decl;
+  }
+
+&SymbolTable::addDecl ($doc, 0, @decl);
 
 
-for (&F ('.//parallel-section', $doc), &F ('.//call-stmt[not(string(procedure-designator)="DR_HOOK")]', $doc), &F ('.//skip-section', $doc), &F ('.//include', $doc))
+
+
+
+
+shift (@par);
+shift (@call);
+
+for (
+     @par,
+     @call,
+     &F ('.//skip-section', $doc), 
+    )
   {
     $_->unbindNode ();
   }
 
-&SymbolTable::renameSubroutine ($doc, sub { return $_[0] . '_OPENMP' });
+&removeUnusedIncludes ($doc);
 
-$F90 =~ s/.F90$/_openmp.F90/o;
+&SymbolTable::renameSubroutine ($doc, sub { return $_[0] . uc ($suffix) });
+
+$F90 =~ s/.F90$/$suffix.F90/o;
 
 'FileHandle'->new (">$F90")->print ($doc->textContent);
 

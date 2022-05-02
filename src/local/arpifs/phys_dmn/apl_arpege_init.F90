@@ -147,6 +147,8 @@ REAL (KIND=JPRB) :: ZHOOK_HANDLE
 
 IF (LHOOK) CALL DR_HOOK ('APL_ARPEGE_INIT', 0, ZHOOK_HANDLE)
 
+!=PARALLEL
+
 PAIPCMT(:)=0._JPRB
 
 !*        1.0 DECORRELATION DEPTH FOR CLOUD OVERLAPS
@@ -157,8 +159,12 @@ IF ( YDMODEL%YRML_PHY_MF%YRPHY0%RDECRD <= 0._JPRB .OR. YDMODEL%YRML_PHY_MF%YRPHY
   ENDDO
 ENDIF
 
+!=END PARALLEL
+
+
 !*        1.1 INITIALISATION DE L'OZONE
 
+!=PARALLEL
 
 IF (YDMODEL%YRML_PHY_G%YRDPHY%NVCLIS == 1) THEN
   ZEPSO3=1.E-11_JPRB
@@ -191,7 +197,11 @@ ELSE
   & YDMF_PHYS_SURF%GSD_VC%PGROUP                              )
 ENDIF
 
+!=END PARALLEL
+
 !     INCREMENTAL CORRECTION FLUX FOR NEGAVTIVE HUMIDITY VALUES
+
+!=PARALLEL
 
 PPRODTH_CVPP(:,:)=0.0_JPRB
 
@@ -209,6 +219,8 @@ DO JLEV=YDCPG_OPTS%KTDIA,YDCPG_OPTS%KFLEVG
   ENDDO
 ENDDO
 
+!=END PARALLEL
+
 
 !     ------------------------------------------------------------------
 !     2.- MISES A ZERO DE SECURITE EN CAS DE NON-APPEL DES PARAMETRIS.
@@ -220,6 +232,9 @@ PEPSNEB=1.E-10_JPRB
 ! (Even better would be to completely avoid any useless initialization.)
 
 ! arrays dimensioned from 0:KLEV (half level quantities)
+
+!=PARALLEL
+
 PFPCOR  (:,:) = 0.0_JPRB
 PXTROV  (:,:) = 1.0_JPRB
 PXUROV  (:,:) = 1.0_JPRB
@@ -285,10 +300,13 @@ PTENQVA(:,:)  = 0.0_JPRB
 PQIC   (:,:)  = 0.0_JPRB
 PQLC   (:,:)  = 0.0_JPRB
 
+!=END PARALLEL
+
 !  ---------------------------------------------------------------------
 !  Correction of negative advected humidity and precipitation values
 !  ---------------------------------------------------------------------
 
+!=PARALLEL
     
 DO JLEV = 1, YDCPG_OPTS%KFLEVG
   DO JLON = YDCPG_BNDS%KIDIA,YDCPG_BNDS%KFDIA
@@ -321,7 +339,11 @@ DO JLEV = 1, YDCPG_OPTS%KFLEVG
     YDMF_PHYS%OUT%FCQSNG(JLON,JLEV)=YDMF_PHYS%OUT%FCQSNG(JLON,JLEV-1)-ZDQS*PPOID(JLON,JLEV)
   ENDDO
 ENDDO
+
+!=END PARALLEL
     
+!=PARALLEL
+
 DO JCHA = 1, 6
   DO JLEV = YDCPG_OPTS%KTDIA, YDCPG_OPTS%KFLEVG
     DO JLON = 1, YDCPG_OPTS%KLON
@@ -359,10 +381,13 @@ DO JSG = 1, YDMODEL%YRML_PHY_RAD%YRERAD%NSW
   ENDDO
 ENDDO
 
+!=END PARALLEL
+
 !  -------------------------------------------------------
 !  Security values for pseudo-historical arrays at KSTEP=0
 !  -------------------------------------------------------
 
+!=PARALLEL
 
 IF((YDMODEL%YRML_PHY_MF%YRPHY%LNEBN.OR.YDMODEL%YRML_PHY_MF%YRPHY%LRRGUST).AND.YDCPG_OPTS%KSTEP == 0) THEN
   DO JLEV=YDCPG_OPTS%KTDIA-1,YDCPG_OPTS%KFLEVG
@@ -378,6 +403,8 @@ IF(YDMODEL%YRML_PHY_MF%YRPHY%LRRGUST.AND.YDCPG_OPTS%KSTEP == 0) THEN
     ENDDO
   ENDDO
 ENDIF
+
+!=END PARALLEL
 
 IF (LHOOK) CALL DR_HOOK ('APL_ARPEGE_INIT', 1, ZHOOK_HANDLE)
 

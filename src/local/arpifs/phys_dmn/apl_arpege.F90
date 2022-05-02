@@ -14,7 +14,7 @@ USE MF_PHYS_TYPE_MOD   , ONLY : MF_PHYS_TYPE
 USE CPG_TYPE_MOD       , ONLY : CPG_MISC_TYPE, CPG_DYN_TYPE, &
                               & CPG_SL2_TYPE, CPG_GPAR_TYPE, &
                               & CPG_PHY_TYPE
-USE CPG_OPTS_TYPE_MOD   , ONLY : CPG_BNDS_TYPE, CPG_OPTS_TYPE
+USE CPG_OPTS_TYPE_MOD  , ONLY : CPG_BNDS_TYPE, CPG_OPTS_TYPE
 USE MF_PHYS_SURFACE_TYPE_MOD  &
                        , ONLY : MF_PHYS_SURF_TYPE
 USE FIELD_VARIABLES_MOD, ONLY : FIELD_VARIABLES
@@ -30,14 +30,10 @@ USE DDH_MIX            , ONLY : TYP_DDH
 
 USE SPP_MOD            , ONLY : TSPP_CONFIG, TSPP_DATA
 
-
-!     -------------------------------------------------------------------------
-
 IMPLICIT NONE
 
-
-TYPE (MF_PHYS_BASE_STATE_TYPE), INTENT(IN)    :: YDMF_PHYS_BASE_STATE
-TYPE (MF_PHYS_NEXT_STATE_TYPE), INTENT(INOUT) :: YDMF_PHYS_NEXT_STATE
+TYPE(MF_PHYS_BASE_STATE_TYPE),  INTENT(IN)    :: YDMF_PHYS_BASE_STATE
+TYPE(MF_PHYS_NEXT_STATE_TYPE),  INTENT(INOUT) :: YDMF_PHYS_NEXT_STATE
 TYPE(GEOMETRY),                 INTENT(IN)    :: YDGEOMETRY
 TYPE(CPG_BNDS_TYPE),            INTENT(IN)    :: YDCPG_BNDS
 TYPE(CPG_OPTS_TYPE),            INTENT(IN)    :: YDCPG_OPTS
@@ -54,21 +50,61 @@ TYPE(TSPP_DATA),                INTENT(IN)    :: YDSPP
 TYPE(TSPP_CONFIG),              INTENT(IN)    :: YDSPP_CONFIG
 TYPE(TYP_DDH),                  INTENT(INOUT) :: YDDDH
 
+#include "accldia.intfb.h"
+#include "acclph.intfb.h"
+#include "acdnshf.intfb.h"
+#include "acdrag.intfb.h"
+#include "acdrme.intfb.h"
+#include "acevadcape.intfb.h"
+#include "achmt.intfb.h"
+#include "achmtls.intfb.h"
+#include "acpluis.intfb.h"
+#include "acsol.intfb.h"
+#include "actqsat.intfb.h"
+#include "acvisih.intfb.h"
+#include "aplpar_init.intfb.h"
+#include "checkmv.intfb.h"
+#include "cpphinp.intfb.h"
+#include "cpqsol.intfb.h"
+#include "mf_phys_bayrad.intfb.h"
+#include "mf_phys_corwat.intfb.h"
+#include "mf_phys_cvv.intfb.h"
+#include "mf_phys_fpl_part1.intfb.h"
+#include "mf_phys_fpl_part2.intfb.h"
+#include "mf_phys_mocon.intfb.h"
+#include "mf_phys_precips.intfb.h"
+#include "mf_phys_save_phsurf_part1.intfb.h"
+#include "mf_phys_save_phsurf_part2.intfb.h"
+#include "mf_phys_transfer.intfb.h"
+#include "ppwetpoint.intfb.h"
+#include "qngcor.intfb.h"
+#include "aplpar_flexdia.intfb.h"
+#include "apl_arpege_oceanic_fluxes.intfb.h"
+#include "apl_wind_gust.intfb.h"
+#include "apl_arpege_shallow_convection_and_turbulence.intfb.h"
+#include "apl_arpege_albedo_computation.intfb.h"
+#include "apl_arpege_aerosols_for_radiation.intfb.h"
+#include "apl_arpege_cloudiness.intfb.h"
+#include "apl_arpege_radiation.intfb.h"
+#include "apl_arpege_soil_hydro.intfb.h"
+#include "apl_arpege_surface.intfb.h"
+#include "apl_arpege_deep_convection.intfb.h"
+#include "apl_arpege_precipitation.intfb.h"
+#include "apl_arpege_hydro_budget.intfb.h"
+#include "apl_arpege_surface_update.intfb.h"
+#include "apl_arpege_atmosphere_update.intfb.h"
+#include "apl_arpege_init.intfb.h"
+#include "apl_arpege_init_surfex.intfb.h"
+#include "apl_arpege_dprecips.intfb.h"
 
-INTEGER(KIND=JPIM) :: INSTEP_DEB,INSTEP_FIN
 
 REAL(KIND=JPRB) :: ZDIFEXT(YDCPG_OPTS%KLON,0:YDCPG_OPTS%KFLEVG,YDMODEL%YRML_GCONF%YGFL%NGFL_EXT)     ! Extra-GFL fluxes.
-
 REAL(KIND=JPRB) :: ZGP2DSPP(YDCPG_OPTS%KLON,YDSPP%N2D)
-
 INTEGER(KIND=JPIM) :: INLAB_CVPP(YDCPG_OPTS%KLON,YDCPG_OPTS%KFLEVG)
-
 REAL(KIND=JPRB) :: ZXTROV(YDCPG_OPTS%KLON,0:YDCPG_OPTS%KFLEVG),ZXUROV(YDCPG_OPTS%KLON,0:YDCPG_OPTS%KFLEVG)
 REAL(KIND=JPRB) :: ZMRIPP(YDCPG_OPTS%KLON,0:YDCPG_OPTS%KFLEVG)
-
 REAL(KIND=JPRB) :: ZKTROV(YDCPG_OPTS%KLON,0:YDCPG_OPTS%KFLEVG),ZKUROV(YDCPG_OPTS%KLON,0:YDCPG_OPTS%KFLEVG),ZNBVNO(YDCPG_OPTS%KLON,0:YDCPG_OPTS%KFLEVG)
 REAL(KIND=JPRB) :: ZKQROV(YDCPG_OPTS%KLON,0:YDCPG_OPTS%KFLEVG),ZKQLROV(YDCPG_OPTS%KLON,0:YDCPG_OPTS%KFLEVG)
-
 REAL(KIND=JPRB) :: ZNEBS(YDCPG_OPTS%KLON,YDCPG_OPTS%KFLEVG)
 REAL(KIND=JPRB) :: ZQLIS(YDCPG_OPTS%KLON,YDCPG_OPTS%KFLEVG)
 REAL(KIND=JPRB) :: ZNEBS0(YDCPG_OPTS%KLON,YDCPG_OPTS%KFLEVG)
@@ -78,7 +114,6 @@ REAL(KIND=JPRB) :: ZNEBDIFF(YDCPG_OPTS%KLON,YDCPG_OPTS%KFLEVG)        ! Nebulosi
 REAL(KIND=JPRB) :: ZNEBCH(YDCPG_OPTS%KLON,YDCPG_OPTS%KFLEVG)          ! Nebulosite convective condensation
 REAL(KIND=JPRB) :: ZUNEBH(YDCPG_OPTS%KLON,YDCPG_OPTS%KFLEVG)          ! Nebulosite convective histo
 REAL(KIND=JPRB) :: ZFPCOR(YDCPG_OPTS%KLON,0:YDCPG_OPTS%KFLEVG)
-             ! Temporar storage for updated PTW)
 REAL(KIND=JPRB) :: ZPOID(YDCPG_OPTS%KLON,YDCPG_OPTS%KFLEVG)           ! DP/(YDMODEL%YRCST%RG*DT) FOR A GIVEN LEVEL AND A GIVEN TIME STEP.
 REAL(KIND=JPRB) :: ZQV(YDCPG_OPTS%KLON,YDCPG_OPTS%KFLEVG)             ! corrected (for negative values) vapour
 REAL(KIND=JPRB) :: ZQI(YDCPG_OPTS%KLON,YDCPG_OPTS%KFLEVG)             ! corrected (for negative values) cloud ice
@@ -105,7 +140,6 @@ REAL(KIND=JPRB) :: ZCONDCVPPL(YDCPG_OPTS%KLON,0:YDCPG_OPTS%KFLEVG)    ! Flux de 
 REAL(KIND=JPRB) :: ZCONDCVPPI(YDCPG_OPTS%KLON,0:YDCPG_OPTS%KFLEVG)    ! Flux de condensation glace du a CVVPP (KFB)
 REAL(KIND=JPRB) :: ZPRODTH_CVPP(YDCPG_OPTS%KLON,0:YDCPG_OPTS%KFLEVG)  ! Flux de production thermique de TKE du a CVPP(KFB)
 REAL(KIND=JPRB) :: ZDE2MR(YDCPG_OPTS%KLON,YDCPG_OPTS%KFLEVG)          ! temporary array for conversion of density to mixing ratio
-
 REAL(KIND=JPRB) :: ZXDROV(YDCPG_OPTS%KLON)
 REAL(KIND=JPRB) :: ZXHROV(YDCPG_OPTS%KLON)
 REAL(KIND=JPRB) :: ZUGST(YDCPG_OPTS%KLON)
@@ -139,31 +173,20 @@ REAL(KIND=JPRB) :: ZAER(YDCPG_OPTS%KLON,YDCPG_OPTS%KFLEVG,6)
 REAL(KIND=JPRB) :: ZAERINDS(YDCPG_OPTS%KLON,YDCPG_OPTS%KFLEVG)
 REAL(KIND=JPRB) :: ZDPHIV(YDCPG_OPTS%KLON),ZDPHIT(YDCPG_OPTS%KLON)
 REAL(KIND=JPRB) :: ZTRSOD(YDCPG_OPTS%KLON)
-
 REAL(KIND=JPRB) :: ZCEMTR(YDCPG_OPTS%KLON,0:1) , ZCTRSO(YDCPG_OPTS%KLON,0:1)
 REAL(KIND=JPRB) :: ZALBD(YDCPG_OPTS%KLON,YDCPG_OPTS%KSW), ZALBP(YDCPG_OPTS%KLON,YDCPG_OPTS%KSW)
 REAL(KIND=JPRB) :: ZSFSWDIR (YDCPG_OPTS%KLON,YDCPG_OPTS%KSW), ZSFSWDIF (YDCPG_OPTS%KLON,YDCPG_OPTS%KSW)
 REAL(KIND=JPRB) :: ZTRSODIR (YDCPG_OPTS%KLON,YDCPG_OPTS%KSW), ZTRSODIF (YDCPG_OPTS%KLON,YDCPG_OPTS%KSW)
-
 REAL(KIND=JPRB) :: ZSUDU(YDCPG_OPTS%KLON) 
 REAL(KIND=JPRB) :: ZTHETAVS(YDCPG_OPTS%KLON)
-
 REAL(KIND=JPRB) :: ZGEOSLC(YDCPG_OPTS%KLON,YDCPG_OPTS%KFLEVG)
 REAL(KIND=JPRB) :: ZTENT(YDCPG_OPTS%KLON,YDCPG_OPTS%KFLEVG)
 REAL(KIND=JPRB) :: ZTHETAV(YDCPG_OPTS%KLON,YDCPG_OPTS%KFLEVG)
-
-
 REAL(KIND=JPRB) :: ZCOEFN(YDCPG_OPTS%KLON,YDCPG_OPTS%KFLEVG)          ! ZCOEFN : COEFFICIENT STATISTIQUE POUR LES FLUX D'EAUX CONDENSEES.
 
 ! LOCAL ARRAYS FOR ACVPPKF
 REAL(KIND=JPRB) :: ZQLI_CVPP(YDCPG_OPTS%KLON,YDCPG_OPTS%KFLEVG)
 REAL(KIND=JPRB) :: ZNEB_CVPP(YDCPG_OPTS%KLON,YDCPG_OPTS%KFLEVG)
-
-INTEGER(KIND=JPIM) :: JLEV, JLON, JSPP
-
-LOGICAL :: LLCLS, LLHMT, LLREDPR
-
-REAL(KIND=JPRB) :: ZAEN, ZEPS0, ZEPSNEB
 
 ! Implicit coupling coefficients
 REAL(KIND=JPRB) :: ZCFBTH(YDCPG_OPTS%KLON,YDCPG_OPTS%KFLEVG)
@@ -172,35 +195,22 @@ REAL(KIND=JPRB) :: ZCFATH(YDCPG_OPTS%KLON,YDCPG_OPTS%KFLEVG)
 REAL(KIND=JPRB) :: ZCFAU(YDCPG_OPTS%KLON,YDCPG_OPTS%KFLEVG)
 REAL(KIND=JPRB) :: ZCFBU(YDCPG_OPTS%KLON,YDCPG_OPTS%KFLEVG)
 REAL(KIND=JPRB) :: ZCFBV(YDCPG_OPTS%KLON,YDCPG_OPTS%KFLEVG)
-
 REAL(KIND=JPRB) :: ZSRAIN(YDCPG_OPTS%KLON)
 REAL(KIND=JPRB) :: ZSSNOW(YDCPG_OPTS%KLON)
 REAL(KIND=JPRB) :: ZSGROUPEL(YDCPG_OPTS%KLON)
 REAL(KIND=JPRB) :: ZTSN(YDCPG_OPTS%KLON)
 
-! Second membre pour les scalaires passifs
-
-
-! Traitement des scalaires passifs
-
-
-
-
 !         ACFLUSO (ECUME) local variable
-!-------------------------------------------
 REAL(KIND=JPRB) :: ZCE(YDCPG_OPTS%KLON)
 REAL(KIND=JPRB) :: ZCEROV(YDCPG_OPTS%KLON)
 REAL(KIND=JPRB) :: ZCRTI(YDCPG_OPTS%KLON)
 
 !        New ACDIFV1 local variable
-!--------------------------------------------
 REAL(KIND=JPRB) :: ZXURO(YDCPG_OPTS%KLON,0:YDCPG_OPTS%KFLEVG)
 REAL(KIND=JPRB) :: ZXQRO(YDCPG_OPTS%KLON,0:YDCPG_OPTS%KFLEVG)
 REAL(KIND=JPRB) :: ZXTRO(YDCPG_OPTS%KLON,0:YDCPG_OPTS%KFLEVG)
 
 !        New ACNORGWD local variables
-!--------------------------------------------
-
 REAL(KIND=JPRB) :: ZFLX_LOTT_GWU(YDCPG_OPTS%KLON,0:YDCPG_OPTS%KFLEVG)
 REAL(KIND=JPRB) :: ZFLX_LOTT_GWV(YDCPG_OPTS%KLON,0:YDCPG_OPTS%KFLEVG)
 
@@ -212,8 +222,6 @@ REAL(KIND=JPRB) :: ZQGM(YDCPG_OPTS%KLON,YDCPG_OPTS%KFLEVG)
 
 
 !        New ARP_GROUND_PARAM local variable
-!------------------------------------------------
-
 REAL(KIND=JPRB) :: ZALPHA1(YDCPG_OPTS%KLON,0:YDCPG_OPTS%KFLEVG)
 REAL(KIND=JPRB) :: ZCOEFA (YDCPG_OPTS%KLON,0:YDCPG_OPTS%KFLEVG)
 REAL(KIND=JPRB) :: ZLVT   (YDCPG_OPTS%KLON,0:YDCPG_OPTS%KFLEVG)
@@ -226,28 +234,18 @@ REAL(KIND=JPRB) :: ZSC_FCLL(YDCPG_OPTS%KLON)
 REAL(KIND=JPRB) :: ZSC_FCLN(YDCPG_OPTS%KLON)
 
 !           TRAJECTORY (For diffusion !) local VARIABLES
-!           ----------------------------
 REAL(KIND=JPRB) :: ZTRAJGWD(YDCPG_OPTS%KLON,0:YDCPG_OPTS%KFLEVG) !Traj buffer saved for TL/AD (YDMODEL%YRML_PHY_MF%YRSIMPHL%LGWDSPNL)
 
-REAL(KIND=JPRB) :: ZRVMD
-LOGICAL         :: LLAERO
 REAL(KIND=JPRB) :: ZAIPCMT(YDCPG_OPTS%KLON) ! Activity Index of PCMT: 1. if PCMT is active, 0. else case.
-
-
 REAL(KIND=JPRB) :: ZQIC(YDCPG_OPTS%KLON,YDCPG_OPTS%KFLEVG),ZQLC(YDCPG_OPTS%KLON,YDCPG_OPTS%KFLEVG)
 REAL(KIND=JPRB) :: ZQLI_CVP(YDCPG_OPTS%KLON,YDCPG_OPTS%KFLEVG)
 REAL(KIND=JPRB) :: ZQC_DET_PCMT(YDCPG_OPTS%KLON,YDCPG_OPTS%KFLEVG)
-
-
 REAL(KIND=JPRB) :: ZDCAPE(YDCPG_OPTS%KLON) ! Descending CAPE for gusts.
 
 ! ACRANEB/ACRANEB2 local variables
-! --------------------------------
 REAL(KIND=JPRB) :: ZDECRD   (YDCPG_OPTS%KLON) ! decorrelation depth for cloud overlaps
 
 ! Precipitation type diagnostics
-!--------------------------------
-
 INTEGER (KIND=JPIM)  :: IMOC_CLPH (YDCPG_OPTS%KLON)
 REAL(KIND=JPRB)     :: ZBAY_QRCONV (YDCPG_OPTS%KLON, 1:YDCPG_OPTS%KFLEVG)
 REAL(KIND=JPRB)     :: ZBAY_QSCONV (YDCPG_OPTS%KLON, 1:YDCPG_OPTS%KFLEVG)
@@ -299,54 +297,13 @@ REAL(KIND=JPRB)     :: ZSAV_UDGRO (YDCPG_OPTS%KLON)
 REAL(KIND=JPRB)     :: ZSAV_UDOM (YDCPG_OPTS%KLON, 1:YDCPG_OPTS%KFLEVG)
 REAL(KIND=JPRB)     :: ZSAV_UNEBH (YDCPG_OPTS%KLON, 1:YDCPG_OPTS%KFLEVG)
 
-REAL(KIND=JPRB) :: ZHOOK_HANDLE
+INTEGER(KIND=JPIM) :: INSTEP_DEB, INSTEP_FIN
+INTEGER(KIND=JPIM) :: JLEV, JLON, JSPP
+LOGICAL :: LLCLS, LLHMT, LLREDPR
+REAL(KIND=JPRB) :: ZEPS0, ZEPSNEB
+REAL(KIND=JPRB) :: ZRVMD
 
-#include "accldia.intfb.h"
-#include "acclph.intfb.h"
-#include "acdnshf.intfb.h"
-#include "acdrag.intfb.h"
-#include "acdrme.intfb.h"
-#include "acevadcape.intfb.h"
-#include "achmt.intfb.h"
-#include "achmtls.intfb.h"
-#include "acpluis.intfb.h"
-#include "acsol.intfb.h"
-#include "actqsat.intfb.h"
-#include "acvisih.intfb.h"
-#include "aplpar_init.intfb.h"
-#include "checkmv.intfb.h"
-#include "cpphinp.intfb.h"
-#include "cpqsol.intfb.h"
-#include "mf_phys_bayrad.intfb.h"
-#include "mf_phys_corwat.intfb.h"
-#include "mf_phys_cvv.intfb.h"
-#include "mf_phys_fpl_part1.intfb.h"
-#include "mf_phys_fpl_part2.intfb.h"
-#include "mf_phys_mocon.intfb.h"
-#include "mf_phys_precips.intfb.h"
-#include "mf_phys_save_phsurf_part1.intfb.h"
-#include "mf_phys_save_phsurf_part2.intfb.h"
-#include "mf_phys_transfer.intfb.h"
-#include "ppwetpoint.intfb.h"
-#include "qngcor.intfb.h"
-#include "aplpar_flexdia.intfb.h"
-#include "apl_arpege_oceanic_fluxes.intfb.h"
-#include "apl_wind_gust.intfb.h"
-#include "apl_arpege_shallow_convection_and_turbulence.intfb.h"
-#include "apl_arpege_albedo_computation.intfb.h"
-#include "apl_arpege_aerosols_for_radiation.intfb.h"
-#include "apl_arpege_cloudiness.intfb.h"
-#include "apl_arpege_radiation.intfb.h"
-#include "apl_arpege_soil_hydro.intfb.h"
-#include "apl_arpege_surface.intfb.h"
-#include "apl_arpege_deep_convection.intfb.h"
-#include "apl_arpege_precipitation.intfb.h"
-#include "apl_arpege_hydro_budget.intfb.h"
-#include "apl_arpege_surface_update.intfb.h"
-#include "apl_arpege_atmosphere_update.intfb.h"
-#include "apl_arpege_init.intfb.h"
-#include "apl_arpege_init_surfex.intfb.h"
-#include "apl_arpege_dprecips.intfb.h"
+REAL(KIND=JPRB) :: ZHOOK_HANDLE
 
 IF (LHOOK) CALL DR_HOOK('APL_ARPEGE', 0, ZHOOK_HANDLE)
 

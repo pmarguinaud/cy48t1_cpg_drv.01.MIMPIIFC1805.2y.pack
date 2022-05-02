@@ -3,6 +3,7 @@ package Object;
 use strict;
 use Fxtran;
 use Data::Dumper;
+use Carp qw (croak);
 
 {
 
@@ -15,7 +16,7 @@ sub getObjectDecl
 
   unless ($decl{$key}) 
     {
-      $h->{$key} or die $key;
+      $h->{$key} or croak $key;
       ($decl{$key}) = &Fxtran::fxtran (statement => $h->{$key});
     }
 

@@ -197,7 +197,16 @@ EOF
           unless ($t->{$ptr})
             {
               my $key = join ('%', &Object::getObjectType ($s, $N), @ctl);
-              my $decl = &Object::getObjectDecl ($key);
+              my $decl;
+              eval
+                {
+                  $decl = &Object::getObjectDecl ($key);
+                };
+              if (my $c = $@)
+                {
+                  my $stmt = &Fxtran::stmt ($expr); 
+                  die $c . $stmt->textContent;
+                }
               my ($as) = &F ('.//array-spec', $decl);
               my ($ts) = &F ('./_T-spec_/*', $decl);
               my @ss = &F ('./shape-spec-LT/shape-spec', $as);

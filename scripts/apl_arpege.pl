@@ -243,6 +243,7 @@ EOF
 
   my %intent2access = qw (IN RDONLY INOUT RDWR OUT WRONLY);
 
+  $par->insertBefore (&t ("\n" . (' ' x $indent)), $loop);
   for my $ptr (reverse (sort keys (%intent)))
     {
       my $s = $t->{$ptr};
@@ -401,9 +402,11 @@ sub setupLocalFields
             }
         }
       
+      my $create_temporary = &SymbolTable::getCreateTemporary ($s->{ts});
+
       my $f = $s->{field}->textContent;
 
-      $p1->insertAfter (&s ("$f => CREATE_TEMPORARY (" . join (', ', @args) . ")"), $drhook1);
+      $p1->insertAfter (&s ("$f => $create_temporary (" . join (', ', @args) . ")"), $drhook1);
       $p1->insertAfter (&t ("\n" . (' ' x $ind1)), $drhook1);
 
       $p2->insertBefore (&s ("IF (ASSOCIATED ($f)) CALL DELETE_TEMPORARY ($f)"), $drhook2);

@@ -38,5 +38,6 @@ slurm-*.out
 src/local/.fypp
 fypp/*.F90
 *_openmp.F90
+*_parallel.F90
 *.svg
 

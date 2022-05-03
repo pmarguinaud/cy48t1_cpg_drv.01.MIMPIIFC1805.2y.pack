@@ -381,41 +381,28 @@ sub setupLocalFields
       next if ($s->{object_based} || $s->{arg});
       my @ss = &F ('./shape-spec-LT/shape-spec', $s->{as});
 
-      shift (@ss); # Drop NPROMA dimension
-
-      # CREATE_TEMPORARY argument names
-      my @argn = qw (NLEV NDIM NDIM2);
-      # CREATE_TEMPORARY first arguments
-      my @args = ('YDGEOMETRY', 'PERSISTENT=.TRUE.');
-
-      die "Too many dimensions ($s->{nd}) for CREATE_TEMPORARY (variable $n)" if ($s->{nd}-1 >= scalar (@argn));
-
+      my (@lb, @ub);
+    
       for my $i (0 .. $#ss)
         {
           my $ss = $ss[$i];
-          my @b = &F ('./ANY-bound', $ss);
-          my ($b0, $b1) = map { $_->textContent } @b;
-          if ((@b == 1) || ($b0 eq '1'))
-            {
-              push @args, $argn[$i] . '=' . $b0;
-            }
-          elsif ($b0 eq '0')
-            {
-              push @args, $argn[$i] . "=$b1+1";
-              push @args, $argn[$i] . "0=$b0";
-            }
-          else
-            {
-              push @args, $argn[$i] . "=($b1)-($b0)+1";
-              push @args, $argn[$i] . "0=$b0";
-            }
+          my @b = map { $_->textContent } &F ('./ANY-bound', $ss);
+          unshift (@b, '1') if (@b == 1);
+          push @lb, $b[0];
+          push @ub, $b[1];
         }
-      
-      my $create_temporary = &SymbolTable::getCreateTemporary ($s->{ts});
 
+      push @lb, '1';
+      push @ub, 'YDCPG_OPTS%KGPBLKS';
+      
       my $f = $s->{field}->textContent;
 
-      $p1->insertAfter (&s ("$f => $create_temporary (" . join (', ', @args) . ")"), $drhook1);
+      my $ubounds = 'UBOUNDS=[' . join (', ', @ub) . '], ';
+      my $lbounds = grep ({ $_ ne '1' } @lb) 
+                  ? 'LBOUNDS=[' . join (', ', @lb) . '], '
+                  : '';
+
+      $p1->insertAfter (&s ("CALL CREATE_TEMPORARY_LU ($f, ${ubounds}${lbounds}PERSISTENT=.TRUE.)"), $drhook1);
       $p1->insertAfter (&t ("\n" . (' ' x $ind1)), $drhook1);
 
       $p2->insertBefore (&s ("IF (ASSOCIATED ($f)) CALL DELETE_TEMPORARY ($f)"), $drhook2);
@@ -515,7 +502,7 @@ for my $n (sort keys (%$t))
 
 &setupLocalFields ($doc, $t);
 
-shift (@call) for (1 .. 4);
+shift (@call) for (1 .. 5);
 
 for (
      @call,

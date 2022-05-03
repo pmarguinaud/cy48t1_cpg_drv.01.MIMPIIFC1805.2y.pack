@@ -102,19 +102,6 @@ sub getFieldType
   return "FIELD_$ts{$ts}${nd}D";
 }
 
-sub getCreateTemporary
-{
-  my ($ts) = @_;
-
-  ($ts = $ts->textContent) =~ s/\s+//go;
-
-  my %ts = ('INTEGER(KIND=JPIM)' => '_INT', 'REAL(KIND=JPRB)' => '');
-
-  return unless (defined ($ts{$ts}));
-
-  return "CREATE_TEMPORARY$ts{$ts}";
-}
-
 sub useModule
 {
   my ($doc, @mod) = @_;

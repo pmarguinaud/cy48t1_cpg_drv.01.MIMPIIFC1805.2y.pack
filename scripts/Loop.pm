@@ -91,7 +91,7 @@ sub arraySyntaxLoop
               my ($ub1) = &F ('./upper-bound', $ss1[$i], 1);
 
               $ss2[$i]->setNodeName ('element');
-              if ($ss2[$i]->textContent eq ':')
+              if ($ss2[$i]->textContent eq ':') 
                 {
                   my $ind = $dim2ind{$ub1};
                   die $ss1[$i]->textContent unless ($ind);
@@ -107,7 +107,7 @@ sub arraySyntaxLoop
                 }
               elsif ($ss2[$i]->textContent =~ m/:/o)
                 {
-                  die;
+                  die &Dumper ([$stmt->textContent, $sslt->textContent, $i, $ss2[$i]->textContent]);
                 }
             }
           

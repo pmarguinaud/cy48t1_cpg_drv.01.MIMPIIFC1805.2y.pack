@@ -11,7 +11,8 @@ for f in \
   src/local/arpifs/phys_dmn/apl_arpege_shallow_convection_and_turbulence.F90 \
   src/local/arpifs/phys_dmn/apl_arpege_albedo_computation.F90 \
   src/local/arpifs/phys_dmn/apl_arpege_aerosols_for_radiation.F90 \
-  src/local/arpifs/phys_dmn/apl_arpege_cloudiness.F90 
+  src/local/arpifs/phys_dmn/apl_arpege_cloudiness.F90 \
+  src/local/arpifs/phys_dmn/apl_arpege_radiation.F90
 do
 ./scripts/apl_arpege.pl $f
 done

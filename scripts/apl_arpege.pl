@@ -502,7 +502,7 @@ for my $n (sort keys (%$t))
 
 &setupLocalFields ($doc, $t);
 
-shift (@call) for (1 .. 5);
+shift (@call) for (1 .. 6);
 
 for (
      @call,

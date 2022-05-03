@@ -119,7 +119,7 @@ sub fieldifyDecl
         {
           &SymbolTable::removeAttributes ($stmt, 'INTENT');
           $s->{arg}->setData ("YD_$N");
-          ($decl_fld) = &Fxtran::fxtran (statement => "TYPE ($type_fld) :: YD_$N");
+          ($decl_fld) = &Fxtran::fxtran (statement => "TYPE ($type_fld), POINTER :: YD_$N");
           $s->{field} = &n ("<named-E><N><n>YD_$N</n></N></named-E>");
         }
       else
@@ -502,7 +502,14 @@ for my $n (sort keys (%$t))
 
 &setupLocalFields ($doc, $t);
 
-shift (@call) for (1 .. 6);
+shift (@call) for (1 .. 8);
+
+for my $call (@call)
+  {
+    my ($proc) = &F ('./procedure-designator', $call);
+    print $proc->textContent, "\n";
+  }
+
 
 for (
      @call,

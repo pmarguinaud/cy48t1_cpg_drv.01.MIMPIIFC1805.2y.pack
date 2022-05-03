@@ -199,33 +199,37 @@ FOUND:
 sub getArgumentIntent
 {
   my ($call, $expr) = @_;
-  my @args = &F ('./arg-spec/arg/ANY-E', $call);
-
-  my $rank;
-  for my $i (0 .. $#args)
-    {
-      if ($expr->isEqual ($args[$i]))
-        {
-          $rank = $i;
-          last;
-        }
-    }
-
-  return unless ($rank);
 
   my ($proc) = &F ('./procedure-designator', $call, 1);
 
   my $intf = &getSubroutineInterface ($proc);
 
-  my ($unit) = &F ('.//program-unit[./subroutine-stmt[string(subroutine-N)="?"]]', $proc, $intf);
+  my ($stmt) = &F ('.//program-unit/subroutine-stmt[string(subroutine-N)="?"]', $proc, $intf);
+  my $unit = $stmt->parentNode;
 
-  my ($stmt) = &F ('./subroutine-stmt', $unit);
+  # Dummy arguments
+  my @argd = &F ('./dummy-arg-LT/arg-N', $stmt, 1); 
 
-  @args = &F ('./dummy-arg-LT/arg-N', $stmt, 1);
+  # Actual arguments
+  my @arga = &F ('./arg-spec/arg', $call); 
 
-  die unless ($rank < @args);
+  my $argn;
 
-  my ($intent) = &F ('.//T-decl-stmt[.//EN-decl[string(EN-N)="?"]]//intent-spec', $args[$rank], $unit, 1);
+  for my $i (0 .. $#arga)
+    {
+      my $arga  = $arga[$i];
+      my ($k) = &F ('./arg-N/k/text()', $arga, 1);
+      my ($e) = &F ('./ANY-E', $arga);
+      if ($expr->isEqual ($e))
+        {
+          $argn = $k || $argd[$i];
+          last;
+        }
+    }
+
+  return unless ($argn);
+
+  my ($intent) = &F ('.//T-decl-stmt[.//EN-decl[string(EN-N)="?"]]//intent-spec', $argn, $unit, 1);
 
   return $intent;
 }

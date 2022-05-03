@@ -184,17 +184,25 @@ sub getSubroutineInterface
       chomp for (@view);
     }
 
+  my @fmt = ('.include/mse/headers/%s.h', '.intfb/arpifs/%s.intfb.h');
+
   my $code;
   for my $view (@view)
     {
-      if (-f (my $intfb = "src/$view/.intfb/arpifs/$proc.intfb.h"))
+      for my $fmt (@fmt)
         {
-          $code = do { local $/ = undef; my $fh = 'FileHandle'->new ("<$intfb"); $fh or die ("Cannot open $proc"); <$fh> };
-          last;
+          my $intf = "src/$view/" . sprintf ($fmt, $proc);
+          if (-f $intf)
+            {
+              $code = do { local $/ = undef; my $fh = 'FileHandle'->new ("<$intf"); $fh or die ("Cannot open $proc"); <$fh> };
+              goto FOUND;
+            }
         }
     }
 
-  die unless ($code);
+  die $proc;
+
+FOUND:
 
   my ($intf) = &Fxtran::fxtran (fragment => $code);
 

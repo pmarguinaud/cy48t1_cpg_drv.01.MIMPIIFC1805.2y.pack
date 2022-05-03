@@ -77,11 +77,7 @@ sub fieldifyDecl
       my $s = $t->{$N};
       next if ($s->{skip});
   
-      next unless (my $nd = $s->{nd});
-  
-      my @ss = &F ('./shape-spec-LT/shape-spec',, $s->{as});
-  
-      next unless ($ss[0]->textContent eq 'YDCPG_OPTS%KLON');
+      next unless ($s->{nproma});
   
       my $en_decl = delete $s->{en_decl};
   
@@ -94,25 +90,24 @@ sub fieldifyDecl
         {
           $_->unbindNode ();
         }
-      for my $i (0 .. $#ss+1)
+      for my $i (0 .. $s->{nd})
         {
           $sslt->appendChild (&n ('<shape-spec>:</shape-spec>'));
-          $sslt->appendChild (&t (',')) if ($i <= $#ss);
+          $sslt->appendChild (&t (',')) if ($i < $s->{nd});
         }
   
       &SymbolTable::addAttributes ($stmt, qw (CONTIGUOUS POINTER));
   
-      my $type_fld = &SymbolTable::getFieldType ($nd, $s->{ts});
+      my $type_fld = &SymbolTable::getFieldType ($s->{nd}, $s->{ts});
       $type_fld or die "Unknown type : " . $s->{ts}->textContent;
   
       my $decl_fld;
   
       if ($s->{arg})
         {
-          my ($intent) = &SymbolTable::removeAttributes ($stmt, 'INTENT');
+          &SymbolTable::removeAttributes ($stmt, 'INTENT');
           $s->{arg}->setData ("YD_$N");
-          die $N unless ($intent);
-          ($decl_fld) = &Fxtran::fxtran (statement => "TYPE ($type_fld), " . $intent->textContent . " :: YD_$N");
+          ($decl_fld) = &Fxtran::fxtran (statement => "TYPE ($type_fld) :: YD_$N");
           $s->{field} = &n ("<named-E><N><n>YD_$N</n></N></named-E>");
         }
       else
@@ -369,7 +364,7 @@ sub setupLocalFields
   while (my ($n, $s) = each (%$t))
     {
       next unless ($s->{nproma});
-      next if ($s->{object_based});
+      next if ($s->{object_based} || $s->{arg});
       my @ss = &F ('./shape-spec-LT/shape-spec', $s->{as});
 
       shift (@ss); # Drop NPROMA dimension
@@ -500,7 +495,7 @@ while (my ($n, $s) = each (%$t))
 
 &setupLocalFields ($doc, $t);
 
-shift (@call);
+shift (@call) for (1 .. 2);
 
 for (
      @call,

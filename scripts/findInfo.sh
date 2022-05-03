@@ -7,4 +7,4 @@ rm -f h.pl h.xml
   src/local/arpifs/module/cpg_type_mod.F90  src/local/arpifs/module/mf_phys_type_mod.F90  \
   src/local/arpifs/module/mf_phys_base_state_type_mod.F90 src/local/arpifs/module/mf_phys_next_state_type_mod.F90 \
   src/local/arpifs/module/mf_phys_surface_type_mod.F90 src/local/arpifs/module/surface_variables_mod.F90 \
-  src/local/arpifs/module/surface_views_module.F90 
+  src/local/arpifs/module/surface_views_diagnostic_module.F90 src/local/arpifs/module/surface_views_prognostic_module.F90

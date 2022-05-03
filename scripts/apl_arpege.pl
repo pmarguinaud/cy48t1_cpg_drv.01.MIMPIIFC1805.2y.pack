@@ -14,6 +14,18 @@ use Loop;
 use SymbolTable;
 use Associate;
 
+sub updateFile
+{
+  my ($F90, $code) = @_;
+
+  my $c = do { local $/ = undef; my $fh = 'FileHandle'->new ("<$F90"); $fh ? <$fh> : undef };
+  
+  if ((! defined ($c)) || ($c ne $code))
+    {
+      'FileHandle'->new (">$F90")->print ($code);
+    }
+}
+
 sub parseDirectives
 {
 
@@ -72,7 +84,7 @@ sub fieldifyDecl
 # - NPROMA arrays are complemented by a field object
 # - NPROMA arguments arrays are replaced by field objects
 
-  for my $N (keys (%$t))
+  for my $N (sort keys (%$t))
     {
       my $s = $t->{$N};
       next if ($s->{skip});
@@ -361,8 +373,10 @@ sub setupLocalFields
   my ($ind1, $ind2) = map { &Fxtran::getIndent ($_) } ($drhook1, $drhook2);
   my ($p1  , $p2  ) = map { $_->parentNode          } ($drhook1, $drhook2);
 
-  while (my ($n, $s) = each (%$t))
+  for my $n (sort keys (%$t))
     {
+      my $s = $t->{$n};
+
       next unless ($s->{nproma});
       next if ($s->{object_based} || $s->{arg});
       my @ss = &F ('./shape-spec-LT/shape-spec', $s->{as});
@@ -482,8 +496,9 @@ for my $call (@call)
 
 my @decl;
 
-while (my ($n, $s) = each (%$t))
+for my $n (sort keys (%$t))
   {
+    my $s = $t->{$n};
     next unless ($s->{object_based});
     my $decl = &Fxtran::fxtran (statement => $s->{ts}->textContent . ", POINTER :: " . $n . "(" . join (',', (':') x ($s->{nd} + 1)) . ")");
     push @decl, $decl;
@@ -495,7 +510,7 @@ while (my ($n, $s) = each (%$t))
 
 &setupLocalFields ($doc, $t);
 
-shift (@call) for (1 .. 2);
+shift (@call) for (1 .. 3);
 
 for (
      @call,
@@ -511,6 +526,7 @@ for (
 
 $F90 =~ s/.F90$/$suffix.F90/o;
 
-'FileHandle'->new (">$F90")->print ($doc->textContent);
+&updateFile ($F90, $doc->textContent);
+
 
 

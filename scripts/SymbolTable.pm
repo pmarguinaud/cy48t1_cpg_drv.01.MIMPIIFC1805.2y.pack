@@ -169,6 +169,8 @@ sub addDecl
      }
 }
 
+my @view;
+
 sub getSubroutineInterface
 {
 # Should cache the interfaces
@@ -176,11 +178,23 @@ sub getSubroutineInterface
   my $proc = shift;
   $proc = lc ($proc);
 
-# Should look at src/main, etc.
+  unless (@view)
+    {
+      @view = do { my $fh = 'FileHandle'->new ("<.gmkview"); <$fh> };
+      chomp for (@view);
+    }
 
-  my $dir = 'src/local/.intfb/arpifs';
+  my $code;
+  for my $view (@view)
+    {
+      if (-f (my $intfb = "src/$view/.intfb/arpifs/$proc.intfb.h"))
+        {
+          $code = do { local $/ = undef; my $fh = 'FileHandle'->new ("<$intfb"); $fh or die ("Cannot open $proc"); <$fh> };
+          last;
+        }
+    }
 
-  my $code = do { local $/ = undef; my $fh = 'FileHandle'->new ("<$dir/$proc.intfb.h"); <$fh> };
+  die unless ($code);
 
   my ($intf) = &Fxtran::fxtran (fragment => $code);
 

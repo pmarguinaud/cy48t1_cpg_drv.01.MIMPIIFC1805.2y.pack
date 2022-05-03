@@ -544,6 +544,9 @@ END TYPE SURFACE_VARIABLE_GROUP_SFLUX
 
 TYPE SURFACE_VARIABLE_GROUP_VO3ABC
   ! Diagnostic surface variable group
+  TYPE(VARIABLE_2D) :: VA   ! A climatological ozone profile
+  TYPE(VARIABLE_2D) :: VB   ! B climatological ozone profile
+  TYPE(VARIABLE_2D) :: VC   ! C climatological ozone profile
 
   ! Store a field encapsualting the entire group array for backward compatibility
   TYPE(FIELD_3D) :: F_GROUP

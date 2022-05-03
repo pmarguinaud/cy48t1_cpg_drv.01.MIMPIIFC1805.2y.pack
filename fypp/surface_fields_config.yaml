@@ -535,5 +535,8 @@ diagnostic:
   short: VC
   dimension: 2
   comment: A,B and C (Climatological ozone profiles) diagnostic fields
-  variables: []
+  variables: 
+  - {name: A, comment: A climatological ozone profile}
+  - {name: B, comment: B climatological ozone profile}
+  - {name: C, comment: C climatological ozone profile}
 

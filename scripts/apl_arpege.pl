@@ -500,9 +500,9 @@ while (my ($n, $s) = each (%$t))
 
 &setupLocalFields ($doc, $t);
 
+shift (@call);
 
 for (
-#    @par,
      @call,
      &F ('.//skip-section', $doc), 
     )

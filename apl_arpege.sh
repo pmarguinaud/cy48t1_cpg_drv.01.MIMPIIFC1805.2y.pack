@@ -17,7 +17,8 @@ for f in \
   src/local/arpifs/phys_dmn/apl_arpege_deep_convection.F90 \
   src/local/arpifs/phys_dmn/apl_arpege_surface.F90 \
   src/local/arpifs/phys_dmn/apl_arpege_precipitation.F90 \
-  src/local/arpifs/phys_dmn/apl_arpege_hydro_budget.F90 
+  src/local/arpifs/phys_dmn/apl_arpege_hydro_budget.F90 \
+  src/local/arpifs/phys_dmn/apl_arpege_dprecips.F90
 do
 ./scripts/apl_arpege.pl $f
 done

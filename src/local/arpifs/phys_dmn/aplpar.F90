@@ -4698,8 +4698,7 @@ ENDIF
 
 !        2.3  Computes MOCON in the CLP.
 !             --------------------------
-CALL MF_PHYS_MOCON (YDCPG_BNDS, YDCPG_OPTS, YDMF_PHYS%OUT%MOCON, ZRDG_LCVQ, IMOC_CLPH, &
-& YDMF_PHYS_BASE_STATE)
+CALL MF_PHYS_MOCON (YDCPG_BNDS, YDCPG_OPTS, ZRDG_LCVQ, IMOC_CLPH, YDMF_PHYS, YDMF_PHYS_BASE_STATE)
 
 ! Store surface water flux P and E for water conservation
 IF (LCORWAT) THEN

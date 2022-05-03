@@ -453,6 +453,11 @@ my $doc = &Fxtran::fxtran (location => $F90, fopts => [qw (-line-length 300)]);
 
 my $t = &SymbolTable::getSymbolTable ($doc);
 
+for my $v (qw (JLON JLEV))
+  {
+    &SymbolTable::addDecl ($doc, 1, "INTEGER(KIND=JPIM) :: $v") unless ($t->{$v});
+  }
+
 
 # Transform NPROMA fields into a pair of (FIELD API object, Fortran pointer)
 
@@ -510,7 +515,7 @@ for my $n (sort keys (%$t))
 
 &setupLocalFields ($doc, $t);
 
-shift (@call) for (1 .. 3);
+shift (@call) for (1 .. 4);
 
 for (
      @call,

@@ -1,5 +1,12 @@
 SUBROUTINE MF_PHYS_TRANSFER (YDCPG_BNDS, YDCPG_OPTS, YDVARS, YDPHY, YDGFL)
 
+!**** *MF_PHYS_TRANSFER*
+
+!     Author. 
+!     ------- 
+!      Philippe Marguinaud *METEO-FRANCE*
+!      Original : 28-04-2021
+
 USE PARKIND1, ONLY : JPIM, JPRB
 USE YOMHOOK,  ONLY : LHOOK, DR_HOOK
 

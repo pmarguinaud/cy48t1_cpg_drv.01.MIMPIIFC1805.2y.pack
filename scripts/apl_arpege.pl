@@ -318,6 +318,9 @@ sub callParallelRoutine
 
   my ($call, $t) = @_;
 
+  my ($proc) = &F ('./procedure-designator', $call, 1);
+  my $dbg = $proc eq 'CPUTQY0';
+
   my $text = $call->textContent;
 
   my @arg = &F ('./arg-spec/arg/named-E/N/n/text()', $call);
@@ -331,12 +334,23 @@ sub callParallelRoutine
       # Is the actual argument a dummy argument of the current routine ?
       my $isArg = $s->{arg};
 
+
       if ($s->{nproma})
         {
           my ($expr) = &Fxtran::expr ($arg);
           die ("No array reference allowed in CALL statement:\n$text\n") if (&F ('./R-LT', $expr));
           $expr->replaceNode ($s->{field}->cloneNode (1));
           $found++;
+        }
+      elsif ($s->{object})
+        {
+          my ($expr) = &Fxtran::expr ($arg);
+          my @ctl = &F ('./R-LT/component-R/ct', $expr, 1);
+          if (@ctl)
+            {
+              my $e = &Object::getFieldFromObjectComponents ($arg->textContent, @ctl);
+              $expr->replaceNode ($e);
+            }
         }
     }
 
@@ -417,6 +431,7 @@ sub setupLocalFields
 my $suffix = '_parallel';
 
 my $F90 = shift;
+my $NSHIFT = shift; $NSHIFT = defined ($NSHIFT) ? $NSHIFT : 17;
 
 my $doc = &Fxtran::fxtran (location => $F90, fopts => [qw (-line-length 300)]);
 
@@ -502,7 +517,7 @@ for my $n (sort keys (%$t))
 
 &setupLocalFields ($doc, $t);
 
-shift (@call) for (1 .. 17);
+shift (@call) for (1 .. $NSHIFT);
 
 for my $call (@call)
   {

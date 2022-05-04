@@ -138,7 +138,7 @@ CALL CPTEND_NEW(YDMODEL%YRCST, YDMODEL, YDCPG_OPTS%KLON, YDCPG_BNDS%KIDIA, YDCPG
 IF (YDCPG_OPTS%LTWOTL) THEN
 ELSE    
   IF ( (YDMODEL%YRML_PHY_MF%YRPHY%NDPSFI==1)) THEN
-!     PFEPFP was ZFEPFP in CPTEND_NEW, before, ZFEPFP still in CPFHPFS
+! PFEPFP was ZFEPFP in CPTEND_NEW, before, ZFEPFP still in CPFHPFS
     DO JLEV = 0, YDCPG_OPTS%KFLEVG 
       DO JLON = 1, YDCPG_OPTS%KLON
         YDMF_PHYS%OUT%FEPFP (JLON,JLEV) = 0.0_JPRB
@@ -150,15 +150,8 @@ ELSE
   ENDIF
 ENDIF 
 
-!        2.8  Modification of vertical velocities
-!             by some physics output when required.
-!             -------------------------------------
-
-
-! * MODIFICATION DE LA VITESSE VERTICALE ET DE LA TENDANCE DE
-! PRESSION DE SURFACE SI NDPSFI=1 ( MASSE VARIABLE ).
-! Ajout de la physique dans l'equation de continuite/Add physics
-! in continuity equation.
+! Modification of vertical velocities by some physics output when required.
+! Ajout de la physique dans l'equation de continuite/Add physics in continuity equation.
 
 IF (YDMODEL%YRML_PHY_MF%YRPHY%NDPSFI == 1) THEN
   CALL CPMVVPS(YDMODEL%YRCST, YDGEOMETRY%YRVAB, YDCPG_OPTS%KLON, YDCPG_BNDS%KIDIA, YDCPG_BNDS%KFDIA, YDCPG_OPTS%KFLEVG, &
@@ -166,17 +159,15 @@ IF (YDMODEL%YRML_PHY_MF%YRPHY%NDPSFI == 1) THEN
   & YDMF_PHYS%OUT%FEVN, YDCPG_DYN0%CTY%EVEL, YDCPG_DYN0%CTY%PSDVBC, YDMF_PHYS_NEXT_STATE%SP)
 ENDIF
 
-!        2.9  Computation of evolution of T, u, v and Q.
-!             ------------------------------------------
+!=END PARALLEL
 
-! Calcul de T , Q et du Vent a l'instant 1
+! Computation of evolution of T, u, v and Q.
 
 CALL CPUTQY_APLPAR_EXPL(YDMODEL%YRCST, YDCPG_BNDS, YDCPG_OPTS, YDMF_PHYS_NEXT_STATE, YDMF_PHYS_BASE_STATE, YDVARS, YDMODEL%YRML_PHY_MF%YRPHY, &
 & YDCPG_OPTS%ZDTPHY, ZTENDH, YDMF_PHYS%OUT%TENDU, YDMF_PHYS%OUT%TENDV, ZTENDU, ZTENDV, ZTENDD, ZTENDEFB1,                                     &
 & ZTENDEFB2, ZTENDEFB3, ZTENDG, ZTENDICONV, ZTENDI, ZTENDLCONV, ZTENDL, ZTENDQ, ZTENDRCONV, ZTENDR,                                           &
 & ZTENDSCONV, ZTENDS, ZTENDTKE, YDMF_PHYS%OUT%FDIS)
 
-!=END PARALLEL
 
 IF (LHOOK) CALL DR_HOOK ('APL_ARPEGE_ATMOSPHERE_UPDATE', 1, ZHOOK_HANDLE)
 

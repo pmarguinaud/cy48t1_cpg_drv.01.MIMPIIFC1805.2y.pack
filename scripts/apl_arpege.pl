@@ -155,7 +155,6 @@ ${str}  CALL YLCPG_BNDS%UPDATE (JBLK)
 ${str}ENDDO
 EOF
 
-
   my ($enddo) = &F ('.//end-do-stmt', $loop);
   my $p = $enddo->parentNode;
 
@@ -318,9 +317,6 @@ sub callParallelRoutine
 
   my ($call, $t) = @_;
 
-  my ($proc) = &F ('./procedure-designator', $call, 1);
-  my $dbg = $proc eq 'CPUTQY0';
-
   my $text = $call->textContent;
 
   my @arg = &F ('./arg-spec/arg/named-E/N/n/text()', $call);
@@ -431,7 +427,6 @@ sub setupLocalFields
 my $suffix = '_parallel';
 
 my $F90 = shift;
-my $NSHIFT = shift; $NSHIFT = defined ($NSHIFT) ? $NSHIFT : 17;
 
 my $doc = &Fxtran::fxtran (location => $F90, fopts => [qw (-line-length 300)]);
 
@@ -459,7 +454,6 @@ for my $v (qw (JLON JLEV))
   {
     &SymbolTable::addDecl ($doc, 1, "INTEGER(KIND=JPIM) :: $v") unless ($t->{$v});
   }
-
 
 # Transform NPROMA fields into a pair of (FIELD API object, Fortran pointer)
 
@@ -511,23 +505,14 @@ for my $n (sort keys (%$t))
     push @decl, $decl;
   }
 
+
 &SymbolTable::addDecl ($doc, 0, @decl);
 
 # Create/delete fields for local arrays
 
 &setupLocalFields ($doc, $t);
 
-shift (@call) for (1 .. $NSHIFT);
-
-for my $call (@call)
-  {
-    my ($proc) = &F ('./procedure-designator', $call);
-    print $proc->textContent, "\n";
-  }
-
-
 for (
-     @call,
      &F ('.//skip-section', $doc), 
     )
   {

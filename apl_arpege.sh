@@ -22,12 +22,10 @@ for f in \
   src/local/arpifs/phys_dmn/apl_arpege_atmosphere_update.F90 \
   src/local/arpifs/adiab/cputqy_aplpar_expl.F90 \
   src/local/arpifs/adiab/acctnd0.F90 \
-  src/local/arpifs/adiab/cputqy0.F90
-
+  src/local/arpifs/adiab/cputqy0.F90 \
+  src/local/arpifs/phys_dmn/apl_arpege.F90 
 do
-./scripts/apl_arpege.pl $f 100
+./scripts/apl_arpege.pl $f 
 done
-
-./scripts/apl_arpege.pl src/local/arpifs/phys_dmn/apl_arpege.F90 18
 
 grep _parallel src/local/arpifs/phys_dmn/apl_arpege_parallel.F90

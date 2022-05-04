@@ -23,6 +23,8 @@ for f in \
   src/local/arpifs/adiab/cputqy_aplpar_expl.F90 \
   src/local/arpifs/adiab/acctnd0.F90 \
   src/local/arpifs/adiab/cputqy0.F90 \
+  src/local/arpifs/phys_dmn/mf_phys_transfer.F90 \
+  src/local/arpifs/phys_dmn/apl_arpege_surface_update.F90 \
   src/local/arpifs/phys_dmn/apl_arpege.F90 
 do
 ./scripts/apl_arpege.pl $f 

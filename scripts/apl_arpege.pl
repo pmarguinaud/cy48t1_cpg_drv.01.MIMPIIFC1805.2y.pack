@@ -183,7 +183,6 @@ EOF
 
   for my $expr (&F ('.//named-E', $par))
     {
-
       my ($N) = &F ('./N', $expr, 1);
       my $s = $t->{$N};
       next if ($s->{skip});

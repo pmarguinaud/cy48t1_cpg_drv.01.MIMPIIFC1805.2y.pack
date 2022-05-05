@@ -325,7 +325,9 @@ sub callParallelRoutine
   for my $arg (@arg)
     {
       my $s = $t->{$arg};
+      next if ($s->{skip});
       $found++ if ($s->{object});
+   
 
       # Is the actual argument a dummy argument of the current routine ?
       my $isArg = $s->{arg};
@@ -335,6 +337,7 @@ sub callParallelRoutine
         {
           my ($expr) = &Fxtran::expr ($arg);
           die ("No array reference allowed in CALL statement:\n$text\n") if (&F ('./R-LT', $expr));
+          $s->{field} or die &Dumper ([$arg->textContent, $s, $text]);
           $expr->replaceNode ($s->{field}->cloneNode (1));
           $found++;
         }

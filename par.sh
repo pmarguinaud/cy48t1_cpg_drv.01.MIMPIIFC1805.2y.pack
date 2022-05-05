@@ -43,11 +43,11 @@ mkdir -p $TMPDIR
 cd $TMPDIR
 
 
-for NAM in ARP LACE LTWOTL=F.ARP
+for INPART in 0 1
 do
 
-mkdir -p $NAM
-cd $NAM
+mkdir -p $INPART
+cd $INPART
 
 
 # Choose your test case resolution
@@ -143,6 +143,8 @@ xpnam --delta="
 &NAMFA
   NVGRIB=0,
 /
+&NAMDPRECIPS
+/
 " --inplace fort.4
 
 xpnam --delta="
@@ -156,10 +158,6 @@ xpnam --delta="
 &NAMPAR1
   NSTRIN=$NPROC_FC,
 /
-" --inplace fort.4
-
-xpnam --delta="
-$(cat $PACK/nam/$NAM.nam)
 " --inplace fort.4
 
 # Set up grib_api environment
@@ -178,10 +176,22 @@ if [ 1 -eq 1 ]
 then
 xpnam --delta="
 &NAMDIM
-  NPROMA=-4,
+  NPROMA=-128,
 /
 " --inplace fort.4
 fi
+
+xpnam --delta="
+$(cat $PACK/nam/APLPAR_NEW.nam)
+" --inplace fort.4
+
+
+xpnam --delta="
+&NAMARPHY
+  LAPL_ARPEGE=.TRUE.
+/
+" --inplace fort.4
+
 
 ls -lrt
 
@@ -189,6 +199,14 @@ cat fort.4
 
 # Run the model; use your mpirun
 
+export INPART=$INPART
+
+if [ "x$INPART" = "x1" ]
+then
+  export PARALLEL=1
+else
+  export PARALLEL=0
+fi
 
 pack=$PACK
 #ack=/home/gmap/mrpm/marguina/pack/48t1_mainPGIdbg.01.PGI217.cpu0
@@ -197,10 +215,13 @@ pack=$PACK
     --nnp $NTASK_FC --nn $NNODE_FC --openmp $NOPMP_FC -- $pack/bin/MASTERODB \
  -- --nnp $NTASK_IO --nn $NNODE_IO --openmp $NOPMP_IO -- $pack/bin/MASTERODB 
 
-diffNODE.001_01 NODE.001_01 $PACK/ref/NODE.001_01.$NAM
 
 ls -lrt
 
 cd ..
 
 done
+
+diffNODE.001_01 0/NODE.001_01 1/NODE.001_01
+
+

@@ -604,7 +604,7 @@ SELF%F_DATA => CREATE_FIELD_WRAP (SELF%ZDATA, PERSISTENT=LLPERSISTENT)
 IF (YDTPTRSLB${ind}$%MSLB${ind}$${var}$ > 0) THEN
   JFLD = YDTPTRSLB${ind}$%MSLB${ind}$${var}$
   #:if vars[var][N3D]
-  SELF%F_${var}$ => CREATE_FIELD_WRAP (SELF%ZDATA (:, JFLD:JFLD+NLEV+1, :), PERSISTENT=LLPERSISTENT)
+  SELF%F_${var}$ => CREATE_FIELD_WRAP (SELF%ZDATA (:, JFLD:JFLD+NLEV+1, :), PERSISTENT=LLPERSISTENT, LBOUNDS=[1,0,1])
   #:else
   SELF%F_${var}$ => CREATE_FIELD_WRAP (SELF%ZDATA (:, JFLD, :), PERSISTENT=LLPERSISTENT)
   #:endif
@@ -619,14 +619,14 @@ ENDIF
     #:elif v.dim == 3
 IF (YGFL%Y${v.name}$%MP_SL1 > 0 .AND. YGFL%Y${v.name}$%MP1 > 0) THEN
   JFLD = YDTPTRSLB${ind}$%MSLB1GFL9  + (YGFL%Y${v.name}$%MP_SL1-1)*(NLEV+2)
-  SELF%F_${v.name}$ => CREATE_FIELD_WRAP (SELF%ZDATA (:, JFLD:JFLD+NLEV+1, :), PERSISTENT=LLPERSISTENT)
+  SELF%F_${v.name}$ => CREATE_FIELD_WRAP (SELF%ZDATA (:, JFLD:JFLD+NLEV+1, :), PERSISTENT=LLPERSISTENT, LBOUNDS=[1,0,1])
 ELSE
   SELF%F_${v.name}$ => NULL ()
 ENDIF
 IF (YDMODEL%YRML_DYN%YRDYN%LSPLTHOIGFL .OR. (YDMODEL%YRML_DYN%YRDYN%NSPLTHOI /= 0)) THEN
   IF (YGFL%Y${v.name}$%MP_SL1 > 0 .AND. YGFL%Y${v.name}$%MP1 > 0) THEN
     JFLD = YDTPTRSLB${ind}$%MSLB1GFLF9 + (YGFL%Y${v.name}$%MP_SL1-1)*(NLEV+2)
-    SELF%F_${v.name}$_F => CREATE_FIELD_WRAP (SELF%ZDATA (:, JFLD:JFLD+NLEV+1, :), PERSISTENT=LLPERSISTENT)
+    SELF%F_${v.name}$_F => CREATE_FIELD_WRAP (SELF%ZDATA (:, JFLD:JFLD+NLEV+1, :), PERSISTENT=LLPERSISTENT, LBOUNDS=[1,0,1])
   ELSE
     SELF%F_${v.name}$_F => NULL ()
   ENDIF
@@ -689,7 +689,7 @@ IF (ASSOCIATED (SELF%F_DATA)) THEN
   #:if vars[var][N3D]
   IF (ASSOCIATED (SELF%F_${var}$)) THEN
     IF ((.NOT. SELF%F_${var}$%THREAD_BUFFER) .OR. (.NOT. ASSOCIATED (SELF%${var}$))) THEN
-      SELF%${var}$ (1:, 0:) => SELF%F_${var}$%GET_VIEW (BLOCK_INDEX)
+      SELF%${var}$ => SELF%F_${var}$%GET_VIEW (BLOCK_INDEX)
     ENDIF
   ELSEIF (.NOT. ASSOCIATED (SELF%${var}$)) THEN
     SELF%${var}$ => ZDUM2
@@ -711,14 +711,14 @@ IF (ASSOCIATED (SELF%F_DATA)) THEN
     #:elif v.dim == 3
   IF (ASSOCIATED (SELF%F_${v.name}$)) THEN
     IF ((.NOT. SELF%F_${v.name}$%THREAD_BUFFER) .OR. (.NOT. ASSOCIATED (SELF%${v.name}$))) THEN
-      SELF%${v.name}$ (1:, 0:) => SELF%F_${v.name}$%GET_VIEW (BLOCK_INDEX)
+      SELF%${v.name}$ => SELF%F_${v.name}$%GET_VIEW (BLOCK_INDEX)
     ENDIF
   ELSEIF (.NOT. ASSOCIATED (SELF%${v.name}$)) THEN
     SELF%${v.name}$ => ZDUM${v.dim-1}$
   ENDIF
   IF (ASSOCIATED (SELF%F_${v.name}$_F)) THEN
     IF ((.NOT. SELF%F_${v.name}$_F%THREAD_BUFFER) .OR. (.NOT. ASSOCIATED (SELF%${v.name}$_F))) THEN
-      SELF%${v.name}$_F (1:, 0:) => SELF%F_${v.name}$_F%GET_VIEW (BLOCK_INDEX)
+      SELF%${v.name}$_F => SELF%F_${v.name}$_F%GET_VIEW (BLOCK_INDEX)
     ENDIF
   ELSEIF (.NOT. ASSOCIATED (SELF%${v.name}$)) THEN
     SELF%${v.name}$_F => ZDUM${v.dim-1}$

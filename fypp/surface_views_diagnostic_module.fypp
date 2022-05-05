@@ -44,7 +44,7 @@ TYPE SURFACE_VIEW_GROUP_${group.name}$
     #:if group.dimension == 2
 !>REAL(KIND=JPRB)          :: P${v.name}$ (YDCPG_OPTS%KLON)
     #:elif group.dimension == 3
-!>REAL(KIND=JPRB)          :: P${v.name}$ (YDCPG_OPTS%KLON, YDCPG_OPTS%YRSURF%YSD_${group.short}$D%NLEVS)
+!>REAL(KIND=JPRB)          :: P${v.name}$ (YDCPG_OPTS%KLON, YDCPG_OPTS%YRSURF_DIMS%YSD_${group.short}$D%NLEVS)
     #:endif
   #:endif
 #:endif

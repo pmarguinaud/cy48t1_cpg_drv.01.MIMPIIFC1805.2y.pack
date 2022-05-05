@@ -5,7 +5,7 @@ use Fxtran;
 
 my @object = qw (YDMF_PHYS_BASE_STATE YDMF_PHYS_NEXT_STATE YDCPG_MISC YDCPG_PHY9
                  YDCPG_PHY0 YDMF_PHYS YDCPG_DYN9 YDCPG_DYN0 YDMF_PHYS_SURF YDVARS
-                 YDCPG_SL1 YLMF_PHYS_NEXT_STATE);
+                 YDCPG_SL1 YLMF_PHYS_NEXT_STATE YDCPG_GPAR);
 my %object = map { ($_, 1) } @object;
 my @skip = qw (PGFL PGFLT1 PGMVT1 PGPSDT2D);
 my %skip = map { ($_, 1) } @skip;

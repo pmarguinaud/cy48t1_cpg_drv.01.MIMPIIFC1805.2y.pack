@@ -11,25 +11,7 @@ use Fxtran;
 
 sub arraySyntaxLoop
 {
-  my $d = shift;
-
-  # Collect dimensions
-
-  my @en_decl = &F ('.//EN-decl[./array-spec/shape-spec-LT[string(shape-spec)="YDCPG_OPTS%KLON"]]', $d);
-
-  my @N;
-
-  my %as;
-
-  for my $en_decl (@en_decl)
-    {
-      my ($N) = &F ('./EN-N', $en_decl, 1);
-      push @N, $N;
-      my @ss = &F ('./array-spec/shape-spec-LT/shape-spec', $en_decl);
-      $as{$N} = \@ss;
-    }
-
-  my %N = map { ($_, 1) } @N;
+  my ($d, $t) = @_;
 
   # Transform simple array syntax in loops
   
@@ -38,7 +20,9 @@ sub arraySyntaxLoop
   for my $stmt (@stmt)
     {
       my ($N1) = &F ('./E-1/named-E/N', $stmt, 1);
-      next unless ($N{$N1});
+      my $s1 = $t->{$N1};
+
+      next unless ($s1->{nproma});
 
       my @ind = ('JLON', 'JLEV');
       my %ind;
@@ -53,10 +37,15 @@ sub arraySyntaxLoop
       for my $expr (@expr)
         {
           my ($N) = &F ('./N', $expr, 1);
-          next unless ($N{$N});
-          my @ss1 = @{ $as{$N} };
+          my $s = $t->{$N};
 
-          my ($r) = &F ('././R-LT/array-R', $expr);
+          next unless ($s->{nproma});
+
+          my $as = $s->{as};
+
+          my @ss1 = &F ('./shape-spec-LT/shape-spec', $as);
+
+          my ($r) = &F ('./R-LT/array-R', $expr);
 
           # The array reference does not exist; add it
           
@@ -82,8 +71,10 @@ sub arraySyntaxLoop
           $sslt->setNodeName ('element-LT');
 
           my @ss2 = &F ('./section-subscript', $sslt);
+ 
+          die unless ('JBLK' ne pop (@ss2));
 
-          die &Dumper ([\@ss1, \@ss2]) unless (scalar (@ss1) == scalar (@ss2));
+          die &Dumper ([[map { $_->textContent } @ss1], [map { $_->textContent } @ss2]]) unless (scalar (@ss1) == scalar (@ss2));
 
           for my $i (0 .. $#ss1)
             {
@@ -94,7 +85,7 @@ sub arraySyntaxLoop
               if ($ss2[$i]->textContent eq ':') 
                 {
                   my $ind = $dim2ind{$ub1};
-                  die $ss1[$i]->textContent unless ($ind);
+                  die $expr->textContent . ' ' . $ss1[$i]->textContent unless ($ind);
                   $ind{$ind}++;
                   $ss2[$i]->firstChild->replaceNode (&n ("<named-E><N><n>$ind</n></N></named-E>"));
 
@@ -107,7 +98,7 @@ sub arraySyntaxLoop
                 }
               elsif ($ss2[$i]->textContent =~ m/:/o)
                 {
-                  die &Dumper ([$stmt->textContent, $sslt->textContent, $i, $ss2[$i]->textContent]);
+                  die &Dumper ([$stmt->textContent, $sslt->textContent, $i, $ss2[$i]->textContent]) . ' ';
                 }
             }
           
@@ -134,6 +125,8 @@ sub arraySyntaxLoop
       $C->replaceNode ($stmt->cloneNode (1));
 
       $stmt->replaceNode ($loop);
+
+
 
     }
 

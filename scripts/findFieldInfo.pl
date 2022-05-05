@@ -65,8 +65,8 @@ for my $T (&F ('.//T-construct', $d))
             $Decl{$N}{$n} = $cd;
             for ($decl{$N}{$n} = $cd->textContent)
               {
-                s/\bNLEV\b/YDCPG_DIM%KFLEVG/goms;
-                s/\bNPROMA\b/YDCPG_DIM%KLON/goms;
+                s/\bNLEV\b/YDCPG_OPTS%KFLEVG/goms;
+                s/\bNPROMA\b/YDCPG_OPTS%KLON/goms;
               }
           }
       }

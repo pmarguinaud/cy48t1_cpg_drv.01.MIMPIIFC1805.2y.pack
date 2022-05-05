@@ -76,11 +76,11 @@ sub walk
         {
           if ($r == 2)
             {
-              $h->{"$path%$suf"} = "REAL (KIND=JPRB) :: $n (YDCPG_DIM%KLON)";
+              $h->{"$path%$suf"} = "REAL (KIND=JPRB) :: $n (YDCPG_OPTS%KLON)";
             }
           elsif ($r == 3)
             {
-              $h->{"$path%$suf"} = "REAL (KIND=JPRB) :: $n (YDCPG_DIM%KLON,YDCPG_DIM%KFLEVG)";
+              $h->{"$path%$suf"} = "REAL (KIND=JPRB) :: $n (YDCPG_OPTS%KLON,YDCPG_OPTS%KFLEVG)";
             }
         }
 
@@ -106,8 +106,8 @@ my @D =
 (
   undef,
   undef,
-  &Fxtran::fxtran (statement => 'REAL (KIND=JPRB) :: X (YDCPG_DIM%KLON)'),
-  &Fxtran::fxtran (statement => 'REAL (KIND=JPRB) :: X (YDCPG_DIM%KLON,YDCPG_DIM%KFLEVG)'),
+  &Fxtran::fxtran (statement => 'REAL (KIND=JPRB) :: X (YDCPG_OPTS%KLON)'),
+  &Fxtran::fxtran (statement => 'REAL (KIND=JPRB) :: X (YDCPG_OPTS%KLON,YDCPG_OPTS%KFLEVG)'),
 );
 
 sub Walk

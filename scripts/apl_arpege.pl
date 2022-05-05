@@ -437,7 +437,6 @@ my $doc = &Fxtran::fxtran (location => $F90, fopts => [qw (-line-length 300)]);
 
 &Associate::resolveAssociates ($doc);
 &Decl::forceSingleDecl ($doc);
-&Loop::arraySyntaxLoop ($doc);
 
 &parseDirectives ($doc);
 
@@ -523,6 +522,8 @@ for my $n (sort keys (%$t))
 &setupLocalFields ($doc, $t);
 
 &removeUnusedIncludes ($doc);
+
+&Loop::arraySyntaxLoop ($doc, $t);
 
 &SymbolTable::renameSubroutine ($doc, sub { return $_[0] . uc ($suffix) });
 

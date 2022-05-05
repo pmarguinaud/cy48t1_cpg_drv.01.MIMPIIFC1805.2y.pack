@@ -13,6 +13,11 @@ do
     continue
   fi
 
+  if [ $f = "field_definition.fypp" ]
+  then
+    continue
+  fi
+
 
   b=$(basename $f .fypp)
   /opt/softs/anaconda3/bin/fypp -m os -M . -m yaml -m field_config ./$b.fypp ./$b.F90

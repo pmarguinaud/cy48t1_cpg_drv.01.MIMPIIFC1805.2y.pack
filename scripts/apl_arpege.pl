@@ -108,7 +108,7 @@ sub fieldifyDecl
           $sslt->appendChild (&t (',')) if ($i < $s->{nd});
         }
   
-      &SymbolTable::addAttributes ($stmt, qw (CONTIGUOUS POINTER));
+      &SymbolTable::addAttributes ($stmt, qw (POINTER));
   
       my $type_fld = &SymbolTable::getFieldType ($s->{nd}, $s->{ts});
       $type_fld or die "Unknown type : " . $s->{ts}->textContent;
@@ -183,6 +183,7 @@ EOF
 
   for my $expr (&F ('.//named-E', $par))
     {
+
       my ($N) = &F ('./N', $expr, 1);
       my $s = $t->{$N};
       next if ($s->{skip});
@@ -443,7 +444,7 @@ my $doc = &Fxtran::fxtran (location => $F90, fopts => [qw (-line-length 300)]);
 
 # Add modules
 
-&SymbolTable::useModule ($doc, qw (FIELD_MODULE FIELD_REGISTRY_MOD));
+&SymbolTable::useModule ($doc, qw (FIELD_MODULE FIELD_REGISTRY_MOD FIELD_HELPER_MODULE));
 
 # Add local variables
 
@@ -456,6 +457,13 @@ my $t = &SymbolTable::getSymbolTable ($doc);
 for my $v (qw (JLON JLEV))
   {
     &SymbolTable::addDecl ($doc, 1, "INTEGER(KIND=JPIM) :: $v") unless ($t->{$v});
+  }
+
+# Remove SKIP sections
+
+for (&F ('.//skip-section', $doc))
+  {
+    $_->unbindNode ();
   }
 
 # Transform NPROMA fields into a pair of (FIELD API object, Fortran pointer)
@@ -514,13 +522,6 @@ for my $n (sort keys (%$t))
 # Create/delete fields for local arrays
 
 &setupLocalFields ($doc, $t);
-
-for (
-     &F ('.//skip-section', $doc), 
-    )
-  {
-    $_->unbindNode ();
-  }
 
 &removeUnusedIncludes ($doc);
 

@@ -426,6 +426,36 @@ sub setupLocalFields
 
 }
 
+sub setOpenMPDirective
+{
+  my ($par, $t) = @_;
+
+  my @N = &F ('.//named-E/N', $par);
+
+  my %priv;
+
+  for my $N (@N)
+    {
+      my $n = $N->textContent;
+      my $s = $t->{$n};
+      next if ($s->{nproma});
+      my $expr = $N->parentNode;
+      my $p = $expr->parentNode;
+      
+      $priv{$n}++ if (($p->nodeName eq 'E-1') || ($p->nodeName eq 'do-V'));
+    }
+
+  my ($do) = &F ('.//do-construct[./do-stmt[string(do-V)="JBLK"]]', $par);
+
+  my $indent = &Fxtran::getIndent ($do);
+
+  my $C = &n ('<C>!$OMP PARALLEL DO PRIVATE (' . join (', ', sort keys (%priv))  . ')</C>');
+  
+  $do->parentNode->insertBefore ($C, $do);
+  $do->parentNode->insertBefore (&t ("\n" . (' ' x $indent)), $do);
+
+}
+
 
 my $suffix = '_parallel';
 
@@ -524,6 +554,12 @@ for my $n (sort keys (%$t))
 &removeUnusedIncludes ($doc);
 
 &Loop::arraySyntaxLoop ($doc, $t);
+
+
+for my $par (@par)
+  {
+    &setOpenMPDirective ($par, $t);
+  }
 
 &SymbolTable::renameSubroutine ($doc, sub { return $_[0] . uc ($suffix) });
 

@@ -138,7 +138,7 @@ sub fieldifyDecl
 
 sub makeParallel
 {
-  my ($par, $t) = @_;
+  my ($par, $t, $hook_suffix) = @_;
 
   # Add a loop nest on blocks
 
@@ -250,6 +250,13 @@ EOF
   my %intent2access = qw (IN RDONLY INOUT RDWR OUT WRONLY);
 
   $par->insertBefore (&t ("\n" . (' ' x $indent)), $loop);
+
+  $par->insertBefore (&s ("IF (LHOOK) CALL DR_HOOK ('GET_DATA$hook_suffix',0,ZHOOK_HANDLE_FIELD_API)"), $loop);
+  $par->insertBefore (&t ("\n" . (' ' x $indent)), $loop);
+
+  $par->insertAfter (&s ("IF (LHOOK) CALL DR_HOOK ('NULLIFY$hook_suffix',1,ZHOOK_HANDLE_FIELD_API)"), $loop);
+  $par->insertAfter (&t ("\n" . (' ' x $indent)), $loop);
+
   for my $ptr (reverse (sort keys (%intent)))
     {
       my $s = $t->{$ptr};
@@ -262,8 +269,15 @@ EOF
       $par->insertAfter (&s ("$ptr => NULL ()"), $loop);
       $par->insertAfter (&t ("\n" . (' ' x $indent)), $loop);
     }
+  $par->insertBefore (&s ("IF (LHOOK) CALL DR_HOOK ('GET_DATA$hook_suffix',1,ZHOOK_HANDLE_FIELD_API)"), $loop);
+  $par->insertBefore (&t ("\n" . (' ' x $indent)), $loop);
+
+  $par->insertAfter (&s ("IF (LHOOK) CALL DR_HOOK ('NULLIFY$hook_suffix',0,ZHOOK_HANDLE_FIELD_API)"), $loop);
+  $par->insertAfter (&t ("\n" . (' ' x $indent)), $loop);
+
   $par->insertBefore (&t ("\n" . (' ' x $indent)), $loop);
   $par->insertAfter (&t ("\n" . (' ' x $indent)), $loop);
+
 
 }
 
@@ -377,7 +391,7 @@ sub setupLocalFields
 # FIELD API objects backing local NPROMA arrays
 # Use DELETE_TEMPORARY to delete these FIELD API objects
 
-  my ($doc, $t) = @_;
+  my ($doc, $t, $hook_suffix) = @_;
 
   my @drhook = &F ('.//if-stmt[.//call-stmt[string(.//procedure-designator)="DR_HOOK"]]', $doc);
   @drhook = @drhook[0,-1];
@@ -385,6 +399,12 @@ sub setupLocalFields
   my ($drhook1, $drhook2) = @drhook;
   my ($ind1, $ind2) = map { &Fxtran::getIndent ($_) } ($drhook1, $drhook2);
   my ($p1  , $p2  ) = map { $_->parentNode          } ($drhook1, $drhook2);
+
+  $p1->insertAfter (&s ("IF (LHOOK) CALL DR_HOOK ('CREATE_TEMPORARIES$hook_suffix',1,ZHOOK_HANDLE_FIELD_API)"), $drhook1);
+  $p1->insertAfter (&t ("\n" . (' ' x $ind1)), $drhook1);
+
+  $p2->insertBefore (&s ("IF (LHOOK) CALL DR_HOOK ('DELETE_TEMPORARIES$hook_suffix',0,ZHOOK_HANDLE_FIELD_API)"), $drhook2);
+  $p2->insertBefore (&t ("\n" . (' ' x $ind2)), $drhook2);
 
   for my $n (sort keys (%$t))
     {
@@ -423,6 +443,13 @@ sub setupLocalFields
       
 
     }
+
+  $p1->insertAfter (&s ("IF (LHOOK) CALL DR_HOOK ('CREATE_TEMPORARIES$hook_suffix',0,ZHOOK_HANDLE_FIELD_API)"), $drhook1);
+  $p1->insertAfter (&t ("\n" . (' ' x $ind1)), $drhook1);
+
+  $p2->insertBefore (&s ("IF (LHOOK) CALL DR_HOOK ('DELETE_TEMPORARIES$hook_suffix',1,ZHOOK_HANDLE_FIELD_API)"), $drhook2);
+  $p2->insertBefore (&t ("\n" . (' ' x $ind2)), $drhook2);
+
 
 }
 
@@ -478,7 +505,8 @@ my $doc = &Fxtran::fxtran (location => $F90, fopts => [qw (-line-length 300)]);
 
 &SymbolTable::addDecl ($doc, 1, 
           'INTEGER(KIND=JPIM) :: JBLK',
-          'TYPE(CPG_BNDS_TYPE) :: YLCPG_BNDS');
+          'TYPE(CPG_BNDS_TYPE) :: YLCPG_BNDS', 
+          'REAL(KIND=JPRB) :: ZHOOK_HANDLE_FIELD_API');
 
 my $t = &SymbolTable::getSymbolTable ($doc);
 
@@ -502,9 +530,10 @@ for (&F ('.//skip-section', $doc))
 
 my @par = &F ('.//parallel-section', $doc);
 
+
 for my $par (@par)
   {
-    &makeParallel ($par, $t);
+    &makeParallel ($par, $t, '');
   }
 
 # Process call to parallel routines
@@ -549,7 +578,7 @@ for my $n (sort keys (%$t))
 
 # Create/delete fields for local arrays
 
-&setupLocalFields ($doc, $t);
+&setupLocalFields ($doc, $t, '');
 
 &removeUnusedIncludes ($doc);
 

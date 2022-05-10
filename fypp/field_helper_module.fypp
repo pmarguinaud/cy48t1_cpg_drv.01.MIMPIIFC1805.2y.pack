@@ -3,6 +3,7 @@
 MODULE FIELD_HELPER_MODULE
 
 USE FIELD_MODULE
+USE YOMHOOK
 
 INTERFACE CREATE_TEMPORARY_LU
 #:for d in [2, 3, 4, 5]
@@ -82,70 +83,44 @@ CONTAINS
 
 #:endfor
 
-#:for d in [2, 3, 4, 5]
-  SUBROUTINE CREATE_TEMPORARY_${d}$D_LU (FIELD_PTR, UBOUNDS, LBOUNDS, PERSISTENT) 
-    ! Create a single ${d}$D field for temporary use with an implicit blocking dimension.
-    TYPE(FIELD_${d}$D), POINTER :: FIELD_PTR
+#:def create_temporary (dims, type)
+#:for d in dims
+  SUBROUTINE CREATE_TEMPORARY_${type}$${d}$D_LU (FIELD_PTR, UBOUNDS, LBOUNDS, PERSISTENT) 
+
+    TYPE(FIELD_${type}$${d}$D), POINTER :: FIELD_PTR
     INTEGER(KIND=JPIM), INTENT(IN) :: UBOUNDS (${d}$)
     INTEGER(KIND=JPIM), OPTIONAL, INTENT(IN) :: LBOUNDS (${d}$)
     LOGICAL, OPTIONAL, INTENT(IN) :: PERSISTENT
     INTEGER(KIND=JPIM) :: NBLOCKS
     INTEGER(KIND=JPIM) :: ISIZE (${d}$)
+    REAL(KIND=JPRB) :: ZHOOK_HANDLE, ZHOOK_HANDLE_1
 
+    IF (LHOOK) CALL DR_HOOK ('CREATE_TEMPORARY_${type}$${d}$D_LU', 0, ZHOOK_HANDLE)
+
+    IF (LHOOK) CALL DR_HOOK ('CREATE_TEMPORARY_${type}$${d}$D_LU:PART1', 0, ZHOOK_HANDLE_1)
     ISIZE = UBOUNDS
     IF (PRESENT (LBOUNDS)) ISIZE = ISIZE - LBOUNDS + 1
 
     ALLOCATE(FIELD_PTR)
     NBLOCKS = UBOUNDS (${d}$)
-    FIELD_PTR = FIELD_${d}$D(SHAPE=ISIZE(1:${d}$-1), NBLOCKS=NBLOCKS, PERSISTENT=PERSISTENT, LBOUNDS=LBOUNDS)
-    ! Due to Fortran's reallocation-on-assignment behaviour, the
-    ! FIELD_PTR%PTR pointer needs updating here for owned objects.
+    IF (LHOOK) CALL DR_HOOK ('CREATE_TEMPORARY_${type}$${d}$D_LU:PART1', 1, ZHOOK_HANDLE_1)
+    IF (LHOOK) CALL DR_HOOK ('CREATE_TEMPORARY_${type}$${d}$D_LU:PART2', 0, ZHOOK_HANDLE_1)
+    CALL ALLOCATE_FIELD (FIELD_PTR, SHAPE=ISIZE(1:${d}$-1), NBLOCKS=NBLOCKS, PERSISTENT=PERSISTENT, LBOUNDS=LBOUNDS)
+    IF (LHOOK) CALL DR_HOOK ('CREATE_TEMPORARY_${type}$${d}$D_LU:PART2', 1, ZHOOK_HANDLE_1)
+
+    IF (LHOOK) CALL DR_HOOK ('CREATE_TEMPORARY_${type}$${d}$D_LU:PART3', 0, ZHOOK_HANDLE_1)
     IF (FIELD_PTR%OWNED) FIELD_PTR%PTR => FIELD_PTR%DATA
-  END SUBROUTINE CREATE_TEMPORARY_${d}$D_LU
+    IF (LHOOK) CALL DR_HOOK ('CREATE_TEMPORARY_${type}$${d}$D_LU:PART3', 1, ZHOOK_HANDLE_1)
+
+    IF (LHOOK) CALL DR_HOOK ('CREATE_TEMPORARY_${type}$${d}$D_LU', 1, ZHOOK_HANDLE)
+
+  END SUBROUTINE CREATE_TEMPORARY_${type}$${d}$D_LU
+
 #:endfor
+#:enddef
 
-#:for d in [2, 3]
-  SUBROUTINE CREATE_TEMPORARY_INT${d}$D_LU (FIELD_PTR, UBOUNDS, LBOUNDS, PERSISTENT) 
-    ! Create a single ${d}$D field for temporary use with an implicit blocking dimension.
-    TYPE(FIELD_INT${d}$D), POINTER :: FIELD_PTR
-    INTEGER(KIND=JPIM), INTENT(IN) :: UBOUNDS (${d}$)
-    INTEGER(KIND=JPIM), OPTIONAL, INTENT(IN) :: LBOUNDS (${d}$)
-    LOGICAL, OPTIONAL, INTENT(IN) :: PERSISTENT
-    INTEGER(KIND=JPIM) :: NBLOCKS
-    INTEGER(KIND=JPIM) :: ISIZE (${d}$)
-
-    ISIZE = UBOUNDS
-    IF (PRESENT (LBOUNDS)) ISIZE = ISIZE - LBOUNDS + 1
-
-    ALLOCATE(FIELD_PTR)
-    NBLOCKS = UBOUNDS (${d}$)
-    FIELD_PTR = FIELD_INT${d}$D(SHAPE=ISIZE(1:${d}$-1), NBLOCKS=NBLOCKS, PERSISTENT=PERSISTENT, LBOUNDS=LBOUNDS)
-    ! Due to Fortran's reallocation-on-assignment behaviour, the
-    ! FIELD_PTR%PTR pointer needs updating here for owned objects.
-    IF (FIELD_PTR%OWNED) FIELD_PTR%PTR => FIELD_PTR%DATA
-  END SUBROUTINE CREATE_TEMPORARY_INT${d}$D_LU
-#:endfor
-
-#:for d in [2]
-  SUBROUTINE CREATE_TEMPORARY_LOG${d}$D_LU (FIELD_PTR, UBOUNDS, LBOUNDS, PERSISTENT) 
-    ! Create a single ${d}$D field for temporary use with an implicit blocking dimension.
-    TYPE(FIELD_LOG${d}$D), POINTER :: FIELD_PTR
-    INTEGER(KIND=JPIM), INTENT(IN) :: UBOUNDS (${d}$)
-    INTEGER(KIND=JPIM), OPTIONAL, INTENT(IN) :: LBOUNDS (${d}$)
-    LOGICAL, OPTIONAL, INTENT(IN) :: PERSISTENT
-    INTEGER(KIND=JPIM) :: NBLOCKS
-    INTEGER(KIND=JPIM) :: ISIZE (${d}$)
-
-    ISIZE = UBOUNDS
-    IF (PRESENT (LBOUNDS)) ISIZE = ISIZE - LBOUNDS + 1
-
-    ALLOCATE(FIELD_PTR)
-    NBLOCKS = UBOUNDS (${d}$)
-    FIELD_PTR = FIELD_LOG${d}$D(SHAPE=ISIZE(1:${d}$-1), NBLOCKS=NBLOCKS, PERSISTENT=PERSISTENT, LBOUNDS=LBOUNDS)
-    ! Due to Fortran's reallocation-on-assignment behaviour, the
-    ! FIELD_PTR%PTR pointer needs updating here for owned objects.
-    IF (FIELD_PTR%OWNED) FIELD_PTR%PTR => FIELD_PTR%DATA
-  END SUBROUTINE CREATE_TEMPORARY_LOG${d}$D_LU
-#:endfor
+$:create_temporary ([2, 3, 4, 5], '')
+$:create_temporary ([2, 3      ], 'INT')
+$:create_temporary ([2         ], 'LOG')
 
 END MODULE FIELD_HELPER_MODULE

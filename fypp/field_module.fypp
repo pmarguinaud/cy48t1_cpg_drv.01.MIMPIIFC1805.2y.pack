@@ -108,6 +108,14 @@ END INTERFACE
 
 #:endfor
 
+INTERFACE ALLOCATE_FIELD
+#:for dtype, suffix, rank, default in field_descriptors
+#:set field_type_name = 'FIELD_%s%sD' % (suffix, rank)
+  MODULE PROCEDURE :: ALLOCATE_${field_type_name}$
+#:endfor
+END INTERFACE
+
+
 INTERFACE FILL_BUFFER
 #:for suffix in suffixes
   MODULE PROCEDURE :: FILL_BUFFER_${suffix}$2D, FILL_BUFFER_${suffix}$3D
@@ -292,7 +300,7 @@ CONTAINS
 
 #:for dtype, suffix, rank, default in field_descriptors
 #:set field_type_name = 'FIELD_%s%sD' % (suffix, rank)
-  FUNCTION ${field_type_name}$_ALLOCATE(SHAPE, NBLOCKS, PERSISTENT, LBOUNDS) RESULT(SELF)
+  SUBROUTINE ALLOCATE_${field_type_name}$ (SELF, SHAPE, NBLOCKS, PERSISTENT, LBOUNDS) 
     ! Create FIELD object by explicitly allocating new data
     !
     ! Please note that SHAPE is the conceptual shape without the block dimension
@@ -327,6 +335,19 @@ CONTAINS
     SELF%NBLOCKS = SIZE(SELF%DATA, ${rank}$)
     SELF%BASE_PTR => NULL()
     SELF%FIDX = -1
+  END SUBROUTINE ALLOCATE_${field_type_name}$
+
+  FUNCTION ${field_type_name}$_ALLOCATE(SHAPE, NBLOCKS, PERSISTENT, LBOUNDS) RESULT(SELF)
+    ! WARNING : Using this function kills performance when the %DATA member is allocated
+    TYPE(${field_type_name}$), TARGET :: SELF
+    INTEGER(KIND=JPIM), INTENT(IN) :: SHAPE(${rank-1}$)
+    INTEGER(KIND=JPIM), INTENT(IN), OPTIONAL :: NBLOCKS
+    LOGICAL, INTENT(IN), OPTIONAL :: PERSISTENT
+    INTEGER(KIND=JPIM), INTENT(IN), OPTIONAL :: LBOUNDS(${rank}$)
+    INTEGER(KIND=JPIM) :: NBLK
+   
+    CALL ALLOCATE_${field_type_name}$ (SELF, SHAPE, NBLOCKS, PERSISTENT, LBOUNDS)
+
   END FUNCTION ${field_type_name}$_ALLOCATE
 
 #:endfor

@@ -582,7 +582,7 @@ for my $n (sort keys (%$t))
 
 &removeUnusedIncludes ($doc);
 
-&Loop::arraySyntaxLoop ($doc, $t);
+#Loop::arraySyntaxLoop ($doc, $t);
 
 
 for my $par (@par)

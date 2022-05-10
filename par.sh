@@ -43,11 +43,11 @@ mkdir -p $TMPDIR
 cd $TMPDIR
 
 
-for INPART in 0 1
+for K in 0 1 2
 do
 
-mkdir -p $INPART
-cd $INPART
+mkdir -p $K
+cd $K
 
 
 # Choose your test case resolution
@@ -199,14 +199,27 @@ cat fort.4
 
 # Run the model; use your mpirun
 
-export INPART=$INPART
-
-if [ "x$INPART" = "x1" ]
+if [ "x$K" = "x0" ]
 then
-  export PARALLEL=1
-else
+  export INPART=0
   export PARALLEL=0
+  export PERSISTENT=0
+elif [ "x$K" = "x1" ]
+then
+  export INPART=1
+  export PARALLEL=1
+  export PERSISTENT=1
+elif [ "x$K" = "x2" ]
+then
+  export INPART=0
+  export PARALLEL=0
+  export PERSISTENT=1
+else
+  unset INPART
+  unset PARALLEL
+  unset PERSISTENT
 fi
+
 
 pack=$PACK
 #ack=/home/gmap/mrpm/marguina/pack/48t1_mainPGIdbg.01.PGI217.cpu0
@@ -222,6 +235,9 @@ cd ..
 
 done
 
+exit
+
+diffNODE.001_01 0/NODE.001_01 2/NODE.001_01
 diffNODE.001_01 0/NODE.001_01 1/NODE.001_01
 
 

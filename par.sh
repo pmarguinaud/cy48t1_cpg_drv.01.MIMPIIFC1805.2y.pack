@@ -235,7 +235,6 @@ cd ..
 
 done
 
-exit
 
 diffNODE.001_01 0/NODE.001_01 2/NODE.001_01
 diffNODE.001_01 0/NODE.001_01 1/NODE.001_01

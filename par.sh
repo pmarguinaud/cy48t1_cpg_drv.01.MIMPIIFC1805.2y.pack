@@ -43,7 +43,7 @@ mkdir -p $TMPDIR
 cd $TMPDIR
 
 
-for K in 0 1 2
+for K in 0 1 2 3
 do
 
 mkdir -p $K
@@ -212,6 +212,11 @@ then
 elif [ "x$K" = "x2" ]
 then
   export INPART=0
+  export PARALLEL=0
+  export PERSISTENT=1
+elif [ "x$K" = "x3" ]
+then
+  export INPART=1
   export PARALLEL=0
   export PERSISTENT=1
 else

@@ -48,7 +48,7 @@ CONTAINS
     ${dtype}$, POINTER :: PTR(${shapes[rank]}$)
 
     IF (ASSOCIATED (SELF)) THEN
-      PTR (${lbptr (rank)}$) => SELF%PTR
+      PTR (${lbptr (rank)}$) => SELF%PTR (${','.join(':' for _ in range(rank))}$)
     ELSE
       PTR => ZDUM
     ENDIF
@@ -61,7 +61,7 @@ CONTAINS
     ${dtype}$, POINTER :: PTR(${shapes[rank]}$)
 
     IF (ASSOCIATED (SELF)) THEN
-      PTR (${lbptr (rank)}$) => SELF%PTR
+      PTR (${lbptr (rank)}$) => SELF%PTR (${','.join(':' for _ in range(rank))}$)
     ELSE
       PTR => ZDUM
     ENDIF
@@ -74,7 +74,7 @@ CONTAINS
     ${dtype}$, POINTER :: PTR(${shapes[rank]}$)
 
     IF (ASSOCIATED (SELF)) THEN
-      PTR (${lbptr (rank)}$) => SELF%PTR
+      PTR (${lbptr (rank)}$) => SELF%PTR (${','.join(':' for _ in range(rank))}$)
     ELSE
       PTR => ZDUM
     ENDIF

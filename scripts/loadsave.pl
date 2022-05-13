@@ -18,6 +18,9 @@ sub process_decl
   my (%U, %J, %L, %B);
 
   my $stmt = &Fxtran::stmt ($en_decl);
+
+  return if ($stmt->nodeName eq 'final-stmt');
+
   my %attr = map { ($_, 1) } &f ('.//f:attribute/f:attribute-N/text ()', $stmt);
 
   return if ($attr{PARAMETER});
@@ -35,12 +38,12 @@ sub process_decl
       goto RETURN;
     }
   
-  
+
   my ($tspec) = &f ('./f:_T-spec_', $stmt);
 
-  die $stmt->textContent unless ($tspec);
+  die $stmt->toString unless ($tspec);
 
-  return if ($tspec->textContent eq 'PROCEDURE');
+  return if (uc ($tspec->textContent) eq 'PROCEDURE');
 
 
   my ($intrinsic) = &f ('./f:intrinsic-T-spec', $tspec);
@@ -168,7 +171,7 @@ sub w
 
 sub process_types
 {
-  my $doc = shift;
+  my ($doc, $opts) = @_;
 
   my ($mod) = &f ('.//f:module-stmt/f:module-N/f:N/f:n/text ()', $doc);
   
@@ -265,7 +268,9 @@ EOF
   
       my $n = lc ($name);
 
-      &w ("$opts{dir}/save_${n}_mod.F90", << "EOF");
+      if ($opts->{save})
+        {
+          &w ("$opts{dir}/save_${n}_mod.F90", << "EOF");
 MODULE SAVE_${name}_MOD
 
 USE $mod, ONLY : $name
@@ -280,8 +285,10 @@ $CONTAINS_SAVE
 
 END MODULE
 EOF
-
-      &w ("$opts{dir}/load_${n}_mod.F90", << "EOF");
+        }
+      if ($opts->{load})
+        {
+          &w ("$opts{dir}/load_${n}_mod.F90", << "EOF");
 MODULE LOAD_${name}_MOD
 
 USE $mod, ONLY : $name
@@ -296,8 +303,10 @@ $CONTAINS_LOAD
 
 END MODULE
 EOF
-
-      &w ("$opts{dir}/copy_${n}_mod.F90", << "EOF");
+        }
+      if ($opts->{copy})
+        {
+          &w ("$opts{dir}/copy_${n}_mod.F90", << "EOF");
 MODULE COPY_${name}_MOD
 
 USE $mod, ONLY : $name
@@ -312,7 +321,7 @@ $CONTAINS_COPY
 
 END MODULE
 EOF
-
+        }
 
     }
 }
@@ -421,21 +430,22 @@ EOF
 &GetOptions
 (
   'skip=s@' => \$opts{skip}, types => \$opts{types}, vars => \$opts{vars}, 'dir=s' => \$opts{dir},
+  save => \$opts{save}, load => \$opts{load}, copy => \$opts{copy},
 );
 
 ( -d $opts{dir}) or &mkpath ($opts{dir});
 
 my $F90 = shift;
 
-my $doc = &Fxtran::fxtran (location => $F90);
+my $doc = &Fxtran::fxtran (location => $F90, fopts => [qw (-line-length 800)]);
 
 if ($opts{types})
   {
-    &process_types ($doc);
+    &process_types ($doc, \%opts);
   }
 
 if ($opts{vars})
   {
-    &process_vars ($doc);
+    &process_vars ($doc, \%opts);
   }
 

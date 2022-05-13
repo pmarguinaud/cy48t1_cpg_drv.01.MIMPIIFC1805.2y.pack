@@ -40,4 +40,5 @@ fypp/*.F90
 *_openmp.F90
 *_parallel.F90
 *.svg
-
+ddrhook*.txt
+src/local/arpifs/module_util/

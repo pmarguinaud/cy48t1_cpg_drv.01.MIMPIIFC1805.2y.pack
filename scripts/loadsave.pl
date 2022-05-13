@@ -8,11 +8,10 @@ use Fxtran;
 use Getopt::Long;
 use File::Path;
 
-my %opts = ('dir' => 'src/local/ifsaux/module', skip => [], types => 0, vars => 0);
 
 sub process_decl
 {
-  my ($en_decl, $sname, $prefix, $BODY_SAVE, $BODY_LOAD, $BODY_COPY, $U, $J, $L, $B) = @_;
+  my ($opts, $en_decl, $sname, $prefix, $BODY_SAVE, $BODY_LOAD, $BODY_COPY, $U, $J, $L, $B) = @_;
 
   my (@BODY_SAVE, @BODY_LOAD, @BODY_COPY);
   my (%U, %J, %L, %B);
@@ -27,7 +26,7 @@ sub process_decl
 
   my ($name) = &f ('.//f:EN-N/f:N/f:n/text ()', $en_decl, 1);
   
-  my $skip = grep { "$sname$name" eq $_ } @{ $opts{skip} };
+  my $skip = grep { "$sname$name" eq $_ } @{ $opts->{skip} };
 
   if ($skip)
     {
@@ -197,7 +196,7 @@ sub process_types
       my @en_decl = &f ('.//f:EN-decl', $tconst);
       for my $en_decl (@en_decl)
         {
-          &process_decl ($en_decl, "$tname%", 'YD%', \@BODY_SAVE, \@BODY_LOAD, \@BODY_COPY, \%U, \%J, \%L, \%B);
+          &process_decl ($opts, $en_decl, "$tname%", 'YD%', \@BODY_SAVE, \@BODY_LOAD, \@BODY_COPY, \%U, \%J, \%L, \%B);
         }
   
       my $DECL_SAVE = '';
@@ -270,7 +269,7 @@ EOF
 
       if ($opts->{save})
         {
-          &w ("$opts{dir}/save_${n}_mod.F90", << "EOF");
+          &w ("$opts->{dir}/save_${n}_mod.F90", << "EOF");
 MODULE SAVE_${name}_MOD
 
 USE $mod, ONLY : $name
@@ -288,7 +287,7 @@ EOF
         }
       if ($opts->{load})
         {
-          &w ("$opts{dir}/load_${n}_mod.F90", << "EOF");
+          &w ("$opts->{dir}/load_${n}_mod.F90", << "EOF");
 MODULE LOAD_${name}_MOD
 
 USE $mod, ONLY : $name
@@ -306,7 +305,7 @@ EOF
         }
       if ($opts->{copy})
         {
-          &w ("$opts{dir}/copy_${n}_mod.F90", << "EOF");
+          &w ("$opts->{dir}/copy_${n}_mod.F90", << "EOF");
 MODULE COPY_${name}_MOD
 
 USE $mod, ONLY : $name
@@ -328,7 +327,7 @@ EOF
 
 sub process_vars
 {
-  my $doc = shift;
+  my ($doc, $opts) = @_;
 
   my ($mod) = &f ('.//f:module-stmt/f:module-N/f:N/f:n/text ()', $doc);
   
@@ -342,7 +341,7 @@ sub process_vars
   
   for my $en_decl (@en_decl)
     {
-      &process_decl ($en_decl, '', '', \@BODY_SAVE, \@BODY_LOAD, \%U, \%J, \%L, \%B);
+      &process_decl ($opts, $en_decl, '', '', \@BODY_SAVE, \@BODY_LOAD, \%U, \%J, \%L, \%B);
     }
 
   my ($CONTAINS_SAVE) = ('');
@@ -401,7 +400,7 @@ EOF
   
   my $n = lc ($mod);
 
-  &w ("$opts{dir}/save_${n}_mod.F90", << "EOF");
+  &w ("$opts->{dir}/save_${n}_mod.F90", << "EOF");
 MODULE SAVE_${mod}_MOD
 
 USE $mod
@@ -413,7 +412,7 @@ $CONTAINS_SAVE
 END MODULE
 EOF
 
-  &w ("$opts{dir}/load_${n}_mod.F90", << "EOF");
+  &w ("$opts->{dir}/load_${n}_mod.F90", << "EOF");
 MODULE LOAD_${mod}_MOD
 
 USE $mod
@@ -426,6 +425,8 @@ END MODULE
 EOF
 
 }
+
+my %opts = ('dir' => 'src/local/ifsaux/module', skip => [], types => 0, vars => 0);
 
 &GetOptions
 (

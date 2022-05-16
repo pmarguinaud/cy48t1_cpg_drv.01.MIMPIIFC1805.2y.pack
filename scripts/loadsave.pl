@@ -128,7 +128,7 @@ sub process_decl
       push @BODY_LOAD, ('  ' x scalar (@ss)) 
                    . "CALL LOAD (KLUN, $prefix$name" . $J . ")\n";
       push @BODY_COPY, ('  ' x scalar (@ss)) 
-                   . "CALL COPY ($prefix$name" . $J . ")\n";
+                   . "CALL COPY ($prefix$name" . $J . ", LDCREATED=.TRUE.)\n";
       push @BODY_SIZE, ('  ' x scalar (@ss))
                    . "ISIZE = SIZE ($prefix$name" . $J . ", CDPATH//'%$name', $LDPRINT)\n", 
                      "JSIZE = JSIZE + ISIZE\n",
@@ -227,7 +227,17 @@ sub process_types
   
       my (@BODY_SAVE, @BODY_LOAD, @BODY_COPY, @BODY_SIZE);
 
+      push @BODY_COPY, "LLCREATED = .FALSE.\n",
+                       "IF (PRESENT (LDCREATED)) THEN\n",
+                       "LLCREATED = LDCREATED\n",
+                       "ENDIF\n",
+                       "IF (.NOT. LLCREATED) THEN\n",
+                       "!\$acc enter data create (YD)\n",
+                       "!\$acc update device (YD)\n",
+                       "ENDIF\n";
+                       
       push @BODY_SIZE, 'KSIZE = 0';
+     
     
       my (%U, %J, %L, %B);
   
@@ -239,7 +249,7 @@ sub process_types
   
       my $DECL_SAVE = '';
       my $DECL_LOAD = '';
-      my $DECL_COPY = '';
+      my $DECL_COPY = "LOGICAL :: LLCREATED\n";
       my $DECL_SIZE = "INTEGER*8 :: ISIZE, JSIZE\n";
   
       if (%J)
@@ -288,10 +298,11 @@ TYPE ($name), INTENT (OUT) :: YD
 EOF
 
       $CONTAINS_COPY .= << "EOF";
-SUBROUTINE COPY_$name (YD)
+SUBROUTINE COPY_$name (YD, LDCREATED)
 $USE_COPY
 IMPLICIT NONE
 TYPE ($name), INTENT (IN) :: YD
+LOGICAL, OPTIONAL, INTENT (IN) :: LDCREATED
 EOF
 
       $CONTAINS_SIZE .= << "EOF";

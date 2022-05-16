@@ -163,7 +163,8 @@ do
        --skip TEPHY%YSURF \
        --skip TRADIATION%RAD_CONFIG \
        --skip TECUCONVCA%YD_RANDOM_STREAM_CA \
-       --dir src/local/arpifs/module_util --load --save --types tmp/$b
+       --dir src/local/arpifs/module_util \
+       --save --load --size --copy tmp/$b
     set +x
     break
     fi

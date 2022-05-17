@@ -1,0 +1,153 @@
+SUBROUTINE SUQNORM(YDGEOMETRY,YDML_GCONF,YDDYN,PQNORM1,PQNORM2,PQNORM3,&
+                &  PQNORM_ADJUST_VOR,&
+                &  PQNORM_ADJUST_DIV,&
+                &  PQNORM_ADJUST_T,&
+                &  PQNORM_ADJUST_Q,&
+                &  PQNORM_ADJUST_LNSP)
+
+!     Purpose.
+!     --------
+!               Define the metric for digital filter Jc
+
+!**   Interface.
+!     ----------
+!        *CALL* *SUQNORM (PQNORM1,PQNORM2,PQNORM3, &
+!               &  PQNORM_ADJUST_VOR, &
+!               &  PQNORM_ADJUST_DIV, &
+!               &  PQNORM_ADJUST_T, &
+!               &  PQNORM_ADJUST_Q, &
+!               &  PQNORM_ADJUST_LNSP)
+
+!      Explicit arguments :
+!      --------------------
+!           PQNORM1,PQNORM2,PQNORM3 (out) - Weights defining the norm
+!           PQNORM_ADJUST_VOR  (in) - Factor adjusting the vorticity weight
+!           PQNORM_ADJUST_DIV  (in) - Factor adjusting the divergence weight
+!           PQNORM_ADJUST_T    (in) - Factor adjusting the temperature weight
+!           PQNORM_ADJUST_Q    (in) - Factor adjusting the humidity weight
+!           PQNORM_ADJUST_LNSP (in) - Factor adjusting the LNSP weight
+
+!     Reference.
+!     ----------
+!     Author.
+!     -------
+!        P. Gauthier   *CNRM/GMAP*
+
+!     Modifications.
+!     --------------
+!        Original : 98-10-21
+!        M.Hamrud      01-Oct-2003 CY28 Cleaning
+!        Y.Tremolet    17-Nov-2008 Jc-DFI diagnostics in outer loop
+!        M.Fisher      15-Nov-2011 Added PQNORM_ADJUST_* weights
+!     ------------------------------------------------------------------
+
+USE MODEL_GENERAL_CONF_MOD , ONLY : MODEL_GENERAL_CONF_TYPE
+USE GEOMETRY_MOD , ONLY : GEOMETRY
+USE PARKIND1 , ONLY : JPIM, JPRB
+USE YOMHOOK  , ONLY : LHOOK, DR_HOOK
+USE YOMCT0   , ONLY : LELAM
+USE YOMLUN   , ONLY : NULOUT
+USE YOMDYN   , ONLY : TDYN
+USE YOMCST   , ONLY : RCPD, RLVTT
+USE YOMLCZ   , ONLY : COEQTERM
+USE YOMVERT  , ONLY : VP00
+
+IMPLICIT NONE
+
+TYPE(GEOMETRY)    ,INTENT(IN)    :: YDGEOMETRY
+TYPE(TDYN)        ,INTENT(INOUT) :: YDDYN
+TYPE(MODEL_GENERAL_CONF_TYPE),INTENT(INOUT):: YDML_GCONF
+REAL(KIND=JPRB)   ,INTENT(OUT)   :: PQNORM1(YDGEOMETRY%YRDIMV%NFLEVL,2) 
+REAL(KIND=JPRB)   ,INTENT(OUT)   :: PQNORM2(0:YDGEOMETRY%YRDIM%NSMAX,YDML_GCONF%YRDIMF%NFD2D) 
+REAL(KIND=JPRB)   ,INTENT(OUT)   :: PQNORM3(YDGEOMETRY%YRDIMV%NFLSUR,0:YDGEOMETRY%YRDIM%NSMAX,YDML_GCONF%YRDIMF%NS3D) 
+
+REAL(KIND=JPRB)   ,INTENT(IN)   :: PQNORM_ADJUST_VOR
+REAL(KIND=JPRB)   ,INTENT(IN)   :: PQNORM_ADJUST_DIV
+REAL(KIND=JPRB)   ,INTENT(IN)   :: PQNORM_ADJUST_T
+REAL(KIND=JPRB)   ,INTENT(IN)   :: PQNORM_ADJUST_Q
+REAL(KIND=JPRB)   ,INTENT(IN)   :: PQNORM_ADJUST_LNSP
+
+!     Local variables
+
+INTEGER(KIND=JPIM) :: JLEV, ILEV, JN
+REAL(KIND=JPRB) :: ZT, ZHU, ZPP
+REAL(KIND=JPRB) :: ZINVLAP
+REAL(KIND=JPRB) :: ZHOOK_HANDLE
+
+IF (LHOOK) CALL DR_HOOK('SUQNORM',0,ZHOOK_HANDLE)
+ASSOCIATE(YDDIM=>YDGEOMETRY%YRDIM,YDDIMV=>YDGEOMETRY%YRDIMV,   YDMP=>YDGEOMETRY%YRMP,  YDLAP=>YDGEOMETRY%YRLAP, &
+& YDVAB=>YDGEOMETRY%YRVAB,   YDELAP=>YDGEOMETRY%YRELAP,    YGFL=>YDML_GCONF%YGFL,   YDDIMF=>YDML_GCONF%YRDIMF   &
+& )
+
+ASSOCIATE(YQ=>YGFL%YQ,   NSMAX=>YDDIM%NSMAX,   LSPT=>YDDIMF%LSPT, NFLEVL=>YDDIMV%NFLEVL, SIDELP=>YDDYN%SIDELP, &
+& SIRPRG=>YDDYN%SIRPRG, SIRPRN=>YDDYN%SIRPRN,   SITR=>YDDYN%SITR,   RLAPIN=>YDLAP%RLAPIN,   MYLEVS=>YDMP%MYLEVS&
+& )
+WRITE(NULOUT,9001)'SUQNORM- Initializing the inner product'&
+ & ,'used to define the Jc based on the DFI'  
+9001 FORMAT(//,12X,A,1X,A)
+
+PQNORM3(:,:,:) = 0.0_JPRB
+PQNORM2(:,:)   = 0.0_JPRB
+PQNORM1(:,:)   = 0.0_JPRB
+
+!     Defining the Q-norm used for the digital filter
+
+COEQTERM=0.0_JPRB
+
+DO JN = 0, NSMAX
+     IF (LELAM) THEN
+   ZINVLAP= YDELAP%RLEPINN(JN+1)
+  ELSE
+   ZINVLAP= RLAPIN(JN)
+  ENDIF
+  DO JLEV = 1,NFLEVL
+    ILEV = MYLEVS(JLEV)
+    ZT   = RCPD*SIDELP(ILEV)/(SITR*2.0_JPRB)
+    ZHU  = COEQTERM*((RLVTT**2)/(RCPD*SITR))*SIDELP(ILEV)/2.0_JPRB
+    PQNORM3(JLEV,JN,2) = -PQNORM_ADJUST_DIV*ZINVLAP*SIDELP(ILEV)/2.0_JPRB
+    PQNORM3(JLEV,JN,1) = -PQNORM_ADJUST_VOR*ZINVLAP*SIDELP(ILEV)/2.0_JPRB
+    IF(LSPT) THEN
+      PQNORM3(JLEV,JN,3) = PQNORM_ADJUST_T*ZT
+    ENDIF
+    IF(YQ%LSP) THEN
+      PQNORM3(JLEV,JN,4) = PQNORM_ADJUST_Q*ZHU
+    ENDIF
+  ENDDO
+ENDDO
+
+!     Surface pressure component
+
+DO JN = 0, NSMAX
+  PQNORM2(JN,1) = PQNORM_ADJUST_LNSP*SIRPRG/SIRPRN/2.0_JPRB
+ENDDO
+
+JLEV = NFLEVL/2
+ILEV = MYLEVS(JLEV)
+ZPP    = (YDVAB%VALH(ILEV) +YDVAB%VBH(ILEV))*VP00/100._JPRB
+WRITE(NULOUT,9003)JLEV,ILEV,ZPP
+9003 FORMAT(//,'SUQNORM- printing the coefficients of the norm'&
+ & ,4X,'No. of local level: ',I2,3X,'No. of global level: ',I2&
+ & ,'Approximate pressure at that level. p = ',F6.1,' hPa'&
+ & ,/2X,'n',6X,'Vorticity',3X,'Divergence',3X,'Temperature',3X&
+ & ,'Humidity')  
+DO JN = 0, NSMAX
+  IF(YQ%LSP) THEN
+    WRITE(NULOUT,9004) JN, PQNORM3(JLEV,JN,1),PQNORM3(JLEV,JN,2)&
+     & ,PQNORM3(JLEV,JN,3),PQNORM3(JLEV,JN,4)  
+  ELSE
+    WRITE(NULOUT,9002) JN, PQNORM3(JLEV,JN,1),PQNORM3(JLEV,JN,2)&
+     & ,PQNORM3(JLEV,JN,3)  
+  ENDIF
+ENDDO
+
+DO JLEV=1,NFLEVL
+PQNORM1(JLEV,:)=SIDELP(JLEV)/2.0_JPRB
+ENDDO
+
+9002 FORMAT(1X,I3,3X,3(4X,G12.6))
+9004 FORMAT(1X,I3,3X,4(4X,G12.6))
+
+END ASSOCIATE
+END ASSOCIATE
+IF (LHOOK) CALL DR_HOOK('SUQNORM',1,ZHOOK_HANDLE)
+END SUBROUTINE SUQNORM

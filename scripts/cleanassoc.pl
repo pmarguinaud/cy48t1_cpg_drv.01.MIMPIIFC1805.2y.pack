@@ -17,6 +17,7 @@ my @assoc = &F ('.//associate-construct', $d);
 for my $assoc (@assoc)
   {
     my $stmt = $assoc->firstChild;
+    &Fxtran::expand ($stmt);
 
     my @N = &F ('./associate-LT/associate/associate-N', $stmt);
 
@@ -26,35 +27,11 @@ for my $assoc (@assoc)
         my @expr = &F ('.//named-E[string(N)="?"]', $n, $d);
         next if (@expr);
         my $associate = $N->parentNode;
-        if ($associate->nextSibling)
-          {
-            $associate->nextSibling->unbindNode;
-            $associate->unbindNode;
-          }
-        elsif ($associate->previousSibling)
-          {
-            $associate->previousSibling->unbindNode;
-            $associate->unbindNode;
-          }
+        &Fxtran::removeListElement ($associate);
       }
 
-  }
+    &Fxtran::fold ($stmt);
 
-for my $cnt (&F ('.//cnt', $d))
-  {
-    next unless ($cnt->previousSibling);
-    next unless ($cnt->nextSibling);
-    next unless ($cnt->previousSibling->nodeName eq '#text');
-    next unless ($cnt->previousSibling->data =~ m/^\s*\n\s*$/o);
-    next unless ($cnt->nextSibling->nodeName eq '#text');
-    next unless ($cnt->nextSibling->data =~ m/^\s*$/o);
-    next unless ($cnt->nextSibling->nextSibling->nodeName eq 'cnt');
-    my $sp = $cnt->previousSibling->data;
-    $sp =~ s/\n\s*$//o;
-    $cnt->previousSibling->setData ($sp);
-    $cnt->nextSibling->nextSibling->unbindNode;
-    $cnt->nextSibling->unbindNode;
-    $cnt->unbindNode;
   }
 
 

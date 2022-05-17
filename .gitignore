@@ -43,3 +43,4 @@ fypp/*.F90
 ddrhook*.txt
 src/local/arpifs/module_util/
 ld_*
+tmp/*

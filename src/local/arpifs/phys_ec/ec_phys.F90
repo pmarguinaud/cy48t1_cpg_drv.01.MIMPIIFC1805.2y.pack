@@ -1,0 +1,827 @@
+#ifdef RS6K        
+@PROCESS NOCHECK
+#endif
+SUBROUTINE EC_PHYS(YDGEOMETRY,YDVARS,YDGMV,YDSURF,YDMODEL,CDCONF,DIMS,&
+ & U, V, T, SP, Q, I, L, A, PGFLT1,PGFL,PGFLSLP,PCONVCTY,PHYS_MWAVE,&
+ & PAUX, PSURF, PRAD,&
+ & PPERT, FLUX, ZDIAG, ZDDHS, ZAUXL, ZSURFL, ZLLKEYS, ZPERTL, PSLPHY9,&
+ & PSAVTEND, PTRAJ_PHYS,&
+ & PSMOS_OBS_BUF,PSMOS_TB_BUF,PSMOS_ANGLE,PSMOS_FARAD,PSMOS_GEOMET,&
+ & KSMOS_BUF,&
+ & STATE_T0, TENDENCY_DYN, TENDENCY_CML,&
+ & STATE_TMP, TENDENCY_TMP, TENDENCY_VDF, TENDENCY_LOC, TENDENCY_PHY)
+
+!**** *EC_PHYS* - ECMWF PHYSICS
+
+!     Purpose.
+!     --------
+!           Grid point calculations lagged part.
+
+!**   Interface.
+!     ----------
+!        *CALL* *EC_PHYS*
+
+!        Explicit arguments :
+!        --------------------
+!        CDCONF    : configuration of work
+!        --- other dummy : missing some comments ---
+
+!        Implicit arguments :
+!        --------------------
+
+!     Method.
+!     -------
+!        See documentation
+
+!     Externals.
+!     ----------
+!        Called by EC_PHYS_DRV and EC_PHYSG.
+
+!     Reference.
+!     ----------
+
+!     Author.
+!     -------
+!        Deborah Salmond *ECMWF*
+
+!     Modifications.
+!     --------------
+!        A. Geer       15-Apr-2008  Multiple sensors for rainy 4D-Var
+!   N. Wedi and K. Yessad (Jan 2008): different dev for NH model and PC scheme
+!        A. Beljaars   27-Mar-2009  WST instead of ZIDL to wave model
+!        A. Geer       01-Oct-2008  Rainy 4D-Var tidying and centralised initialisation
+!      GMozdzynski/JJMorcrette 20090128 bugfix dynamical extra fields
+!        Y. Takaya     01-Feb-2009  Ocean mixed layer fields
+!        P. de Rosnay  13- Feb-2009 Offline Jacobians in surface analysis SEKF
+!        K. Yessad (March 2009): correct false comments for LRWSDLG=T
+!        W. Bell       06-Mar-2009  Add azimuthal angles for Windsat
+!        A. Geer       10-Jun-2009  Rainy 4D-Var passive mode and diagnostics
+!        F. Karbou     16-Dec-2009  Surface emissivity estimation
+!        H. Hersbach   04-Dec-2009 10-m neutral wind and friction velocity
+!        J. Munoz Sabater (Oct.2009) Introduced SMOS data treatment
+!        S. Boussetta/G.Balsamo      May 2009   (Add variable LAI) 
+!        JJMorcrette   20091201     Total and clear-sky direct SW radiation flux at surface 
+!        R. Forbes     01-Mar-2010  Adding TCRW,TCSW
+!        JJMorcrette   20100212     PP of CBASE, 0DEGL and VISIH
+!        T. Wilhelmsson (25 Mar 2010) Add 6 hourly min/max fields
+!        K. Yessad (Jan 2011): remove useless overdimension.
+!        A. Geer       21-Sep-2010  All-sky AMSU-A
+!        P. Lopez      07-Oct-2010 Added handling of ground-based radar precip data (GBRAD)
+!        G.Balsamo/S.Boussetta 17-Apr-2011 Added land carbon dioxide
+!        P. Bechtold   09-Aug-2011  PP of CIN, CONVIND
+!        M. Ahlgrimm  31-Oct-2011 Add rain, snow and PEXTRA to DDH output
+!        M. Ahlgrimm  31-Oct-2011 Clear-sky downward radiation at surface 
+!        L. Jones      26-Oct-2011  Tidied MACC fluxes in CALLPAR call
+!        A. Geer       13-Jan-2012  Removed all-sky (MWAVE) obs operator
+!        P. Bechtold   24-Apr-2012  Replace hard coded RG RD RETV RCPD by general values for wave
+!        A. Inness     28-Mar-2012  Add total column chemistry fields
+!        J. Bidlot     19-Feb-2013  switch from 2m specific humidity to lowest model level value for surface air density
+!        JJMorcrette   20130213     PP optical depths GEMS/MACC aerosols
+!        P. Lopez      10-Aug-2012  Added rain gauge assimilation
+!        F. Vana       15-Mar-2013  New detaflow with derive structures
+!        PdeRosnay     April-2013   SEKF code cleaning
+!        F. Vana       28-Nov-2013 : Redesigned trajectory handling
+!        K. Yessad (July 2014): Move some variables.
+!        J. Munoz-Sabater Nov-2014 : Mixed-layer lake temperature introduced in SMOS forward operator
+!        R. Hogan      24-Apr-2015: Solar zenith angle computed in cos_sza
+!        A. Geer       04-Jan-2017 : Remove rainy 1D-Var code
+!        P. Lopez      30-May-2017 : Moved ground-based radars and rain-gauges from model to obs part.
+!        E.Dutra/G.Arduini  Jan 2018: Snow multi-layer, compute total snow mass 
+!        K. Yessad (Feb 2018): remove deep-layer formulations.
+!        P. Bechtold   06-Jan-2018 : Add zonal and meridional gradients of T,U,V
+!        M. Lange      10-Jan-2020 : Adding VARIABLE and FIELD types in EC-physics and surface (IFS-1175)
+!        H Petithomme (Dec 2020): optimisation on gphpre
+! End Modifications
+!     -----------------------------------------------------------------------------
+
+USE TYPE_MODEL         , ONLY : MODEL
+USE GEOMETRY_MOD       , ONLY : GEOMETRY
+USE SURFACE_FIELDS_MIX , ONLY : TSURF, GPPOPER
+USE FIELD_VARIABLES_MOD, ONLY : FIELD_VARIABLES
+USE VARIABLE_MODULE    , ONLY : VARIABLE_2D, VARIABLE_3D
+USE YOMGMV             , ONLY : TGMV
+USE PARKIND1           , ONLY : JPIM, JPRB
+USE YOMHOOK            , ONLY : LHOOK, DR_HOOK
+USE YOMCT0             , ONLY : NFRCO, N6BINS, LTWOTL, LSCREEN
+USE YOMCT3             , ONLY : NSTEP
+USE YOMLUN             , ONLY : NULOUT
+USE YOMCST             , ONLY : RG, RD, RETV, RCPD
+USE TRAJECTORY_MOD     , ONLY : LTRAJSAVE, LTRAJPHYS
+USE YOMANCS            , ONLY : RMDI
+USE YOMSMOS            , ONLY : LESMOS_ACTIVE, LESMOS_SEKF, SMOS_TB_TYPE, NPOL_MAX,&
+ &                              NANG_MAX, SMOS_USE, SMOS_SEA, SMOS_PHYS_TYPE
+USE YOMRAINGG          , ONLY : RACCPR3
+USE YOMSEKF            , ONLY : LUSEKF_REF
+USE INTDYN_MOD         , ONLY : YYTXYB
+USE YOMPHYDER          , ONLY : DIMENSION_TYPE, AUX_TYPE, SURF_AND_MORE_TYPE, PERTURB_TYPE,&
+  &                             MODEL_STATE_TYPE, AUX_RAD_TYPE, AUX_DIAG_TYPE, AUX_DIAG_LOCAL_TYPE, &
+  &                             FLUX_TYPE, DDH_SURF_TYPE, SURF_AND_MORE_LOCAL_TYPE, KEYS_LOCAL_TYPE, &
+  &                             PERTURB_LOCAL_TYPE
+USE YOMTRAJ            , ONLY : TRAJ_PHYS_TYPE, LPRTTRAJ
+USE YOE_PHYS_MWAVE     , ONLY : N_PHYS_MWAVE
+USE ECPHYS_STATE_TYPE_MOD, ONLY: STATE_TYPE
+
+!     -----------------------------------------------------------------------------
+
+IMPLICIT NONE
+
+TYPE(GEOMETRY)           ,INTENT(IN)    :: YDGEOMETRY
+TYPE(FIELD_VARIABLES)    ,INTENT(INOUT) :: YDVARS
+TYPE(TGMV)               ,INTENT(INOUT) :: YDGMV
+TYPE(TSURF)              ,INTENT(INOUT) :: YDSURF
+TYPE(MODEL)              ,INTENT(INOUT) :: YDMODEL
+CHARACTER(LEN=1)         ,INTENT(IN)    :: CDCONF 
+TYPE (DIMENSION_TYPE)    ,INTENT(INOUT) :: DIMS
+TYPE(VARIABLE_3D)        ,INTENT(INOUT) :: U
+TYPE(VARIABLE_3D)        ,INTENT(INOUT) :: V
+TYPE(VARIABLE_3D)        ,INTENT(INOUT) :: T
+TYPE(VARIABLE_2D)        ,INTENT(INOUT) :: SP
+TYPE(VARIABLE_3D)        ,INTENT(INOUT) :: Q
+TYPE(VARIABLE_3D)        ,INTENT(INOUT) :: I
+TYPE(VARIABLE_3D)        ,INTENT(INOUT) :: L
+TYPE(VARIABLE_3D)        ,INTENT(INOUT) :: A
+REAL(KIND=JPRB)          ,INTENT(INOUT) :: PGFLT1(DIMS%KLON,DIMS%KLEV,YDMODEL%YRML_GCONF%YGFL%NDIM1) 
+REAL(KIND=JPRB)          ,INTENT(INOUT) :: PGFL(DIMS%KLON,DIMS%KLEV,YDMODEL%YRML_GCONF%YGFL%NDIM) 
+REAL(KIND=JPRB)          ,INTENT(OUT)   :: PGFLSLP(DIMS%KLON,DIMS%KLEV,YDMODEL%YRML_GCONF%YGFL%NDIMSLP)
+REAL(KIND=JPRB)          ,INTENT(INOUT) :: PCONVCTY(DIMS%KLON,DIMS%KLEV)
+REAL(KIND=JPRB)          ,INTENT(INOUT) :: PHYS_MWAVE(DIMS%KLON,DIMS%KLEV,N_PHYS_MWAVE) 
+TYPE (AUX_TYPE)          ,INTENT(INOUT) :: PAUX
+TYPE (SURF_AND_MORE_TYPE),INTENT(INOUT) :: PSURF
+TYPE (AUX_RAD_TYPE)      ,INTENT(INOUT) :: PRAD
+TYPE (PERTURB_TYPE)      ,INTENT(INOUT) :: PPERT
+TYPE (FLUX_TYPE)         ,INTENT(INOUT) :: FLUX
+TYPE (AUX_DIAG_TYPE)     ,INTENT(INOUT) :: ZDIAG
+TYPE (DDH_SURF_TYPE)     ,INTENT(INOUT) :: ZDDHS
+TYPE (AUX_DIAG_LOCAL_TYPE),INTENT(INOUT):: ZAUXL
+TYPE (SURF_AND_MORE_LOCAL_TYPE),INTENT(INOUT) :: ZSURFL
+TYPE (KEYS_LOCAL_TYPE)   ,INTENT(INOUT) :: ZLLKEYS
+TYPE (PERTURB_LOCAL_TYPE),INTENT(INOUT) :: ZPERTL
+TYPE (MODEL_STATE_TYPE)  ,INTENT(IN)    :: PSLPHY9
+REAL(KIND=JPRB)          ,INTENT(INOUT) :: PSAVTEND (DIMS%KLON,DIMS%KLEV,YDMODEL%YRML_PHY_G%YRSLPHY%NVTEND)
+TYPE (TRAJ_PHYS_TYPE)    ,INTENT(INOUT) :: PTRAJ_PHYS  ! not to coincide with MF part
+REAL(KIND=JPRB)          ,INTENT(IN)    :: PSMOS_OBS_BUF(YDGEOMETRY%YRGEM%NGPTOT,0:NPOL_MAX-1,NANG_MAX)
+REAL(KIND=JPRB)          ,INTENT(IN)    :: PSMOS_ANGLE(YDGEOMETRY%YRGEM%NGPTOT,0:NPOL_MAX-1,NANG_MAX)
+REAL(KIND=JPRB)          ,INTENT(IN)    :: PSMOS_FARAD(YDGEOMETRY%YRGEM%NGPTOT,0:NPOL_MAX-1,NANG_MAX)
+REAL(KIND=JPRB)          ,INTENT(IN)    :: PSMOS_GEOMET(YDGEOMETRY%YRGEM%NGPTOT,0:NPOL_MAX-1,NANG_MAX)
+REAL(KIND=JPRB)          ,INTENT(OUT)   :: PSMOS_TB_BUF(YDGEOMETRY%YRGEM%NGPTOT,0:NPOL_MAX-1,NANG_MAX)
+INTEGER(KIND=JPIM)       ,INTENT(INOUT) :: KSMOS_BUF(YDGEOMETRY%YRGEM%NGPTOT,0:NPOL_MAX-1,NANG_MAX)
+TYPE (STATE_TYPE)        ,INTENT(INOUT) :: STATE_T0
+TYPE (STATE_TYPE)        ,INTENT(INOUT) :: TENDENCY_DYN
+TYPE (STATE_TYPE)        ,INTENT(INOUT) :: TENDENCY_CML
+TYPE (STATE_TYPE)        ,INTENT(INOUT) :: STATE_TMP
+TYPE (STATE_TYPE)        ,INTENT(INOUT) :: TENDENCY_TMP
+TYPE (STATE_TYPE)        ,INTENT(INOUT) :: TENDENCY_VDF
+TYPE (STATE_TYPE)        ,INTENT(INOUT) :: TENDENCY_LOC
+TYPE (STATE_TYPE)        ,INTENT(INOUT) :: TENDENCY_PHY(DIMS%K2DSDT)
+
+!     ------------------------------------------------------------------
+REAL(KIND=JPRB), TARGET :: ZXYB9(DIMS%KLON,DIMS%KLEV,YYTXYB%NDIM)
+REAL(KIND=JPRB) :: ZTENQD(DIMS%KLON,DIMS%KLEV) 
+
+! ZR9    : (DIMS%KLON,DIMS%KLEV)       ; R
+
+REAL(KIND=JPRB) :: ZR9(DIMS%KLON,DIMS%KLEV)
+
+! ZPHI9  : (DIMS%KLON,0:DIMS%KLEV)     ; HALF LEVEL GEOPOTENTIAL
+! ZPHIF9 : (DIMS%KLON,  DIMS%KLEV)     ; FULL LEVEL GEOPOTENTIAL
+! ZGEOM1 : (DIMS%KLON,  DIMS%KLEV)     ; ZPHIF9-ZPHI9(:,DIMS%KLEV)
+! ZGEOMH : (DIMS%KLON,0:DIMS%KLEV)     ; ZPHI9 -ZPHI9(:,DIMS%KLEV)
+
+
+REAL(KIND=JPRB) :: ZPREC(DIMS%KLON,DIMS%KLEV)
+! Stored tendencies from dynamics
+REAL(KIND=JPRB) :: ZTENDDU(DIMS%KLON,DIMS%KLEV), ZTENDDV(DIMS%KLON,DIMS%KLEV)
+REAL(KIND=JPRB) :: ZTENDDT(DIMS%KLON,DIMS%KLEV), ZTENDDQ(DIMS%KLON,DIMS%KLEV)
+
+INTEGER(KIND=JPIM) :: JLEV, JL, JK, JROF, IPOL, IANG, JFLD, JTILE4WAM
+INTEGER(KIND=JPIM) :: JBIN, IN6BINS, I6BIN, I6PREVBIN, I6BINLEN
+
+LOGICAL :: LLFSTEP, LLMLPP, LLRS6, LLACCRS
+
+REAL(KIND=JPRB) :: ZCONS_PJ, ZKAPPA_PJ, ZGZNLEV_PJ, ZNLEV_PJ
+REAL(KIND=JPRB) :: ZIPBL_PJ, Z1D3_PJ 
+REAL(KIND=JPRB) :: ZRHO_A, ZTAU_U, ZTAU_V, ZUST, ZLOG 
+REAL(KIND=JPRB) :: ZRHO_A_M1
+REAL(KIND=JPRB) :: ZROWQ, ZROWT, ZBUO, ZWST
+
+!*     Local arrays for SMOS L-band radiances assimilation
+TYPE (SMOS_TB_TYPE) :: YL_SMOS_TB  (DIMS%KLON)
+
+!LLL INTEGER(KIND=JPIM) :: IACCL, IACC
+
+!*     Local arrays for level-1c SMOS radiances assimilation
+INTEGER(KIND=JPIM) :: IPROM
+REAL (KIND=JPRB), TARGET :: ZPHYSMOS_SM   (DIMS%KLON,DIMS%KLEVS)
+REAL (KIND=JPRB), TARGET :: ZPHYSMOS_ST   (DIMS%KLON,DIMS%KLEVS)
+
+TYPE (SMOS_PHYS_TYPE) :: YL_SMOS_PHYS (DIMS%KLON)
+
+REAL(KIND=JPRB) :: ZHOOK_HANDLE
+
+!     ------------------------------------------------------------------
+
+#include "callpar.intfb.h"
+#include "phys_arrays_ini.intfb.h"
+#include "phys_arrays_fin.intfb.h"
+#include "smos_screen.intfb.h"
+#include "cumcoe.intfb.h"
+#include "gpgeo.intfb.h"
+#include "gphpre.intfb.h"
+#include "gprcp.intfb.h"
+#include "postphy_layer.intfb.h"
+#include "store_sekf_cv.intfb.h"
+#include "store_traj_phys_layer.intfb.h"
+#include "update_fields.intfb.h"
+#include "cos_sza.intfb.h"
+
+!     ------------------------------------------------------------------
+
+IF (LHOOK) CALL DR_HOOK('EC_PHYS',0,ZHOOK_HANDLE)
+ASSOCIATE(YDDIM=>YDGEOMETRY%YRDIM,YDGEM=>YDGEOMETRY%YRGEM, YDVAB=>YDGEOMETRY%YRVAB, YDRIP=>YDMODEL%YRML_GCONF%YRRIP,        &
+& YDSLPHY=>YDMODEL%YRML_PHY_G%YRSLPHY,YDERIP=>YDMODEL%YRML_PHY_RAD%YRERIP,   YDEWCOU=>YDMODEL%YREWCOU,                      &
+& YDPHY2=>YDMODEL%YRML_PHY_MF%YRPHY2,   YGFL=>YDMODEL%YRML_GCONF%YGFL,YDEPHY=>YDMODEL%YRML_PHY_EC%YREPHY,                   &
+& YDNCL=>YDMODEL%YRML_PHY_SLIN%YRNCL,   YDPHNC=>YDMODEL%YRML_PHY_SLIN%YRPHNC,  RMFADVW=>YDMODEL%YRML_PHY_EC%YRECUMF%RMFADVW,&
+& RMFADVWDD=>YDMODEL%YRML_PHY_EC%YRECUMF%RMFADVWDD)
+
+ASSOCIATE(NERA40=>YGFL%NERA40, YERA40=>YGFL%YERA40, YI=>YGFL%YI,   YL=>YGFL%YL, LEGBRAD=>YDEPHY%LEGBRAD,                                  &
+& LERAINGG=>YDEPHY%LERAINGG,   LFPOS_EC_PHYS=>YDEPHY%LFPOS_EC_PHYS, NPRACCL=>YDEPHY%NPRACCL,   LFPOS_ACC_RESET=>YDEPHY%LFPOS_ACC_RESET,   &
+& NATMFLX=>YDEWCOU%NATMFLX,   LWCOU=>YDEWCOU%LWCOU, LWCUR=>YDEWCOU%LWCUR, RMISSW=>YDEWCOU%RMISSW,   NGPTOT=>YDGEM%NGPTOT,                 &
+& LNCLIN=>YDNCL%LNCLIN,   LENCLD2=>YDPHNC%LENCLD2, LETRAJP=>YDPHNC%LETRAJP,   NSTART=>YDRIP%NSTART, RCODEC=>YDRIP%RCODEC,                 &
+& RCOVSR=>YDRIP%RCOVSR,   RSIDEC=>YDRIP%RSIDEC, RSIVSR=>YDRIP%RSIVSR, TSTEP=>YDRIP%TSTEP,   TSPHY=>YDPHY2%TSPHY                           &
+& )
+!     ------------------------------------------------------------------
+
+!*       1.1   INITIAL COMPUTATIONS
+
+IF(NSTEP > 0) THEN
+  LLFSTEP = .FALSE.
+ELSE
+  LLFSTEP = .TRUE.
+ENDIF
+
+
+IF(LFPOS_EC_PHYS) THEN
+  LLMLPP = .TRUE.
+ELSE
+  LLMLPP = .FALSE.
+ENDIF
+
+IF(LFPOS_ACC_RESET) THEN
+  LLACCRS = .TRUE.
+ELSE
+  LLACCRS = .FALSE.
+ENDIF
+
+
+I6BINLEN  = MAX(3600,INT(TSTEP))
+IN6BINS   = 6*3600/I6BINLEN
+I6BIN     = MOD(INT(( NSTEP   *TSTEP)/I6BINLEN),IN6BINS) + 1
+I6PREVBIN = MOD(INT(((NSTEP-1)*TSTEP)/I6BINLEN),IN6BINS) + 1
+LLRS6 = (I6BIN /= I6PREVBIN)
+
+!Setup of phys space arrays
+CALL PHYS_ARRAYS_INI(YDSURF, YDEPHY, YGFL, DIMS, PAUX, ZDDHS, ZDIAG, PSURF, PRAD, FLUX)
+PAUX%PDELP => ZXYB9(:,:,YYTXYB%M_DELP)
+
+
+!*       1.    Interface to global arrays.
+!              ---------------------------
+
+!*       1.6   SURFACE FIELDS FOR PHYSICS
+
+IF(LLFSTEP .AND. .NOT. LTWOTL) THEN
+  CALL PSURF%SET9TO0()
+ENDIF
+IF(CDCONF == 'A'.OR.CDCONF == 'B')THEN
+  CALL PSURF%SET1TO9()
+ELSE
+  CALL PSURF%SET1TO0()
+ENDIF
+
+IF (LLFSTEP) THEN
+  DO JBIN=1,N6BINS
+    PSURF%GSD_VD%PMX2T6(JBIN)%P(DIMS%KIDIA:DIMS%KFDIA)   =   0.0_JPRB
+    PSURF%GSD_VD%PMN2T6(JBIN)%P(DIMS%KIDIA:DIMS%KFDIA)   = 999.0_JPRB
+    PSURF%GSD_VD%P10FG6(JBIN)%P(DIMS%KIDIA:DIMS%KFDIA)   =   0.0_JPRB
+    PSURF%GSD_VD%PMXTPR6(JBIN)%P(DIMS%KIDIA:DIMS%KFDIA)  =   0.0_JPRB
+    PSURF%GSD_VD%PMNTPR6(JBIN)%P(DIMS%KIDIA:DIMS%KFDIA)  = 999.0_JPRB
+    PSURF%GSD_VD%PMXCAP6(JBIN)%P(DIMS%KIDIA:DIMS%KFDIA)  =   0.0_JPRB
+    PSURF%GSD_VD%PMXCAPS6(JBIN)%P(DIMS%KIDIA:DIMS%KFDIA) =   0.0_JPRB
+    PSURF%GSD_VD%PLITOTA6(JBIN)%P(DIMS%KIDIA:DIMS%KFDIA) =   0.0_JPRB
+    PSURF%GSD_VD%PLICGA6(JBIN)%P(DIMS%KIDIA:DIMS%KFDIA)  =   0.0_JPRB
+  ENDDO
+ELSEIF (LLRS6) THEN
+  DO JBIN=N6BINS,2,-1
+    PSURF%GSD_VD%PMX2T6(JBIN)%P(DIMS%KIDIA:DIMS%KFDIA) = PSURF%GSD_VD%PMX2T6(JBIN-1)%P(DIMS%KIDIA:DIMS%KFDIA)
+    PSURF%GSD_VD%PMN2T6(JBIN)%P(DIMS%KIDIA:DIMS%KFDIA) = PSURF%GSD_VD%PMN2T6(JBIN-1)%P(DIMS%KIDIA:DIMS%KFDIA)
+    PSURF%GSD_VD%P10FG6(JBIN)%P(DIMS%KIDIA:DIMS%KFDIA) = PSURF%GSD_VD%P10FG6(JBIN-1)%P(DIMS%KIDIA:DIMS%KFDIA)
+    PSURF%GSD_VD%PMXTPR6(JBIN)%P(DIMS%KIDIA:DIMS%KFDIA) = PSURF%GSD_VD%PMXTPR6(JBIN-1)%P(DIMS%KIDIA:DIMS%KFDIA)
+    PSURF%GSD_VD%PMNTPR6(JBIN)%P(DIMS%KIDIA:DIMS%KFDIA) = PSURF%GSD_VD%PMNTPR6(JBIN-1)%P(DIMS%KIDIA:DIMS%KFDIA)
+    PSURF%GSD_VD%PMXCAP6(JBIN)%P(DIMS%KIDIA:DIMS%KFDIA) = PSURF%GSD_VD%PMXCAP6(JBIN-1)%P(DIMS%KIDIA:DIMS%KFDIA)
+    PSURF%GSD_VD%PMXCAPS6(JBIN)%P(DIMS%KIDIA:DIMS%KFDIA) = PSURF%GSD_VD%PMXCAPS6(JBIN-1)%P(DIMS%KIDIA:DIMS%KFDIA)
+    PSURF%GSD_VD%PLITOTA6(JBIN)%P(DIMS%KIDIA:DIMS%KFDIA) = PSURF%GSD_VD%PLITOTA6(JBIN-1)%P(DIMS%KIDIA:DIMS%KFDIA)
+    PSURF%GSD_VD%PLICGA6(JBIN)%P(DIMS%KIDIA:DIMS%KFDIA) = PSURF%GSD_VD%PLICGA6(JBIN-1)%P(DIMS%KIDIA:DIMS%KFDIA)
+  ENDDO
+ENDIF
+
+IF (NERA40 > 0) THEN
+  IF (LLFSTEP) THEN
+    DO JFLD=1,NERA40
+      PGFL(DIMS%KIDIA:DIMS%KFDIA,1:DIMS%KLEV,YERA40(JFLD)%MP)=0.0_JPRB
+    ENDDO
+  ENDIF
+ENDIF
+
+!     ------------------------------------------------------------------
+
+!*       3.   PREPARE FOR PHYSICS  COMPUTATIONS
+!             ---------------------------------
+
+!*      3.1   Compute pressure
+
+DO JROF=DIMS%KIDIA,DIMS%KFDIA
+  PAUX%PAPRS(JROF,DIMS%KLEV) = EXP(SP%PH9(JROF))
+ENDDO
+
+CALL GPHPRE(DIMS%KLON,DIMS%KLEV,DIMS%KIDIA,DIMS%KFDIA,YDVAB,PAUX%PAPRS,PXYB=ZXYB9,PRESF=PAUX%PAPRSF,&
+ & LRTGR=.FALSE.,LRPP=.FALSE.)
+
+!*      3.3   Compute R, Cp 
+
+CALL GPRCP(DIMS%KLON,DIMS%KIDIA,DIMS%KFDIA,DIMS%KLEV,PGFL=PGFL,KGFLTYP=9,PR=ZR9)
+
+!*      3.5   Integrate Hydrostatics
+
+DO JROF=DIMS%KIDIA,DIMS%KFDIA
+  PAUX%PAPHI(JROF,DIMS%KLEV) = PAUX%POROG(JROF)
+ENDDO
+
+CALL GPGEO(DIMS%KLON,DIMS%KIDIA,DIMS%KFDIA,DIMS%KLEV,&
+ & PAUX%PAPHI,PAUX%PAPHIF,T%PH9,ZR9,ZXYB9(1,1,YYTXYB%M_LNPR),ZXYB9(1,1,YYTXYB%M_ALPH),&
+ & YDGEOMETRY%YRVERT_GEOM)
+
+DO JLEV=1,DIMS%KLEV
+  DO JROF=DIMS%KIDIA,DIMS%KFDIA
+    PAUX%PGEOM1(JROF,JLEV)=PAUX%PAPHIF(JROF,JLEV)-PAUX%PAPHI(JROF,DIMS%KLEV)
+    PAUX%PGEOMH(JROF,JLEV)=PAUX%PAPHI(JROF,JLEV) -PAUX%PAPHI(JROF,DIMS%KLEV)
+  ENDDO
+ENDDO
+DO JROF=DIMS%KIDIA,DIMS%KFDIA
+  PAUX%PGEOMH(JROF,0)=PAUX%PAPHI(JROF,0)-PAUX%PAPHI(JROF,DIMS%KLEV)
+ENDDO
+
+
+!*      3.6   Astronomy.
+
+! Solar zenith angle used each model timestep
+CALL COS_SZA(YDMODEL%YRML_PHY_RAD%YRERAD, YDERIP, YDRIP,&
+           & DIMS%KIDIA, DIMS%KFDIA, YDDIM%NPROMA, PAUX%PGEMU,&
+           & PAUX%PGELAM, .FALSE., PAUX%PMU0)
+
+! Solar zenith angle used by the radiation scheme each radiation
+! timestep - strictly this shouldn't be recalculated every model
+! timestep
+CALL COS_SZA(YDMODEL%YRML_PHY_RAD%YRERAD, YDERIP, YDRIP,&
+           & DIMS%KIDIA, DIMS%KFDIA, YDDIM%NPROMA, PAUX%PGEMU,&
+           & PAUX%PGELAM, .TRUE., PAUX%PMU0M)
+
+! Solar zenith angle used by stratospheric chemistry scheme: Can become negative
+! to be able to account for photolysis in upper atmosphere before/after sunrise/sunset at earth surface.
+DO JROF=DIMS%KIDIA,DIMS%KFDIA
+  PAUX%PMU0T(JROF)=RSIDEC*PAUX%PGEMU(JROF)&
+   & -RCODEC*RCOVSR*SQRT(1.0_JPRB-PAUX%PGEMU(JROF)**2)*COS(PAUX%PGELAM(JROF))&
+   & +RCODEC*RSIVSR*SQRT(1.0_JPRB-PAUX%PGEMU(JROF)**2)*SIN(PAUX%PGELAM(JROF))
+ENDDO
+
+!*       3.7  ADIABATIC TENDENCIES AS INPUT FOR PHYSICS
+
+DO JROF=DIMS%KIDIA,DIMS%KFDIA
+  PAUX%PRS1(JROF,DIMS%KLEV) = EXP(SP%T1(JROF))
+ENDDO
+CALL GPHPRE(DIMS%KLON,DIMS%KLEV,DIMS%KIDIA,DIMS%KFDIA,YDVAB,PAUX%PRS1,PRESF=PAUX%PRSF1)
+
+!     ------------------------------------------------------------------
+
+!*       4.   CALL PHYSICS
+!             -------------
+
+!*     4.1  STORE THE MODEL TRAJECTORY AT T-DT
+
+IF  (LTRAJSAVE .AND. LTRAJPHYS .AND. LETRAJP) THEN
+
+  CALL GSTATS(15,0)
+
+  CALL STORE_TRAJ_PHYS_LAYER(YDGMV,YDSURF,YDMODEL%YRML_PHY_SLIN%YREPHLI,YDMODEL%YRML_PHY_G%YRDPHY,YGFL, & 
+    &                        DIMS, U, V, T, SP, Q, PGFL, PAUX, PGFLT1, PRAD, PSURF, PTRAJ_PHYS)
+  IF (LPRTTRAJ.AND.PTRAJ_PHYS%LASTCHUNK) WRITE(NULOUT,*)'GREPTRAJ STORE TRAJ_PHYS in EC_PHYS'
+
+  CALL GSTATS(15,1)
+ENDIF
+
+!*     4.1b INITIALIZE CLOUD VARIABLES FOR CLOUDST
+
+! There's no special reason this has to be done here,
+! perhaps more elegant would be to move it to EC_PHYS_DRV
+IF  (LTRAJSAVE .AND. LTRAJPHYS .AND. LETRAJP) THEN
+IF (LENCLD2 .AND. LETRAJP .AND. (NSTEP == NSTART)) THEN
+  IF (LNCLIN) THEN
+    PTRAJ_PHYS%YA(DIMS%KIDIA:DIMS%KFDIA,1:DIMS%KLEV) = A%PH9(DIMS%KIDIA:DIMS%KFDIA,1:DIMS%KLEV)
+    PTRAJ_PHYS%YL(DIMS%KIDIA:DIMS%KFDIA,1:DIMS%KLEV) = L%PH9(DIMS%KIDIA:DIMS%KFDIA,1:DIMS%KLEV)
+    PTRAJ_PHYS%YI(DIMS%KIDIA:DIMS%KFDIA,1:DIMS%KLEV) = I%PH9(DIMS%KIDIA:DIMS%KFDIA,1:DIMS%KLEV)
+  ELSE
+    PTRAJ_PHYS%YA(DIMS%KIDIA:DIMS%KFDIA,1:DIMS%KLEV) = 0.0_JPRB
+    PTRAJ_PHYS%YL(DIMS%KIDIA:DIMS%KFDIA,1:DIMS%KLEV) = 0.0_JPRB
+    PTRAJ_PHYS%YI(DIMS%KIDIA:DIMS%KFDIA,1:DIMS%KLEV) = 0.0_JPRB
+  ENDIF
+  IF (LPRTTRAJ.AND.PTRAJ_PHYS%LASTCHUNK) WRITE(NULOUT,*)'GREPTRAJ STORE INI STATE to TRAJ_PHYS in EC_PHYS'
+ENDIF
+ENDIF
+
+
+! Other quantities
+IF (YL%LACTIVE.AND.YI%LACTIVE) THEN
+  DO JLEV=1,DIMS%KLEV
+    DO JROF=DIMS%KIDIA,DIMS%KFDIA
+      ZTENQD(JROF,JLEV) = -1._JPRB * (Q%T1(JROF,JLEV) + L%T1(JROF,JLEV) + I%T1(JROF,JLEV))
+    ENDDO
+  ENDDO
+ELSE
+  DO JLEV=1,DIMS%KLEV
+    DO JROF=DIMS%KIDIA,DIMS%KFDIA
+      ZTENQD(JROF,JLEV) = -1._JPRB * Q%T1(JROF,JLEV)
+    ENDDO
+  ENDDO
+ENDIF
+
+!Allocate derived types for SMOS
+IF (LESMOS_ACTIVE .OR. LESMOS_SEKF) THEN
+  DO IPROM=1,DIMS%KLON
+     ALLOCATE(YL_SMOS_TB(IPROM) % SCREEN (0:NPOL_MAX-1,NANG_MAX))   
+     ALLOCATE(YL_SMOS_TB(IPROM) % OBS    (0:NPOL_MAX-1,NANG_MAX))
+     ALLOCATE(YL_SMOS_TB(IPROM) % ANG    (0:NPOL_MAX-1,NANG_MAX))
+     ALLOCATE(YL_SMOS_TB(IPROM) % FAR    (0:NPOL_MAX-1,NANG_MAX))
+     ALLOCATE(YL_SMOS_TB(IPROM) % GEO    (0:NPOL_MAX-1,NANG_MAX))
+     ALLOCATE(YL_SMOS_TB(IPROM) % FW     (0:NPOL_MAX-1,NANG_MAX))
+     ALLOCATE(YL_SMOS_TB(IPROM) % OERR)   
+     ALLOCATE(YL_SMOS_TB(IPROM) % BIAS)   
+  ENDDO
+ENDIF
+
+!* Obs. input and initialisations for CMEM forward operator     
+IF (LESMOS_ACTIVE .OR. LESMOS_SEKF) THEN
+  DO IPOL = 0, NPOL_MAX-1
+   DO IANG = 1, NANG_MAX
+    DO JROF = DIMS%KSTGLO, MIN (DIMS%KSTGLO-1+DIMS%KLON,NGPTOT)
+      YL_SMOS_TB (JROF-DIMS%KSTGLO+1) % SCREEN (IPOL,IANG) = KSMOS_BUF     (JROF,IPOL,IANG)
+      YL_SMOS_TB (JROF-DIMS%KSTGLO+1) % OBS    (IPOL,IANG) = PSMOS_OBS_BUF (JROF,IPOL,IANG)
+      YL_SMOS_TB (JROF-DIMS%KSTGLO+1) % ANG    (IPOL,IANG) = PSMOS_ANGLE   (JROF,IPOL,IANG)  
+      YL_SMOS_TB (JROF-DIMS%KSTGLO+1) % FAR    (IPOL,IANG) = PSMOS_FARAD   (JROF,IPOL,IANG)
+      YL_SMOS_TB (JROF-DIMS%KSTGLO+1) % GEO    (IPOL,IANG) = PSMOS_GEOMET  (JROF,IPOL,IANG)
+      YL_SMOS_TB (JROF-DIMS%KSTGLO+1) % FW     (IPOL,IANG) = 0.0_JPRB
+      YL_SMOS_TB (JROF-DIMS%KSTGLO+1) % OERR          = 0.0_JPRB
+      YL_SMOS_TB (JROF-DIMS%KSTGLO+1) % BIAS          = 0.0_JPRB
+    ENDDO
+   ENDDO
+  ENDDO
+ENDIF
+
+! Total physics tendencies for ERA40
+IF (NERA40 > 0) THEN
+  ! First step: store the tendencies from dynamics (only)
+  CALL UPDATE_FIELDS(YDPHY2, 2,DIMS%KIDIA, DIMS%KFDIA, DIMS%KLON, DIMS%KLEV,&
+    & PI1=T%T1, PO1=ZTENDDT,&
+    & PI2=Q%T1, PO2=ZTENDDQ,&
+    & PI3=U%T1, PO3=ZTENDDU,&
+    & PI4=V%T1, PO4=ZTENDDV )
+ENDIF
+
+! -------------------------------------------------------------------------------------
+
+!*     4.2  CALL ECMWF PHYSICS
+
+CALL CALLPAR(YDGEOMETRY,YDVARS,YDSURF,YDMODEL,DIMS,&
+ & PAUX, PRAD, FLUX, ZDIAG, PSURF, ZDDHS, ZAUXL, ZSURFL, ZLLKEYS, ZPERTL, &
+ ! - Quantities of current timestep
+ & PGFL,&
+ ! Stochastics physics, cellular automata, SL physics quantities
+ & PPERT, PSLPHY9,&
+ ! - UPDATED TENDENCIES
+ & PGFLT1,&
+ & PHYS_MWAVE,&
+ ! Stored quantities
+ & PSAVTEND, PGFLSLP,&
+ & STATE_T0, TENDENCY_DYN, TENDENCY_CML,&
+ & STATE_TMP, TENDENCY_TMP, TENDENCY_VDF, TENDENCY_LOC, TENDENCY_PHY&
+& )
+
+
+! ----------------------------------------------------------------------------------------
+
+
+! Fill up PCONVCTY using MASSFLUXes from convection scheme 
+! PMFU/PMFD array for vert. dim. KLEV. 
+! However, they are defined at half level.
+! The surf. level is not stored as the surf. fluxes are supposed to be 0.
+!If RMFADVW =0., PCONVCTY=0. (as in original conv. scheme)
+
+PCONVCTY(:,:)=0.0_JPRB
+DO JLEV=1,DIMS%KLEV-1
+  DO JROF=DIMS%KIDIA,DIMS%KFDIA
+    IF (ZDIAG%ITYPE(JROF)==1) THEN
+      PCONVCTY(JROF,JLEV)=-RG*( &
+ &                         (ZDIAG%PMFU(JROF,JLEV)-ZDIAG%PMFU(JROF,JLEV+1)) &
+ &                       + (ZDIAG%PMFD(JROF,JLEV)-ZDIAG%PMFD(JROF,JLEV+1))*RMFADVWDD &
+ &                       )* ZXYB9(JROF,JLEV,YYTXYB%M_RDELP)*RMFADVW 
+     ENDIF
+  ENDDO
+ENDDO
+DO JROF=DIMS%KIDIA,DIMS%KFDIA
+   IF (ZDIAG%ITYPE(JROF)==1) THEN
+    !special case for the layer above the surface
+     PCONVCTY(JROF,DIMS%KLEV)=-RG*( &
+ &                         (ZDIAG%PMFU(JROF,DIMS%KLEV)-0.0_JPRB) &
+ &                       + (ZDIAG%PMFD(JROF,DIMS%KLEV)-0.0_JPRB)*RMFADVWDD &
+ &                      )* ZXYB9(JROF,DIMS%KLEV,YYTXYB%M_RDELP)*RMFADVW
+   ENDIF
+ENDDO
+
+! ----------------------------------------------------------------------------------------
+
+!- accumulated clear-sky fluxes for full budget
+!- extra radiation diagnostics for ERA-40
+!-- accumulated clear-sky and total SW and LW heating rates
+
+IF (NERA40 > 0) THEN
+
+  CALL UPDATE_FIELDS(YDPHY2, 1,DIMS%KIDIA,DIMS%KFDIA,DIMS%KLON,DIMS%KLEV,&
+   & PTA1=PRAD%PHRSW, PO1=PGFL(:,:,YERA40(1)%MP),&
+   & PTA2=PRAD%PHRLW, PO2=PGFL(:,:,YERA40(2)%MP),&
+   & PTA3=PRAD%PHRSC, PO3=PGFL(:,:,YERA40(3)%MP),&
+   & PTA4=PRAD%PHRLC, PO4=PGFL(:,:,YERA40(4)%MP))
+
+ ! 1-4 Convection, 5 Cloud Scheme (3D-precip), 6 Turbulent Diffusion
+  !  Convection is updated globaly (no need of masking by LLCUM) to speed up the execution
+  DO JK=1,DIMS%KLEV
+    DO JL=DIMS%KIDIA,DIMS%KFDIA
+      ZPREC(JL,JK)=FLUX%PFPLCL(JL,JK)+FLUX%PFPLCN(JL,JK)+FLUX%PFPLSL(JL,JK)+FLUX%PFPLSN(JL,JK)
+    ENDDO
+  ENDDO
+  CALL UPDATE_FIELDS(YDPHY2, 1,DIMS%KIDIA,DIMS%KFDIA,DIMS%KLON,DIMS%KLEV,&
+   & PTA1=ZDIAG%PMFU,        PO1=PGFL(:,:,YERA40(5)%MP),&
+   & PTA2=ZDIAG%PMFD,        PO2=PGFL(:,:,YERA40(6)%MP),&
+   & PTA3=ZDIAG%PMFUDE_RATE, PO3=PGFL(:,:,YERA40(7)%MP),&
+   & PTA4=ZDIAG%PMFDDE_RATE, PO4=PGFL(:,:,YERA40(8)%MP),&
+   & PTA5=ZPREC,             PO5=PGFL(:,:,YERA40(9)%MP),&
+   & PTA6=ZDIAG%PKH_VDF,     PO6=PGFL(:,:,YERA40(10)%MP) )
+
+  ! Total physics tendencies for ERA40
+  ! Second step: add the cumulated tendencies from both dynamics and physics
+  CALL UPDATE_FIELDS(YDPHY2, 1,DIMS%KIDIA, DIMS%KFDIA, DIMS%KLON, DIMS%KLEV,&
+    & PTA1=T%T1, PTS1=ZTENDDT, PO1=PGFL(:,:,YERA40(11)%MP),&
+    & PTA2=Q%T1, PTS2=ZTENDDQ, PO2=PGFL(:,:,YERA40(12)%MP),&
+    & PTA3=U%T1, PTS3=ZTENDDU, PO3=PGFL(:,:,YERA40(13)%MP),&
+    & PTA4=V%T1, PTS4=ZTENDDV, PO4=PGFL(:,:,YERA40(14)%MP) )
+ENDIF
+! ---------------------------------------------------------------------------------------
+
+!*      xxx. PSEUDO-L1C SMOS RADIANCES MONITORING AND/OR ASSIMILATION IN SEKF
+
+IF ((LSCREEN.AND.LESMOS_ACTIVE) .OR. LESMOS_SEKF) THEN
+  
+  DO JL = DIMS%KIDIA, DIMS%KFDIA
+
+    YL_SMOS_PHYS (JL) % NLEVELSUR = DIMS%KLEVS
+    YL_SMOS_PHYS (JL) % SM    => ZPHYSMOS_SM   (JL,:)
+    YL_SMOS_PHYS (JL) % ST    => ZPHYSMOS_ST   (JL,:)
+
+    YL_SMOS_PHYS (JL) % SM  (1:DIMS%KLEVS)  = PSURF%GSP_SB%PQ_T9(JL,1:DIMS%KLEVS)
+    YL_SMOS_PHYS (JL) % ST  (1:DIMS%KLEVS)  = PSURF%GSP_SB%PT_T9(JL,1:DIMS%KLEVS) 
+
+    YL_SMOS_PHYS (JL) % SKT   = PSURF%GSP_RR%PT_T9(JL)
+    YL_SMOS_PHYS (JL) % T2M   = PSURF%GSD_VD%P2T(JL)
+    YL_SMOS_PHYS (JL) % TLK   = PSURF%GSP_SL%PLMLT_T9(JL)
+    YL_SMOS_PHYS (JL) % SNDT  = SUM(PSURF%GSP_SG%PR_T9(JL,:))
+    YL_SMOS_PHYS (JL) % SNDP  = SUM(PSURF%GSP_SG%PF_T9(JL,:) / PSURF%GSP_SG%PR_T9(JL,:))
+    YL_SMOS_PHYS (JL) % LAIH  = PSURF%PLAIH (JL)
+    YL_SMOS_PHYS (JL) % LAIL  = PSURF%PLAIL (JL)
+    YL_SMOS_PHYS (JL) % FCH   = PSURF%PCVH  (JL)
+    YL_SMOS_PHYS (JL) % FCL   = PSURF%PCVL  (JL)
+    YL_SMOS_PHYS (JL) % VEGTH = PSURF%ITVH  (JL)
+    YL_SMOS_PHYS (JL) % VEGTL = PSURF%ITVL  (JL)
+
+    YL_SMOS_PHYS (JL) % OR    = PAUX%PAPHI (JL,DIMS%KLEV)
+    YL_SMOS_PHYS (JL) % LSM   = PSURF%GSD_VF%PLSM(JL)
+    YL_SMOS_PHYS (JL) % STP   = PSURF%ISOTY (JL)
+  ENDDO
+
+  !* Screening incl. forward operator
+  CALL SMOS_SCREEN (DIMS%KIDIA, DIMS%KFDIA, DIMS%KLON, DIMS%KLEVS, YL_SMOS_PHYS, YL_SMOS_TB)
+
+ENDIF
+! ---------------------------------------------------------------------------------------
+
+!*      xxx. ASSIMILATION OF ACCUMULATED RADAR RAIN OBSERVATIONS
+
+IF (LEGBRAD) THEN
+  ! Reset precipitation accumulation to zero at first time step of accumulation period.
+  IF (MOD(NSTEP*NINT(TSPHY),NPRACCL) == 0) PSURF%GSD_VN%PACCPR(DIMS%KIDIA:DIMS%KFDIA) = 0.0_JPRB
+
+  ! Update precipitation accumulation (mm).
+  DO JL = DIMS%KIDIA, DIMS%KFDIA
+    PSURF%GSD_VN%PACCPR(JL) = PSURF%GSD_VN%PACCPR(JL) + TSPHY &
+             & *(FLUX%PFPLCL (JL,DIMS%KLEV) + FLUX%PFPLSL (JL,DIMS%KLEV) &
+             & + FLUX%PFPLCN (JL,DIMS%KLEV) + FLUX%PFPLSN (JL,DIMS%KLEV))
+  ENDDO
+ENDIF
+
+! ---------------------------------------------------------------------------------------
+
+!*     xxx. ASSIMILATION OF ACCUMULATED RAIN GAUGE OBSERVATIONS
+
+IF (LERAINGG) THEN
+  ! Store precipitation amount for current time step (mm).
+  DO JL = DIMS%KIDIA, DIMS%KFDIA
+    RACCPR3(JL,NSTEP,DIMS%KBL) = TSPHY &
+                   & *(FLUX%PFPLCL (JL,DIMS%KLEV) + FLUX%PFPLSL (JL,DIMS%KLEV) &
+                   & + FLUX%PFPLCN (JL,DIMS%KLEV) + FLUX%PFPLSN (JL,DIMS%KLEV))
+  ENDDO
+ENDIF
+
+! ---------------------------------------------------------------------------------------
+
+!*  Ouput from CMEM forward operator
+IF (LESMOS_ACTIVE .OR. LESMOS_SEKF) THEN
+  DO IPOL = 0, NPOL_MAX-1
+   DO IANG = 1, NANG_MAX
+    DO JROF = DIMS%KSTGLO, MIN (DIMS%KSTGLO-1+DIMS%KLON,NGPTOT)
+      KSMOS_BUF (JROF,IPOL,IANG) = YL_SMOS_TB (JROF-DIMS%KSTGLO+1) % SCREEN (IPOL,IANG)
+      !IF ( .NOT. BTEST( KSMOS_BUF (JROF,IPOL,IANG), SMOS_NO_OBS ) ) THEN
+      IF (BTEST( KSMOS_BUF (JROF,IPOL,IANG), SMOS_USE ) .OR.&
+        & BTEST( KSMOS_BUF (JROF,IPOL,IANG), SMOS_SEA) ) THEN
+        PSMOS_TB_BUF (JROF,IPOL,IANG) = YL_SMOS_TB (JROF-DIMS%KSTGLO+1) % FW (IPOL,IANG)   
+      ELSE
+        PSMOS_TB_BUF (JROF,IPOL,IANG) = RMDI 
+      ENDIF
+    ENDDO
+   ENDDO
+  ENDDO
+ELSE
+  ! Send RMDI values to Store SEKF if SMOS not used
+  PSMOS_TB_BUF (:,:,:) = RMDI
+ENDIF ! LESMOS_ACTIVE OR LESMOS_SEKF
+
+IF (LESMOS_ACTIVE .OR. LESMOS_SEKF) THEN
+  DO IPROM=1,DIMS%KLON
+    DEALLOCATE(YL_SMOS_TB(IPROM) % SCREEN) 
+    DEALLOCATE(YL_SMOS_TB(IPROM) % OBS)   
+    DEALLOCATE(YL_SMOS_TB(IPROM) % ANG)  
+    DEALLOCATE(YL_SMOS_TB(IPROM) % FAR) 
+    DEALLOCATE(YL_SMOS_TB(IPROM) % GEO) 
+    DEALLOCATE(YL_SMOS_TB(IPROM) % FW)   
+    DEALLOCATE(YL_SMOS_TB(IPROM) % OERR)
+    DEALLOCATE(YL_SMOS_TB(IPROM) % BIAS)
+  ENDDO
+ENDIF
+
+!*       4.3.0 SAVE SOIL MOISTURE AND SCREENLEVEL PARAMETERS FOR SEKF
+
+IF (LUSEKF_REF) THEN
+  CALL STORE_SEKF_CV(YDGEOMETRY,DIMS%KIDIA,DIMS%KFDIA,DIMS%KLON,DIMS%KSTGLO,NSTEP,&
+     & PSURF%GSP_SB%PQ_T1(:,:),&
+     & PSURF%GSD_VD%P2T(:),&
+     & PSURF%GSD_VD%P2D(:),&
+     & PSMOS_TB_BUF,&
+     & PSURF%ISOTY (:))
+! &     PSMOS_TB_BUF,PSMOS_OBS_BUF,KSMOS_BUF) # for debugging use this line instead
+ENDIF
+
+!*       4.3  NEW T+1, ACC. OF TEND. FOR DIAGNOSTICS
+
+CALL POSTPHY_LAYER(YDGEOMETRY,YDSURF,YDMODEL,DIMS, LLFSTEP  ,LLMLPP, LLRS6, LLACCRS,&
+ & U%PH9, U%PH9, T%PH9, PGFL, ZTENQD,&
+ & PAUX, PRAD, PSURF, FLUX, ZDIAG, ZDDHS)
+
+!*    4.3  Accumulation of coupled fields
+
+IF (NFRCO /= 0) THEN
+  CALL CUMCOE (YDRIP, DIMS%KLON ,DIMS%KIDIA ,DIMS%KFDIA ,DIMS%KSTGLO ,&
+   & FLUX%PSTRTU(:,DIMS%KLEV), FLUX%PSTRTV(:,DIMS%KLEV),&
+   & FLUX%PFRTH (:,DIMS%KLEV) ,FLUX%PFRSO (:,DIMS%KLEV),&
+   & FLUX%PFTLHEV          ,FLUX%PFTLHSB,&
+   & FLUX%PDIFTS(:,DIMS%KLEV) ,FLUX%PDIFTQ(:,DIMS%KLEV),&
+   & FLUX%PFPLCL(:,DIMS%KLEV) ,FLUX%PFPLCN(:,DIMS%KLEV),&
+   & FLUX%PFPLSL(:,DIMS%KLEV) ,FLUX%PFPLSN(:,DIMS%KLEV),&
+   & FLUX%PFWRO1           ,FLUX%PFWROD)  
+ENDIF
+
+!*    5.7   SURFACE FIELDS TIMESTEPPING
+
+! PREPARE AND GET THE FIELDS WHICH WILL BE PASSED TO THE WAVE MODEL:
+
+IF (LWCOU) THEN
+
+! STRUCTURE OF FIELDS TO WAVE MODEL IS AS FOLLOWS:
+! SEE SU_SURF_FLDS and SURFACE_FIELDS_MIX.
+
+!      YSD_WW%YU10N    10M NEUTRAL WIND U-COMPONENT
+!      YSD_WW%YV10N    10M NEUTRAL WIND V-COMPONENT
+!      YSD_WW%YRHO     AIR DENSITY AT SURFACE
+!      YSD_WW%YZIL     ZI/L USED FOR GUSTINESS
+!      YSD_WW%YCIF     SEA ICE FRACTION FOR THE SEA ICE BOUNDARY
+!                       (ONLY ON SEA POINTS)
+
+  ZCONS_PJ = RD*RETV
+  ZKAPPA_PJ = 0.40_JPRB
+  ZNLEV_PJ = 10._JPRB
+  ZGZNLEV_PJ = ZNLEV_PJ*RG
+  ZIPBL_PJ=1000._JPRB
+  Z1D3_PJ=1._JPRB/3._JPRB
+
+  DO JROF=DIMS%KIDIA,DIMS%KFDIA
+
+!   COMPUTATION OF THE SURFACE AIR DENSITY
+    ZRHO_A = PAUX%PAPRSF(JROF,DIMS%KLEV)/(RD*T%PH9(JROF,DIMS%KLEV)*(&
+         & 1.0_JPRB + RETV*Q%T9(JROF,DIMS%KLEV)))
+    ZRHO_A_M1 = 1.0_JPRB/ZRHO_A
+                               
+
+!   COMPUTATION OF THE COMPONENT OF MOMEMTUM FLUX THAT IS PASSED TO WAM
+!   USING SURFACE FROM THE OCEAN TILE  
+
+    JTILE4WAM=1
+
+    SELECT CASE (NATMFLX)
+!   NATMFLX=1  ::  FRICTION VELOCITY 
+    CASE(1)
+      ZTAU_U = PSURF%PUSTRTI(JROF,JTILE4WAM)*ZRHO_A_M1
+      ZTAU_V = PSURF%PVSTRTI(JROF,JTILE4WAM)*ZRHO_A_M1
+      ZUST   = MAX(0.0001_JPRB,(ZTAU_U**2+ZTAU_V**2)**(0.25_JPRB))
+      PSURF%GSD_WW%PU10N(JROF) = ZTAU_U/ZUST
+      PSURF%GSD_WW%PV10N(JROF) = ZTAU_V/ZUST
+!   NATMFLX=2  ::  SURFACE STRESS 
+    CASE(2)
+      ZTAU_U = PSURF%PUSTRTI(JROF,JTILE4WAM)
+      ZTAU_V = PSURF%PVSTRTI(JROF,JTILE4WAM)
+      ZUST   = MAX(0.0001_JPRB,(ZTAU_U**2+ZTAU_V**2)**(0.5_JPRB))
+      PSURF%GSD_WW%PU10N(JROF) = ZTAU_U/ZUST
+      PSURF%GSD_WW%PV10N(JROF) = ZTAU_V/ZUST
+!   NATMFLX=3  ::  NEUTRAL 10m WIND
+    CASE(3)
+      ZTAU_U = PSURF%PUSTRTI(JROF,JTILE4WAM)*ZRHO_A_M1
+      ZTAU_V = PSURF%PVSTRTI(JROF,JTILE4WAM)*ZRHO_A_M1
+      ZLOG   = LOG(ZGZNLEV_PJ/PSURF%GSD_VD%PZ0F(JROF))/ZKAPPA_PJ
+      ZUST   = MAX(0.0001_JPRB,(ZTAU_U**2+ZTAU_V**2)**(0.25_JPRB))
+      PSURF%GSD_WW%PU10N(JROF) = ZTAU_U/ZUST*ZLOG
+      PSURF%GSD_WW%PV10N(JROF) = ZTAU_V/ZUST*ZLOG
+    END SELECT 
+
+    ZROWQ=FLUX%PDIFTQ(JROF,DIMS%KLEV)
+    ZROWT=FLUX%PDIFTS(JROF,DIMS%KLEV)/RCPD
+    ZBUO =RG*(-RETV*ZROWQ-ZROWT/T%PH9(JROF,DIMS%KLEV))*ZRHO_A_M1
+    IF (ZBUO > 0._JPRB) THEN 
+      ZWST=(ZIPBL_PJ*ZBUO)**Z1D3_PJ
+    ELSE
+      ZWST=0._JPRB
+    ENDIF
+     
+    PSURF%GSD_WW%PRHO(JROF)  = ZRHO_A
+    PSURF%GSD_WW%PZIL(JROF)  = ZWST
+
+!   Sea Ice fraction is only defined for sea points (this includes resolved lakes)
+    IF(PSURF%GSD_VF%PLSM(JROF) <= 0.5_JPRB ) THEN
+      PSURF%GSD_WW%PCIF(JROF) =  PSURF%GSD_VF%PCI(JROF)
+    ELSE
+      PSURF%GSD_WW%PCIF(JROF) = RMISSW
+    ENDIF
+
+!   Lake fraction
+    PSURF%GSD_WW%PCLK(JROF) =  PSURF%GSD_VF%PCLK(JROF)
+
+!   Ocean currents were set to 0. over land
+    IF(LWCUR) THEN
+      PSURF%GSD_WW%PUCURW(JROF)= PSURF%GSD_VF%PUCUR(JROF)
+      PSURF%GSD_WW%PVCURW(JROF)= PSURF%GSD_VF%PVCUR(JROF)
+    ENDIF
+
+  ENDDO
+
+ENDIF
+
+IF (LTWOTL) THEN
+  CALL PSURF%SET0TO1()
+ELSE
+  CALL PSURF%PHTFILT(YDDYN=YDMODEL%YRML_DYN%YRDYN)
+ENDIF
+
+!CALL GPRNORM2( 1, 1, ZINCSR0, 'INCSOL0' )
+!CALL GPRNORM2( 1, 1, ZINCSR , 'INCSOL ' )
+
+! Cleaning of local arrays to physics
+CALL PHYS_ARRAYS_FIN(DIMS, PAUX, ZDDHS, ZDIAG, PSURF, PRAD, FLUX)
+
+!     ------------------------------------------------------------------
+
+END ASSOCIATE
+END ASSOCIATE
+IF (LHOOK) CALL DR_HOOK('EC_PHYS',1,ZHOOK_HANDLE)
+END SUBROUTINE EC_PHYS

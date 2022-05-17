@@ -1,0 +1,249 @@
+SUBROUTINE FLTBGERR(YDGEOMETRY)
+
+!*** *FLTBGERR*
+
+!   Purpose.
+!   --------
+!      To apply a spectral filter to the standard deviations of
+!      background error. This removes much of the random noise produced
+!      by the randomization method.
+
+!   Interface.
+!   ----------
+
+!      CALL ADVSIGA
+
+!   Externals.
+!   ----------
+
+!   Reference.
+!   ----------
+
+!   Author.
+!   -------
+!    Mike Fisher *ECMWF*
+!    Original   97-05-19
+
+!   Modifications.
+!   --------------
+!    M.Hamrud      01-Oct-2003 CY28 Cleaning
+!    M.Hamrud      10-Jan-2004 CY28R1 Cleaning
+!    G. Desroziers 16-Mar-2006 Enable sigmab filtering for radiances if LECMWF=.F.
+!    L. Berre      19-Oct-2011 Enable printing of average sigmab profiles on globe and lat. bands
+!    T. Wilhelmsson (Sept 2013) Geometry and setup refactoring.
+!-----------------------------------------------------------------------
+
+USE GEOMETRY_MOD , ONLY : GEOMETRY
+USE PARKIND1 , ONLY : JPIM, JPRB
+USE YOMHOOK  , ONLY : LHOOK, DR_HOOK
+USE YOMCST   , ONLY : RPI
+USE YOMCT0   , ONLY : LECMWF
+USE YOMVAR   , ONLY : NOANEF, NBGTRUNC, LBACKGE, LWRISB_VPROF
+USE YOMANEB  , ONLY : ANEBUF, NANEBRAD,&
+ & NANEBRH2, NANEBU10, NANEBV10, NANEBT2, NANERADS,&
+ & NANEBVO, NANEBT, NANEBSP, NANEBQ, NANEBU, NANEBV
+USE YOMLUN   , ONLY : NULOUT
+
+!-----------------------------------------------------------------------
+
+IMPLICIT NONE
+
+TYPE(GEOMETRY), INTENT(IN)   :: YDGEOMETRY
+CHARACTER(LEN=30) ::  CLFILE
+CHARACTER(LEN=14) ::  CLFMT
+
+REAL(KIND=JPRB) :: ZANE(YDGEOMETRY%YRDIM%NPROMA,NOANEF),ZSPEC(NOANEF,YDGEOMETRY%YRDIM%NSPEC2),&
+ & ZREEL(YDGEOMETRY%YRGEM%NGPTOT,NOANEF)
+REAL(KIND=JPRB) :: ZSPEC_NOET(NOANEF,YDGEOMETRY%YRDIM%NSPEC2),ZREEL_NOET(YDGEOMETRY%YRGEM%NGPTOT,NOANEF)
+REAL(KIND=JPRB) :: ZSPEC_TROP(NOANEF,YDGEOMETRY%YRDIM%NSPEC2),ZREEL_TROP(YDGEOMETRY%YRGEM%NGPTOT,NOANEF)
+REAL(KIND=JPRB) :: ZSPEC_SOET(NOANEF,YDGEOMETRY%YRDIM%NSPEC2),ZREEL_SOET(YDGEOMETRY%YRGEM%NGPTOT,NOANEF)
+
+INTEGER(KIND=JPIM) :: IENDC,IM,INM,ISTC,J,JIR,JK,JKGLO,JMLOC,JN
+
+REAL(KIND=JPRB) :: ZFILT,ZLAT_TROPN,ZLAT_TROPS
+REAL(KIND=JPRB) :: ZSURF_NOET,ZSURF_SOET,ZSURF_TROP
+REAL(KIND=JPRB) :: ZSURF_TROPN,ZSURF_TROPS
+REAL(KIND=JPRB) :: ZHOOK_HANDLE
+
+#include "reespe.intfb.h"
+#include "speree.intfb.h"
+
+!-----------------------------------------------------------------------
+
+!--- copy analysis errors into zreel
+
+IF (LHOOK) CALL DR_HOOK('FLTBGERR',0,ZHOOK_HANDLE)
+ASSOCIATE(YDDIM=>YDGEOMETRY%YRDIM,YDDIMV=>YDGEOMETRY%YRDIMV,YDGEM=>YDGEOMETRY%YRGEM, YDGSGEOM_NB=>YDGEOMETRY%YRGSGEOM_NB, &
+& YDLAP=>YDGEOMETRY%YRLAP)
+ASSOCIATE(NPROMA=>YDDIM%NPROMA, NSMAX=>YDDIM%NSMAX, NUMP=>YDDIM%NUMP,   NFLEVG=>YDDIMV%NFLEVG,   NGPTOT=>YDGEM%NGPTOT,   &
+& MYMS=>YDLAP%MYMS, NASM0=>YDLAP%NASM0)
+MESSP_LOOP_1 : DO JKGLO=1,NGPTOT,NPROMA
+  ISTC=1
+  IENDC=MIN(NPROMA,NGPTOT-JKGLO+1)
+  ZANE = ANEBUF (:, :, 1+(JKGLO-1)/YDGEOMETRY%YRDIM%NPROMA)
+
+
+  DO J=1,NOANEF
+    DO JK=ISTC,IENDC
+      ZREEL(JK+JKGLO-1,J) = ZANE(JK,J)
+    ENDDO
+  ENDDO
+ENDDO MESSP_LOOP_1
+
+!--- transform to spectral space (for filtering)
+
+ZSPEC(:,:) = 0.0_JPRB   ! Protection for NPRGPEW > 1
+CALL REESPE(YDGEOMETRY,NOANEF,NOANEF,ZSPEC,ZREEL)
+
+!--- before filtering :
+!--- optionally write spectral coefficient of wn (im,jn)=(0,0)
+!--- for knowledge about horizontally averaged variances 
+!--- on the globe and on 3 latitude bands
+!--- (e.g. for ensemble inflation calculations)
+
+IF (LWRISB_VPROF) THEN
+
+  ! define latitude band limits
+  ZLAT_TROPN=25._JPRB
+  ZLAT_TROPS=-25._JPRB
+
+  ! calculate spherical surface proportion of each latitude band
+  ZSURF_TROPN=(COS(RPI/2._JPRB-ABS(ZLAT_TROPN)*RPI/180._JPRB))/2._JPRB
+  ZSURF_TROPS=(COS(RPI/2._JPRB-ABS(ZLAT_TROPS)*RPI/180._JPRB))/2._JPRB
+  ZSURF_TROP=ZSURF_TROPN+ZSURF_TROPS
+  ZSURF_NOET=0.5_JPRB-ZSURF_TROPN
+  ZSURF_SOET=0.5_JPRB-ZSURF_TROPS
+  WRITE(NULOUT,*)'zsurf_noet=',ZSURF_NOET
+  WRITE(NULOUT,*)'zsurf_trop=',ZSURF_TROP
+  WRITE(NULOUT,*)'zsurf_soet=',ZSURF_SOET
+
+  DO JKGLO=1,NGPTOT,NPROMA
+    ISTC=1
+    IENDC=MIN(NPROMA,NGPTOT-JKGLO+1)
+    DO J=1,NOANEF
+      DO JK=ISTC,IENDC
+        IF (YDGSGEOM_NB%GELAT(JK+JKGLO-1)>(ZLAT_TROPN*RPI/180._JPRB)) THEN
+           ZREEL_NOET(JK+JKGLO-1,J)=ZREEL(JK+JKGLO-1,J)
+           ZREEL_TROP(JK+JKGLO-1,J)=0._JPRB
+           ZREEL_SOET(JK+JKGLO-1,J)=0._JPRB
+        ELSEIF (YDGSGEOM_NB%GELAT(JK+JKGLO-1)<(ZLAT_TROPS*RPI/180._JPRB)) THEN
+           ZREEL_NOET(JK+JKGLO-1,J)=0._JPRB
+           ZREEL_TROP(JK+JKGLO-1,J)=0._JPRB
+           ZREEL_SOET(JK+JKGLO-1,J)=ZREEL(JK+JKGLO-1,J)
+        ELSE
+           ZREEL_NOET(JK+JKGLO-1,J)=0._JPRB
+           ZREEL_TROP(JK+JKGLO-1,J)=ZREEL(JK+JKGLO-1,J)
+           ZREEL_SOET(JK+JKGLO-1,J)=0._JPRB
+        ENDIF
+      ENDDO
+    ENDDO
+  ENDDO
+
+  ZSPEC_NOET(:,:) = 0.0_JPRB   ! Protection for NPRGPEW > 1
+  CALL REESPE(YDGEOMETRY,NOANEF,NOANEF,ZSPEC_NOET,ZREEL_NOET)
+
+  ZSPEC_TROP(:,:) = 0.0_JPRB   ! Protection for NPRGPEW > 1
+  CALL REESPE(YDGEOMETRY,NOANEF,NOANEF,ZSPEC_TROP,ZREEL_TROP)
+
+  ZSPEC_SOET(:,:) = 0.0_JPRB   ! Protection for NPRGPEW > 1
+  CALL REESPE(YDGEOMETRY,NOANEF,NOANEF,ZSPEC_SOET,ZREEL_SOET)
+
+  IF (LBACKGE) THEN
+    CLFILE='std_eb_profile_bgevecs'
+  ELSE
+    CLFILE='std_eb_profile_bgvecs'
+  ENDIF
+
+  CLFMT='(4(E22.15,2X))'
+
+  OPEN(UNIT=60,FILE=TRIM(CLFILE),FORM='FORMATTED')
+  DO JMLOC=1,NUMP
+    IM=MYMS(JMLOC)
+    IF (IM==0) THEN
+      INM=NASM0(IM)
+      WRITE(60,*) "Vor std deviations : globe, noet, trop, soet"
+      DO J=1,NFLEVG
+        WRITE(60,CLFMT) SQRT(  ZSPEC(NANEBVO+J,INM)),&
+ &                  SQRT(ZSPEC_NOET(NANEBVO+J,INM)/ZSURF_NOET),&
+ &                  SQRT(ZSPEC_TROP(NANEBVO+J,INM)/ZSURF_TROP),&
+ &                  SQRT(ZSPEC_SOET(NANEBVO+J,INM)/ZSURF_SOET)
+      ENDDO
+      WRITE(60,*) "T std deviations"
+      DO J=1,NFLEVG
+        WRITE(60,CLFMT) SQRT(  ZSPEC(NANEBT+J,INM)),&
+ &                  SQRT(ZSPEC_NOET(NANEBT+J,INM)/ZSURF_NOET),&
+ &                  SQRT(ZSPEC_TROP(NANEBT+J,INM)/ZSURF_TROP),&
+ &                  SQRT(ZSPEC_SOET(NANEBT+J,INM)/ZSURF_SOET)
+      ENDDO
+      WRITE(60,*) "PS std deviations"
+      WRITE(60,CLFMT) SQRT(  ZSPEC(NANEBSP+1,INM)),&
+ &                SQRT(ZSPEC_NOET(NANEBSP+1,INM)/ZSURF_NOET),&
+ &                SQRT(ZSPEC_TROP(NANEBSP+1,INM)/ZSURF_TROP),&
+ &                SQRT(ZSPEC_SOET(NANEBSP+1,INM)/ZSURF_SOET)
+      WRITE(60,*) "Q std deviations"
+      DO J=1,NFLEVG
+        WRITE(60,CLFMT) SQRT(  ZSPEC(NANEBQ+J,INM)),&
+ &                  SQRT(ZSPEC_NOET(NANEBQ+J,INM)/ZSURF_NOET),&
+ &                  SQRT(ZSPEC_TROP(NANEBQ+J,INM)/ZSURF_TROP),&
+ &                  SQRT(ZSPEC_SOET(NANEBQ+J,INM)/ZSURF_SOET)
+      ENDDO
+      WRITE(60,*) "U std deviations"
+      DO J=1,NFLEVG
+        WRITE(60,CLFMT) SQRT(  ZSPEC(NANEBU+J,INM)),&
+ &                  SQRT(ZSPEC_NOET(NANEBU+J,INM)/ZSURF_NOET),&
+ &                  SQRT(ZSPEC_TROP(NANEBU+J,INM)/ZSURF_TROP),&
+ &                  SQRT(ZSPEC_SOET(NANEBU+J,INM)/ZSURF_SOET)
+      ENDDO
+      WRITE(60,*) "V std deviations"
+      DO J=1,NFLEVG
+        WRITE(60,CLFMT) SQRT(  ZSPEC(NANEBV+J,INM)),&
+ &                  SQRT(ZSPEC_NOET(NANEBV+J,INM)/ZSURF_NOET),&
+ &                  SQRT(ZSPEC_TROP(NANEBV+J,INM)/ZSURF_TROP),&
+ &                  SQRT(ZSPEC_SOET(NANEBV+J,INM)/ZSURF_SOET)
+      ENDDO
+    ENDIF
+  ENDDO
+  CLOSE(60)
+
+ENDIF
+
+!--- filter
+
+DO JMLOC=1,NUMP
+  IM=MYMS(JMLOC)
+  DO JIR=0,MIN(1,IM)
+    DO JN=IM,NSMAX
+      ZFILT = COS(0.5_JPRB*RPI*REAL(MIN(JN,NBGTRUNC),JPRB)/&
+       &                       REAL(NBGTRUNC,JPRB))**2
+      INM  = NASM0(IM)+(JN-IM)*2+JIR
+      ZSPEC(:,INM) = ZSPEC(:,INM) * ZFILT
+    ENDDO
+  ENDDO
+ENDDO
+
+CALL SPEREE(YDGEOMETRY,NOANEF,NOANEF,ZSPEC,ZREEL)
+
+
+!--- copy errors back into the analysis error buffer
+
+MESSP_LOOP_2 : DO JKGLO=1,NGPTOT,NPROMA
+  ISTC=1
+  IENDC=MIN(NPROMA,NGPTOT-JKGLO+1)
+  ZANE = ANEBUF (:, :, 1+(JKGLO-1)/YDGEOMETRY%YRDIM%NPROMA)
+
+
+  DO J=1,NOANEF
+    IF(J >= NANEBRAD+1.AND. J <= NANEBRAD+NANERADS .AND.LECMWF) CYCLE
+    IF(ANY(J-1 == (/NANEBRH2,NANEBU10,NANEBV10,NANEBT2/))) CYCLE
+    DO JK=ISTC,IENDC
+      ZANE(JK,J) = ZREEL(JK+JKGLO-1,J)
+    ENDDO
+  ENDDO
+  ANEBUF (:, :, 1+(JKGLO-1)/YDGEOMETRY%YRDIM%NPROMA) = ZANE
+
+ENDDO MESSP_LOOP_2
+
+END ASSOCIATE
+END ASSOCIATE
+IF (LHOOK) CALL DR_HOOK('FLTBGERR',1,ZHOOK_HANDLE)
+END SUBROUTINE FLTBGERR

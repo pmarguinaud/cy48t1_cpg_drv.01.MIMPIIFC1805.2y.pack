@@ -1,0 +1,423 @@
+SUBROUTINE SLINT(YDGEOMETRY,KPROMB,KTSLOT,YDSL,YDGOM,KLSOBS,PLAT,PLON,KOBSTYP)
+
+!**** *SLINT* - Horizontal interpolation of the model variables
+!               from grid points to observation points by using
+!               interpolation routines
+
+!     Purpose.
+!     -------
+!           Feeding the tables GOMMV,GOSMV,GSMMV,GSSMV,GSCMV with the
+!     variables at the observation points, from the model variables in
+!     grid points. These tables are containing the quantity called Xmvo
+!     in the scientific documentation.
+
+!     Interface.
+!     ---------
+!        CALL SLINT(..)
+!     where: 
+!            KPROMB    : Length of work.                          (in)
+!            KTSLOT    : Observation timeslot                     (in)
+!            YDSL      : SL_STRUCT definition                     (inout)
+!            YDGOM     : contains GOMS                            (inout)
+!            KLSOBS    :                                          (in)
+!            PLAT      : Latitude of interpolation point.         (in)
+!            PLON      : Longitude of interpolation point.        (in)
+!            KOBSTYP   : Observation type                         (in)
+
+!     Externals. See includes below.
+!     ---------
+
+!     Author: Drasko Vasiljevic
+!     Date  : 92-05-19
+
+!     Modifications.
+!     -------------
+!     09-Jan-2007 F. Vana  : arguments update for ELASCAW
+!     28-Aug-2007 F. Vana     : update arguments of (E)LASCAW
+!     04-07-08 H.Hersbach  : add ocean current and wave Charnock
+!     07-Nov-2007 J. Masek : Modified calls to LASCAW/ELASCAW. Removed argument KIBUFP1.
+!     20-Aug-2008 F. Vana  : Weights driven interpolation.
+!     K. Yessad Dec 2008: merge the different (E)SLEXTPOL.. -> (E)SLEXTPOL.
+!     K. Yessad (Aug 2009): use RIPI, RSLD
+!     K. Yessad (Jan 2010): revised code (first draft)
+!     09-12-04 H. Hersbach : 10-m neutral wind
+!     F. Vana  22-Feb-2011: updated arguments for (E)LASCAW
+!     G.Mozdzynski (Jan 2011): OOPS cleaning, use of derived type SL_STRUCT
+!     G.Mozdzynski (Feb 2011): OOPS cleaning, use of derived type TCSGLEG
+!     J.Hague      (Aug 2011(: YOBB1 part of YDGOM
+!     A.Geer       (Jan 2012): More configurable interpolation (to allow
+!                             nearest-neighbour for all fields for all-sky)
+!     A.Geer       (Mar 2012): GOM modernisation
+!     G. Mozdzynski (May 2012): further cleaning
+!     S. Malardel (Nov 2013): COMAD weights for SL interpolations
+!     F. Taillefer (Feb 2014) : land-sea mask use validation
+!     F. Vana  13-Feb-2014 Updated arguments for LASCAW
+!     G. Mozdzynski (Feb 2015): improve halo debugging
+!     B. Bochenek (Apr 2015): Phasing: update
+!     N. Bormann (Feb 2016): Make latitude/longitude available
+!     K. Yessad (March 2017): simplify level numbering in interpolator.
+!     F. Vana    21-Nov-2017: Option LHOISLT
+!     H Petithomme (Dec 2020): add WENO in LAM
+!    -------------------------------------------------------------------
+
+USE GEOMETRY_MOD , ONLY : GEOMETRY
+USE PARKIND1 , ONLY : JPIM, JPRB
+USE YOMHOOK  , ONLY : LHOOK, DR_HOOK
+USE YOMCT0   , ONLY : LRPLANE, LCANARI
+USE YOMMP0   , ONLY : LSLDEBUG
+USE YOMCST   , ONLY : RPI
+USE YOMOBS   , ONLY : LSLREJ, LRLOI
+USE GOM_MOD  , ONLY : TYPE_GOM, GINTERP, GOM_GET_INTERPOLATION_BUFFERS,&
+  & TYPE_PRE_INTERP_ACCESS, GOM_PRE_INTERP_ACCESS
+USE EINT_MOD , ONLY : SL_STRUCT, SLHALO_DEBUG
+
+!    -------------------------------------------------------------------
+
+IMPLICIT NONE
+
+TYPE(GEOMETRY)    ,INTENT(IN)    :: YDGEOMETRY
+INTEGER(KIND=JPIM),INTENT(IN)    :: KPROMB
+INTEGER(KIND=JPIM),INTENT(IN)    :: KTSLOT
+TYPE(SL_STRUCT)   ,INTENT(INOUT) :: YDSL
+TYPE(TYPE_GOM)    ,INTENT(INOUT) :: YDGOM
+INTEGER(KIND=JPIM),INTENT(IN)    :: KLSOBS(KPROMB) 
+REAL(KIND=JPRB)   ,INTENT(IN)    :: PLAT(KPROMB) 
+REAL(KIND=JPRB)   ,INTENT(IN)    :: PLON(KPROMB) 
+INTEGER(KIND=JPIM),INTENT(IN)    :: KOBSTYP(KPROMB) 
+
+!    -------------------------------------------------------------------
+
+REAL(KIND=JPRB) :: ZLSDEPI(YDSL%NDGSAH:YDSL%NDGENH)
+REAL(KIND=JPRB) :: ZLEV(KPROMB,1)
+REAL(KIND=JPRB) :: ZDSLAT(KPROMB,1)
+REAL(KIND=JPRB) :: ZCSLA (KPROMB,1,2:4)
+REAL(KIND=JPRB) :: ZDSLON(KPROMB,1,0:3)
+REAL(KIND=JPRB) :: ZDSLAT_LSM(KPROMB,1)
+REAL(KIND=JPRB) :: ZDSLON_LSM(KPROMB,1,0:3)
+REAL(KIND=JPRB) :: ZDSLAT_OCEAN(KPROMB,1)
+REAL(KIND=JPRB) :: ZDSLON_OCEAN(KPROMB,1,0:3)
+REAL(KIND=JPRB) :: ZCSLO (KPROMB,1,3,2)
+INTEGER(KIND=JPIM) :: IL0S(KPROMB,1,0:3)
+INTEGER(KIND=JPIM) :: ISTALAT(YDSL%NDGSAH:YDSL%NDGENH)
+INTEGER(KIND=JPIM) :: IL0ULI(KPROMB,2,2), IL0UDI(KPROMB,0:3,0:3)
+INTEGER(KIND=JPIM) :: IDEP(KPROMB,YDGEOMETRY%YRDIMV%NFLEVG)
+
+INTEGER(KIND=JPIM) :: ISPLTHOI, IDIMK
+INTEGER(KIND=JPIM) :: IFLDN, IGLGLO, IHOR,&
+ & IHVI, IWIS, J1, JGL, JLAT, ID, JOBS
+INTEGER(KIND=JPIM) ::  INT, ILEN, INT_DEFAULT
+
+LOGICAL :: LLSLHD,LLSLHDQUAD,LLSLHD_OLD,LL3DTURB,LLINTERP,LLSLHDHEAT
+LOGICAL         :: LLCOMAD, LLCOMADH, LLCOMADV
+
+REAL(KIND=JPRB) :: ZDEPI, ZPIS2  
+
+REAL(KIND=JPRB),POINTER :: ZPRE(:,:), ZPOST(:)
+
+TYPE(TYPE_PRE_INTERP_ACCESS) :: YLPRE
+
+REAL(KIND=JPRB) :: ZHOOK_HANDLE
+
+! unused arguments in call to LASCAW/ELASCAW
+! a) input - array dimensions contracted
+INTEGER(KIND=JPIM) :: IUN_VAUTF(1)
+REAL(KIND=JPRB) :: ZUN_SLD(1,3)
+REAL(KIND=JPRB) :: ZUN_SLDW(1)
+REAL(KIND=JPRB) :: ZUN_3DTW(1)
+REAL(KIND=JPRB) :: ZUN_VETAF(1)
+REAL(KIND=JPRB) :: ZUN_VCUICO(1)
+REAL(KIND=JPRB) :: ZUN_VSLD(1)
+REAL(KIND=JPRB) :: ZUN_VSLDW(1)
+REAL(KIND=JPRB) :: ZUN_KAPPA(1),ZUN_KAPPAT(1),ZUN_KAPPAM(1),ZUN_KAPPAH(1)
+REAL(KIND=JPRB) :: ZUN_MADU(1),ZUN_MADV(1),ZUN_MADW(1)
+REAL(KIND=JPRB) :: ZUN_GAMMA_WENO(1)
+! b) output - array dimensions kept for safety
+INTEGER(KIND=JPIM) :: IUN_LEV(KPROMB,1)
+INTEGER(KIND=JPIM) :: IUN_LH0(KPROMB,1,0:3)
+INTEGER(KIND=JPIM) :: IUN_NOWENO(KPROMB,1)
+REAL(KIND=JPRB) :: ZUN_DLAMAD(KPROMB)
+REAL(KIND=JPRB) :: ZUN_CLASLD(KPROMB,1,3)
+REAL(KIND=JPRB) :: ZUN_CLAMAD(KPROMB,1,3)
+REAL(KIND=JPRB) :: ZUN_DLOMAD (KPROMB,1,0:3)
+REAL(KIND=JPRB) :: ZUN_CLOSLD(KPROMB,1,3,2)
+REAL(KIND=JPRB) :: ZUN_CLOMAD(KPROMB,1,3,2)
+REAL(KIND=JPRB) :: ZUN_CLASLT(KPROMB,1,3)
+REAL(KIND=JPRB) :: ZUN_CLOSLT(KPROMB,1,3,2)
+REAL(KIND=JPRB) :: ZUN_DVER(KPROMB,1)
+REAL(KIND=JPRB) :: ZUN_DVERMAD(KPROMB,1)
+REAL(KIND=JPRB) :: ZUN_VINTW(KPROMB,1,3)
+REAL(KIND=JPRB) :: ZUN_VINTWSLD(KPROMB,1,3)
+REAL(KIND=JPRB) :: ZUN_VINTWMAD(KPROMB,1,3)
+REAL(KIND=JPRB) :: ZUN_VINTWSLT(KPROMB,1,3)
+REAL(KIND=JPRB) :: ZUN_VINTWS(KPROMB,1,1:4)
+REAL(KIND=JPRB) :: ZUN_VDERW(KPROMB,1,0,0)  ! case KHVI=0
+REAL(KIND=JPRB) :: ZUN_HVW(KPROMB,1,0)      ! case KHVI=0
+REAL(KIND=JPRB) :: ZUN_CW(KPROMB,1,3)      ! case KHVI=0
+
+!    -------------------------------------------------------------------
+
+#include "abor1.intfb.h"
+#include "elascaw.intfb.h"
+#include "laiddiobs.intfb.h"
+#include "laidlic.intfb.h"
+#include "laidliobs.intfb.h"
+#include "lascaw.intfb.h"
+#include "slint_canari.intfb.h"
+
+!    -------------------------------------------------------------------
+
+IF (LHOOK) CALL DR_HOOK('SLINT',0,ZHOOK_HANDLE)
+ASSOCIATE(YDDIMV=>YDGEOMETRY%YRDIMV,YDGEM=>YDGEOMETRY%YRGEM, YDHSLMER=>YDGEOMETRY%YRHSLMER, YDCSGLEG=>YDGEOMETRY%YRCSGLEG, &
+& YDVSPLIP=>YDGEOMETRY%YRVSPLIP)
+ASSOCIATE(R4JP=>YDGEM%R4JP)
+!    -------------------------------------------------------------------
+!*       1. PRESET INTERPOLATION AT OBS. POINTS
+!           -----------------------------------
+
+CALL GSTATS(1856,0)
+IWIS = YDGOM%NOBSHOR
+IF ( IWIS /= 201.AND. IWIS /= 203 ) THEN
+  CALL ABOR1('SLINT: UNKNOWN INTERPOL. NO:')
+ENDIF
+IFLDN=1
+CALL GOM_PRE_INTERP_ACCESS(YDGOM,YLPRE)
+IHOR=0
+IHVI=0
+ZDEPI=2.0_JPRB*RPI
+ZPIS2=0.5_JPRB*RPI
+
+DO JGL=MAX(YDSL%NDGSAG,YDSL%NDGSAL+YDSL%NFRSTLOFF-YDSL%NSLWIDE)-YDSL%NFRSTLOFF,&
+   & MIN(YDSL%NDGENG,YDSL%NDGENL+YDSL%NFRSTLOFF+YDSL%NSLWIDE)-YDSL%NFRSTLOFF  
+  IGLGLO=JGL+YDSL%NFRSTLOFF
+  ZLSDEPI(JGL)=REAL(YDSL%NLOENG(IGLGLO),JPRB)/ZDEPI
+ENDDO
+
+DO JLAT=MAX(YDSL%NDGSAH,LBOUND(YDSL%NSLOFF,1)),MIN(YDSL%NDGENH,UBOUND(YDSL%NSLOFF,1))
+  ISTALAT(JLAT)=YDSL%NSLOFF(JLAT)
+ENDDO
+
+ZLEV(:,:) = 0.0_JPRB
+
+!    -------------------------------------------------------------------
+!*       2. SET INTERPOLATION/BUFFER PARAMETERS
+!           -----------------------------------
+
+! deactivate computation of SLHD/COMAD weights
+LLSLHD     =.FALSE.
+LLSLHDQUAD =.FALSE.
+LLSLHD_OLD =.FALSE.
+LLCOMAD=.FALSE.
+LLCOMADH=.FALSE.
+LLCOMADV=.FALSE.
+
+ISPLTHOI=0
+LL3DTURB=.FALSE.
+IDIMK=1
+
+LLSLHDHEAT = .FALSE.
+IF ( LRPLANE ) THEN
+  CALL ELASCAW(YDVSPLIP,LLSLHDHEAT,YDSL,KPROMB,IDIMK,1,KPROMB,1,&
+   & IFLDN,ISTALAT,IWIS,IHOR,1,IHVI,&
+   & LLSLHD,LLSLHDQUAD,LLSLHD_OLD,LL3DTURB,&
+   & LLCOMAD,LLCOMADH,LLCOMADV,ISPLTHOI,&
+   & PLON,PLAT,ZLEV,&
+   & ZUN_VETAF,IUN_VAUTF,&
+   & ZUN_VCUICO,ZUN_VSLD,ZUN_VSLDW,ZUN_GAMMA_WENO,1,1.0_JPRB,&
+   & ZUN_KAPPA,ZUN_KAPPAT,ZUN_KAPPAM,ZUN_KAPPAH,&
+   & ZUN_MADU,ZUN_MADV,ZUN_MADW,&
+   & ZDSLAT,ZUN_DLAMAD,ZCSLA,ZUN_CLASLD,ZUN_CLASLT,ZUN_CLAMAD,&
+   & ZDSLON,ZUN_DLOMAD,ZCSLO,ZUN_CLOSLD,ZUN_CLOSLT,ZUN_CLOMAD,&
+   & IL0S,IUN_LH0,IUN_LEV,IUN_NOWENO,ZUN_CW,&
+   & ZUN_DVER,ZUN_DVERMAD,ZUN_VINTW,ZUN_VINTWSLD,ZUN_VINTWSLT,ZUN_VINTWMAD,ZUN_VINTWS,&
+   & ZUN_VDERW,ZUN_HVW,IDEP)  
+ELSE
+  CALL LASCAW(YDVSPLIP,YDSL,KPROMB,IDIMK,1,KPROMB,1,&
+   & IFLDN,ISTALAT,IWIS,IHOR,1,IHVI,&
+   & LLSLHD,LLSLHDQUAD,LLSLHD_OLD,LLSLHDHEAT,LL3DTURB,&
+   & LLCOMAD,LLCOMADH,LLCOMADV,ISPLTHOI,&
+   & R4JP,ZPIS2,ZLSDEPI,YDCSGLEG%RLATI(YDSL%NDGSAH:),&
+   & YDHSLMER%RIPI(YDSL%NDGSAH:YDSL%NDGENH,1),&
+   & YDHSLMER%RIPI(YDSL%NDGSAH:YDSL%NDGENH,2),&
+   & YDHSLMER%RIPI(YDSL%NDGSAH:YDSL%NDGENH,3),&
+   & ZUN_SLD(1,1),ZUN_SLD(1,2),ZUN_SLD(1,3),&
+   & ZUN_SLDW,ZUN_3DTW,&
+   & PLON,PLAT,ZLEV,&
+   & ZUN_VETAF,IUN_VAUTF,&
+   & ZUN_VCUICO,ZUN_VSLD,ZUN_VSLDW,ZUN_GAMMA_WENO,1,1.0_JPRB,&
+   & ZUN_KAPPA,ZUN_KAPPAT,ZUN_KAPPAM,ZUN_KAPPAH,&
+   & ZUN_MADU,ZUN_MADV,ZUN_MADW,&
+   & ZDSLAT,ZUN_DLAMAD,ZCSLA,ZUN_CLASLD,ZUN_CLASLT,ZUN_CLAMAD,&
+   & ZDSLON,ZUN_DLOMAD,ZCSLO,ZUN_CLOSLD,ZUN_CLOSLT,ZUN_CLOMAD,&
+   & IL0S,IUN_LH0,IUN_LEV,IUN_NOWENO,ZUN_CW,&
+   & ZUN_DVER,ZUN_DVERMAD,ZUN_VINTW,ZUN_VINTWSLD,ZUN_VINTWSLT,ZUN_VINTWMAD,ZUN_VINTWS,&
+   & ZUN_VDERW,ZUN_HVW)
+ENDIF
+CALL GSTATS(1856,1)
+
+IF (IWIS == 201) THEN
+  INT_DEFAULT = GINTERP%BILINEAR_4POINT
+  DO J1 = 1 , KPROMB
+    IL0ULI(J1,1,1) = IL0S(J1,1,1)+1
+    IL0ULI(J1,1,2) = IL0S(J1,1,1)+2
+    IL0ULI(J1,2,1) = IL0S(J1,1,2)+1
+    IL0ULI(J1,2,2) = IL0S(J1,1,2)+2
+  ENDDO
+  IF( LSLDEBUG .AND. YDSL%CVER=='OB' )THEN
+    DO J1 = 1 , KPROMB
+      YDSL%MASK_SL1(IL0ULI(J1,1,1))=1
+      CALL SLHALO_DEBUG(YDSL,IL0ULI(J1,1,1))
+      YDSL%MASK_SL1(IL0ULI(J1,1,2))=1
+      CALL SLHALO_DEBUG(YDSL,IL0ULI(J1,1,2))
+      YDSL%MASK_SL1(IL0ULI(J1,2,1))=1
+      CALL SLHALO_DEBUG(YDSL,IL0ULI(J1,2,1))
+      YDSL%MASK_SL1(IL0ULI(J1,2,2))=1
+      CALL SLHALO_DEBUG(YDSL,IL0ULI(J1,2,2))
+    ENDDO
+  ENDIF
+ELSEIF (IWIS == 203) THEN
+  INT_DEFAULT = GINTERP%BIDIMENSIONAL_12POINT
+  DO J1 = 1 , KPROMB
+    IL0UDI(J1,0,0) = 0
+    IL0UDI(J1,0,1) = IL0S(J1,1,0)+1
+    IL0UDI(J1,0,2) = IL0S(J1,1,0)+2
+    IL0UDI(J1,0,3) = 0
+    IL0UDI(J1,1,0) = IL0S(J1,1,1)+0
+    IL0UDI(J1,1,1) = IL0S(J1,1,1)+1
+    IL0UDI(J1,1,2) = IL0S(J1,1,1)+2
+    IL0UDI(J1,1,3) = IL0S(J1,1,1)+3
+    IL0UDI(J1,2,0) = IL0S(J1,1,2)+0
+    IL0UDI(J1,2,1) = IL0S(J1,1,2)+1
+    IL0UDI(J1,2,2) = IL0S(J1,1,2)+2
+    IL0UDI(J1,2,3) = IL0S(J1,1,2)+3
+    IL0UDI(J1,3,0) = 0
+    IL0UDI(J1,3,1) = IL0S(J1,1,3)+1
+    IL0UDI(J1,3,2) = IL0S(J1,1,3)+2
+    IL0UDI(J1,3,3) = 0
+  ENDDO
+  DO J1 = 1 , KPROMB
+    IL0ULI(J1,1,1) = IL0S(J1,1,1)+1
+    IL0ULI(J1,1,2) = IL0S(J1,1,1)+2
+    IL0ULI(J1,2,1) = IL0S(J1,1,2)+1
+    IL0ULI(J1,2,2) = IL0S(J1,1,2)+2
+  ENDDO
+  IF( LSLDEBUG .AND. YDSL%CVER=='OB' )THEN
+    DO J1 = 1 , KPROMB
+      YDSL%MASK_SL1(IL0UDI(J1,0,1))=1
+      CALL SLHALO_DEBUG(YDSL,IL0UDI(J1,0,1))
+      YDSL%MASK_SL1(IL0UDI(J1,0,2))=1
+      CALL SLHALO_DEBUG(YDSL,IL0UDI(J1,0,2))
+      YDSL%MASK_SL1(IL0UDI(J1,1,0))=1
+      CALL SLHALO_DEBUG(YDSL,IL0UDI(J1,1,0))
+      YDSL%MASK_SL1(IL0UDI(J1,1,1))=1
+      CALL SLHALO_DEBUG(YDSL,IL0UDI(J1,1,1))
+      YDSL%MASK_SL1(IL0UDI(J1,1,2))=1
+      CALL SLHALO_DEBUG(YDSL,IL0UDI(J1,1,2))
+      YDSL%MASK_SL1(IL0UDI(J1,1,3))=1
+      CALL SLHALO_DEBUG(YDSL,IL0UDI(J1,1,3))
+      YDSL%MASK_SL1(IL0UDI(J1,2,0))=1
+      CALL SLHALO_DEBUG(YDSL,IL0UDI(J1,2,0))
+      YDSL%MASK_SL1(IL0UDI(J1,2,1))=1
+      CALL SLHALO_DEBUG(YDSL,IL0UDI(J1,2,1))
+      YDSL%MASK_SL1(IL0UDI(J1,2,2))=1
+      CALL SLHALO_DEBUG(YDSL,IL0UDI(J1,2,2))
+      YDSL%MASK_SL1(IL0UDI(J1,2,3))=1
+      CALL SLHALO_DEBUG(YDSL,IL0UDI(J1,2,3))
+      YDSL%MASK_SL1(IL0UDI(J1,3,1))=1
+      CALL SLHALO_DEBUG(YDSL,IL0UDI(J1,3,1))
+      YDSL%MASK_SL1(IL0UDI(J1,3,2))=1
+      CALL SLHALO_DEBUG(YDSL,IL0UDI(J1,3,2))
+    ENDDO
+    DO J1 = 1 , KPROMB
+      YDSL%MASK_SL1(IL0ULI(J1,1,1))=1
+      CALL SLHALO_DEBUG(YDSL,IL0ULI(J1,1,1))
+      YDSL%MASK_SL1(IL0ULI(J1,1,2))=1
+      CALL SLHALO_DEBUG(YDSL,IL0ULI(J1,1,2))
+      YDSL%MASK_SL1(IL0ULI(J1,2,1))=1
+      CALL SLHALO_DEBUG(YDSL,IL0ULI(J1,2,1))
+      YDSL%MASK_SL1(IL0ULI(J1,2,2))=1
+      CALL SLHALO_DEBUG(YDSL,IL0ULI(J1,2,2))
+    ENDDO
+  ENDIF
+ENDIF
+
+ZDSLON_LSM(:,:,:)=ZDSLON(:,:,:)
+ZDSLAT_LSM(:,:)=ZDSLAT(:,:)
+ZDSLON_OCEAN(:,:,:)=ZDSLON(:,:,:)
+ZDSLAT_OCEAN(:,:)=ZDSLAT(:,:)
+
+IF((LCANARI .AND. LSLREJ) .OR. LRLOI) THEN
+
+  ! Create modified weights for LSM-dependent interpolation
+  CALL SLINT_CANARI(KPROMB,KLSOBS,IL0ULI,ZDSLON_LSM,ZDSLAT_LSM,ZDSLON_OCEAN,ZDSLAT_OCEAN,YDGOM)
+
+ENDIF
+
+CALL GSTATS(1020,0)
+!$OMP PARALLEL DO SCHEDULE(DYNAMIC,1) PRIVATE(JOBS,LLINTERP,ID,INT,ILEN,ZPRE,ZPOST)
+DO JOBS = 1,KPROMB
+  ID=1
+  LLINTERP=.TRUE.
+  DO WHILE (LLINTERP)
+
+    ! Find contiguous runs of fields for interpolation (important for 
+    ! performance here) and get access to the pre and post-interpolation buffers
+    CALL GOM_GET_INTERPOLATION_BUFFERS(JOBS, YDGOM, ID, LLINTERP, ILEN, INT, ZPRE, ZPOST)
+    IF (LLINTERP) THEN
+
+      IF (INT==GINTERP%DEFAULT) INT=INT_DEFAULT
+
+    ! Complete the interpolation
+      SELECT CASE(INT)
+
+      CASE (GINTERP%BILINEAR_4POINT)
+        CALL LAIDLIOBS(YDSL%NASLB1, ILEN, ZDSLAT(JOBS,1), ZDSLON(JOBS,1,1:2), IL0ULI(JOBS,:,:),&
+          & ZPRE, ZPOST)
+
+      CASE (GINTERP%BILINEAR_4POINT_LSM)
+        CALL LAIDLIOBS(YDSL%NASLB1, ILEN, ZDSLAT_LSM(JOBS,1), ZDSLON_LSM(JOBS,1,1:2), IL0ULI(JOBS,:,:),&
+          & ZPRE, ZPOST)
+
+      CASE (GINTERP%BILINEAR_4POINT_OCEAN)
+        CALL LAIDLIOBS(YDSL%NASLB1, ILEN, ZDSLAT_OCEAN(JOBS,1), ZDSLON_OCEAN(JOBS,1,1:2), IL0ULI(JOBS,:,:),&
+          & ZPRE, ZPOST)
+
+      CASE (GINTERP%BIDIMENSIONAL_12POINT)
+        CALL LAIDDIOBS(YDSL%NASLB1, ILEN,&
+          & ZCSLA(JOBS,1,:), ZDSLON(JOBS,1,:), ZCSLO(JOBS,1,:,:), IL0UDI(JOBS,:,:),&
+          & ZPRE, ZPOST)
+
+      CASE (GINTERP%NEAREST_NEIGHBOUR)
+        CALL LAIDLIC(YDSL%NASLB1, ILEN, ZDSLAT(JOBS,1), ZDSLON(JOBS,1,1:2), IL0ULI(JOBS,:,:),&
+          & ZPRE, ZPOST)
+
+      CASE (GINTERP%NEAREST_NEIGHBOUR_LSM)
+        CALL LAIDLIC(YDSL%NASLB1, ILEN, ZDSLAT_LSM(JOBS,1), ZDSLON_LSM(JOBS,1,1:2), IL0ULI(JOBS,:,:),&
+          & ZPRE, ZPOST)
+      CASE (GINTERP%SET_ZERO)
+        ZPOST(:)=0.0_JPRB
+
+      CASE (GINTERP%SET_ONE)
+        ZPOST(:)=1.0_JPRB
+
+      CASE (GINTERP%SET_LAT)
+        ZPOST(:)=PLAT(JOBS)
+
+      CASE (GINTERP%SET_LON)
+        ZPOST(:)=PLON(JOBS)
+
+      CASE DEFAULT
+        CALL ABOR1('SLINT: INTERPOLATION METHOD NOT SET')
+      END SELECT
+
+    ENDIF
+  ENDDO
+ENDDO
+!$OMP END PARALLEL DO
+CALL GSTATS(1020,1)
+
+!    -------------------------------------------------------------------
+END ASSOCIATE
+END ASSOCIATE
+IF (LHOOK) CALL DR_HOOK('SLINT',1,ZHOOK_HANDLE)
+
+END SUBROUTINE SLINT

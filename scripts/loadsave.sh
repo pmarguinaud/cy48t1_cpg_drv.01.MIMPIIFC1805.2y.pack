@@ -163,6 +163,10 @@ do
        --skip TEPHY%YSURF \
        --skip TRADIATION%RAD_CONFIG \
        --skip TECUCONVCA%YD_RANDOM_STREAM_CA \
+       --skip GEOMETRY%YRCSGEOM_NB \
+       --skip GEOMETRY%YRGSGEOM_NB \
+       --skip GEOMETRY%YRCSGEOMAD_NB \
+       --skip GEOMETRY%YRGSGEOMAD_NB \
        --dir src/local/arpifs/module_util \
        --save --load --size --copy tmp/$b
     set +x

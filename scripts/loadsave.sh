@@ -157,14 +157,14 @@ do
     b=$(basename $f)
     set -x
     cp src/$view/$f tmp/$b
+#      --skip GEOMETRY%YRCSGEOM_NB \
+#      --skip GEOMETRY%YRGSGEOM_NB \
     ./scripts/loadsave.pl \
        --skip TYPE_GFL_COMP%PREVIOUS \
        --skip MODEL_PHYSICS_STOCHAST_TYPE%YR_RANDOM_STREAMS \
        --skip TEPHY%YSURF \
        --skip TRADIATION%RAD_CONFIG \
        --skip TECUCONVCA%YD_RANDOM_STREAM_CA \
-       --skip GEOMETRY%YRCSGEOM_NB \
-       --skip GEOMETRY%YRGSGEOM_NB \
        --skip GEOMETRY%YRCSGEOMAD_NB \
        --skip GEOMETRY%YRGSGEOMAD_NB \
        --dir src/local/arpifs/module_util \

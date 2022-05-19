@@ -10,7 +10,7 @@ use File::stat;
 use File::Path;
 use Getopt::Long;
 
-my %opts;
+my $suffix = '_openacc';
 
 sub newer
 {
@@ -53,6 +53,50 @@ sub addSeqDirective
   $pu->insertAfter (&t ("\n"), $pu->firstChild);
 }
 
+sub addSuffix
+{
+  my ($d, $suffix) = @_;
+
+  $suffix = uc ($suffix);
+
+  my @pde = &F ('.//call-stmt/procedure-designator[not(string(.)="DR_HOOK")]/N/n/text()', $d);
+  my @sub = &F ('.//subroutine-N/N/n/text()', $d);
+
+  for (@pde, @sub)
+    {
+      $_->setData ($_->data . $suffix);
+    }
+
+  my @inc = &F ('.//include/filename/text()', $d);
+
+  $suffix = lc ($suffix);
+
+  for (@inc)
+    {
+      my $f = $_->data;
+      $f =~ s/\.intfb\.h$/$suffix.intfb.h/goms;
+      $_->setData ($f);
+    }
+
+}
+
+sub prune
+{
+  use Apply;
+
+  my $d = shift;
+
+  &Apply::apply 
+  (
+    $d, 
+    '//named-E[string(N)="LMUSCLFA"]' => &n ('<literal-E>.FALSE.</literal-E>'),
+    '//named-E[string(N)="YDLDDH"][./R-LT/component-R[string(ct)="LFLEXDIA"]]', &n ('<literal-E>.FALSE.</literal-E>'),
+    '//named-E[string(N)="YDLDDH"][./R-LT/component-R[string(ct)="LFLEXDIA"]]', &n ('<literal-E>.FALSE.</literal-E>'),
+  );
+  
+
+}
+
 sub preProcessIfNewer
 {
   use Inline;
@@ -64,8 +108,18 @@ sub preProcessIfNewer
   use Stack;
   use Loop;
   use ReDim;
+  use DrHook;
+  use SymbolTable;
+  use Construct;
 
   my ($f1, $f2) = @_;
+
+  my $conf = 
+  {
+    ind => ['JLON', 'JLEV'],
+    dim2ind => {'KLON' => 'JLON', 'KLEV' => 'JLEV'},
+    ind2bnd => {'JLON' => ['KIDIA', 'KFDIA'], 'JLEV' => ['1', 'KLEV']},
+  };
 
   if (&newer ($f1, $f2))
     {
@@ -74,18 +128,23 @@ sub preProcessIfNewer
       my $d = &Fxtran::fxtran (location => $f1);
       &saveToFile ($d, "tmp/$f2");
 
+      my $t = &SymbolTable::getSymbolTable ($d, {NPROMA => 'KLON'});
+
       &Inline::inlineContainedSubroutines ($d);
       &saveToFile ($d, "tmp/inlineContainedSubroutines/$f2");
 
       &Associate::resolveAssociates ($d);
       &saveToFile ($d, "tmp/resolveAssociates/$f2");
 
-#     &Vector::hoistJlonLoops ($d);
-#     &saveToFile ($d, "tmp/hoistJlonLoops/$f2");
+      &Construct::changeIfStatementsInIfConstructs ($d);
+      &saveToFile ($d, "tmp/changeIfStatementsInIfConstructs/$f2");
 
-#     &Vector::addDirectives ($d);
-#     &saveToFile ($d, "tmp/addDirectives/$f2");
-#
+      &prune ($d);
+      &saveToFile ($d, "tmp/prune/$f2");
+
+      &Loop::arraySyntaxLoop ($d, $t, $conf);
+      &saveToFile ($d, "tmp/arraySyntaxLoop/$f2");
+
       &Loop::removeJlonLoops ($d);
       &saveToFile ($d, "tmp/removeJlonLoops/$f2");
 
@@ -97,61 +156,24 @@ sub preProcessIfNewer
       &Stack::addStack ($d);
       &saveToFile ($d, "tmp/addStack/$f2");
 
+      &addSuffix ($d, $suffix);
+      &saveToFile ($d, "tmp/addSuffix/$f2");
+
+      &DrHook::remove ($d);
+      &saveToFile ($d, "tmp/DrHook/$f2");
+
       'FileHandle'->new (">$f2")->print ($d->textContent ());
 
-      &Fxtran::intfb ($f2);
     }
 }
 
-my @opts_f = qw (update compile kernels single-block);
-my @opts_s = qw (arch);
 
-&GetOptions
-(
-  map ({ ($_,     \$opts{$_}) } @opts_f),
-  map ({ ("$_=s", \$opts{$_}) } @opts_s),
-);
+my $f = shift;
 
-my @compute = map { &basename ($_) } <compute/*.F90>;
-my @support = map { &basename ($_) } <support/*>;
+(my $g = $f) =~ s/\.F90$/$suffix.F90/;
 
-&mkpath ("compile.$opts{arch}");
+&preProcessIfNewer ($f, $g);
 
-chdir ("compile.$opts{arch}");
-
-if ($opts{update})
-  {
-    for my $f (@support)
-      {
-        &copyIfNewer ("../support/$f", $f);
-      }
-    
-    if ($opts{arch} =~ m/^gpu/o)
-      {
-        for my $f (@compute)
-          {
-            &preProcessIfNewer ("../compute/$f", $f);
-          }
-      }
-   else
-     {
-        for my $f (@compute)
-          {
-            &copyIfNewer ("../compute/$f", $f);
-          }
-     }
-
-    &copy ("../Makefile.$opts{arch}", "Makefile.inc");
-
-    system ("$Bin/Makefile.PL") and die;
-  }
-
-if ($opts{compile})
-  {
-    system ('make -j4 main.x') and die;
-  }
-
-
-
+&Fxtran::intfb ($g, 'src/local/.intfb/arpifs');
 
 

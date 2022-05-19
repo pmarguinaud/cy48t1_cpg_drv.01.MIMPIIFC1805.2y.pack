@@ -10,9 +10,16 @@ my %object = map { ($_, 1) } @object;
 my @skip = qw (PGFL PGFLT1 PGMVT1 PGPSDT2D);
 my %skip = map { ($_, 1) } @skip;
 
+my $conf0 = 
+{
+  NPROMA => 'YDCPG_OPTS%KLON'
+};
+
 sub getSymbolTable
 {
-  my $doc = shift;
+  my ($doc, $conf) = @_;
+
+  $conf ||= $conf0;
 
   my @args = &F ('.//subroutine-stmt/dummy-arg-LT/arg-N/N/n/text()', $doc);
   my %args = map { ($_->textContent, $_) } @args;
@@ -32,7 +39,7 @@ sub getSymbolTable
       $t{$N} = {
                  object => $object{$N},
                  skip => $skip{$N},
-                 nproma => $as && $ss[0]->textContent eq 'YDCPG_OPTS%KLON',
+                 nproma => $as && $ss[0]->textContent eq $conf->{NPROMA},
                  arg => $args{$N} || 0, 
                  ts => $ts->cloneNode (1), 
                  as => $as ? $as->cloneNode (1) : undef, 

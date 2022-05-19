@@ -44,3 +44,4 @@ ddrhook*.txt
 src/local/arpifs/module_util/
 ld_*
 tmp/*
+*_openacc.F90

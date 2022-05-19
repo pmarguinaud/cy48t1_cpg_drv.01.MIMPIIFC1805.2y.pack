@@ -1547,7 +1547,9 @@ sub add_associates
 
 sub intfb
 {
-  my $F90 = shift;
+  my ($F90, $dir) = @_;
+  
+  $dir ||= '.';
 
   my $doc = &Fxtran::fxtran (location => $F90);
   
@@ -1650,13 +1652,13 @@ sub intfb
   my $sub = &basename ($F90, qw (.F90));
   
   
-  &Fxtran::save_to_file ("$sub.intfb.h", << "EOF");
+  &Fxtran::save_to_file ("$dir/$sub.intfb.h", << "EOF");
 INTERFACE
 $text
 END INTERFACE
 EOF
 
-  return "$sub.intfb.h";
+  return "$dir/$sub.intfb.h";
 }
 
 1;

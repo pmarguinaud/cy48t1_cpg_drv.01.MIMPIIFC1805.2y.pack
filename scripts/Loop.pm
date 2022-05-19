@@ -8,10 +8,19 @@ use FindBin qw ($Bin);
 use lib $Bin;
 use Fxtran;
 
+my $conf0 = 
+{
+  ind => ['JLON', 'JLEV'],
+  dim2ind => {'YDCPG_OPTS%KLON' => 'JLON', 'YDCPG_OPTS%KFLEVG' => 'JLEV'},
+  ind2bnd => {'JLON' => ['YDCPG_BNDS%KIDIA', 'YDCPG_BNDS%KFDIA'], 'JLEV' => ['1', 'YDCPG_OPTS%KFLEVG']},
+  block => 1,
+};
 
 sub arraySyntaxLoop
 {
-  my ($d, $t) = @_;
+  my ($d, $t, $conf) = @_;
+
+  $conf ||= $conf0;
 
   # Transform simple array syntax in loops
   
@@ -24,10 +33,10 @@ sub arraySyntaxLoop
 
       next unless ($s1->{nproma});
 
-      my @ind = ('JLON', 'JLEV');
       my %ind;
-      my %dim2ind = ('YDCPG_OPTS%KLON' => 'JLON', 'YDCPG_OPTS%KFLEVG' => 'JLEV');
-      my %ind2bnd = ('JLON' => ['YDCPG_BNDS%KIDIA', 'YDCPG_BNDS%KFDIA'], 'JLEV' => ['1', 'YDCPG_OPTS%KFLEVG']);
+      my @ind = @{ $conf->{ind} };
+      my %dim2ind = %{ $conf->{dim2ind} };
+      my %ind2bnd = %{ $conf->{ind2bnd} };
 
       # For all expressions in this statement, involving arrays whose first dimension if NIT, replace subscript sections by indices
 
@@ -72,9 +81,12 @@ sub arraySyntaxLoop
 
           my @ss2 = &F ('./section-subscript', $sslt);
  
-          die unless ('JBLK' ne pop (@ss2));
+          if ($conf->{block})
+            {
+              die unless ('JBLK' ne pop (@ss2));
+            }
 
-          die &Dumper ([[map { $_->textContent } @ss1], [map { $_->textContent } @ss2]]) unless (scalar (@ss1) == scalar (@ss2));
+          die &Dumper ([$expr->textContent, [map { $_->textContent } @ss1], [map { $_->textContent } @ss2]]) . ' ' unless (scalar (@ss1) == scalar (@ss2));
 
           for my $i (0 .. $#ss1)
             {

@@ -52,7 +52,11 @@ sub reDim
       for my $rlt (@rlt)
         {
           my ($r) = &F ('./ANY-R[1]', $rlt);
-          die unless ($r->nodeName eq 'parens-R');
+          unless ($r->nodeName eq 'parens-R')
+            {
+              my $expr = $rlt->parentNode;
+              die $expr->textContent;
+            }
           my @e = &F ('./element-LT/element', $r);
           if (scalar (@e) > 1)
             {

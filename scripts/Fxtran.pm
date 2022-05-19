@@ -545,7 +545,7 @@ sub f
 
   my $xpath = shift (@_);
 
-  while ($xpath =~ s/\?/$_[0]/)
+  while (@_ && ($xpath =~ s/\?/$_[0]/))
     {
       shift (@_);
     }
@@ -554,14 +554,14 @@ sub f
 
   my @x;
 
-  eval
-  {
-    @x = $xpc->findnodes ($xpath, $_[0]);
-  };
+  eval 
+    {
+      @x = $xpc->findnodes ($xpath, $_[0]);
+    };
 
   if (my $c = $@)
     {
-      croak ($c);
+      &croak ($c);
     }
 
   if (! defined ($_[1]))
@@ -587,8 +587,16 @@ sub n
 {
   my $xml = shift;
   my $doc = 'XML::LibXML'->load_xml (string => '<?xml version="1.0"?><object xmlns="http://fxtran.net/#syntax">' . $xml . '</object>');
-  my $x = $doc->documentElement ()->firstChild;
-  return $x;
+
+  my @childs = $doc->documentElement ()->childNodes ();
+  if (@childs > 1)
+    {
+      return @childs;
+    }
+  else
+    {
+      return $childs[0];
+    }
 }
 
 sub is_INTEGER
@@ -1494,9 +1502,12 @@ sub add_used_vars
 sub stmt_is_executable
 {
   my $stmt = shift;
+  &croak ("Undefined stmt\n") unless ($stmt);
+
   my @noexec = ('subroutine-stmt', 'use-stmt', 'T-decl-stmt', 'end-subroutine-stmt', 'data-stmt', 'save-stmt',
-                'implicit-none-stmt');
+                'implicit-none-stmt', 'T-stmt', 'component-decl-stmt', 'end-T-stmt');
   my %noexec = map {($_, 1)} @noexec;
+
   if ($noexec{$stmt->nodeName})
     {
       return 0;
@@ -1534,5 +1545,118 @@ sub add_associates
 
 }
 
+sub intfb
+{
+  my $F90 = shift;
+
+  my $doc = &Fxtran::fxtran (location => $F90);
+  
+  my @pu = &f ('./f:object/f:file/f:program-unit', $doc);
+  
+  for my $pu (@pu)
+    {
+
+      for (&f ('.//f:program-unit', $pu))
+        {
+          $_->unbindNode ();
+        }
+
+      my $stmt = $pu->firstChild;
+  
+      (my $kind = $stmt->nodeName ()) =~ s/-stmt$//o;
+  
+      my ($name) = &f ('./f:' . $kind . '-N/f:N/f:n/text ()', $stmt, 1);
+      my @args = &f ('.//f:dummy-arg-LT//f:arg-N/f:N/f:n/text ()', $stmt, 1);
+      
+      my %stmt;
+      
+      # Keep first & last statements
+      
+      $stmt{$pu->firstChild} = $pu->firstChild;
+      $stmt{$pu->lastChild}  = $pu->lastChild;
+      
+      # Keep declaration statements referecing arguments
+      
+
+      for my $arg (@args)
+        {
+          my @en = &f ('.//f:EN-decl[./f:EN-N/f:N/f:n[text ()="' . $arg . '"]]', $pu);
+          for my $en (@en)
+            {
+              my $stmt = &Fxtran::stmt ($en);
+              $stmt{$stmt} = $stmt;
+            }
+        }
+  
+      # Strip blocks (these may contain use statements)
+      
+      for (&f ('.//f:block-construct', $doc))
+        {
+          $_->unbindNode ();
+        }
+  
+      # Keep use statements
+      
+      for (&f ('.//f:use-stmt', $pu))
+        {
+          $stmt{$_} = $_;
+        }
+        
+      
+      my @stmt = &f ('.//' . &Fxtran::xpath_by_type ('stmt'), $pu);
+      
+      for my $stmt (@stmt)
+        {
+          $stmt->unbindNode () unless ($stmt{$stmt});
+        }
+  
+    }
+  
+
+  # Strip labels
+  for (&f ('.//f:label', $doc))
+    {
+      $_->unbindNode ();
+    }
+  
+  # Strip comments
+  
+  for (&f ('.//f:C', $doc))
+    {
+      next if ($_->textContent =~ m/^!\$acc\s+routine/o);
+      $_->unbindNode ();
+    }
+  
+  # Strip includes
+  
+  for (&f ('.//f:include', $doc))
+    {
+      $_->unbindNode ();
+    }
+
+  # Strip defines
+
+  for (&f ('.//f:cpp[starts-with (text (), "#define ")]', $doc))
+    {
+      $_->unbindNode ();
+    }
+
+  # Strip empty lines
+  
+  my $text = $doc->textContent ();
+  
+  $text =~ s/^\s*\n$//goms;
+  
+  my $sub = &basename ($F90, qw (.F90));
+  
+  
+  &Fxtran::save_to_file ("$sub.intfb.h", << "EOF");
+INTERFACE
+$text
+END INTERFACE
+EOF
+
+  return "$sub.intfb.h";
+}
 
 1;

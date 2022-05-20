@@ -168,12 +168,10 @@ sub preProcessIfNewer
 }
 
 
-my $f = shift;
-
-(my $g = $f) =~ s/\.F90$/$suffix.F90/;
+my ($f, $g) = @ARGV;
 
 &preProcessIfNewer ($f, $g);
 
-&Fxtran::intfb ($g, 'src/local/.intfb/arpifs');
+&Fxtran::intfb ($g, 'src/local/openacc');
 
 

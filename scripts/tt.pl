@@ -5,22 +5,15 @@ use FindBin qw ($Bin);
 use Data::Dumper;
 use FileHandle;
 use File::Basename;
-use List::MoreUtils qw (uniq);
 use lib $Bin;
 use Fxtran;
 
-for my $F90 (@ARGV)
-  {
+my $F90 = shift;
 
-    my $d = &Fxtran::fxtran (location => $F90, fopts => [qw (-line-length 400)]);
+my $d = &Fxtran::fxtran (location => $F90, fopts => [qw (-line-length 300)]);
 
-    my @x = &F ('.//named-E[string(N)="PGMV" or string(N)="PGMVT1"]/R-LT/parens-R/element-LT/element[last()]/named-E', $d, 1);
+#my @expr = &F ('//named-E[string(.)="SUM(ZTESTSAVE(KIDIA:KFDIA))"]', $d);
+ my @expr = &F ('//named-E[translate(string(.)," ","")="SUM(ZTESTSAVE(KIDIA:KFDIA))"]', $d);
 
-    @x = sort &uniq (@x);
+print &Dumper (\@expr);
 
-    print &Dumper (\@x);
-    
-#   'FileHandle'->new (">$F90.new")->print ($d->textContent);
-    
-
-  }

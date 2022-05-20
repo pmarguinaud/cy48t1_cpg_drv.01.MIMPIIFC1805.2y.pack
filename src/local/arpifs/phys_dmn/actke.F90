@@ -266,7 +266,7 @@ IF (LECTFL) THEN
    IF (LMUSCLFA) THEN
       ZTABFL(:,:)=0._JPRB
       CALL HL2FL ( KIDIA, KFDIA, KLON, 1, KLEV,&
-          & PAPRS, PAPRSF, ZECT, 1, ZTABFL, 'HL2FL  ')
+          & PAPRS, PAPRSF, ZECT, 1, ZTABFL)
       DO JLEV = 1, KLEV
       DO JLON = KIDIA,KFDIA
          ZDIFFAR(JLON,JLEV)=(ZTABFL(JLON,JLEV)-PECT(JLON,JLEV))/TSPHY
@@ -377,7 +377,7 @@ IF (LECTFL) THEN
 ! Passage de ZECT1 sur les niveaux pleins pour calculer la tendance sur les FL
 ! puis le flux  
    CALL HL2FL ( KIDIA, KFDIA, KLON, 1, KLEV,&
-          & PAPRS, PAPRSF, ZECT1, 1, PECT1, 'HL2FL  ') 
+          & PAPRS, PAPRSF, ZECT1, 1, PECT1) 
    DO JLEV = KTDIAT, KLEV
       DO JLON = KIDIA,KFDIA
          ZDET(JLON,JLEV)=(PECT1(JLON,JLEV)-PECT(JLON,JLEV))/TSPHY
@@ -385,26 +385,26 @@ IF (LECTFL) THEN
    ENDDO
    ! Production dynamique
    CALL HL2FL ( KIDIA, KFDIA, KLON, 1, KLEV,&
-      & PAPRS, PAPRSF, ZPRDY, 1, PTPRDY, 'HL2FL  ') 
+      & PAPRS, PAPRSF, ZPRDY, 1, PTPRDY) 
    ! EDR
    CALL HL2FL ( KIDIA, KFDIA, KLON, 1, KLEV,&
-      & PAPRS, PAPRSF, ZEDR, 1, PEDR, 'HL2FL  ') 
+      & PAPRS, PAPRSF, ZEDR, 1, PEDR) 
    IF (LMUSCLFA.OR.LFLEXDIA) THEN 
       ! Dissipation
       CALL HL2FL ( KIDIA, KFDIA, KLON, 1, KLEV,&
-          & PAPRS, PAPRSF, ZDISS, 1, ZTDISS, 'HL2FL  ') 
+          & PAPRS, PAPRSF, ZDISS, 1, ZTDISS) 
       ! Terme de diffusion
       CALL HL2FL ( KIDIA, KFDIA, KLON, 1, KLEV,&
-          & PAPRS, PAPRSF, ZDIFF, 1, ZTDIFF, 'HL2FL  ') 
+          & PAPRS, PAPRSF, ZDIFF, 1, ZTDIFF) 
       ! Production dynamique
       CALL HL2FL ( KIDIA, KFDIA, KLON, 1, KLEV,&
-         & PAPRS, PAPRSF, ZPRDY, 1, PTPRDY, 'HL2FL  ') 
+         & PAPRS, PAPRSF, ZPRDY, 1, PTPRDY) 
       ! Production thermique
       CALL HL2FL ( KIDIA, KFDIA, KLON, 1, KLEV,&
-         & PAPRS, PAPRSF, ZPRODTH, 1, ZTPRTH, 'HL2FL  ') 
+         & PAPRS, PAPRSF, ZPRODTH, 1, ZTPRTH) 
       ! Dissipation
       CALL HL2FL ( KIDIA, KFDIA, KLON, 1, KLEV,&
-         & PAPRS, PAPRSF, ZDISS, 1, ZTDISS, 'HL2FL  ') 
+         & PAPRS, PAPRSF, ZDISS, 1, ZTDISS) 
       DO JLEV = KTDIAT, KLEV
       DO JLON = KIDIA,KFDIA
          ZTCORTKE(JLON,JLEV)=ZDET(JLON,JLEV)-ZTPRTH(JLON,JLEV) &

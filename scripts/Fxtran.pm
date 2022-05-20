@@ -1392,6 +1392,10 @@ sub save_to_file
       my $data0 = do { my $fh = 'FileHandle'->new ("<$file"); local $/ = undef; <$fh> };
       return if ($data0 eq $data);
     }
+  use File::Path;
+  use File::Basename;
+
+  &mkpath (&dirname ($file));
 
   'FileHandle'->new (">$file")->print ($data);
 } 

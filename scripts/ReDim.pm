@@ -22,6 +22,33 @@ sub reDim
       next if (&F ('.//attribute-N[string(.)="INTENT"]', $stmt));
       next if (&F ('.//call-stmt[.//named-E[string(N)="?"]', $N, $d));
   
+# The following is used sometimes (eg acbl89.F90)
+#
+# ZTESTM=SUM(ZTESTSAVE(KIDIA:KFDIA))
+#
+# DO JJLEV=JLEV,KTDIAN+1,-1
+#   IF (ZTESTM > 0.0_JPRB) THEN
+#     DO JLON=KIDIA,KFDIA
+#       ZDLUP1   = ZGDZF(JLON,JJLEV)
+#       ZZTHVL   =(ZTHETA (JLON,JJLEV)+ZTHETA (JLON,JJLEV-1))/2.0_JPRB
+#       ...
+#       ZEN   (JLON)=ZEN  (JLON)-ZINCR*ZTEST0
+#     ENDDO
+#     ZTESTM=SUM(ZTESTSAVE(KIDIA:KFDIA))
+#   ENDIF
+# ENDDO
+
+      my @sum = &F ('//E-2/named-E[translate(string(.)," ","")="?"]', "SUM($N(KIDIA:KFDIA))", $d);
+
+# So we need to replace the SUM by a scalar assignment
+
+      my $N_JLON = &e ("$N(JLON)");
+      for my $sum (@sum)
+        {
+          $sum->replaceNode ($N_JLON->cloneNode (1));
+        }
+
+
       my ($as) = &F ('./array-spec', $en_decl);
 
       my @ss = &F ('./shape-spec-LT/shape-spec', $as);

@@ -174,6 +174,7 @@ my ($f, $g) = @ARGV;
 unless ($g)
   {
     $g = 'src/local/openacc/' . &basename ($f);
+    $g =~ s/\.F90$/$suffix.F90/;
   }
 
 &preProcessIfNewer ($f, $g);

@@ -14,6 +14,7 @@ my $suffix = '_openacc';
 
 sub newer
 {
+  return 1;
   my ($f1, $f2)  = @_;
   die unless (-f $f1);
   return 1 unless (-f $f2);
@@ -169,6 +170,11 @@ sub preProcessIfNewer
 
 
 my ($f, $g) = @ARGV;
+
+unless ($g)
+  {
+    $g = 'src/local/openacc/' . &basename ($f);
+  }
 
 &preProcessIfNewer ($f, $g);
 

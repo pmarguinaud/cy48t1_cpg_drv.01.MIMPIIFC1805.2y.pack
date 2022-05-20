@@ -129,6 +129,9 @@ sub preProcessIfNewer
       my $d = &Fxtran::fxtran (location => $f1);
       &saveToFile ($d, "tmp/$f2");
 
+      my @hdr = &F ('//include/filename', $d);
+      my @pde = &F ('//procedure-designator', $d, 1);
+
       my $t = &SymbolTable::getSymbolTable ($d, {NPROMA => 'KLON'});
 
       &Inline::inlineContainedSubroutines ($d);
@@ -156,6 +159,15 @@ sub preProcessIfNewer
 
       &Stack::addStack ($d);
       &saveToFile ($d, "tmp/addStack/$f2");
+
+      for my $hdr (@hdr)
+        {
+          (my $f = $hdr->textContent) =~ s/\.intfb\.h//o;
+          $f = uc ($f);
+          next unless (grep { $_ eq $f } @pde);
+          my $inc = $hdr->parentNode;
+          $inc->unbindNode ();
+        }
 
       &addSuffix ($d, $suffix);
       &saveToFile ($d, "tmp/addSuffix/$f2");

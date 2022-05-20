@@ -262,7 +262,7 @@ ZDIFFAR(:,:)=0._JPRB
 IF (LECTFL) THEN
 ! PECT en entree sur les FL donc passage sur les HL pour les calculs physiques 
    CALL FL2HL ( KIDIA, KFDIA, KLON, 1, KLEV,&
-          & PAPRS, PAPRSF, PECT, ZECT, 1, 'FL2HL  ')
+          & PAPRS, PAPRSF, PECT, ZECT, 1)
    IF (LMUSCLFA) THEN
       ZTABFL(:,:)=0._JPRB
       CALL HL2FL ( KIDIA, KFDIA, KLON, 1, KLEV,&

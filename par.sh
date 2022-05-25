@@ -43,7 +43,7 @@ mkdir -p $TMPDIR
 cd $TMPDIR
 
 
-for K in 0 1 2 3
+for K in 0 1 
 do
 
 mkdir -p $K
@@ -241,7 +241,7 @@ cd ..
 done
 
 
-diffNODE.001_01 0/NODE.001_01 2/NODE.001_01
+#diffNODE.001_01 0/NODE.001_01 2/NODE.001_01
 diffNODE.001_01 0/NODE.001_01 1/NODE.001_01
 
 

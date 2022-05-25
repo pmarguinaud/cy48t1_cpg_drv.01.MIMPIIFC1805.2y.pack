@@ -272,6 +272,10 @@ sub grokIntent
           $r = 1;
         }
     }
+  else
+    {
+      $r = 1;
+    }
   
   if (defined ($$pintent))
     {

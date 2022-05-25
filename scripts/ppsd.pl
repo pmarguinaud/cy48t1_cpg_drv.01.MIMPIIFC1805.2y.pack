@@ -9,6 +9,7 @@ use File::Basename;
 use File::stat;
 use File::Path;
 use Getopt::Long;
+use Data::Dumper;
 
 my $suffix = '_openacc';
 
@@ -60,7 +61,8 @@ sub addSuffix
 
   $suffix = uc ($suffix);
 
-  my @pde = &F ('.//call-stmt/procedure-designator[not(string(.)="DR_HOOK")]/N/n/text()', $d);
+  my @pde = &F ('.//call-stmt/procedure-designator[not(string(.)="DR_HOOK")]/named-E/N/n/text()', $d);
+
   my @sub = &F ('.//subroutine-N/N/n/text()', $d);
 
   for (@pde, @sub)
@@ -72,11 +74,11 @@ sub addSuffix
 
   $suffix = lc ($suffix);
 
-  for (@inc)
+  for my $inc (@inc)
     {
-      my $f = $_->data;
+      my $f = $inc->data;
       $f =~ s/\.intfb\.h$/$suffix.intfb.h/goms;
-      $_->setData ($f);
+      $inc->setData ($f);
     }
 
 }
@@ -129,8 +131,6 @@ sub preProcessIfNewer
       my $d = &Fxtran::fxtran (location => $f1);
       &saveToFile ($d, "tmp/$f2");
 
-      my @hdr = &F ('//include/filename', $d);
-      my @pde = &F ('//procedure-designator', $d, 1);
 
       my $t = &SymbolTable::getSymbolTable ($d, {NPROMA => 'KLON'});
 
@@ -160,16 +160,18 @@ sub preProcessIfNewer
       &Stack::addStack ($d);
       &saveToFile ($d, "tmp/addStack/$f2");
 
+      &addSuffix ($d, $suffix);
+
+      my @hdr = &F ('//include/filename', $d);
       for my $hdr (@hdr)
         {
-          (my $f = $hdr->textContent) =~ s/\.intfb\.h//o;
+          next unless (my $f = $hdr->textContent) =~ s/\.intfb\.h//o;
           $f = uc ($f);
-          next unless (grep { $_ eq $f } @pde);
+          next if (&F ('.//call-stmt[string(procedure-designator)="?"]', $f, $d));
           my $inc = $hdr->parentNode;
           $inc->unbindNode ();
         }
 
-      &addSuffix ($d, $suffix);
       &saveToFile ($d, "tmp/addSuffix/$f2");
 
       &DrHook::remove ($d);
@@ -185,12 +187,12 @@ my ($f, $g) = @ARGV;
 
 unless ($g)
   {
-    $g = 'src/local/openacc/' . &basename ($f);
+    $g = 'src/local/ifsaux/openacc/' . &basename ($f);
     $g =~ s/\.F90$/$suffix.F90/;
   }
 
 &preProcessIfNewer ($f, $g);
 
-&Fxtran::intfb ($g, 'src/local/openacc');
+&Fxtran::intfb ($g, 'src/local/ifsaux/openacc');
 
 

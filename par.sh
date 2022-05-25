@@ -4,6 +4,7 @@
 #SBATCH --nodes=1
 #SBATCH --time=00:05:00
 #SBATCH --exclusive
+#SBATCH -p ndl
 #SBATCH --verbose
 #SBATCH --no-requeue
 
@@ -43,7 +44,7 @@ mkdir -p $TMPDIR
 cd $TMPDIR
 
 
-for K in 0 1 
+for K in 0 1
 do
 
 mkdir -p $K
@@ -88,7 +89,7 @@ done
 
 NNODE_FC=1
 NTASK_FC=4
-NOPMP_FC=8
+NOPMP_FC=1
 
 # Set the number of nodes, tasks, threads for the IO server
 
@@ -108,6 +109,7 @@ STOP=6
 xpnam --delta="
 &NAMRIP
   CSTOP='h$STOP',
+! CSTOP='t1',
   TSTEP=240,
 /
 &NAMARG
@@ -176,7 +178,7 @@ if [ 1 -eq 1 ]
 then
 xpnam --delta="
 &NAMDIM
-  NPROMA=-8,
+  NPROMA=-16,
 /
 " --inplace fort.4
 fi
@@ -227,11 +229,51 @@ fi
 
 
 pack=$PACK
-#ack=/home/gmap/mrpm/marguina/pack/48t1_mainPGIdbg.01.PGI217.cpu0
+pack=/home/gmap/mrpm/marguina/pack/48t1_cpg_drv.01.PGI217.cpu0
+BIN=$pack/bin/MASTERODB
+
+export DEBUG=0
+
+
+if [ "x$DEBUG" = "x1" ]
+then
+
+(
+/opt/softs/mpiauto/mpiauto --verbose --wrap --wrap-stdeo --nouse-slurm-mpi --prefix-mpirun '/usr/bin/time -f "time=%e"' \
+    --nnp $NTASK_FC --nn $NNODE_FC --openmp $NOPMP_FC -- $BIN \
+ -- --nnp $NTASK_IO --nn $NNODE_IO --openmp $NOPMP_IO -- $BIN 
+) &
+
+
+for i in 0 
+do
+while [ True ]
+do
+  if [ -f "pid.$i.txt" ]
+  then
+    break
+  fi  
+  sleep 1
+done
+done
+set -e
+
+
+gdb -ex 'shell rm pid.0.txt' $BIN $(cat pid.0.txt) 
+
+rm pid.*.txt
+
+wait
+
+else
 
 /opt/softs/mpiauto/mpiauto --verbose --wrap --wrap-stdeo --nouse-slurm-mpi --prefix-mpirun '/usr/bin/time -f "time=%e"' \
-    --nnp $NTASK_FC --nn $NNODE_FC --openmp $NOPMP_FC -- $pack/bin/MASTERODB \
- -- --nnp $NTASK_IO --nn $NNODE_IO --openmp $NOPMP_IO -- $pack/bin/MASTERODB 
+    --nnp $NTASK_FC --nn $NNODE_FC --openmp $NOPMP_FC -- $BIN \
+ -- --nnp $NTASK_IO --nn $NNODE_IO --openmp $NOPMP_IO -- $BIN 
+
+
+fi
+
 
 
 ls -lrt

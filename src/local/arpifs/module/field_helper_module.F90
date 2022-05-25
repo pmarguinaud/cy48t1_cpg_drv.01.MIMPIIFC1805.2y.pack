@@ -139,11 +139,15 @@ CONTAINS
         ISIZE = KIND (HST)
         IF (KDIR == NH2D) THEN
           !$acc host_data use_device (DEV)
+#ifdef _OPENACC
           CALL ACC_MEMCPY_TO_DEVICE (DEV (J1, J2), HST (J1, J2), ISIZE)
+#endif
           !$acc end host_data
         ELSEIF (KDIR == ND2H) THEN
           !$acc host_data use_device (DEV)
+#ifdef _OPENACC
           CALL ACC_MEMCPY_FROM_DEVICE (HST (J1, J2), DEV (J1, J2), ISIZE)
+#endif
           !$acc end host_data
         ENDIF
       ENDDO
@@ -161,11 +165,15 @@ CONTAINS
       ISIZE = KIND (HST) * SIZE (HST (:, J2))
       IF (KDIR == NH2D) THEN
         !$acc host_data use_device (DEV)
+#ifdef _OPENACC
         CALL ACC_MEMCPY_TO_DEVICE (DEV (:, J2), HST (:, J2), ISIZE)
+#endif
         !$acc end host_data
       ELSEIF (KDIR == ND2H) THEN
         !$acc host_data use_device (DEV)
+#ifdef _OPENACC
         CALL ACC_MEMCPY_FROM_DEVICE (HST (:, J2), DEV (:, J2), ISIZE)
+#endif
         !$acc end host_data
       ENDIF
     ENDDO
@@ -181,11 +189,15 @@ CONTAINS
         ISIZE = KIND (HST) * SIZE (HST (:, :))
         IF (KDIR == NH2D) THEN
           !$acc host_data use_device (DEV)
+#ifdef _OPENACC
           CALL ACC_MEMCPY_TO_DEVICE (DEV (:, :), HST (:, :), ISIZE)
+#endif
           !$acc end host_data
         ELSEIF (KDIR == ND2H) THEN
           !$acc host_data use_device (DEV)
+#ifdef _OPENACC
           CALL ACC_MEMCPY_FROM_DEVICE (HST (:, :), DEV (:, :), ISIZE)
+#endif
           !$acc end host_data
         ENDIF
     END SUBROUTINE
@@ -335,11 +347,15 @@ CONTAINS
           ISIZE = KIND (HST)
           IF (KDIR == NH2D) THEN
             !$acc host_data use_device (DEV)
+#ifdef _OPENACC
             CALL ACC_MEMCPY_TO_DEVICE (DEV (J1, J2, J3), HST (J1, J2, J3), ISIZE)
+#endif
             !$acc end host_data
           ELSEIF (KDIR == ND2H) THEN
             !$acc host_data use_device (DEV)
+#ifdef _OPENACC
             CALL ACC_MEMCPY_FROM_DEVICE (HST (J1, J2, J3), DEV (J1, J2, J3), ISIZE)
+#endif
             !$acc end host_data
           ENDIF
         ENDDO
@@ -359,11 +375,15 @@ CONTAINS
         ISIZE = KIND (HST) * SIZE (HST (:, J2, J3))
         IF (KDIR == NH2D) THEN
           !$acc host_data use_device (DEV)
+#ifdef _OPENACC
           CALL ACC_MEMCPY_TO_DEVICE (DEV (:, J2, J3), HST (:, J2, J3), ISIZE)
+#endif
           !$acc end host_data
         ELSEIF (KDIR == ND2H) THEN
           !$acc host_data use_device (DEV)
+#ifdef _OPENACC
           CALL ACC_MEMCPY_FROM_DEVICE (HST (:, J2, J3), DEV (:, J2, J3), ISIZE)
+#endif
           !$acc end host_data
         ENDIF
       ENDDO
@@ -381,11 +401,15 @@ CONTAINS
       ISIZE = KIND (HST) * SIZE (HST (:, :, J3))
       IF (KDIR == NH2D) THEN
         !$acc host_data use_device (DEV)
+#ifdef _OPENACC
         CALL ACC_MEMCPY_TO_DEVICE (DEV (:, :, J3), HST (:, :, J3), ISIZE)
+#endif
         !$acc end host_data
       ELSEIF (KDIR == ND2H) THEN
         !$acc host_data use_device (DEV)
+#ifdef _OPENACC
         CALL ACC_MEMCPY_FROM_DEVICE (HST (:, :, J3), DEV (:, :, J3), ISIZE)
+#endif
         !$acc end host_data
       ENDIF
     ENDDO
@@ -401,11 +425,15 @@ CONTAINS
         ISIZE = KIND (HST) * SIZE (HST (:, :, :))
         IF (KDIR == NH2D) THEN
           !$acc host_data use_device (DEV)
+#ifdef _OPENACC
           CALL ACC_MEMCPY_TO_DEVICE (DEV (:, :, :), HST (:, :, :), ISIZE)
+#endif
           !$acc end host_data
         ELSEIF (KDIR == ND2H) THEN
           !$acc host_data use_device (DEV)
+#ifdef _OPENACC
           CALL ACC_MEMCPY_FROM_DEVICE (HST (:, :, :), DEV (:, :, :), ISIZE)
+#endif
           !$acc end host_data
         ENDIF
     END SUBROUTINE
@@ -564,11 +592,15 @@ CONTAINS
             ISIZE = KIND (HST)
             IF (KDIR == NH2D) THEN
               !$acc host_data use_device (DEV)
+#ifdef _OPENACC
               CALL ACC_MEMCPY_TO_DEVICE (DEV (J1, J2, J3, J4), HST (J1, J2, J3, J4), ISIZE)
+#endif
               !$acc end host_data
             ELSEIF (KDIR == ND2H) THEN
               !$acc host_data use_device (DEV)
+#ifdef _OPENACC
               CALL ACC_MEMCPY_FROM_DEVICE (HST (J1, J2, J3, J4), DEV (J1, J2, J3, J4), ISIZE)
+#endif
               !$acc end host_data
             ENDIF
           ENDDO
@@ -590,11 +622,15 @@ CONTAINS
           ISIZE = KIND (HST) * SIZE (HST (:, J2, J3, J4))
           IF (KDIR == NH2D) THEN
             !$acc host_data use_device (DEV)
+#ifdef _OPENACC
             CALL ACC_MEMCPY_TO_DEVICE (DEV (:, J2, J3, J4), HST (:, J2, J3, J4), ISIZE)
+#endif
             !$acc end host_data
           ELSEIF (KDIR == ND2H) THEN
             !$acc host_data use_device (DEV)
+#ifdef _OPENACC
             CALL ACC_MEMCPY_FROM_DEVICE (HST (:, J2, J3, J4), DEV (:, J2, J3, J4), ISIZE)
+#endif
             !$acc end host_data
           ENDIF
         ENDDO
@@ -614,11 +650,15 @@ CONTAINS
         ISIZE = KIND (HST) * SIZE (HST (:, :, J3, J4))
         IF (KDIR == NH2D) THEN
           !$acc host_data use_device (DEV)
+#ifdef _OPENACC
           CALL ACC_MEMCPY_TO_DEVICE (DEV (:, :, J3, J4), HST (:, :, J3, J4), ISIZE)
+#endif
           !$acc end host_data
         ELSEIF (KDIR == ND2H) THEN
           !$acc host_data use_device (DEV)
+#ifdef _OPENACC
           CALL ACC_MEMCPY_FROM_DEVICE (HST (:, :, J3, J4), DEV (:, :, J3, J4), ISIZE)
+#endif
           !$acc end host_data
         ENDIF
       ENDDO
@@ -636,11 +676,15 @@ CONTAINS
       ISIZE = KIND (HST) * SIZE (HST (:, :, :, J4))
       IF (KDIR == NH2D) THEN
         !$acc host_data use_device (DEV)
+#ifdef _OPENACC
         CALL ACC_MEMCPY_TO_DEVICE (DEV (:, :, :, J4), HST (:, :, :, J4), ISIZE)
+#endif
         !$acc end host_data
       ELSEIF (KDIR == ND2H) THEN
         !$acc host_data use_device (DEV)
+#ifdef _OPENACC
         CALL ACC_MEMCPY_FROM_DEVICE (HST (:, :, :, J4), DEV (:, :, :, J4), ISIZE)
+#endif
         !$acc end host_data
       ENDIF
     ENDDO
@@ -656,11 +700,15 @@ CONTAINS
         ISIZE = KIND (HST) * SIZE (HST (:, :, :, :))
         IF (KDIR == NH2D) THEN
           !$acc host_data use_device (DEV)
+#ifdef _OPENACC
           CALL ACC_MEMCPY_TO_DEVICE (DEV (:, :, :, :), HST (:, :, :, :), ISIZE)
+#endif
           !$acc end host_data
         ELSEIF (KDIR == ND2H) THEN
           !$acc host_data use_device (DEV)
+#ifdef _OPENACC
           CALL ACC_MEMCPY_FROM_DEVICE (HST (:, :, :, :), DEV (:, :, :, :), ISIZE)
+#endif
           !$acc end host_data
         ENDIF
     END SUBROUTINE
@@ -828,11 +876,15 @@ CONTAINS
               ISIZE = KIND (HST)
               IF (KDIR == NH2D) THEN
                 !$acc host_data use_device (DEV)
+#ifdef _OPENACC
                 CALL ACC_MEMCPY_TO_DEVICE (DEV (J1, J2, J3, J4, J5), HST (J1, J2, J3, J4, J5), ISIZE)
+#endif
                 !$acc end host_data
               ELSEIF (KDIR == ND2H) THEN
                 !$acc host_data use_device (DEV)
+#ifdef _OPENACC
                 CALL ACC_MEMCPY_FROM_DEVICE (HST (J1, J2, J3, J4, J5), DEV (J1, J2, J3, J4, J5), ISIZE)
+#endif
                 !$acc end host_data
               ENDIF
             ENDDO
@@ -856,11 +908,15 @@ CONTAINS
             ISIZE = KIND (HST) * SIZE (HST (:, J2, J3, J4, J5))
             IF (KDIR == NH2D) THEN
               !$acc host_data use_device (DEV)
+#ifdef _OPENACC
               CALL ACC_MEMCPY_TO_DEVICE (DEV (:, J2, J3, J4, J5), HST (:, J2, J3, J4, J5), ISIZE)
+#endif
               !$acc end host_data
             ELSEIF (KDIR == ND2H) THEN
               !$acc host_data use_device (DEV)
+#ifdef _OPENACC
               CALL ACC_MEMCPY_FROM_DEVICE (HST (:, J2, J3, J4, J5), DEV (:, J2, J3, J4, J5), ISIZE)
+#endif
               !$acc end host_data
             ENDIF
           ENDDO
@@ -882,11 +938,15 @@ CONTAINS
           ISIZE = KIND (HST) * SIZE (HST (:, :, J3, J4, J5))
           IF (KDIR == NH2D) THEN
             !$acc host_data use_device (DEV)
+#ifdef _OPENACC
             CALL ACC_MEMCPY_TO_DEVICE (DEV (:, :, J3, J4, J5), HST (:, :, J3, J4, J5), ISIZE)
+#endif
             !$acc end host_data
           ELSEIF (KDIR == ND2H) THEN
             !$acc host_data use_device (DEV)
+#ifdef _OPENACC
             CALL ACC_MEMCPY_FROM_DEVICE (HST (:, :, J3, J4, J5), DEV (:, :, J3, J4, J5), ISIZE)
+#endif
             !$acc end host_data
           ENDIF
         ENDDO
@@ -906,11 +966,15 @@ CONTAINS
         ISIZE = KIND (HST) * SIZE (HST (:, :, :, J4, J5))
         IF (KDIR == NH2D) THEN
           !$acc host_data use_device (DEV)
+#ifdef _OPENACC
           CALL ACC_MEMCPY_TO_DEVICE (DEV (:, :, :, J4, J5), HST (:, :, :, J4, J5), ISIZE)
+#endif
           !$acc end host_data
         ELSEIF (KDIR == ND2H) THEN
           !$acc host_data use_device (DEV)
+#ifdef _OPENACC
           CALL ACC_MEMCPY_FROM_DEVICE (HST (:, :, :, J4, J5), DEV (:, :, :, J4, J5), ISIZE)
+#endif
           !$acc end host_data
         ENDIF
       ENDDO
@@ -928,11 +992,15 @@ CONTAINS
       ISIZE = KIND (HST) * SIZE (HST (:, :, :, :, J5))
       IF (KDIR == NH2D) THEN
         !$acc host_data use_device (DEV)
+#ifdef _OPENACC
         CALL ACC_MEMCPY_TO_DEVICE (DEV (:, :, :, :, J5), HST (:, :, :, :, J5), ISIZE)
+#endif
         !$acc end host_data
       ELSEIF (KDIR == ND2H) THEN
         !$acc host_data use_device (DEV)
+#ifdef _OPENACC
         CALL ACC_MEMCPY_FROM_DEVICE (HST (:, :, :, :, J5), DEV (:, :, :, :, J5), ISIZE)
+#endif
         !$acc end host_data
       ENDIF
     ENDDO
@@ -948,11 +1016,15 @@ CONTAINS
         ISIZE = KIND (HST) * SIZE (HST (:, :, :, :, :))
         IF (KDIR == NH2D) THEN
           !$acc host_data use_device (DEV)
+#ifdef _OPENACC
           CALL ACC_MEMCPY_TO_DEVICE (DEV (:, :, :, :, :), HST (:, :, :, :, :), ISIZE)
+#endif
           !$acc end host_data
         ELSEIF (KDIR == ND2H) THEN
           !$acc host_data use_device (DEV)
+#ifdef _OPENACC
           CALL ACC_MEMCPY_FROM_DEVICE (HST (:, :, :, :, :), DEV (:, :, :, :, :), ISIZE)
+#endif
           !$acc end host_data
         ENDIF
     END SUBROUTINE
@@ -1093,11 +1165,15 @@ CONTAINS
         ISIZE = KIND (HST)
         IF (KDIR == NH2D) THEN
           !$acc host_data use_device (DEV)
+#ifdef _OPENACC
           CALL ACC_MEMCPY_TO_DEVICE (DEV (J1, J2), HST (J1, J2), ISIZE)
+#endif
           !$acc end host_data
         ELSEIF (KDIR == ND2H) THEN
           !$acc host_data use_device (DEV)
+#ifdef _OPENACC
           CALL ACC_MEMCPY_FROM_DEVICE (HST (J1, J2), DEV (J1, J2), ISIZE)
+#endif
           !$acc end host_data
         ENDIF
       ENDDO
@@ -1115,11 +1191,15 @@ CONTAINS
       ISIZE = KIND (HST) * SIZE (HST (:, J2))
       IF (KDIR == NH2D) THEN
         !$acc host_data use_device (DEV)
+#ifdef _OPENACC
         CALL ACC_MEMCPY_TO_DEVICE (DEV (:, J2), HST (:, J2), ISIZE)
+#endif
         !$acc end host_data
       ELSEIF (KDIR == ND2H) THEN
         !$acc host_data use_device (DEV)
+#ifdef _OPENACC
         CALL ACC_MEMCPY_FROM_DEVICE (HST (:, J2), DEV (:, J2), ISIZE)
+#endif
         !$acc end host_data
       ENDIF
     ENDDO
@@ -1135,11 +1215,15 @@ CONTAINS
         ISIZE = KIND (HST) * SIZE (HST (:, :))
         IF (KDIR == NH2D) THEN
           !$acc host_data use_device (DEV)
+#ifdef _OPENACC
           CALL ACC_MEMCPY_TO_DEVICE (DEV (:, :), HST (:, :), ISIZE)
+#endif
           !$acc end host_data
         ELSEIF (KDIR == ND2H) THEN
           !$acc host_data use_device (DEV)
+#ifdef _OPENACC
           CALL ACC_MEMCPY_FROM_DEVICE (HST (:, :), DEV (:, :), ISIZE)
+#endif
           !$acc end host_data
         ENDIF
     END SUBROUTINE
@@ -1289,11 +1373,15 @@ CONTAINS
           ISIZE = KIND (HST)
           IF (KDIR == NH2D) THEN
             !$acc host_data use_device (DEV)
+#ifdef _OPENACC
             CALL ACC_MEMCPY_TO_DEVICE (DEV (J1, J2, J3), HST (J1, J2, J3), ISIZE)
+#endif
             !$acc end host_data
           ELSEIF (KDIR == ND2H) THEN
             !$acc host_data use_device (DEV)
+#ifdef _OPENACC
             CALL ACC_MEMCPY_FROM_DEVICE (HST (J1, J2, J3), DEV (J1, J2, J3), ISIZE)
+#endif
             !$acc end host_data
           ENDIF
         ENDDO
@@ -1313,11 +1401,15 @@ CONTAINS
         ISIZE = KIND (HST) * SIZE (HST (:, J2, J3))
         IF (KDIR == NH2D) THEN
           !$acc host_data use_device (DEV)
+#ifdef _OPENACC
           CALL ACC_MEMCPY_TO_DEVICE (DEV (:, J2, J3), HST (:, J2, J3), ISIZE)
+#endif
           !$acc end host_data
         ELSEIF (KDIR == ND2H) THEN
           !$acc host_data use_device (DEV)
+#ifdef _OPENACC
           CALL ACC_MEMCPY_FROM_DEVICE (HST (:, J2, J3), DEV (:, J2, J3), ISIZE)
+#endif
           !$acc end host_data
         ENDIF
       ENDDO
@@ -1335,11 +1427,15 @@ CONTAINS
       ISIZE = KIND (HST) * SIZE (HST (:, :, J3))
       IF (KDIR == NH2D) THEN
         !$acc host_data use_device (DEV)
+#ifdef _OPENACC
         CALL ACC_MEMCPY_TO_DEVICE (DEV (:, :, J3), HST (:, :, J3), ISIZE)
+#endif
         !$acc end host_data
       ELSEIF (KDIR == ND2H) THEN
         !$acc host_data use_device (DEV)
+#ifdef _OPENACC
         CALL ACC_MEMCPY_FROM_DEVICE (HST (:, :, J3), DEV (:, :, J3), ISIZE)
+#endif
         !$acc end host_data
       ENDIF
     ENDDO
@@ -1355,11 +1451,15 @@ CONTAINS
         ISIZE = KIND (HST) * SIZE (HST (:, :, :))
         IF (KDIR == NH2D) THEN
           !$acc host_data use_device (DEV)
+#ifdef _OPENACC
           CALL ACC_MEMCPY_TO_DEVICE (DEV (:, :, :), HST (:, :, :), ISIZE)
+#endif
           !$acc end host_data
         ELSEIF (KDIR == ND2H) THEN
           !$acc host_data use_device (DEV)
+#ifdef _OPENACC
           CALL ACC_MEMCPY_FROM_DEVICE (HST (:, :, :), DEV (:, :, :), ISIZE)
+#endif
           !$acc end host_data
         ENDIF
     END SUBROUTINE
@@ -1518,11 +1618,15 @@ CONTAINS
             ISIZE = KIND (HST)
             IF (KDIR == NH2D) THEN
               !$acc host_data use_device (DEV)
+#ifdef _OPENACC
               CALL ACC_MEMCPY_TO_DEVICE (DEV (J1, J2, J3, J4), HST (J1, J2, J3, J4), ISIZE)
+#endif
               !$acc end host_data
             ELSEIF (KDIR == ND2H) THEN
               !$acc host_data use_device (DEV)
+#ifdef _OPENACC
               CALL ACC_MEMCPY_FROM_DEVICE (HST (J1, J2, J3, J4), DEV (J1, J2, J3, J4), ISIZE)
+#endif
               !$acc end host_data
             ENDIF
           ENDDO
@@ -1544,11 +1648,15 @@ CONTAINS
           ISIZE = KIND (HST) * SIZE (HST (:, J2, J3, J4))
           IF (KDIR == NH2D) THEN
             !$acc host_data use_device (DEV)
+#ifdef _OPENACC
             CALL ACC_MEMCPY_TO_DEVICE (DEV (:, J2, J3, J4), HST (:, J2, J3, J4), ISIZE)
+#endif
             !$acc end host_data
           ELSEIF (KDIR == ND2H) THEN
             !$acc host_data use_device (DEV)
+#ifdef _OPENACC
             CALL ACC_MEMCPY_FROM_DEVICE (HST (:, J2, J3, J4), DEV (:, J2, J3, J4), ISIZE)
+#endif
             !$acc end host_data
           ENDIF
         ENDDO
@@ -1568,11 +1676,15 @@ CONTAINS
         ISIZE = KIND (HST) * SIZE (HST (:, :, J3, J4))
         IF (KDIR == NH2D) THEN
           !$acc host_data use_device (DEV)
+#ifdef _OPENACC
           CALL ACC_MEMCPY_TO_DEVICE (DEV (:, :, J3, J4), HST (:, :, J3, J4), ISIZE)
+#endif
           !$acc end host_data
         ELSEIF (KDIR == ND2H) THEN
           !$acc host_data use_device (DEV)
+#ifdef _OPENACC
           CALL ACC_MEMCPY_FROM_DEVICE (HST (:, :, J3, J4), DEV (:, :, J3, J4), ISIZE)
+#endif
           !$acc end host_data
         ENDIF
       ENDDO
@@ -1590,11 +1702,15 @@ CONTAINS
       ISIZE = KIND (HST) * SIZE (HST (:, :, :, J4))
       IF (KDIR == NH2D) THEN
         !$acc host_data use_device (DEV)
+#ifdef _OPENACC
         CALL ACC_MEMCPY_TO_DEVICE (DEV (:, :, :, J4), HST (:, :, :, J4), ISIZE)
+#endif
         !$acc end host_data
       ELSEIF (KDIR == ND2H) THEN
         !$acc host_data use_device (DEV)
+#ifdef _OPENACC
         CALL ACC_MEMCPY_FROM_DEVICE (HST (:, :, :, J4), DEV (:, :, :, J4), ISIZE)
+#endif
         !$acc end host_data
       ENDIF
     ENDDO
@@ -1610,11 +1726,15 @@ CONTAINS
         ISIZE = KIND (HST) * SIZE (HST (:, :, :, :))
         IF (KDIR == NH2D) THEN
           !$acc host_data use_device (DEV)
+#ifdef _OPENACC
           CALL ACC_MEMCPY_TO_DEVICE (DEV (:, :, :, :), HST (:, :, :, :), ISIZE)
+#endif
           !$acc end host_data
         ELSEIF (KDIR == ND2H) THEN
           !$acc host_data use_device (DEV)
+#ifdef _OPENACC
           CALL ACC_MEMCPY_FROM_DEVICE (HST (:, :, :, :), DEV (:, :, :, :), ISIZE)
+#endif
           !$acc end host_data
         ENDIF
     END SUBROUTINE
@@ -1782,11 +1902,15 @@ CONTAINS
               ISIZE = KIND (HST)
               IF (KDIR == NH2D) THEN
                 !$acc host_data use_device (DEV)
+#ifdef _OPENACC
                 CALL ACC_MEMCPY_TO_DEVICE (DEV (J1, J2, J3, J4, J5), HST (J1, J2, J3, J4, J5), ISIZE)
+#endif
                 !$acc end host_data
               ELSEIF (KDIR == ND2H) THEN
                 !$acc host_data use_device (DEV)
+#ifdef _OPENACC
                 CALL ACC_MEMCPY_FROM_DEVICE (HST (J1, J2, J3, J4, J5), DEV (J1, J2, J3, J4, J5), ISIZE)
+#endif
                 !$acc end host_data
               ENDIF
             ENDDO
@@ -1810,11 +1934,15 @@ CONTAINS
             ISIZE = KIND (HST) * SIZE (HST (:, J2, J3, J4, J5))
             IF (KDIR == NH2D) THEN
               !$acc host_data use_device (DEV)
+#ifdef _OPENACC
               CALL ACC_MEMCPY_TO_DEVICE (DEV (:, J2, J3, J4, J5), HST (:, J2, J3, J4, J5), ISIZE)
+#endif
               !$acc end host_data
             ELSEIF (KDIR == ND2H) THEN
               !$acc host_data use_device (DEV)
+#ifdef _OPENACC
               CALL ACC_MEMCPY_FROM_DEVICE (HST (:, J2, J3, J4, J5), DEV (:, J2, J3, J4, J5), ISIZE)
+#endif
               !$acc end host_data
             ENDIF
           ENDDO
@@ -1836,11 +1964,15 @@ CONTAINS
           ISIZE = KIND (HST) * SIZE (HST (:, :, J3, J4, J5))
           IF (KDIR == NH2D) THEN
             !$acc host_data use_device (DEV)
+#ifdef _OPENACC
             CALL ACC_MEMCPY_TO_DEVICE (DEV (:, :, J3, J4, J5), HST (:, :, J3, J4, J5), ISIZE)
+#endif
             !$acc end host_data
           ELSEIF (KDIR == ND2H) THEN
             !$acc host_data use_device (DEV)
+#ifdef _OPENACC
             CALL ACC_MEMCPY_FROM_DEVICE (HST (:, :, J3, J4, J5), DEV (:, :, J3, J4, J5), ISIZE)
+#endif
             !$acc end host_data
           ENDIF
         ENDDO
@@ -1860,11 +1992,15 @@ CONTAINS
         ISIZE = KIND (HST) * SIZE (HST (:, :, :, J4, J5))
         IF (KDIR == NH2D) THEN
           !$acc host_data use_device (DEV)
+#ifdef _OPENACC
           CALL ACC_MEMCPY_TO_DEVICE (DEV (:, :, :, J4, J5), HST (:, :, :, J4, J5), ISIZE)
+#endif
           !$acc end host_data
         ELSEIF (KDIR == ND2H) THEN
           !$acc host_data use_device (DEV)
+#ifdef _OPENACC
           CALL ACC_MEMCPY_FROM_DEVICE (HST (:, :, :, J4, J5), DEV (:, :, :, J4, J5), ISIZE)
+#endif
           !$acc end host_data
         ENDIF
       ENDDO
@@ -1882,11 +2018,15 @@ CONTAINS
       ISIZE = KIND (HST) * SIZE (HST (:, :, :, :, J5))
       IF (KDIR == NH2D) THEN
         !$acc host_data use_device (DEV)
+#ifdef _OPENACC
         CALL ACC_MEMCPY_TO_DEVICE (DEV (:, :, :, :, J5), HST (:, :, :, :, J5), ISIZE)
+#endif
         !$acc end host_data
       ELSEIF (KDIR == ND2H) THEN
         !$acc host_data use_device (DEV)
+#ifdef _OPENACC
         CALL ACC_MEMCPY_FROM_DEVICE (HST (:, :, :, :, J5), DEV (:, :, :, :, J5), ISIZE)
+#endif
         !$acc end host_data
       ENDIF
     ENDDO
@@ -1902,11 +2042,15 @@ CONTAINS
         ISIZE = KIND (HST) * SIZE (HST (:, :, :, :, :))
         IF (KDIR == NH2D) THEN
           !$acc host_data use_device (DEV)
+#ifdef _OPENACC
           CALL ACC_MEMCPY_TO_DEVICE (DEV (:, :, :, :, :), HST (:, :, :, :, :), ISIZE)
+#endif
           !$acc end host_data
         ELSEIF (KDIR == ND2H) THEN
           !$acc host_data use_device (DEV)
+#ifdef _OPENACC
           CALL ACC_MEMCPY_FROM_DEVICE (HST (:, :, :, :, :), DEV (:, :, :, :, :), ISIZE)
+#endif
           !$acc end host_data
         ENDIF
     END SUBROUTINE
@@ -2047,11 +2191,15 @@ CONTAINS
         ISIZE = KIND (HST)
         IF (KDIR == NH2D) THEN
           !$acc host_data use_device (DEV)
+#ifdef _OPENACC
           CALL ACC_MEMCPY_TO_DEVICE (DEV (J1, J2), HST (J1, J2), ISIZE)
+#endif
           !$acc end host_data
         ELSEIF (KDIR == ND2H) THEN
           !$acc host_data use_device (DEV)
+#ifdef _OPENACC
           CALL ACC_MEMCPY_FROM_DEVICE (HST (J1, J2), DEV (J1, J2), ISIZE)
+#endif
           !$acc end host_data
         ENDIF
       ENDDO
@@ -2069,11 +2217,15 @@ CONTAINS
       ISIZE = KIND (HST) * SIZE (HST (:, J2))
       IF (KDIR == NH2D) THEN
         !$acc host_data use_device (DEV)
+#ifdef _OPENACC
         CALL ACC_MEMCPY_TO_DEVICE (DEV (:, J2), HST (:, J2), ISIZE)
+#endif
         !$acc end host_data
       ELSEIF (KDIR == ND2H) THEN
         !$acc host_data use_device (DEV)
+#ifdef _OPENACC
         CALL ACC_MEMCPY_FROM_DEVICE (HST (:, J2), DEV (:, J2), ISIZE)
+#endif
         !$acc end host_data
       ENDIF
     ENDDO
@@ -2089,11 +2241,15 @@ CONTAINS
         ISIZE = KIND (HST) * SIZE (HST (:, :))
         IF (KDIR == NH2D) THEN
           !$acc host_data use_device (DEV)
+#ifdef _OPENACC
           CALL ACC_MEMCPY_TO_DEVICE (DEV (:, :), HST (:, :), ISIZE)
+#endif
           !$acc end host_data
         ELSEIF (KDIR == ND2H) THEN
           !$acc host_data use_device (DEV)
+#ifdef _OPENACC
           CALL ACC_MEMCPY_FROM_DEVICE (HST (:, :), DEV (:, :), ISIZE)
+#endif
           !$acc end host_data
         ENDIF
     END SUBROUTINE
@@ -2243,11 +2399,15 @@ CONTAINS
           ISIZE = KIND (HST)
           IF (KDIR == NH2D) THEN
             !$acc host_data use_device (DEV)
+#ifdef _OPENACC
             CALL ACC_MEMCPY_TO_DEVICE (DEV (J1, J2, J3), HST (J1, J2, J3), ISIZE)
+#endif
             !$acc end host_data
           ELSEIF (KDIR == ND2H) THEN
             !$acc host_data use_device (DEV)
+#ifdef _OPENACC
             CALL ACC_MEMCPY_FROM_DEVICE (HST (J1, J2, J3), DEV (J1, J2, J3), ISIZE)
+#endif
             !$acc end host_data
           ENDIF
         ENDDO
@@ -2267,11 +2427,15 @@ CONTAINS
         ISIZE = KIND (HST) * SIZE (HST (:, J2, J3))
         IF (KDIR == NH2D) THEN
           !$acc host_data use_device (DEV)
+#ifdef _OPENACC
           CALL ACC_MEMCPY_TO_DEVICE (DEV (:, J2, J3), HST (:, J2, J3), ISIZE)
+#endif
           !$acc end host_data
         ELSEIF (KDIR == ND2H) THEN
           !$acc host_data use_device (DEV)
+#ifdef _OPENACC
           CALL ACC_MEMCPY_FROM_DEVICE (HST (:, J2, J3), DEV (:, J2, J3), ISIZE)
+#endif
           !$acc end host_data
         ENDIF
       ENDDO
@@ -2289,11 +2453,15 @@ CONTAINS
       ISIZE = KIND (HST) * SIZE (HST (:, :, J3))
       IF (KDIR == NH2D) THEN
         !$acc host_data use_device (DEV)
+#ifdef _OPENACC
         CALL ACC_MEMCPY_TO_DEVICE (DEV (:, :, J3), HST (:, :, J3), ISIZE)
+#endif
         !$acc end host_data
       ELSEIF (KDIR == ND2H) THEN
         !$acc host_data use_device (DEV)
+#ifdef _OPENACC
         CALL ACC_MEMCPY_FROM_DEVICE (HST (:, :, J3), DEV (:, :, J3), ISIZE)
+#endif
         !$acc end host_data
       ENDIF
     ENDDO
@@ -2309,11 +2477,15 @@ CONTAINS
         ISIZE = KIND (HST) * SIZE (HST (:, :, :))
         IF (KDIR == NH2D) THEN
           !$acc host_data use_device (DEV)
+#ifdef _OPENACC
           CALL ACC_MEMCPY_TO_DEVICE (DEV (:, :, :), HST (:, :, :), ISIZE)
+#endif
           !$acc end host_data
         ELSEIF (KDIR == ND2H) THEN
           !$acc host_data use_device (DEV)
+#ifdef _OPENACC
           CALL ACC_MEMCPY_FROM_DEVICE (HST (:, :, :), DEV (:, :, :), ISIZE)
+#endif
           !$acc end host_data
         ENDIF
     END SUBROUTINE
@@ -2472,11 +2644,15 @@ CONTAINS
             ISIZE = KIND (HST)
             IF (KDIR == NH2D) THEN
               !$acc host_data use_device (DEV)
+#ifdef _OPENACC
               CALL ACC_MEMCPY_TO_DEVICE (DEV (J1, J2, J3, J4), HST (J1, J2, J3, J4), ISIZE)
+#endif
               !$acc end host_data
             ELSEIF (KDIR == ND2H) THEN
               !$acc host_data use_device (DEV)
+#ifdef _OPENACC
               CALL ACC_MEMCPY_FROM_DEVICE (HST (J1, J2, J3, J4), DEV (J1, J2, J3, J4), ISIZE)
+#endif
               !$acc end host_data
             ENDIF
           ENDDO
@@ -2498,11 +2674,15 @@ CONTAINS
           ISIZE = KIND (HST) * SIZE (HST (:, J2, J3, J4))
           IF (KDIR == NH2D) THEN
             !$acc host_data use_device (DEV)
+#ifdef _OPENACC
             CALL ACC_MEMCPY_TO_DEVICE (DEV (:, J2, J3, J4), HST (:, J2, J3, J4), ISIZE)
+#endif
             !$acc end host_data
           ELSEIF (KDIR == ND2H) THEN
             !$acc host_data use_device (DEV)
+#ifdef _OPENACC
             CALL ACC_MEMCPY_FROM_DEVICE (HST (:, J2, J3, J4), DEV (:, J2, J3, J4), ISIZE)
+#endif
             !$acc end host_data
           ENDIF
         ENDDO
@@ -2522,11 +2702,15 @@ CONTAINS
         ISIZE = KIND (HST) * SIZE (HST (:, :, J3, J4))
         IF (KDIR == NH2D) THEN
           !$acc host_data use_device (DEV)
+#ifdef _OPENACC
           CALL ACC_MEMCPY_TO_DEVICE (DEV (:, :, J3, J4), HST (:, :, J3, J4), ISIZE)
+#endif
           !$acc end host_data
         ELSEIF (KDIR == ND2H) THEN
           !$acc host_data use_device (DEV)
+#ifdef _OPENACC
           CALL ACC_MEMCPY_FROM_DEVICE (HST (:, :, J3, J4), DEV (:, :, J3, J4), ISIZE)
+#endif
           !$acc end host_data
         ENDIF
       ENDDO
@@ -2544,11 +2728,15 @@ CONTAINS
       ISIZE = KIND (HST) * SIZE (HST (:, :, :, J4))
       IF (KDIR == NH2D) THEN
         !$acc host_data use_device (DEV)
+#ifdef _OPENACC
         CALL ACC_MEMCPY_TO_DEVICE (DEV (:, :, :, J4), HST (:, :, :, J4), ISIZE)
+#endif
         !$acc end host_data
       ELSEIF (KDIR == ND2H) THEN
         !$acc host_data use_device (DEV)
+#ifdef _OPENACC
         CALL ACC_MEMCPY_FROM_DEVICE (HST (:, :, :, J4), DEV (:, :, :, J4), ISIZE)
+#endif
         !$acc end host_data
       ENDIF
     ENDDO
@@ -2564,11 +2752,15 @@ CONTAINS
         ISIZE = KIND (HST) * SIZE (HST (:, :, :, :))
         IF (KDIR == NH2D) THEN
           !$acc host_data use_device (DEV)
+#ifdef _OPENACC
           CALL ACC_MEMCPY_TO_DEVICE (DEV (:, :, :, :), HST (:, :, :, :), ISIZE)
+#endif
           !$acc end host_data
         ELSEIF (KDIR == ND2H) THEN
           !$acc host_data use_device (DEV)
+#ifdef _OPENACC
           CALL ACC_MEMCPY_FROM_DEVICE (HST (:, :, :, :), DEV (:, :, :, :), ISIZE)
+#endif
           !$acc end host_data
         ENDIF
     END SUBROUTINE
@@ -2736,11 +2928,15 @@ CONTAINS
               ISIZE = KIND (HST)
               IF (KDIR == NH2D) THEN
                 !$acc host_data use_device (DEV)
+#ifdef _OPENACC
                 CALL ACC_MEMCPY_TO_DEVICE (DEV (J1, J2, J3, J4, J5), HST (J1, J2, J3, J4, J5), ISIZE)
+#endif
                 !$acc end host_data
               ELSEIF (KDIR == ND2H) THEN
                 !$acc host_data use_device (DEV)
+#ifdef _OPENACC
                 CALL ACC_MEMCPY_FROM_DEVICE (HST (J1, J2, J3, J4, J5), DEV (J1, J2, J3, J4, J5), ISIZE)
+#endif
                 !$acc end host_data
               ENDIF
             ENDDO
@@ -2764,11 +2960,15 @@ CONTAINS
             ISIZE = KIND (HST) * SIZE (HST (:, J2, J3, J4, J5))
             IF (KDIR == NH2D) THEN
               !$acc host_data use_device (DEV)
+#ifdef _OPENACC
               CALL ACC_MEMCPY_TO_DEVICE (DEV (:, J2, J3, J4, J5), HST (:, J2, J3, J4, J5), ISIZE)
+#endif
               !$acc end host_data
             ELSEIF (KDIR == ND2H) THEN
               !$acc host_data use_device (DEV)
+#ifdef _OPENACC
               CALL ACC_MEMCPY_FROM_DEVICE (HST (:, J2, J3, J4, J5), DEV (:, J2, J3, J4, J5), ISIZE)
+#endif
               !$acc end host_data
             ENDIF
           ENDDO
@@ -2790,11 +2990,15 @@ CONTAINS
           ISIZE = KIND (HST) * SIZE (HST (:, :, J3, J4, J5))
           IF (KDIR == NH2D) THEN
             !$acc host_data use_device (DEV)
+#ifdef _OPENACC
             CALL ACC_MEMCPY_TO_DEVICE (DEV (:, :, J3, J4, J5), HST (:, :, J3, J4, J5), ISIZE)
+#endif
             !$acc end host_data
           ELSEIF (KDIR == ND2H) THEN
             !$acc host_data use_device (DEV)
+#ifdef _OPENACC
             CALL ACC_MEMCPY_FROM_DEVICE (HST (:, :, J3, J4, J5), DEV (:, :, J3, J4, J5), ISIZE)
+#endif
             !$acc end host_data
           ENDIF
         ENDDO
@@ -2814,11 +3018,15 @@ CONTAINS
         ISIZE = KIND (HST) * SIZE (HST (:, :, :, J4, J5))
         IF (KDIR == NH2D) THEN
           !$acc host_data use_device (DEV)
+#ifdef _OPENACC
           CALL ACC_MEMCPY_TO_DEVICE (DEV (:, :, :, J4, J5), HST (:, :, :, J4, J5), ISIZE)
+#endif
           !$acc end host_data
         ELSEIF (KDIR == ND2H) THEN
           !$acc host_data use_device (DEV)
+#ifdef _OPENACC
           CALL ACC_MEMCPY_FROM_DEVICE (HST (:, :, :, J4, J5), DEV (:, :, :, J4, J5), ISIZE)
+#endif
           !$acc end host_data
         ENDIF
       ENDDO
@@ -2836,11 +3044,15 @@ CONTAINS
       ISIZE = KIND (HST) * SIZE (HST (:, :, :, :, J5))
       IF (KDIR == NH2D) THEN
         !$acc host_data use_device (DEV)
+#ifdef _OPENACC
         CALL ACC_MEMCPY_TO_DEVICE (DEV (:, :, :, :, J5), HST (:, :, :, :, J5), ISIZE)
+#endif
         !$acc end host_data
       ELSEIF (KDIR == ND2H) THEN
         !$acc host_data use_device (DEV)
+#ifdef _OPENACC
         CALL ACC_MEMCPY_FROM_DEVICE (HST (:, :, :, :, J5), DEV (:, :, :, :, J5), ISIZE)
+#endif
         !$acc end host_data
       ENDIF
     ENDDO
@@ -2856,11 +3068,15 @@ CONTAINS
         ISIZE = KIND (HST) * SIZE (HST (:, :, :, :, :))
         IF (KDIR == NH2D) THEN
           !$acc host_data use_device (DEV)
+#ifdef _OPENACC
           CALL ACC_MEMCPY_TO_DEVICE (DEV (:, :, :, :, :), HST (:, :, :, :, :), ISIZE)
+#endif
           !$acc end host_data
         ELSEIF (KDIR == ND2H) THEN
           !$acc host_data use_device (DEV)
+#ifdef _OPENACC
           CALL ACC_MEMCPY_FROM_DEVICE (HST (:, :, :, :, :), DEV (:, :, :, :, :), ISIZE)
+#endif
           !$acc end host_data
         ENDIF
     END SUBROUTINE

@@ -115,11 +115,15 @@ CONTAINS
     #:endif
     ${indent}$  IF (KDIR == NH2D) THEN
     ${indent}$    !$acc host_data use_device (DEV)
+#ifdef _OPENACC
     ${indent}$    CALL ACC_MEMCPY_TO_DEVICE (DEV (${ar}$), HST (${ar}$), ISIZE)
+#endif
     ${indent}$    !$acc end host_data
     ${indent}$  ELSEIF (KDIR == ND2H) THEN
     ${indent}$    !$acc host_data use_device (DEV)
+#ifdef _OPENACC
     ${indent}$    CALL ACC_MEMCPY_FROM_DEVICE (HST (${ar}$), DEV (${ar}$), ISIZE)
+#endif
     ${indent}$    !$acc end host_data
     ${indent}$  ENDIF
   #:for e in range (d, rank)

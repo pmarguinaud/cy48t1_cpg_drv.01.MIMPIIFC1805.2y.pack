@@ -38,6 +38,12 @@ sub parseDirectives
   while (my $C  = shift (@C))
     {
       (my $bdir = $C->textContent) =~ s/^!=\s*//o;
+
+      ($bdir, my $opts) = ($bdir =~ m/^(\w+)\s*(?:\(\s*(\S.*\S)\s*\)\s*)?$/goms);
+      my %opts = $opts ? split (m/\s*[=,]\s*/o, $opts) : ();
+
+      $opts{TARGET} ||= 'OPENMP';
+
       $bdir = lc ($bdir);
       my ($tag) = ($bdir =~ m/^(\w+)/o);
   
@@ -63,7 +69,7 @@ sub parseDirectives
 
         }
 
-      my $e = &n ("<$tag-section/>");
+      my $e = &n ("<$tag-section " . join (' ', map { sprintf ('%s="%s"', lc ($_), $opts{$_}) } keys (%opts))  . "/>");
  
       for my $node (@node)
         {
@@ -582,13 +588,22 @@ for my $n (sort keys (%$t))
 
 &removeUnusedIncludes ($doc);
 
-#Loop::arraySyntaxLoop ($doc, $t);
-
 
 for my $par (@par)
   {
-    &setOpenMPDirective ($par, $t);
+    my $target = $par->getAttribute ('target');
+    if ($target eq 'OPENACC')
+      {
+        use SingleDirective;
+        &Loop::arraySyntaxLoop ($par, $t);
+        &SingleDirective::hoistJlonLoops ($par);
+      }
+    elsif ($target eq 'OPENMP')
+      {
+        &setOpenMPDirective ($par, $t);
+      }
   }
+
 
 &SymbolTable::renameSubroutine ($doc, sub { return $_[0] . uc ($suffix) });
 

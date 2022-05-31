@@ -128,7 +128,7 @@ sub preProcessIfNewer
     {
       print "Preprocess $f1\n";
 
-      my $d = &Fxtran::fxtran (location => $f1);
+      my $d = &Fxtran::fxtran (location => $f1, fopts => [qw (-line-length 300)]);
       &saveToFile ($d, "tmp/$f2");
 
 
@@ -155,12 +155,12 @@ sub preProcessIfNewer
       &ReDim::reDim ($d);
       &saveToFile ($d, "tmp/reDim/$f2");
 
-      &addSeqDirective ($d);
-
       &Stack::addStack ($d);
       &saveToFile ($d, "tmp/addStack/$f2");
 
       &addSuffix ($d, $suffix);
+
+      &addSeqDirective ($d);
 
       my @hdr = &F ('//include/filename', $d);
       for my $hdr (@hdr)

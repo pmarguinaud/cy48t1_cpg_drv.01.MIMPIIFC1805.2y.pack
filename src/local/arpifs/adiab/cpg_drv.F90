@@ -166,7 +166,7 @@ USE SPP_MOD, ONLY : YSPP, YSPP_CONFIG
 
 USE UTIL_MODEL_MOD
 USE UTIL_GEOMETRY_MOD
-USE STACK_MOD
+USE STACK_MOD, ONLY : YSTACK
 
 
 !     ------------------------------------------------------------------
@@ -390,8 +390,9 @@ IF (.NOT. LLDONE) THEN
 
   !$acc enter data create (YSTACK)
   !$acc update device (YSTACK)
-  ALLOCATE (ZSTACK (YDGEOMETRY%YRDIM%NPROMA*YDGEOMETRY%YRDIMV%NFLEVG*100, YDGEOMETRY%YRDIM%NGPBLKS))
-  !$acc enter data create (ZSTACK)
+  ALLOCATE (YSTACK%ZDATA (YDGEOMETRY%YRDIM%NPROMA*YDGEOMETRY%YRDIMV%NFLEVG*100, YDGEOMETRY%YRDIM%NGPBLKS))
+  !$acc enter data create (YSTACK%ZDATA)
+  !$acc enter data attach (YSTACK%ZDATA)
 
   LLDONE = .TRUE.
 ENDIF

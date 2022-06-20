@@ -44,7 +44,8 @@ mkdir -p $TMPDIR
 cd $TMPDIR
 
 
-for K in 0 1
+#for K in 0 1
+for K in 1 4
 do
 
 mkdir -p $K
@@ -88,7 +89,7 @@ done
 # Set the number of nodes, tasks, threads for the model
 
 NNODE_FC=1
-NTASK_FC=4
+NTASK_FC=1
 NOPMP_FC=1
 
 # Set the number of nodes, tasks, threads for the IO server
@@ -108,8 +109,8 @@ STOP=6
 
 xpnam --delta="
 &NAMRIP
-  CSTOP='h$STOP',
-! CSTOP='t1',
+! CSTOP='h$STOP',
+  CSTOP='t10',
   TSTEP=240,
 /
 &NAMARG
@@ -178,7 +179,7 @@ if [ 1 -eq 1 ]
 then
 xpnam --delta="
 &NAMDIM
-  NPROMA=-16,
+  NPROMA=-32,
 /
 " --inplace fort.4
 fi
@@ -206,25 +207,36 @@ then
   export INPART=0
   export PARALLEL=0
   export PERSISTENT=0
+  export OPENACC=0
 elif [ "x$K" = "x1" ]
 then
   export INPART=1
   export PARALLEL=1
   export PERSISTENT=1
+  export OPENACC=0
 elif [ "x$K" = "x2" ]
 then
   export INPART=0
   export PARALLEL=0
   export PERSISTENT=1
+  export OPENACC=0
 elif [ "x$K" = "x3" ]
 then
   export INPART=1
   export PARALLEL=0
   export PERSISTENT=1
+  export OPENACC=0
+elif [ "x$K" = "x4" ]
+then
+  export INPART=1
+  export PARALLEL=1
+  export PERSISTENT=1
+  export OPENACC=1
 else
   unset INPART
   unset PARALLEL
   unset PERSISTENT
+  unset OPENACC
 fi
 
 
@@ -286,6 +298,7 @@ done
 
 
 #diffNODE.001_01 0/NODE.001_01 2/NODE.001_01
-diffNODE.001_01 0/NODE.001_01 1/NODE.001_01
+#diffNODE.001_01 0/NODE.001_01 1/NODE.001_01
+diffNODE.001_01 1/NODE.001_01 4/NODE.001_01
 
 

@@ -191,7 +191,7 @@ cat fort.4
 
 
 pack=$PACK
-#ack=/home/gmap/mrpm/marguina/pack/48t1_mainPGIdbg.01.PGI217.cpu0
+pack=/home/gmap/mrpm/marguina/pack/48t1_cpg_drv.01.PGI217.cpu0
 
 /opt/softs/mpiauto/mpiauto --verbose --wrap --wrap-stdeo --nouse-slurm-mpi --prefix-mpirun '/usr/bin/time -f "time=%e"' \
     --nnp $NTASK_FC --nn $NNODE_FC --openmp $NOPMP_FC -- $pack/bin/MASTERODB \

@@ -2,7 +2,7 @@
 #SBATCH --export=NONE
 #SBATCH --job-name=aro
 #SBATCH --nodes=1
-#SBATCH --time=00:05:00
+#SBATCH --time=00:15:00
 #SBATCH --exclusive
 #SBATCH --verbose
 #SBATCH --no-requeue
@@ -219,7 +219,7 @@ cat fort.4
 # Run the model; use your mpirun
 
 pack=$PACK
-#ack=/home/mf/dp/marp/gco/packs/cy48t1_main.01.MIMPIIFC1805.2y.pack
+pack=/home/gmap/mrpm/marguina/pack/48t1_cpg_drv.01.PGI217.cpu0
 
 /opt/softs/mpiauto/mpiauto --verbose --wrap --wrap-stdeo --nouse-slurm-mpi --prefix-mpirun '/usr/bin/time -f "time=%e"' \
     --nnp $NTASK_FC --nn $NNODE_FC --openmp $NOPMP_FC -- $pack/bin/MASTERODB \
@@ -227,8 +227,8 @@ pack=$PACK
 
 ls -lrt
 
-diffNODE.001_01 NODE.001_01 $PACK/ref/NODE.001_01.$NAM1.$NAM2
-#cp NODE.001_01 $PACK/NODE.001_01.$NAM1.$NAM2
+diffNODE.001_01 NODE.001_01 $pack/ref.pgi/NODE.001_01.$NAM1.$NAM2
+#cp NODE.001_01 $pack/ref.pgi/NODE.001_01.$NAM1.$NAM2
 
 cd ..
 

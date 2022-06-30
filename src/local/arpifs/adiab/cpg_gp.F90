@@ -221,20 +221,6 @@ TYPE(TYP_DDH)     ,INTENT(INOUT) :: YDDDH
 
 !     ------------------------------------------------------------------
 
-INTEGER(KIND=JPIM) :: JROF,IFLAG, JGFL
-!!! INTEGER(KIND=JPIM) :: INHFIELDS
-LOGICAL :: LLSTR, LLGPXX, LLUVH
-REAL(KIND=JPRB) :: ZEPS
-
-REAL(KIND=JPRB), POINTER :: ZP1FORC(:,:)
-
-REAL(KIND=JPRB) :: ZHOOK_HANDLE
-
-REAL(KIND=JPRB) :: ZATND_Q(YDGEOMETRY%YRDIM%NPROMA,YDGEOMETRY%YRDIMV%NFLEVG)    ! 1D model adiab Lagr tendency for "q"
-REAL(KIND=JPRB) :: ZGM2
-
-!     ------------------------------------------------------------------
-
 #include "abor1.intfb.h"
 #include "cp_forcing.intfb.h"
 #include "cp_forcing_ps.intfb.h"
@@ -258,6 +244,18 @@ REAL (KIND=JPRB) :: Z_OROGLL_T0 (YDGEOMETRY%YRDIM%NPROMA)
 REAL (KIND=JPRB) :: Z_OROGLM_T0 (YDGEOMETRY%YRDIM%NPROMA)
 REAL (KIND=JPRB) :: Z_OROGMM_T0 (YDGEOMETRY%YRDIM%NPROMA)
 
+INTEGER(KIND=JPIM) :: JROF,IFLAG, JGFL
+LOGICAL :: LLSTR, LLGPXX, LLUVH
+REAL(KIND=JPRB) :: ZEPS
+
+REAL(KIND=JPRB), POINTER :: ZP1FORC(:,:)
+
+REAL(KIND=JPRB) :: ZATND_Q(YDGEOMETRY%YRDIM%NPROMA,YDGEOMETRY%YRDIMV%NFLEVG)    ! 1D model adiab Lagr tendency for "q"
+REAL(KIND=JPRB) :: ZGM2
+
+REAL(KIND=JPRB) :: ZHOOK_HANDLE
+
+!     ------------------------------------------------------------------
 
 IF (LHOOK) CALL DR_HOOK('CPG_GP', 0, ZHOOK_HANDLE)
 ASSOCIATE(YDDIM=>YDGEOMETRY%YRDIM, YDDIMV=>YDGEOMETRY%YRDIMV, YDGEM=>YDGEOMETRY%YRGEM, YDGSGEOM=>YDGEOMETRY%YRGSGEOM(YDCPG_BNDS%KBL), &

@@ -18,21 +18,29 @@ do
     continue
   fi
 
-
   b=$(basename $f .fypp)
+
+  d=arpifs/module
+
+  if [ "$b" = "gprcp_ydvars" ]
+  then
+    d=arpifs/adiab
+  fi
+
+
   /opt/softs/anaconda3/bin/fypp -m os -M . -m yaml -m field_config ./$b.fypp ./$b.F90
 
-  if [ ! -f ../src/local/arpifs/module/$b.F90 ]
+  if [ ! -f ../src/local/$d/$b.F90 ]
   then
-    cp $b.F90 ../src/local/arpifs/module/$b.F90
+    cp $b.F90 ../src/local/$d/$b.F90
   else
     set +e
-    cmp $b.F90 ../src/local/arpifs/module/$b.F90
+    cmp $b.F90 ../src/local/$d/$b.F90
     c=$?
     set -e
     if [ $c -ne 0 ]
     then
-      cp $b.F90 ../src/local/arpifs/module/$b.F90
+      cp $b.F90 ../src/local/$d/$b.F90
     fi
   fi
 

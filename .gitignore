@@ -46,3 +46,4 @@ ld_*
 tmp/*
 *_openacc.F90
 src/local/ifsaux/openacc/*
+src/local/arpifs/adiab/gprcp_ydvars.F90

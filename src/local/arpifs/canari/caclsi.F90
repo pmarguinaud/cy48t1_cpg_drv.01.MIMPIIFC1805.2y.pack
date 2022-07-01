@@ -173,7 +173,7 @@ REAL(KIND=JPRB) :: ZHOOK_HANDLE
 #include "acsolw.intfb.h"
 #include "gpgeo.intfb.h"
 #include "gphpre.intfb.h"
-#include "gprcp.intfb.h"
+#include "gprcp_qlirsg.intfb.h"
 
 !**---------------------------------------------------------------------
 
@@ -222,7 +222,7 @@ DO JROF = 1 , KNBPT
 ENDDO
 
 ! Calcul de R, CP et KAPPA.
-CALL GPRCP(KPROMA,1,KNBPT,NFLEVG,&
+CALL GPRCP_QLIRSG(KPROMA,1,KNBPT,NFLEVG,&
  & PQ=ZQ,PQI=ZQI,PQL=ZQL,PQR=ZQR,PQS=ZQSN,PQG=ZQG,&
  & PCP=ZCP,PR=ZR,PKAP=ZKAP)
 

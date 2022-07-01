@@ -227,7 +227,7 @@ REAL(KIND=JPRB) :: ZHOOK_HANDLE
 #include "cumcoe.intfb.h"
 #include "gpgeo.intfb.h"
 #include "gphpre.intfb.h"
-#include "gprcp.intfb.h"
+#include "gprcp_pgfl.intfb.h"
 #include "postphy_layer.intfb.h"
 #include "store_sekf_cv.intfb.h"
 #include "store_traj_phys_layer.intfb.h"
@@ -348,7 +348,7 @@ CALL GPHPRE(DIMS%KLON,DIMS%KLEV,DIMS%KIDIA,DIMS%KFDIA,YDVAB,PAUX%PAPRS,PXYB=ZXYB
 
 !*      3.3   Compute R, Cp 
 
-CALL GPRCP(DIMS%KLON,DIMS%KIDIA,DIMS%KFDIA,DIMS%KLEV,PGFL=PGFL,KGFLTYP=9,PR=ZR9)
+CALL GPRCP_PGFL(DIMS%KLON,DIMS%KIDIA,DIMS%KFDIA,DIMS%KLEV,PGFL=PGFL,KGFLTYP=9,PR=ZR9)
 
 !*      3.5   Integrate Hydrostatics
 

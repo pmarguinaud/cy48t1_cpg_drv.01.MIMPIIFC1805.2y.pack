@@ -450,7 +450,7 @@ LOGICAL :: LL_SREDB_ECHOT, LL_CAT
 #include "gnhee_svdincr13.intfb.h"
 #include "gpprs0d.intfb.h"
 #include "gppvo.intfb.h"
-#include "gprcp.intfb.h"
+#include "gprcp_qlirsg.intfb.h"
 #include "gprh.intfb.h"
 #include "gprt.intfb.h"
 #include "gpuvs.intfb.h"
@@ -868,13 +868,13 @@ ENDIF
 
 !*      2.1.1   COMPUTATION OF Cp, R AND R/Cp
 
-CALL GPRCP(KPROMA,KST,KND,KFLEVG,PQ=ZQT0,&
+CALL GPRCP_QLIRSG(KPROMA,KST,KND,KFLEVG,PQ=ZQT0,&
  & PQI=ZIT0,PQL=ZLT0,&
  & PQR=ZRT0,PQS=ZST0,PQG=ZGRHLT0,&
  & PCP=ZCP,PR=ZR,PKAP=ZKAP)
 
 IF (LL_RHO) THEN
-  CALL GPRCP(KPROMA,KST,KND,KFLEVG,PQ=ZQT0,&
+  CALL GPRCP_QLIRSG(KPROMA,KST,KND,KFLEVG,PQ=ZQT0,&
    & PQI=ZIT0,PQL=ZLT0,PR=ZR2)
 ENDIF
 

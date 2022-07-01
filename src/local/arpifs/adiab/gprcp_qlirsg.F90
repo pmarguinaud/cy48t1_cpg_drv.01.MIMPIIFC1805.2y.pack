@@ -1,0 +1,204 @@
+SUBROUTINE GPRCP_QLIRSG(KPROMA,KST,KPROF,KFLEV,PQ,PQI,PQL,PQR,PQS,PQG,PCP,PR,PKAP,KGFLTYP,LDTHERMACT)
+
+!**** *GPRCP_QLIRSG* - Computes Cp, R and R/Cp from Q
+
+!     Purpose.
+!     --------
+!        Computes Cp, R and R/Cp from Q
+
+!**   Interface.
+!     ----------
+!        *CALL* *GPRCP_QLIRSG(...)
+
+!        Explicit arguments :
+!        --------------------
+
+!        INPUT:
+!          KPROMA               - dimensioning.
+!          KSTART               - start of work.
+!          KPROF                - depth of work.
+!          KFLEV                - number of layers.
+!          PQ(KPROMA,KFLEV)     - specific humidity.
+!          PQI(KPROMA,KFLEV)    - ice.
+!          PQL(KPROMA,KFLEV)    - liquid water.
+!          PQR(KPROMA,KFLEV)    - rain.
+!          PQS(KPROMA,KFLEV)    - snow.
+!          PQG(KPROMA,KFLEV)    - graupel.
+
+!        OUTPUT:
+!          PCP(KPROMA,KFLEV)    - CP
+!          PR(KPROMA,KFLEV)     - R
+!          PKAP(KPROMA,KFLEV)   - KAPPA
+
+!        Implicit arguments :  Physical constants from YOMCST
+!        --------------------
+
+!     Method.
+!     -------
+!        See documentation
+
+!     Externals.  None.
+!     ----------
+
+!     Reference.
+!     ----------
+!        ECMWF Research Department documentation of the IFS
+
+!     Author.
+!     -------
+!      Mats Hamrud and Philippe Courtier  *ECMWF*
+!      Original : 88-02-04
+
+!     Modifications.
+!      M.Hamrud      01-Oct-2003 CY28 Cleaning
+!      Y.Seity  04-02-13 (Rain, Snow and Graupel)
+!      M.Hamrud  15-Jan-2006  Revised GPRCP
+!      K. Yessad (Jan 2011): more compact rewriting.
+!      R. El Khatib 28-Aug-2014 Optimizations :
+!       - compute R or CP only if required
+!       - loop collapsing whenever possible, through pure array syntax
+!      A. Geer      01-Oct-2015    For independence of observation operator in OOPS, 
+!                                  allow calls without YGFL initialised. Removal
+!                                  of all YGFL references will have to wait.
+!      H Petithomme (Dec 2020): general rewrite for optimization
+!     ------------------------------------------------------------------
+
+USE PARKIND1,ONLY: JPIM,JPRB
+USE YOMHOOK,ONLY: LHOOK,DR_HOOK
+USE YOMCST,ONLY: RD,RV,RCPD,RCPV,RCW,RCS
+USE YOM_YGFL,ONLY: TYPE_GFLD,TYPE_GFL_COMP,YGFL
+USE CODETOOLS,ONLY: SETDEFAULTL,SETDEFAULTI
+
+IMPLICIT NONE
+
+INTEGER(KIND=JPIM),INTENT(IN) :: KPROMA,KFLEV,KST,KPROF
+INTEGER(KIND=JPIM),OPTIONAL,INTENT(IN) :: KGFLTYP
+LOGICAL,OPTIONAL,INTENT(IN) :: LDTHERMACT
+REAL(KIND=JPRB),OPTIONAL,INTENT(IN) :: PQ(KPROMA,KFLEV)
+REAL(KIND=JPRB),OPTIONAL,INTENT(IN) :: PQL(KPROMA,KFLEV)
+REAL(KIND=JPRB),OPTIONAL,INTENT(IN) :: PQI(KPROMA,KFLEV),PQR(KPROMA,KFLEV)
+REAL(KIND=JPRB),OPTIONAL,INTENT(IN) :: PQS(KPROMA,KFLEV),PQG(KPROMA,KFLEV)
+REAL(KIND=JPRB),OPTIONAL,TARGET,INTENT(OUT) :: PCP(KPROMA,KFLEV)
+REAL(KIND=JPRB),OPTIONAL,TARGET,INTENT(OUT) :: PR(KPROMA,KFLEV)
+REAL(KIND=JPRB),OPTIONAL,INTENT(OUT) :: PKAP(KPROMA,KFLEV)
+
+REAL(KIND=JPRB),TARGET :: ZCP0(KPROMA,KFLEV),ZR0(KPROMA,KFLEV)
+REAL(KIND=JPRB),CONTIGUOUS,POINTER :: ZCP(:,:),ZR(:,:)
+REAL(KIND=JPRB) :: ZHOOK
+
+IF (LHOOK) CALL DR_HOOK("GPRCP_QLIRSG",0,ZHOOK)
+
+IF (PRESENT(PR)) THEN
+  ZR => PR(:,:)
+ELSEIF (PRESENT(PKAP)) THEN
+  ZR => ZR0(:,:)
+ENDIF
+
+IF (PRESENT(PCP)) THEN
+  ZCP => PCP(:,:)
+ELSEIF (PRESENT(PKAP)) THEN
+  ZCP => ZCP0(:,:)
+ELSE
+  ZCP => NULL()
+ENDIF
+
+!DIR$ FORCEINLINE
+CALL GPRCPQ(YGFL,KPROMA,KST,KPROF,KFLEV,PQ=PQ,PQL=PQL,PQI=PQI,PQR=PQR,PQS=PQS,&
+  PQG=PQG,ZR=ZR,ZCP=ZCP,LDTHERMACT=LDTHERMACT)
+
+IF (PRESENT(PKAP)) PKAP(KST:KPROF,1:KFLEV)=ZR(KST:KPROF,1:KFLEV)/ZCP(KST:KPROF,1:KFLEV)
+
+IF (LHOOK) CALL DR_HOOK("GPRCP_QLIRSG",1,ZHOOK)
+
+CONTAINS
+
+SUBROUTINE GPRCPQ(YGFL,KPROMA,KST,KPROF,KFLEV,PQ,PQL,PQI,PQR,PQS,PQG,ZR,ZCP,LDTHERMACT)
+  TYPE(TYPE_GFLD),INTENT(IN) :: YGFL
+  INTEGER(KIND=JPIM),INTENT(IN) :: KPROMA,KFLEV,KST,KPROF
+  LOGICAL,OPTIONAL,INTENT(IN) :: LDTHERMACT
+  REAL(KIND=JPRB),OPTIONAL,INTENT(IN) :: PQ(KPROMA,KFLEV)
+  REAL(KIND=JPRB),OPTIONAL,INTENT(IN) :: PQL(KPROMA,KFLEV)
+  REAL(KIND=JPRB),OPTIONAL,INTENT(IN) :: PQI(KPROMA,KFLEV)
+  REAL(KIND=JPRB),OPTIONAL,INTENT(IN) :: PQR(KPROMA,KFLEV)
+  REAL(KIND=JPRB),OPTIONAL,INTENT(IN) :: PQS(KPROMA,KFLEV)
+  REAL(KIND=JPRB),OPTIONAL,INTENT(IN) :: PQG(KPROMA,KFLEV)
+  REAL(KIND=JPRB),CONTIGUOUS,POINTER,INTENT(INOUT) :: ZR(:,:)
+  REAL(KIND=JPRB),CONTIGUOUS,POINTER,INTENT(INOUT) :: ZCP(:,:)
+
+  LOGICAL :: LTHERMACT,LQ,LL,LI
+
+  ASSOCIATE(YQ=>YGFL%YQ,YL=>YGFL%YL,YI=>YGFL%YI,YR=>YGFL%YR,YS=>YGFL%YS,YG=>YGFL%YG)
+
+  LTHERMACT = SETDEFAULTL(.TRUE.,LDTHERMACT)
+
+  LQ = PRESENT(PQ).AND.(LTHERMACT.OR.YQ%LTHERMACT)
+  LL = PRESENT(PQL).AND.(LTHERMACT.OR.YL%LTHERMACT)
+  LI = PRESENT(PQI).AND.(LTHERMACT.OR.YI%LTHERMACT)
+
+  IF (ASSOCIATED(ZR)) THEN
+    ! note: mind that no brackets are used on multiple adds for reproducibility reasons
+    ! optim: explicit treatment of cases LQ, LL and LI (fewer loops)
+    IF (LQ.AND.LL.AND.LI) THEN
+      ZR(KST:KPROF,1:KFLEV) = RD+(RV-RD)*PQ(KST:KPROF,1:KFLEV)-&
+       & RD*PQL(KST:KPROF,1:KFLEV)-RD*PQI(KST:KPROF,1:KFLEV)
+    ELSE
+      IF (LQ) THEN
+        ZR(KST:KPROF,1:KFLEV) = RD+(RV-RD)*PQ(KST:KPROF,1:KFLEV)
+      ELSE
+        ZR(KST:KPROF,1:KFLEV) = RD
+     ENDIF
+
+      IF (LL.AND.LI) THEN
+        ZR(KST:KPROF,1:KFLEV) = ZR(KST:KPROF,1:KFLEV)-RD*PQL(KST:KPROF,1:KFLEV)-&
+         & RD*PQI(KST:KPROF,1:KFLEV)
+      ELSE IF (LL) THEN
+        ZR(KST:KPROF,1:KFLEV) = ZR(KST:KPROF,1:KFLEV)-RD*PQL(KST:KPROF,1:KFLEV)
+      ELSE IF (LI) THEN
+        ZR(KST:KPROF,1:KFLEV) = ZR(KST:KPROF,1:KFLEV)-RD*PQI(KST:KPROF,1:KFLEV)
+      ENDIF
+    ENDIF
+
+    IF (PRESENT(PQR).AND.(LTHERMACT.OR.YR%LTHERMACT))&
+      ZR(KST:KPROF,1:KFLEV) = ZR(KST:KPROF,1:KFLEV)-RD*PQR(KST:KPROF,1:KFLEV)
+    IF (PRESENT(PQS).AND.(LTHERMACT.OR.YS%LTHERMACT))&
+      ZR(KST:KPROF,1:KFLEV) = ZR(KST:KPROF,1:KFLEV)-RD*PQS(KST:KPROF,1:KFLEV)
+    IF (PRESENT(PQG).AND.(LTHERMACT.OR.YG%LTHERMACT))&
+      ZR(KST:KPROF,1:KFLEV) = ZR(KST:KPROF,1:KFLEV)-RD*PQG(KST:KPROF,1:KFLEV)
+  ENDIF
+
+  IF (ASSOCIATED(ZCP)) THEN
+    ! note: mind that no brackets are used on multiple adds for reproducibility reasons
+    ! optim: explicit treatment of cases LQ, LL and LI (fewer loops)
+    IF (LQ.AND.LL.AND.LI) THEN
+      ZCP(KST:KPROF,1:KFLEV) = RCPD+(RCPV-RCPD)*PQ(KST:KPROF,1:KFLEV)+&
+       & (RCW-RCPD)*PQL(KST:KPROF,1:KFLEV)+(RCS-RCPD)*PQI(KST:KPROF,1:KFLEV)
+    ELSE
+      IF (LQ) THEN
+        ZCP(KST:KPROF,1:KFLEV) = RCPD+(RCPV-RCPD)*PQ(KST:KPROF,1:KFLEV)
+      ELSE
+        ZCP(KST:KPROF,1:KFLEV) = RCPD
+      ENDIF
+
+      IF (LL.AND.LI) THEN
+        ZCP(KST:KPROF,1:KFLEV) = ZCP(KST:KPROF,1:KFLEV)+(RCW-RCPD)*PQL(KST:KPROF,1:KFLEV)+&
+         & (RCS-RCPD)*PQI(KST:KPROF,1:KFLEV)
+       ELSE  IF (LL) THEN
+        ZCP(KST:KPROF,1:KFLEV) = ZCP(KST:KPROF,1:KFLEV)+(RCW-RCPD)*PQL(KST:KPROF,1:KFLEV)
+      ELSE IF (LI) THEN
+        ZCP(KST:KPROF,1:KFLEV) = ZCP(KST:KPROF,1:KFLEV)+(RCS-RCPD)*PQI(KST:KPROF,1:KFLEV)
+      ENDIF
+    ENDIF
+
+    IF (PRESENT(PQR).AND.(LTHERMACT.OR.YR%LTHERMACT))&
+      ZCP(KST:KPROF,1:KFLEV) = ZCP(KST:KPROF,1:KFLEV)+(RCW-RCPD)*PQR(KST:KPROF,1:KFLEV)
+    IF (PRESENT(PQS).AND.(LTHERMACT.OR.YS%LTHERMACT))&
+      ZCP(KST:KPROF,1:KFLEV) = ZCP(KST:KPROF,1:KFLEV)+(RCS-RCPD)*PQS(KST:KPROF,1:KFLEV)
+    IF (PRESENT(PQG).AND.(LTHERMACT.OR.YG%LTHERMACT))&
+      ZCP(KST:KPROF,1:KFLEV) = ZCP(KST:KPROF,1:KFLEV)+(RCS-RCPD)*PQG(KST:KPROF,1:KFLEV)
+  ENDIF
+  END ASSOCIATE
+
+END SUBROUTINE
+
+END SUBROUTINE
+

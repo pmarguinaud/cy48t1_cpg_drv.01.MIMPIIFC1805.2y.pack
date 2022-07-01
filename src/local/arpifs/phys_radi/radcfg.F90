@@ -169,7 +169,7 @@ REAL(KIND=JPRB) :: ZHOOK_HANDLE
 !     ------------------------------------------------------------------
 
 #include "gphpre.intfb.h"
-#include "gprcp.intfb.h"
+#include "gprcp_pgfl.intfb.h"
 #include "radpar.intfb.h"
 #include "cos_sza.intfb.h"
 
@@ -230,7 +230,7 @@ CALL GPHPRE(NPROMA,NFLEVG,IST,IEND,YDVAB,PPRE9,PXYB=ZXYB9,PRESF=PPRE9F)
 PDELP9=ZXYB9(:,:,YYTXYB%M_DELP)
 
 !*       3.3   Compute R, Cp 
-CALL GPRCP(NPROMA,IST,IEND,NFLEVG,PGFL=PGFL,KGFLTYP=9,PCP=ZCP9,PR=ZR9)
+CALL GPRCP_PGFL(NPROMA,IST,IEND,NFLEVG,PGFL=PGFL,KGFLTYP=9,PCP=ZCP9,PR=ZR9)
 
 !*       3.5   Astronomy.
 

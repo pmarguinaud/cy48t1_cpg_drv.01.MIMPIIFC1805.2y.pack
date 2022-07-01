@@ -1,28 +1,31 @@
-SUBROUTINE GNHQE_NHX(&
+SUBROUTINE GNHEE_SVDINCR13_CALLER(&
  ! ----- INPUT ---------------------------------------------------------------
- & YDGEOMETRY,KPROMA,KSTART,KEND,POROG,POROGL,POROGM,&
+ & YDGEOMETRY,KPROMA,KSTART,KEND,POROGL,POROGM,&
  & PSP,PSPL,PSPM,PT,PTL,PTM,&
- & PQ,PQL,PQM,PL,PLL,PLM,PI,PIL,PIM,PR,PS,PG,PUF,PVF,PDIV,&
+ & PQ,PQL,PQM,PL,PLL,PLM,PI,PIL,PIM,PR,PS,PG,PUF,PVF,PSPD,&
  ! ----- OUTPUT --------------------------------------------------------------
- & PNHX,PPIH)
+ & PSVDINCR13)
 
 ! -----
 ! REMARKS:
 !  - Variables PLL, PLM, PIL, PIM are not used currently, but they
 !    might be needed in corrected version of GPRT.
-!  - The structure of this routine must remain consistent with the one of CPG_GP_NHQE.
+!  - The structure of this routine must remain consistent with the one of CPG_GP_NHEE.
 ! -----
 
-! GNHQE_NHX - Diagnose NHX-term in the NHQE model.
+! GNHEE_SVDINCR13_CALLER - caller for GNHEE_SVDINCR13
+!                          compute d13 - dver in NHEE model
+!                          This routine is called for NVDVAR=13 or 14
 
 ! Purpose
 ! -------
-!   Diagnose NHX-term in the NHQE model.
-!   NHX writes NHX=NHX_s+NHX_d
-!   NHX_s has an expression close to the NHEE-model total NHX-term, and is linked to the
-!    interaction between wind shear and orography gradient.
-!   NHX_d is an additional term involving the horizontal divergence.
-!   In the NHQE model, d4 = dver + NHX, but D3 = D + d4 - NHX_d = D + dver + NHX_s
+!  See comments in GNHEE_SVDINCR13.
+
+! Remarks:
+! - structure of GNHEE_SVDINCR13_CALLER follows GNHX one.
+! - to avoid inconsistencies in parts doing conversions between d13 and [gW],
+!   the increment (d13 - dver) is defined with the same value of R as 'dver',
+!   according to the value of L_RDRY_VD.
 
 ! Interface
 ! ---------
@@ -31,15 +34,14 @@ SUBROUTINE GNHQE_NHX(&
 !   KPROMA       : length of work
 !   KSTART       : start of work
 !   KEND         : end of work
-!   POROG        : surface geopotential
 !   POROGL       : zonal gradient of surface geopotential
 !   POROGM       : meridional gradient of surface geopotential
 !   PSP          : ln(prehyds)
 !   PSPL         : zonal gradient of ln(prehyds)
 !   PSPM         : meridional gradient of ln(prehyds)
-!   PT           : Tt (modified temperature T)
-!   PTL          : zonal gradient of Tt
-!   PTM          : meridional gradient of Tt
+!   PT           : temperature T
+!   PTL          : zonal gradient of temperature
+!   PTM          : meridional gradient of temperature
 !   PQ           : specific humidity q
 !   PQL          : zonal gradient of q
 !   PQM          : meridional gradient of q
@@ -54,10 +56,10 @@ SUBROUTINE GNHQE_NHX(&
 !   PG           : specific mass of graupel qg
 !   PUF          : U-wind at full levels
 !   PVF          : V-wind at full levels
-!   PDIV         : horizontal divergence
+!   PSPD         : NH pressure departure variable
 
 ! * OUTPUT:
-!   PNHX         : NHX-term
+!   PSVDINCR13   : (d13 - dver) at full levels.
 
 ! Externals
 ! ---------
@@ -70,11 +72,10 @@ SUBROUTINE GNHQE_NHX(&
 
 ! Author
 ! ------
-!   K. Yessad and F. Voitus, after GNHX (July 2017).
+!   K. Yessad (August 2018), after GNHX.
 
 ! Modifications
 ! -------------
-!   H Petithomme (Dec 2020): gphpre optimization, use of pointers
 ! End Modifications
 !---------------------------------------------------------------------
 
@@ -84,8 +85,9 @@ USE PARKIND1     , ONLY : JPIM, JPRB
 USE YOMHOOK      , ONLY : LHOOK, DR_HOOK
 USE YOMCST       , ONLY : RD, RV
 USE YOMCT0       , ONLY : LSPRT
-USE YOMCVER      , ONLY : LVERTFE
-USE INTDYN_MOD   , ONLY : YYTHW, YYTXYBDER, YYTXYB
+USE YOMCVER      , ONLY : LVERTFE, LVFE_GW
+USE YOMDYNA      , ONLY : L_RDRY_VD, LVEREGINT
+USE INTDYN_MOD   , ONLY : YYTHW, YYTXYB
 
 ! -----------------------------------------------------------------------------
 
@@ -95,7 +97,6 @@ TYPE(GEOMETRY),    INTENT(IN)       :: YDGEOMETRY
 INTEGER(KIND=JPIM),INTENT(IN)       :: KPROMA 
 INTEGER(KIND=JPIM),INTENT(IN)       :: KSTART 
 INTEGER(KIND=JPIM),INTENT(IN)       :: KEND 
-REAL(KIND=JPRB)   ,INTENT(IN)       :: POROG  (KPROMA) 
 REAL(KIND=JPRB)   ,INTENT(IN)       :: POROGL (KPROMA) 
 REAL(KIND=JPRB)   ,INTENT(IN)       :: POROGM (KPROMA) 
 REAL(KIND=JPRB)   ,INTENT(IN)       :: PSP    (KPROMA) 
@@ -118,9 +119,8 @@ REAL(KIND=JPRB)   ,INTENT(IN)       :: PS     (KPROMA,YDGEOMETRY%YRDIMV%NFLEVG)
 REAL(KIND=JPRB)   ,INTENT(IN)       :: PG     (KPROMA,YDGEOMETRY%YRDIMV%NFLEVG) 
 REAL(KIND=JPRB)   ,INTENT(IN)       :: PUF    (KPROMA,YDGEOMETRY%YRDIMV%NFLEVG) 
 REAL(KIND=JPRB)   ,INTENT(IN)       :: PVF    (KPROMA,YDGEOMETRY%YRDIMV%NFLEVG) 
-REAL(KIND=JPRB)   ,INTENT(IN)       :: PDIV   (KPROMA,YDGEOMETRY%YRDIMV%NFLEVG) 
-REAL(KIND=JPRB)   ,INTENT(OUT)      :: PNHX   (KPROMA,YDGEOMETRY%YRDIMV%NFLEVG) 
-REAL(KIND=JPRB),OPTIONAL,TARGET,INTENT(IN) :: PPIH(KPROMA,0:YDGEOMETRY%YRDIMV%NFLEVG) 
+REAL(KIND=JPRB)   ,INTENT(OUT)      :: PSVDINCR13(KPROMA,YDGEOMETRY%YRDIMV%NFLEVG) 
+REAL(KIND=JPRB),OPTIONAL,INTENT(IN) :: PSPD   (KPROMA,YDGEOMETRY%YRDIMV%NFLEVG) 
 
 ! -----------------------------------------------------------------------------
 
@@ -128,138 +128,94 @@ INTEGER(KIND=JPIM) :: JROF, JLEV
 
 REAL(KIND=JPRB) :: ZHOOK_HANDLE
 
-REAL(KIND=JPRB),CONTIGUOUS,POINTER :: ZPIS(:),ZPIH(:,:) ! pressure prehyd and prehyds
+REAL(KIND=JPRB) :: ZPIS  (KPROMA)          ! surface pressure prehyds
 REAL(KIND=JPRB) :: ZPISL (KPROMA)          ! zonal derivative of prehyds 
 REAL(KIND=JPRB) :: ZPISM (KPROMA)          ! meridional derivative of prehyds
 
-REAL(KIND=JPRB) :: ZXYBDER(KPROMA,YDGEOMETRY%YRDIMV%NFLEVG,YYTXYBDER%NDIM) ! cf. PXYBDER in GPGRXYB
 REAL(KIND=JPRB) :: ZXYB  (KPROMA, YDGEOMETRY%YRDIMV%NFLEVG,YYTXYB%NDIM)  ! contains "delta", "alpha"
-REAL(KIND=JPRB),TARGET :: ZPIH0(KPROMA, 0:YDGEOMETRY%YRDIMV%NFLEVG) ! prehyd at half levels
+REAL(KIND=JPRB) :: ZPIH  (KPROMA, 0:YDGEOMETRY%YRDIMV%NFLEVG)! prehyd at half levels
 REAL(KIND=JPRB) :: ZPIF  (KPROMA, YDGEOMETRY%YRDIMV%NFLEVG)  ! prehyd at full levels
-REAL(KIND=JPRB) :: ZCP   (KPROMA, YDGEOMETRY%YRDIMV%NFLEVG)  ! specific heat of air cp
 REAL(KIND=JPRB) :: ZR    (KPROMA, YDGEOMETRY%YRDIMV%NFLEVG)  ! gas "constatnt" of air R
-REAL(KIND=JPRB) :: ZKAPPA(KPROMA, YDGEOMETRY%YRDIMV%NFLEVG)  ! kappa = R/cp
 REAL(KIND=JPRB) :: ZRT   (KPROMA, YDGEOMETRY%YRDIMV%NFLEVG)  ! RT
 REAL(KIND=JPRB) :: ZRTL  (KPROMA, YDGEOMETRY%YRDIMV%NFLEVG)  ! zonal gradient of RT
 REAL(KIND=JPRB) :: ZRTM  (KPROMA, YDGEOMETRY%YRDIMV%NFLEVG)  ! meridional gradient of RT
 
-REAL(KIND=JPRB) :: ZPHIHL(KPROMA, 0:YDGEOMETRY%YRDIMV%NFLEVG)  ! zonal comp of grad(gz) (half lay)
-REAL(KIND=JPRB) :: ZPHIHM(KPROMA, 0:YDGEOMETRY%YRDIMV%NFLEVG)  ! merid comp of grad(gz) (half lay)
-REAL(KIND=JPRB) :: ZPHIFL(KPROMA, YDGEOMETRY%YRDIMV%NFLEVG)    ! zonal comp of grad(gz) (full lay)
-REAL(KIND=JPRB) :: ZPHIFM(KPROMA, YDGEOMETRY%YRDIMV%NFLEVG)    ! merid comp of grad(gz) (full lay)
 REAL(KIND=JPRB) :: ZUVH(KPROMA,0:YDGEOMETRY%YRDIMV%NFLEVG,YYTHW%NDIM) ! hor wind at half levels
 
-REAL(KIND=JPRB) :: ZNHXS(KPROMA,YDGEOMETRY%YRDIMV%NFLEVG) 
-REAL(KIND=JPRB) :: ZNHXD(KPROMA,YDGEOMETRY%YRDIMV%NFLEVG) 
+REAL(KIND=JPRB) :: ZNHPPI (KPROMA,YDGEOMETRY%YRDIMV%NFLEVG)    ! "pre/prehyd" at full levels.
 
 ! -----------------------------------------------------------------------------
 
-#include "gpgrgeo.intfb.h"
-#include "gpgrxyb.intfb.h"
+#include "abor1.intfb.h"
+#include "gnhpre.intfb.h"
 #include "gphluv.intfb.h"
 #include "gphlwi.intfb.h"
 #include "gphpre.intfb.h"
 #include "gprcp_qlirsg.intfb.h"
 #include "gprt.intfb.h"
-#include "gpxx.intfb.h"
-#include "gnhqe_xxd.intfb.h"
+#include "gnhee_svdincr13.intfb.h"
 
 ! -----------------------------------------------------------------------------
 
-IF (LHOOK) CALL DR_HOOK('GNHQE_NHX',0,ZHOOK_HANDLE)
+IF (LHOOK) CALL DR_HOOK('GNHEE_SVDINCR13_CALLER',0,ZHOOK_HANDLE)
 ASSOCIATE(YDVAB=>YDGEOMETRY%YRVAB)
 ASSOCIATE(NFLEVG=>YDGEOMETRY%YRDIMV%NFLEVG,YDDIMV=>YDGEOMETRY%YRDIMV)
 
 ! -----------------------------------------------------------------------------
 
-! -----
-! computation of pressures
-! -----
+! * convert ln(prehyds) to prehyds (same for derivatives)
+DO JROF=KSTART,KEND
+  ZPIS (JROF)=EXP(PSP(JROF))
+  ZPISL(JROF)=ZPIS(JROF)*PSPL(JROF)
+  ZPISM(JROF)=ZPIS(JROF)*PSPM(JROF)
+ENDDO
 
-! half level pressure
-IF (PRESENT(PPIH)) THEN
-  ! prehyds already computed, only compute derivatives
-  ZPIH => PPIH(:,:)
-  ZPIS => PPIH(:,NFLEVG)
+! * half level pressure and ZXYB
+DO JROF=KSTART,KEND
+  ZPIH(JROF,NFLEVG)=ZPIS(JROF)
+ENDDO
+CALL GPHPRE(KPROMA,NFLEVG,KSTART,KEND,YDVAB,ZPIH,PXYB=ZXYB,PRESF=ZPIF)
 
-  DO JROF=KSTART,KEND
-    ZPISL(JROF)=ZPIS(JROF)*PSPL(JROF)
-    ZPISM(JROF)=ZPIS(JROF)*PSPM(JROF)
+! * computation of RT (R is the one used in definition of 'dver').
+IF (L_RDRY_VD) THEN
+  DO JLEV=1,NFLEVG
+    DO JROF=KSTART,KEND
+      ZRT(JROF,JLEV)=RD*PT(JROF,JLEV)
+    ENDDO
   ENDDO
 ELSE
-  ! convert ln(prehyds) to prehyds (same for derivatives)
-  ZPIH => ZPIH0(:,:)
-  ZPIS => ZPIH0(:,NFLEVG)
-
-  DO JROF=KSTART,KEND
-    ZPIS(JROF)=EXP(PSP(JROF))
-    ZPISL(JROF)=ZPIS(JROF)*PSPL(JROF)
-    ZPISM(JROF)=ZPIS(JROF)*PSPM(JROF)
-  ENDDO
+  CALL GPRCP_QLIRSG(KPROMA,KSTART,KEND,NFLEVG,PQ=PQ,PQI=PI,PQL=PL,PQR=PR,PQS=PS,PQG=PG,PR=ZR)  
+  CALL GPRT(LSPRT,KPROMA,KSTART,KEND,NFLEVG,RD,RV,ZR,PT,PTL,PTM,PQL,PQM,ZRT,ZRTL,ZRTM)  
 ENDIF
 
-CALL GPHPRE(KPROMA,NFLEVG,KSTART,KEND,YDVAB,ZPIH,PXYB=ZXYB,PRESF=ZPIF,&
- & LHSET=PRESENT(PPIH),LALPHA=.NOT.LVERTFE)
+! * computation of pre/prehyd.
+CALL GNHPRE(YDGEOMETRY,KPROMA,NFLEVG,KSTART,KEND,PSPD,ZPIF,PNHPPI=ZNHPPI)
 
-! additional auxiliary quantities (grad(delta) and grad(alpha) for ex.)
-CALL GPGRXYB(KPROMA,KSTART,KEND,NFLEVG,.FALSE.,YDVAB,ZPISL,ZPISM,ZXYB,ZXYBDER)
-
-! -----
-! computation of R, cp, kappa
-! -----
-
-CALL GPRCP_QLIRSG(KPROMA,KSTART,KEND,NFLEVG,PQ=PQ,PQI=PI,PQL=PL,PQR=PR,PQS=PS,PQG=PG,&
- & PCP=ZCP,PR=ZR,PKAP=ZKAPPA)  
-
-! -----
-! computation of RT, grad(RT)
-! -----
-
-CALL GPRT(LSPRT,KPROMA,KSTART,KEND,NFLEVG,RD,RV,ZR,PT,PTL,&
- & PTM,PQL,PQM,ZRT,ZRTL,ZRTM)  
-
-! -----
-! computation of half level wind if relevant
-! -----
-
-IF (.NOT.LVERTFE) THEN
+! * computation of half level wind if relevant
+IF (LVERTFE .AND. LVFE_GW) THEN
+  ! case not yet coded.
+  CALL ABOR1(' GNHEE_SVDINCR13_CALLER: LVFE_GW not yet coded! ')
+  ! ZUVH is useless, set to 0 for safety.
+  ZUVH(KSTART:KEND,0:NFLEVG,1:YYTHW%NDIM)=0.0_JPRB
+ELSE
   ! compute interpolation weights
-  CALL GPHLWI(YDDIMV,KPROMA,KSTART,KEND,ZXYB(1,1,YYTXYB%M_LNPR),ZXYB(1,1,YYTXYB%M_ALPH),ZUVH(1,1,YYTHW%M_WWI))
+  CALL GPHLWI(YDDIMV,KPROMA,KSTART,KEND,ZXYB(1,1,YYTXYB%M_LNPR),ZXYB(1,1,YYTXYB%M_ALPH),&
+            & ZUVH(1,1,YYTHW%M_WWI),LDVERINT=LVEREGINT)
   ! interpolate wind into half levels
   CALL GPHLUV(YDDIMV,KPROMA,KSTART,KEND,PUF,PVF,ZUVH)
 ENDIF
 
-! -----
-! computation of grad(gz)
-! -----
-CALL GPGRGEO(YDGEOMETRY,KPROMA,KSTART,KEND,NFLEVG,&
- & ZRT,ZRTL,ZRTM,&
- & ZXYB(1,1,YYTXYB%M_LNPR),ZXYB(1,1,YYTXYB%M_ALPH),ZXYBDER,&
- & POROGL,POROGM,&
- & ZPHIFL,ZPHIFM,ZPHIHL,ZPHIHM)
-
-! -----
-! computation of NHX
-! -----
-
-CALL GPXX(YDGEOMETRY,NFLEVG,KPROMA,KSTART,KEND,ZPHIHL,ZPHIHM,ZPHIFL,ZPHIFM,ZXYB(1,1,YYTXYB%M_LNPR),&
-  & ZRT,PUF,PVF,ZUVH(1,0,YYTHW%M_UH),ZUVH(1,0,YYTHW%M_VH),ZNHXS)
-
-CALL GNHQE_XXD(YDGEOMETRY,NFLEVG,KPROMA,KSTART,KEND,PUF,PVF,&
-    & ZXYB(:,:,YYTXYB%M_LNPR), ZXYB(:,:,YYTXYB%M_RDELP), ZXYB(:,:,YYTXYB%M_ALPH), &
-    & ZXYB(:,:,YYTXYB%M_RTGR), ZPISL,ZPISM,ZKAPPA,ZNHXD)
-
-DO JLEV=1,NFLEVG
-  DO JROF=KSTART,KEND
-    PNHX(JROF,JLEV)=ZNHXS(JROF,JLEV)+ZNHXD(JROF,JLEV)
-  ENDDO
-ENDDO
+! * computation of (d13 - dver).
+CALL GNHEE_SVDINCR13(YDGEOMETRY,NFLEVG,KPROMA,KSTART,KEND,POROGL,POROGM,&
+ & ZUVH(1,0,YYTHW%M_UH),ZUVH(1,0,YYTHW%M_VH),&
+ & PLNPR=ZXYB(1,1,YYTXYB%M_LNPR),PRT=ZRT,PNHPPI=ZNHPPI,&
+ & PSVDINCR13=PSVDINCR13)
 
 ! -----------------------------------------------------------------------------
 
 END ASSOCIATE
 END ASSOCIATE
-IF (LHOOK) CALL DR_HOOK('GNHQE_NHX',1,ZHOOK_HANDLE)
+IF (LHOOK) CALL DR_HOOK('GNHEE_SVDINCR13_CALLER',1,ZHOOK_HANDLE)
 
-END SUBROUTINE GNHQE_NHX
+END SUBROUTINE GNHEE_SVDINCR13_CALLER
 

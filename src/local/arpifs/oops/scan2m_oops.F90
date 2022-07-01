@@ -174,7 +174,7 @@ REAL(KIND=JPRB) :: ZHOOK_HANDLE
 #include "abor1.intfb.h"
 #include "gpnorm3.intfb.h"
 #include "gp_model_drv.intfb.h"
-#include "gprcp.intfb.h"
+#include "gprcp_pgfl.intfb.h"
 #include "sujbvcoord.intfb.h"
 #include "gp_derivatives.intfb.h"
 
@@ -242,7 +242,7 @@ IF(CDCONF(3:3) /= '0' .AND. YRSPEC%LGP) THEN
     IST =1
     IEND=MIN(NPROMA,NGPTOT-JKGLO+1)
     IBL=(JKGLO-1)/NPROMA+1
-    CALL GPRCP(NPROMA,IST,IEND,NFLEVG,PGFL=GFL(1,1,1,IBL),PR=GFL(1,1,YRSPEC%MP,IBL))
+    CALL GPRCP_PGFL(NPROMA,IST,IEND,NFLEVG,PGFL=GFL(1,1,1,IBL),PR=GFL(1,1,YRSPEC%MP,IBL))
   ENDDO
   CALL GPNORM3(YDGEOMETRY,GFL,NDIM,YRSPEC%MP,YRSPEC%CNAME)
 ENDIF

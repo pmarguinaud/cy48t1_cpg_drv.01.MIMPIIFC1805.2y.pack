@@ -1,0 +1,462 @@
+SUBROUTINE GNH_CONV_NHVAR(&
+ ! ----- INPUT ---------------------------------------------------------------
+ & YDGEOMETRY,YDGFL,LDMODEL_TO_FILE,&
+ ! ----- INPUT-OUTPUT --------------------------------------------------------
+ & PU,PV,PT,PTL,PTM,PSPD,PSPDL,PSPDM,PSVD,PSP,PSPL,PSPM,&
+ & PQ,PQL,PQM,PL,PLL,PLM,PI,PIL,PIM,PR,PS,PG,&
+ ! ----- OUTPUT --------------------------------------------------------------
+ & PSNHX&
+ &)
+
+!!!! & PQ,PQL,PQM,PL,PLL,PLM,PI,PIL,PIM,PR,PS,PG,&
+
+!* GNH_CONV_NHVAR - Conversion of NH variables (model to file and vice-versa)
+!                   Grid-point part.
+
+! Purpose
+! -------
+!   Converts NH pressure departure and vertical divergence between model and file.
+!   Files contain "pre-prehyd" and "-G.dw".
+!   Modifies spectral buffers:
+!     SPSPD
+!     SPSVD
+!     SPNHX (only for d4 + file ---> model conversion)
+
+! Interface
+! ---------
+!  * INPUT:
+!     LDMODEL_TO_FILE - switch for model to file / file to model conversion
+
+!  * INPUT-OUTPUT:
+!     PU     : U-wind
+!     PV     : V-wind
+!     PT     : temperature
+!     PTL    : zonal comp of grad(temperature)
+!     PTM    : merid comp of grad(temperature)
+!     PSPD   : NH pressure departure variable "spd"
+!     PSPDL  : zonal comp of grad(spd)
+!     PSPDM  : merid comp of grad(spd)
+!     PSVD   : NH vertical divergence variable "svd"
+!     PSP    : log(prehyd)
+!     PSPL   : zonal comp of grad(log(prehyd))
+!     PSPM   : merid comp of grad(log(prehyd))
+!     PQ     : moisture
+!     PQL    : zonal comp of grad(moisture)
+!     PQM    : merid comp of grad(moisture)
+!     PL     : liquid water
+!     PLL    : zonal comp of grad(liquid water)
+!     PLM    : merid comp of grad(liquid water)
+!     PI     : ice
+!     PIL    : zonal comp of grad(ice)
+!     PIM    : merid comp of grad(ice)
+!     PR     : rain
+!     PS     : snow
+!     PG     : graupels
+
+!  * OUTPUT:
+!     PSNHX: "X" divergence variable for case nvdvar=4.
+
+
+! Externals
+! ---------
+
+! Method
+! ------
+!   See documentation
+
+! Reference
+! ---------
+
+! Author
+! ------
+!   07-Feb-2005 K. Yessad (after the old routine GNHPDVDCONV)
+
+! Modifications
+! -------------
+!   K. Yessad (Dec 2009): Finalise NH-deep layer model + bug corrections.
+!   K. Yessad (Dec 2011): Use GPHPRE.
+!   T. Wilhelmsson (Sept 2013) Geometry and setup refactoring.
+!   K. Yessad (June 2017): Introduce NHQE model.
+!   K. Yessad (Feb 2018): remove deep-layer formulations.
+!   K. Yessad (Apr 2018): introduce key L_RDRY_VD (ensure consistent definition of "dver" everywhere).
+!------------------------------------------------------------------------------
+
+USE GEOMETRY_MOD , ONLY : GEOMETRY
+USE PARKIND1     , ONLY : JPIM, JPRB
+USE YOMHOOK      , ONLY : LHOOK, DR_HOOK
+USE YOMCST       , ONLY : RD
+USE YOMDYNA      , ONLY : NVDVAR, NPDVAR, L_RDRY_VD, LVEREGINT
+USE YOM_YGFL     , ONLY : TYPE_GFLD
+USE INTDYN_MOD   , ONLY : YYTXYB, YYTHW
+
+!------------------------------------------------------------------------------
+
+IMPLICIT NONE
+
+TYPE(GEOMETRY) ,INTENT(IN)    :: YDGEOMETRY
+TYPE(TYPE_GFLD),INTENT(IN)    :: YDGFL
+LOGICAL        ,INTENT(IN)    :: LDMODEL_TO_FILE
+REAL(KIND=JPRB),INTENT(INOUT) :: PU   (YDGEOMETRY%YRGEM%NGPTOT,YDGEOMETRY%YRDIMV%NFLEVG)
+REAL(KIND=JPRB),INTENT(INOUT) :: PV   (YDGEOMETRY%YRGEM%NGPTOT,YDGEOMETRY%YRDIMV%NFLEVG)
+REAL(KIND=JPRB),INTENT(INOUT) :: PT   (YDGEOMETRY%YRGEM%NGPTOT,YDGEOMETRY%YRDIMV%NFLEVG)
+REAL(KIND=JPRB),INTENT(INOUT) :: PTL  (YDGEOMETRY%YRGEM%NGPTOT,YDGEOMETRY%YRDIMV%NFLEVG)
+REAL(KIND=JPRB),INTENT(INOUT) :: PTM  (YDGEOMETRY%YRGEM%NGPTOT,YDGEOMETRY%YRDIMV%NFLEVG)
+REAL(KIND=JPRB),INTENT(INOUT) :: PSPD (YDGEOMETRY%YRGEM%NGPTOT,YDGEOMETRY%YRDIMV%NFLEVG)
+REAL(KIND=JPRB),INTENT(INOUT) :: PSPDL(YDGEOMETRY%YRGEM%NGPTOT,YDGEOMETRY%YRDIMV%NFLEVG)
+REAL(KIND=JPRB),INTENT(INOUT) :: PSPDM(YDGEOMETRY%YRGEM%NGPTOT,YDGEOMETRY%YRDIMV%NFLEVG)
+REAL(KIND=JPRB),INTENT(INOUT) :: PSVD (YDGEOMETRY%YRGEM%NGPTOT,YDGEOMETRY%YRDIMV%NFLEVG)
+REAL(KIND=JPRB),INTENT(INOUT) :: PSP  (YDGEOMETRY%YRGEM%NGPTOT)
+REAL(KIND=JPRB),INTENT(INOUT) :: PSPL (YDGEOMETRY%YRGEM%NGPTOT)
+REAL(KIND=JPRB),INTENT(INOUT) :: PSPM (YDGEOMETRY%YRGEM%NGPTOT)
+REAL(KIND=JPRB),INTENT(INOUT) :: PQ(YDGEOMETRY%YRGEM%NGPTOT,YDGEOMETRY%YRDIMV%NFLEVG)
+REAL(KIND=JPRB),INTENT(INOUT) :: PQL(YDGEOMETRY%YRGEM%NGPTOT,YDGEOMETRY%YRDIMV%NFLEVG)
+REAL(KIND=JPRB),INTENT(INOUT) :: PQM(YDGEOMETRY%YRGEM%NGPTOT,YDGEOMETRY%YRDIMV%NFLEVG)
+REAL(KIND=JPRB),INTENT(INOUT) :: PL(YDGEOMETRY%YRGEM%NGPTOT,YDGEOMETRY%YRDIMV%NFLEVG)
+REAL(KIND=JPRB),INTENT(INOUT) :: PLL(YDGEOMETRY%YRGEM%NGPTOT,YDGEOMETRY%YRDIMV%NFLEVG)
+REAL(KIND=JPRB),INTENT(INOUT) :: PLM(YDGEOMETRY%YRGEM%NGPTOT,YDGEOMETRY%YRDIMV%NFLEVG)
+REAL(KIND=JPRB),INTENT(INOUT) :: PI(YDGEOMETRY%YRGEM%NGPTOT,YDGEOMETRY%YRDIMV%NFLEVG)
+REAL(KIND=JPRB),INTENT(INOUT) :: PIL(YDGEOMETRY%YRGEM%NGPTOT,YDGEOMETRY%YRDIMV%NFLEVG)
+REAL(KIND=JPRB),INTENT(INOUT) :: PIM(YDGEOMETRY%YRGEM%NGPTOT,YDGEOMETRY%YRDIMV%NFLEVG)
+REAL(KIND=JPRB),INTENT(INOUT) :: PR(YDGEOMETRY%YRGEM%NGPTOT,YDGEOMETRY%YRDIMV%NFLEVG)
+REAL(KIND=JPRB),INTENT(INOUT) :: PS(YDGEOMETRY%YRGEM%NGPTOT,YDGEOMETRY%YRDIMV%NFLEVG)
+REAL(KIND=JPRB),INTENT(INOUT) :: PG(YDGEOMETRY%YRGEM%NGPTOT,YDGEOMETRY%YRDIMV%NFLEVG)
+REAL(KIND=JPRB),INTENT(OUT)   :: PSNHX(YDGEOMETRY%YRGEM%NGPTOT,YDGEOMETRY%YRDIMV%NFLEVG)
+
+!------------------------------------------------------------------------------
+
+INTEGER(KIND=JPIM) :: JIST,JLEV
+INTEGER(KIND=JPIM) :: IST,IEND,IPROMA,IBL
+
+REAL(KIND=JPRB) :: ZOROGL(YDGEOMETRY%YRGEM%NGPTOT)
+REAL(KIND=JPRB) :: ZOROGM(YDGEOMETRY%YRGEM%NGPTOT)
+REAL(KIND=JPRB) :: ZPDEP (YDGEOMETRY%YRDIM%NPROMA,  YDGEOMETRY%YRDIMV%NFLEVG)
+REAL(KIND=JPRB) :: ZXYB  (YDGEOMETRY%YRDIM%NPROMA,  YDGEOMETRY%YRDIMV%NFLEVG,YYTXYB%NDIM)
+REAL(KIND=JPRB) :: ZPREH (YDGEOMETRY%YRDIM%NPROMA,0:YDGEOMETRY%YRDIMV%NFLEVG)
+REAL(KIND=JPRB) :: ZPREF (YDGEOMETRY%YRDIM%NPROMA,  YDGEOMETRY%YRDIMV%NFLEVG)
+REAL(KIND=JPRB) :: ZX    (YDGEOMETRY%YRDIM%NPROMA,  YDGEOMETRY%YRDIMV%NFLEVG)
+REAL(KIND=JPRB) :: ZRT   (YDGEOMETRY%YRDIM%NPROMA,  YDGEOMETRY%YRDIMV%NFLEVG)
+REAL(KIND=JPRB) :: ZR    (YDGEOMETRY%YRDIM%NPROMA,  YDGEOMETRY%YRDIMV%NFLEVG)
+REAL(KIND=JPRB) :: ZUVH  (YDGEOMETRY%YRDIM%NPROMA,0:YDGEOMETRY%YRDIMV%NFLEVG,YYTHW%NDIM)
+REAL(KIND=JPRB) :: ZSVD13(YDGEOMETRY%YRDIM%NPROMA,  YDGEOMETRY%YRDIMV%NFLEVG)
+REAL(KIND=JPRB) :: ZDGWINCR13(YDGEOMETRY%YRDIM%NPROMA,YDGEOMETRY%YRDIMV%NFLEVG)
+
+REAL(KIND=JPRB) :: ZHOOK_HANDLE
+
+!------------------------------------------------------------------------------
+
+#include "gnhx.intfb.h"
+#include "gphpre.intfb.h"
+#include "gprcp_qlirsg.intfb.h"
+#include "gphlwi.intfb.h"
+#include "gphluv.intfb.h"
+#include "gnhee_svdincr13.intfb.h"
+
+!------------------------------------------------------------------------------
+
+IF (LHOOK) CALL DR_HOOK('GNH_CONV_NHVAR',0,ZHOOK_HANDLE)
+ASSOCIATE(YDDIM=>YDGEOMETRY%YRDIM,YDDIMV=>YDGEOMETRY%YRDIMV,YDGEM=>YDGEOMETRY%YRGEM, &
+ & YDGSGEOM=>YDGEOMETRY%YRGSGEOM, YDGSGEOM_NB=>YDGEOMETRY%YRGSGEOM_NB, &
+ & YDOROG=>YDGEOMETRY%YROROG, YDVAB=>YDGEOMETRY%YRVAB)
+ASSOCIATE(YI=>YDGFL%YI, YL=>YDGFL%YL, YQ=>YDGFL%YQ, &
+ & NPROMA=>YDDIM%NPROMA,NFLEVG=>YDDIMV%NFLEVG, &
+ & NGPTOT=>YDGEM%NGPTOT)
+
+!------------------------------------------------------------------------------
+
+!* 1. GRID POINT COMPUTATIONS
+!     -----------------------
+
+!* 1.0 MULTIPLICATION BY MAP FACTOR
+
+! orography
+DO JIST=1,NGPTOT,NPROMA
+  IST    = JIST                      ! first element
+  IEND   = MIN(IST+NPROMA-1,NGPTOT)  ! last element
+  IPROMA = IEND-IST+1                ! actual number of elements
+  IBL=(JIST-1)/NPROMA+1
+  ZOROGL(IST:IEND)=YDOROG(IBL)%OROGL(1:IPROMA)*YDGSGEOM(IBL)%GM(1:IPROMA)
+  ZOROGM(IST:IEND)=YDOROG(IBL)%OROGM(1:IPROMA)*YDGSGEOM(IBL)%GM(1:IPROMA)
+ENDDO
+
+! horizontal wind:
+DO JLEV=1,NFLEVG
+  PU(1:NGPTOT,JLEV)=PU(1:NGPTOT,JLEV)*YDGSGEOM_NB%GM(1:NGPTOT)
+  PV(1:NGPTOT,JLEV)=PV(1:NGPTOT,JLEV)*YDGSGEOM_NB%GM(1:NGPTOT)
+ENDDO
+
+IF (NVDVAR == 4 .OR. NVDVAR == 5) THEN
+
+  ! surface pressure (GMVS)
+  PSPL(1:NGPTOT)=PSPL(1:NGPTOT)*YDGSGEOM_NB%GM(1:NGPTOT)
+  PSPM(1:NGPTOT)=PSPM(1:NGPTOT)*YDGSGEOM_NB%GM(1:NGPTOT)
+
+  ! GMV:
+  DO JLEV = 1,NFLEVG
+    PTL  (1:NGPTOT,JLEV)=PTL  (1:NGPTOT,JLEV)*YDGSGEOM_NB%GM(1:NGPTOT)
+    PTM  (1:NGPTOT,JLEV)=PTM  (1:NGPTOT,JLEV)*YDGSGEOM_NB%GM(1:NGPTOT)
+    PSPDL(1:NGPTOT,JLEV)=PSPDL(1:NGPTOT,JLEV)*YDGSGEOM_NB%GM(1:NGPTOT)
+    PSPDM(1:NGPTOT,JLEV)=PSPDM(1:NGPTOT,JLEV)*YDGSGEOM_NB%GM(1:NGPTOT)
+  ENDDO ! JLEV
+
+  ! GFL:
+  DO JLEV = 1,NFLEVG
+    IF (YQ%LSP) THEN
+      PQM(1:NGPTOT,JLEV)=PQM(1:NGPTOT,JLEV)*YDGSGEOM_NB%GM(1:NGPTOT)
+      PQL(1:NGPTOT,JLEV)=PQL(1:NGPTOT,JLEV)*YDGSGEOM_NB%GM(1:NGPTOT)
+    ENDIF
+    IF (YL%LSP) THEN
+      PLM(1:NGPTOT,JLEV)=PLM(1:NGPTOT,JLEV)*YDGSGEOM_NB%GM(1:NGPTOT)
+      PLL(1:NGPTOT,JLEV)=PLL(1:NGPTOT,JLEV)*YDGSGEOM_NB%GM(1:NGPTOT)
+    ENDIF
+    IF (YI%LSP) THEN
+      PIM(1:NGPTOT,JLEV)=PIM(1:NGPTOT,JLEV)*YDGSGEOM_NB%GM(1:NGPTOT)
+      PIL(1:NGPTOT,JLEV)=PIL(1:NGPTOT,JLEV)*YDGSGEOM_NB%GM(1:NGPTOT)
+    ENDIF
+  ENDDO ! JLEV
+
+ENDIF
+
+IF ( LDMODEL_TO_FILE ) THEN
+
+  !* 1.1 TRANSFORM FROM MODEL TO FILE
+
+  ! loop through sections of length NPROMA
+  DO JIST=1,NGPTOT,NPROMA
+
+    IST    = JIST                      ! first element
+    IEND   = MIN(IST+NPROMA-1,NGPTOT)  ! last element
+    IPROMA = IEND-IST+1                ! actual number of elements
+    IBL=(JIST-1)/NPROMA+1
+
+    !* 1.1.1 COMPUTE PRESSURES
+
+    ZPREH(1:IPROMA,NFLEVG)=EXP(PSP(IST:IEND))
+    CALL GPHPRE(IPROMA,NFLEVG,1,IPROMA,YDVAB,ZPREH(1:IPROMA,:),ZXYB(1:IPROMA,:,:),&
+     & ZPREF(1:IPROMA,:),LDELP=.FALSE.,LALPHA=.FALSE.,LRTGR=.FALSE.,LRPP=.FALSE.)
+
+    !* 1.1.2 COMPUTE TERM X (IF NVDVAR=4 or 5)
+
+    IF (NVDVAR == 4 .OR. NVDVAR == 5) THEN
+
+      CALL GNHX(YDGEOMETRY,IPROMA,1,IPROMA,YDOROG(IBL)%OROG,&
+       & ZOROGL(IST:IEND),ZOROGM(IST:IEND),&
+       & PSP(IST:IEND),PSPL(IST:IEND),PSPM(IST:IEND),&
+       & PT(IST:IEND,:),PTL(IST:IEND,:),PTM(IST:IEND,:),&
+       & PQ(IST:IEND,:),PQL(IST:IEND,:),PQM(IST:IEND,:),&
+       & PL(IST:IEND,:),PLL(IST:IEND,:),PLM(IST:IEND,:),&
+       & PI(IST:IEND,:),PIL(IST:IEND,:),PIM(IST:IEND,:),&
+       & PR(IST:IEND,:),PS(IST:IEND,:),PG(IST:IEND,:),&
+       & PU(IST:IEND,:),PV(IST:IEND,:),&
+       & ZX(1:IPROMA,:),&
+       & PSPD=PSPD(IST:IEND,:),PSPDL=PSPDL(IST:IEND,:),PSPDM=PSPDM(IST:IEND,:))
+
+    ENDIF
+
+    !* 1.1.3 COMPUTE "R Tt".
+
+    IF (L_RDRY_VD) THEN
+      DO JLEV=1,NFLEVG
+        ZRT(1:IPROMA,JLEV)=RD*PT(IST:IEND,JLEV)
+      ENDDO
+    ELSE
+      CALL GPRCP_QLIRSG(IPROMA,1,IPROMA,NFLEVG,&
+       & PQ=PQ(IST:IEND,:),PQI=PI(IST:IEND,:),PQL=PL(IST:IEND,:),&
+       & PQR=PR(IST:IEND,:),PQS=PS(IST:IEND,:),PQG=PG(IST:IEND,:),&
+       & PR=ZR(1:IPROMA,:))
+      DO JLEV=1,NFLEVG
+        ZRT(1:IPROMA,JLEV)=ZR(1:IPROMA,JLEV)*PT(IST:IEND,JLEV)
+      ENDDO
+    ENDIF
+
+    !* 1.1.5 TRANSFORM PD
+
+    DO JLEV=1,NFLEVG
+
+      IF ( NPDVAR == 2 ) THEN
+        PSPD(IST:IEND,JLEV) = ( EXP(PSPD(IST:IEND,JLEV))-1.0_JPRB )*ZPREF(1:IPROMA,JLEV)
+      ENDIF
+
+    ENDDO  ! JLEV = 1,NFLEVG
+
+    !* 1.1.6 TRANSFORM VD
+
+    DO JLEV=1,NFLEVG
+
+      IF ( NVDVAR == 3 ) THEN
+        ! dver -> -G(dw)
+        PSVD(IST:IEND,JLEV) = ZRT(1:IPROMA,JLEV)*&
+         & ZXYB(1:IPROMA,JLEV,YYTXYB%M_LNPR)*PSVD(IST:IEND,JLEV)/&
+         & ( PSPD(IST:IEND,JLEV)/ZPREF(1:IPROMA,JLEV)+1.0_JPRB )
+      ELSEIF ( NVDVAR == 4 .OR. NVDVAR == 5) THEN
+        ! d4 -> -G(dw)
+        PSVD(IST:IEND,JLEV) = (PSVD(IST:IEND,JLEV)-ZX(1:IPROMA,JLEV))*&
+         & ZRT(1:IPROMA,JLEV)*ZXYB(1:IPROMA,JLEV,YYTXYB%M_LNPR)/&
+         & ( PSPD(IST:IEND,JLEV)/ZPREF(1:IPROMA,JLEV)+1.0_JPRB)
+      ENDIF
+
+    ENDDO  ! JLEV = 1,NFLEVG
+
+  ENDDO  ! JIST = 1,NGPTOT,NPROMA
+
+ELSE
+
+  !* 1.2 TRANSFORM FROM FILE TO MODEL
+
+  ! loop through sections of length NPROMA
+  DO JIST=1,NGPTOT,NPROMA
+
+    IST    = JIST                      ! first element
+    IEND   = MIN(IST+NPROMA-1,NGPTOT)  ! last element
+    IPROMA = IEND-IST+1                ! actual number of elements
+    IBL=(JIST-1)/NPROMA+1
+
+    !* 1.2.1 COMPUTE PRESSURES
+
+    ZPREH(1:IPROMA,NFLEVG)=EXP(PSP(IST:IEND))
+    CALL GPHPRE(IPROMA,NFLEVG,1,IPROMA,YDVAB,ZPREH(1:IPROMA,:),ZXYB(1:IPROMA,:,:),&
+     & ZPREF(1:IPROMA,:),LDELP=.FALSE.,LRPP=.FALSE.)
+
+    !* 1.2.2 Transform PD
+
+    DO JLEV=1,NFLEVG
+
+      IF ( NPDVAR == 2 ) THEN
+        ! save "pre-prehyd" in ZPDEP
+        ZPDEP(1:IPROMA,JLEV)=PSPD(IST:IEND,JLEV)
+        PSPD(IST:IEND,JLEV) = LOG( PSPD(IST:IEND,JLEV)/ZPREF(1:IPROMA,JLEV)+1.0_JPRB )
+
+        ! For the horizontal derivatives of "spd" the formula used is:
+        !  dQcha = [d(pre-prehyd) - (pre-prehyd) (dprehyd/prehyd)]
+        !          /[(pre-prehyd)+prehyd]
+        IF ( NVDVAR == 4 .OR. NVDVAR == 5 ) THEN
+          PSPDL(IST:IEND,JLEV)=&
+           & ( PSPDL(IST:IEND,JLEV)&
+           & - ZPDEP(1:IPROMA,JLEV)*ZXYB(1:IPROMA,JLEV,YYTXYB%M_RTGR)*PSPL(IST:IEND) )&
+           & /(ZPDEP(1:IPROMA,JLEV)+ZPREF(1:IPROMA,JLEV))
+          PSPDM(IST:IEND,JLEV)=&
+           & ( PSPDM(IST:IEND,JLEV)&
+           & - ZPDEP(1:IPROMA,JLEV)*ZXYB(1:IPROMA,JLEV,YYTXYB%M_RTGR)*PSPM(IST:IEND) )&
+           & /(ZPDEP(1:IPROMA,JLEV)+ZPREF(1:IPROMA,JLEV))
+        ENDIF
+      ENDIF
+
+    ENDDO ! JLEV
+
+    !* 1.2.3 COMPUTE "R Tt".
+
+    IF (L_RDRY_VD) THEN
+      DO JLEV=1,NFLEVG
+        ZRT(1:IPROMA,JLEV)=RD*PT(IST:IEND,JLEV)
+      ENDDO
+    ELSE
+      CALL GPRCP_QLIRSG(IPROMA,1,IPROMA,NFLEVG,&
+       & PQ=PQ(IST:IEND,:),PQI=PI(IST:IEND,:),PQL=PL(IST:IEND,:),&
+       & PQR=PR(IST:IEND,:),PQS=PS(IST:IEND,:),PQG=PG(IST:IEND,:),&
+       & PR=ZR(1:IPROMA,:))
+      DO JLEV=1,NFLEVG
+        ZRT(1:IPROMA,JLEV)=ZR(1:IPROMA,JLEV)*PT(IST:IEND,JLEV)
+      ENDDO
+    ENDIF
+
+    !* 1.2.4 Transform VD
+
+    IF (NVDVAR == 3) THEN
+
+      ! Provides "d3=dver" from -G[dw].
+      DO JLEV=1,NFLEVG
+         PSVD(IST:IEND,JLEV) = PSVD(IST:IEND,JLEV)/&
+          & ( ZRT(1:IPROMA,JLEV)*ZXYB(1:IPROMA,JLEV,YYTXYB%M_LNPR) )*&
+          & ( ZPDEP(1:IPROMA,JLEV)/ZPREF(1:IPROMA,JLEV)+1.0_JPRB )
+      ENDDO
+
+    ELSEIF (NVDVAR == 4) THEN
+
+      ! Provides "d3=dver" from -G[dw].
+      DO JLEV=1,NFLEVG
+         PSVD(IST:IEND,JLEV) = PSVD(IST:IEND,JLEV)/&
+          & ( ZRT(1:IPROMA,JLEV)*ZXYB(1:IPROMA,JLEV,YYTXYB%M_LNPR) )*&
+          & ( ZPDEP(1:IPROMA,JLEV)/ZPREF(1:IPROMA,JLEV)+1.0_JPRB )
+      ENDDO
+
+      ! compute NHX
+      CALL GNHX(YDGEOMETRY,IPROMA,1,IPROMA,YDOROG(IBL)%OROG,&
+       & ZOROGL(IST:IEND),ZOROGM(IST:IEND),&
+       & PSP(IST:IEND),PSPL(IST:IEND),PSPM(IST:IEND),&
+       & PT(IST:IEND,:),PTL(IST:IEND,:),PTM(IST:IEND,:),&
+       & PQ(IST:IEND,:),PQL(IST:IEND,:),PQM(IST:IEND,:),&
+       & PL(IST:IEND,:),PLL(IST:IEND,:),PLM(IST:IEND,:),&
+       & PI(IST:IEND,:),PIL(IST:IEND,:),PIM(IST:IEND,:),&
+       & PR(IST:IEND,:),PS(IST:IEND,:),PG(IST:IEND,:),&
+       & PU(IST:IEND,:),PV(IST:IEND,:),&
+       & ZX(1:IPROMA,:),&
+       & PSPD=PSPD(IST:IEND,:),PSPDL=PSPDL(IST:IEND,:),PSPDM=PSPDM(IST:IEND,:))
+
+      DO JLEV=1,NFLEVG
+        PSVD(IST:IEND,JLEV)=PSVD(IST:IEND,JLEV)+ZX(1:IPROMA,JLEV)
+        PSNHX(IST:IEND,JLEV) = ZX(1:IPROMA,JLEV)
+      ENDDO ! JLEV
+
+    ELSEIF (NVDVAR == 5) THEN
+
+      ! compute half level horizontal wind
+      CALL GPHLWI(YDGEOMETRY%YRDIMV,IPROMA,1,IPROMA,ZXYB(1:IPROMA,1:NFLEVG,YYTXYB%M_LNPR),&
+                & ZXYB(1:IPROMA,1:NFLEVG,YYTXYB%M_ALPH),ZUVH(1:IPROMA,1:NFLEVG,YYTHW%M_WWI),LDVERINT=LVEREGINT)
+      CALL GPHLUV(YDGEOMETRY%YRDIMV,IPROMA,1,IPROMA,PU(IST:IEND,:),PV(IST:IEND,:),ZUVH(1:IPROMA,0:NFLEVG,:))
+
+      ! compute -G[dW] from -G[dw] (in ZSVD13)
+      CALL GNHEE_SVDINCR13(YDGEOMETRY,NFLEVG,IPROMA,1,IPROMA,ZOROGL(IST:IEND),ZOROGM(IST:IEND),&
+       & ZUVH(1:IPROMA,0:NFLEVG,YYTHW%M_UH),ZUVH(1:IPROMA,0:NFLEVG,YYTHW%M_VH),PDGWINCR13=ZDGWINCR13(1:IPROMA,1:NFLEVG))
+      DO JLEV=1,NFLEVG
+        ZSVD13(1:IPROMA,JLEV) = PSVD(IST:IEND,JLEV)+ZDGWINCR13(1:IPROMA,JLEV)
+      ENDDO
+
+      ! Provides "d3=dver" from -G[dw].
+      DO JLEV=1,NFLEVG
+        PSVD(IST:IEND,JLEV) = PSVD(IST:IEND,JLEV)/&
+         & ( ZRT(1:IPROMA,JLEV)*ZXYB(1:IPROMA,JLEV,YYTXYB%M_LNPR) )*&
+         & ( ZPDEP(1:IPROMA,JLEV)/ZPREF(1:IPROMA,JLEV)+1.0_JPRB )
+      ENDDO
+
+      ! Provides "d13" from -G[dW] (in ZSVD13).
+      DO JLEV=1,NFLEVG
+        ZSVD13(1:IPROMA,JLEV) = ZSVD13(1:IPROMA,JLEV)/&
+         & ( ZRT(1:IPROMA,JLEV)*ZXYB(1:IPROMA,JLEV,YYTXYB%M_LNPR) )*&
+         & ( ZPDEP(1:IPROMA,JLEV)/ZPREF(1:IPROMA,JLEV)+1.0_JPRB )
+      ENDDO
+
+      ! Compute NHX_S.
+      CALL GNHX(YDGEOMETRY,IPROMA,1,IPROMA,YDOROG(IBL)%OROG,&
+       & ZOROGL(IST:IEND),ZOROGM(IST:IEND),&
+       & PSP(IST:IEND),PSPL(IST:IEND),PSPM(IST:IEND),&
+       & PT(IST:IEND,:),PTL(IST:IEND,:),PTM(IST:IEND,:),&
+       & PQ(IST:IEND,:),PQL(IST:IEND,:),PQM(IST:IEND,:),&
+       & PL(IST:IEND,:),PLL(IST:IEND,:),PLM(IST:IEND,:),&
+       & PI(IST:IEND,:),PIL(IST:IEND,:),PIM(IST:IEND,:),&
+       & PR(IST:IEND,:),PS(IST:IEND,:),PG(IST:IEND,:),&
+       & PU(IST:IEND,:),PV(IST:IEND,:),&
+       & ZX(1:IPROMA,:),&
+       & PSPD=PSPD(IST:IEND,:),PSPDL=PSPDL(IST:IEND,:),PSPDM=PSPDM(IST:IEND,:))
+
+      ! Store NHX=NHX_S+d3-d13 in PSNHX (d4 = d3+NHX_S = d13+NHX).
+      DO JLEV=1,NFLEVG
+        PSNHX(IST:IEND,JLEV)=ZX(1:IPROMA,JLEV)+PSVD(IST:IEND,JLEV)-ZSVD13(1:IPROMA,JLEV)
+      ENDDO ! JLEV
+      ! Compute d4 (in PSVD): d4=d3+NHX_S.
+      ! Write PSVD+ZX or ZSVD13+PSNHX is equivalent.
+      DO JLEV=1,NFLEVG
+        PSVD(IST:IEND,JLEV)=PSVD(IST:IEND,JLEV)+ZX(1:IPROMA,JLEV)
+      ENDDO ! JLEV
+    ENDIF
+
+  ENDDO ! JIST
+
+ENDIF  ! LDMODEL_TO_FILE
+
+!------------------------------------------------------------------------------
+
+END ASSOCIATE
+END ASSOCIATE
+IF (LHOOK) CALL DR_HOOK('GNH_CONV_NHVAR',1,ZHOOK_HANDLE)
+
+END SUBROUTINE GNH_CONV_NHVAR
+

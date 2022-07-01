@@ -237,7 +237,7 @@ REAL(KIND=JPRB) :: ZHOOK_HANDLE
 #include "gpgeo.intfb.h"
 #include "gnhpre.intfb.h"
 #include "gphpre.intfb.h"
-#include "gprcp.intfb.h"
+#include "gprcp_qlirsg.intfb.h"
 #include "mts_phys.intfb.h"
 #include "fcttrm.ycst.h"
 #include "gppcloud.intfb.h"
@@ -481,7 +481,7 @@ IF (LLSMC.OR.LLASMC.OR.LLVSMC.OR.LLICV.OR.LLMTS.OR.LLPBL.OR.LLSRH.OR.LLCLD) THEN
   IF (LLPBL.OR.LLICV.OR.LLMTS.OR.LLSRH.OR.LLCLD) THEN
 
     ! Compute R and Cp.
-    CALL GPRCP(KPROMA,KST,KND,NFLEVG,PQ=ZQT0,PQI=ZIT0,&
+    CALL GPRCP_QLIRSG(KPROMA,KST,KND,NFLEVG,PQ=ZQT0,PQI=ZIT0,&
      & PQL=ZLT0,PQR=ZRRT0,PQS=ZSNT0,PQG=ZGRHLT0,&
      & PCP=ZCP,PR=ZR,PKAP=ZUSL_KAP)
 

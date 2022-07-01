@@ -764,7 +764,7 @@ REAL(KIND=JPRB) :: ZHOOK_HANDLE
 #include "acnpart.intfb.h"
 #include "bri2acconv.intfb.h"
 #include "gpgeo.intfb.h"
-#include "gprcp.intfb.h"
+#include "gprcp_qlirsg.intfb.h"
 #include "radheat.intfb.h"
 #include "suozon.intfb.h"
 #include "radaer.intfb.h"
@@ -1600,7 +1600,7 @@ IF (LMICRO) THEN
 
   !modif de R et CP
   ZQHGM(YDCPG_BNDS%KIDIA:YDCPG_BNDS%KFDIA,:)=ZQHM(YDCPG_BNDS%KIDIA:YDCPG_BNDS%KFDIA,:)+ZQGM(YDCPG_BNDS%KIDIA:YDCPG_BNDS%KFDIA,:)
-  CALL GPRCP(YDCPG_OPTS%KLON, YDCPG_BNDS%KIDIA, YDCPG_BNDS%KFDIA, YDCPG_OPTS%KFLEVG, PQ=ZQVM, PQI=ZQIM, &
+  CALL GPRCP_QLIRSG(YDCPG_OPTS%KLON, YDCPG_BNDS%KIDIA, YDCPG_BNDS%KFDIA, YDCPG_OPTS%KFLEVG, PQ=ZQVM, PQI=ZQIM, &
   & PQL=ZQCM, PQR=ZQRM, PQS=ZQSM, PQG=ZQHGM, PCP=ZCPM, PR=ZRHM)  
 
   DO JLEV = 1,YDCPG_OPTS%KFLEVG

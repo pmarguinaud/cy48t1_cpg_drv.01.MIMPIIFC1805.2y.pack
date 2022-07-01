@@ -171,7 +171,7 @@ REAL(KIND=JPRB)   ,INTENT(INOUT), OPTIONAL :: PP1FORC (:,:)
 #include "gpcty_expl.intfb.h"
 #include "gpcty_forc.intfb.h"
 #include "gpgeo.intfb.h"
-#include "gpgrgeo.intfb.h"
+#include "gpgrgeo_expl.intfb.h"
 #include "gpflwi.intfb.h"
 #include "gphlwi.intfb.h"
 #include "gphluv.intfb.h"
@@ -402,7 +402,7 @@ CALL GPGEO(NPROMA, YDCPG_BNDS%KIDIA, YDCPG_BNDS%KFDIA, NFLEVG, YDCPG_DYN0%PHI, Y
 
 ! * "grad gz" at full levels and half levels.
 
-CALL GPGRGEO(YDGEOMETRY, NPROMA, YDCPG_BNDS%KIDIA, YDCPG_BNDS%KFDIA, NFLEVG, Z_RT_T0, YDCPG_DYN0%RTL,                   &
+CALL GPGRGEO_EXPL(YDGEOMETRY, NPROMA, YDCPG_BNDS%KIDIA, YDCPG_BNDS%KFDIA, NFLEVG, Z_RT_T0, YDCPG_DYN0%RTL,              &
 & YDCPG_DYN0%RTM, YDCPG_DYN0%XYB%LNPR, YDCPG_DYN0%XYB%ALPH, POROGL=YDCPG_DYN0%OROGL, POROGM=YDCPG_DYN0%OROGM,           &
 & PHIFL=YDCPG_DYN0%PHIFL, PHIFM=YDCPG_DYN0%PHIFM, PHIHL=Z_GPHL_T0, PHIHM=Z_GPHM_T0, LDNHEE=.TRUE., PRNHPPI=Z_RNHPPI_T0, &
 & PQCHAL=YDCPG_DYN0%QCHAL, PQCHAM=YDCPG_DYN0%QCHAM, PLNPRL_DER=Z_XYBDER_LNPRL_T0, PLNPRM_DER=Z_XYBDER_LNPRM_T0,         &

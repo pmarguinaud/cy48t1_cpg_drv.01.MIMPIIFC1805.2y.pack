@@ -168,7 +168,7 @@ REAL(KIND=JPRB)   ,INTENT(INOUT), OPTIONAL :: PP1FORC (:,:)
 #include "gnhpre.intfb.h"
 #include "gnhpreh.intfb.h"
 #include "gnhgrpre.intfb.h"
-#include "gpcty.intfb.h"
+#include "gpcty_expl.intfb.h"
 #include "gpcty_forc.intfb.h"
 #include "gpgeo.intfb.h"
 #include "gpgrgeo.intfb.h"
@@ -370,7 +370,7 @@ CALL GNHGRPRE(YDGEOMETRY, NPROMA, NFLEVG, YDCPG_BNDS%KIDIA, YDCPG_BNDS%KFDIA, YD
 !            Computation of the vertical velocities "etapt (d prehyd / d eta)"
 !            "omega/prehyd" and "W".
 
-CALL GPCTY(YDVFE, NPROMA, YDCPG_BNDS%KIDIA, YDCPG_BNDS%KFDIA, NFLEVG, LRUBC, YDVAB, YDVETA, YDVARS%U%T0,            &
+CALL GPCTY_EXPL(YDVFE, NPROMA, YDCPG_BNDS%KIDIA, YDCPG_BNDS%KFDIA, NFLEVG, LRUBC, YDVAB, YDVETA, YDVARS%U%T0,       &
 & YDVARS%V%T0, YDVARS%DIV%T0, YDVARS%EDOT%T0, PSPL=YDCPG_DYN0%PREL, PSPM=YDCPG_DYN0%PREM, PRPREF=Z_RPREF_T0,        &
 & PDELP=YDCPG_DYN0%XYB%DELP, PLNPR=YDCPG_DYN0%XYB%LNPR, PRDELP=YDCPG_DYN0%XYB%RDELP, PALPH=YDCPG_DYN0%XYB%ALPH,     &
 & PRTGR=YDCPG_DYN0%XYB%RTGR, PRPRE=YDCPG_DYN0%XYB%RPRE, PRPP=YDCPG_DYN0%XYB%RPP, PEVEL=YDCPG_DYN0%CTY%EVEL,         &

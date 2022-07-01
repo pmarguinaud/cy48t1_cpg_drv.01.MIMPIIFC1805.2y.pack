@@ -139,7 +139,7 @@ REAL(KIND=JPRB)   ,INTENT(INOUT), OPTIONAL :: PP1FORC (:,:)
 #include "gpgrxyb_expl.intfb.h"
 #include "gprcp_ydvars.intfb.h"
 #include "gprt.intfb.h"
-#include "gpcty.intfb.h"
+#include "gpcty_expl.intfb.h"
 #include "gpcty_forc.intfb.h"
 #include "gpgeo.intfb.h"
 #include "gpgrgeo.intfb.h"
@@ -280,7 +280,7 @@ ELSE
   Z_DPHYCTY_T0(:,:)=0.0_JPRB
 ENDIF
 
-CALL GPCTY(YDVFE, NPROMA, YDCPG_BNDS%KIDIA, YDCPG_BNDS%KFDIA, NFLEVG, LRUBC, YDVAB, YDVETA, YDVARS%U%T0,            &
+CALL GPCTY_EXPL(YDVFE, NPROMA, YDCPG_BNDS%KIDIA, YDCPG_BNDS%KFDIA, NFLEVG, LRUBC, YDVAB, YDVETA, YDVARS%U%T0,       &
 & YDVARS%V%T0, YDVARS%DIV%T0, YDVARS%EDOT%T0, PSPL=YDCPG_DYN0%PREL, PSPM=YDCPG_DYN0%PREM, PRPREF=Z_RPREF_T0,        &
 & PDPHYCTY=Z_DPHYCTY_T0, PDELP=YDCPG_DYN0%XYB%DELP, PLNPR=YDCPG_DYN0%XYB%LNPR, PRDELP=YDCPG_DYN0%XYB%RDELP,         &
 & PALPH=YDCPG_DYN0%XYB%ALPH, PRTGR=YDCPG_DYN0%XYB%RTGR, PRPRE=YDCPG_DYN0%XYB%RPRE, PRPP=YDCPG_DYN0%XYB%RPP,         &

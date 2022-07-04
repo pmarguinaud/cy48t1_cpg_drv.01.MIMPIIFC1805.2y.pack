@@ -28,6 +28,14 @@ TYPE(CPG_DYN_TYPE),     INTENT(INOUT) :: YDCPG_DYN9
 LOGICAL,                INTENT(IN)    :: LDLDIAB
 LOGICAL,                INTENT(IN)    :: LDMPA
 
+#include "gpgeo.intfb.h"
+#include "gpgw.intfb.h"
+#include "gphluv_expl.intfb.h"
+#include "gphpre_expl.intfb.h"
+#include "gprcp_ydvars.intfb.h"
+#include "gpuvs.intfb.h"
+#include "gpxx.intfb.h"
+
 REAL (KIND=JPRB) :: Z_DVER_T9 (YDGEOMETRY%YRDIM%NPROMA,YDGEOMETRY%YRDIMV%NFLEVG)
 REAL (KIND=JPRB) :: Z_GWHT_T9 (YDGEOMETRY%YRDIM%NPROMA,0:YDGEOMETRY%YRDIMV%NFLEVG)
 REAL (KIND=JPRB) :: Z_NHXT_T9 (YDGEOMETRY%YRDIM%NPROMA,YDGEOMETRY%YRDIMV%NFLEVG)
@@ -38,14 +46,6 @@ REAL (KIND=JPRB) :: Z_UVH_UH_T9 (YDGEOMETRY%YRDIM%NPROMA,0:YDGEOMETRY%YRDIMV%NFL
 REAL (KIND=JPRB) :: Z_UVH_VH_T9 (YDGEOMETRY%YRDIM%NPROMA,0:YDGEOMETRY%YRDIMV%NFLEVG)
 REAL (KIND=JPRB) :: Z_UVH_WWI_T9 (YDGEOMETRY%YRDIM%NPROMA,0:YDGEOMETRY%YRDIMV%NFLEVG)
 REAL (KIND=JPRB) :: Z_VS_T9 (YDGEOMETRY%YRDIM%NPROMA)
-
-#include "gpgeo.intfb.h"
-#include "gpgw.intfb.h"
-#include "gphluv_expl.intfb.h"
-#include "gphpre_expl.intfb.h"
-#include "gprcp_ydvars.intfb.h"
-#include "gpuvs.intfb.h"
-#include "gpxx.intfb.h"
 
 INTEGER (KIND=JPIM) :: JLEV
 INTEGER (KIND=JPIM) :: JROF

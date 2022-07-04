@@ -60,9 +60,10 @@ SUBROUTINE GPHLUV_EXPL (YDDIMV,KPROMA,KSTART,KPROF,PU,PV,PWWI,PUH,PVH)
 ! End Modifications
 !------------------------------------------------------------------
 
-USE YOMDIMV   , ONLY : TDIMV
 USE PARKIND1  , ONLY : JPIM, JPRB
 USE YOMHOOK   , ONLY : LHOOK, DR_HOOK
+
+USE YOMDIMV   , ONLY : TDIMV
 
 !     ------------------------------------------------------------------
 

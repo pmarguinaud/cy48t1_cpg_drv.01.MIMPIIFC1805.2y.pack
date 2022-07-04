@@ -118,9 +118,11 @@ SUBROUTINE GPGRGEO_EXPL(&
 !      H. Petithomme (Nov 2020): use of pointers for avoiding array copies
 !     ------------------------------------------------------------------
 
-USE GEOMETRY_MOD , ONLY : GEOMETRY
 USE PARKIND1     , ONLY : JPIM, JPRB
 USE YOMHOOK      , ONLY : LHOOK, DR_HOOK
+
+USE GEOMETRY_MOD , ONLY : GEOMETRY
+
 USE YOMCVER      , ONLY : LVERTFE
 
 !     ------------------------------------------------------------------

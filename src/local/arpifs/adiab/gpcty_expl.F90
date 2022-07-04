@@ -134,9 +134,11 @@ SUBROUTINE GPCTY_EXPL(YDVFE,KPROMA,KD,KF,KFLEV,LDRUBC,YDVAB,YDVETA,&
 !   H Petithomme (Dec 2020): use of pointer, add directives for dependencies
 !     ------------------------------------------------------------------
 
-USE YOMVERT   , ONLY : TVFE, TVAB, TVETA
 USE PARKIND1  , ONLY : JPIM, JPRB
 USE YOMHOOK   , ONLY : LHOOK, DR_HOOK
+
+USE YOMVERT   , ONLY : TVFE, TVAB, TVETA
+
 USE YOMCVER   , ONLY : LVERTFE
 
 !     ------------------------------------------------------------------

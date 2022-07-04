@@ -76,9 +76,11 @@ SUBROUTINE GPGRP_EXPL(&
 !   H Petithomme (Dec 2020): merge VFD loops
 !     ------------------------------------------------------------------
 
-USE GEOMETRY_MOD , ONLY : GEOMETRY
 USE PARKIND1     , ONLY : JPIM, JPRB
 USE YOMHOOK      , ONLY : LHOOK, DR_HOOK
+
+USE GEOMETRY_MOD , ONLY : GEOMETRY
+
 USE YOMCVER      , ONLY : LVERTFE
 
 !     ------------------------------------------------------------------

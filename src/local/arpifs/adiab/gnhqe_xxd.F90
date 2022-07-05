@@ -62,7 +62,6 @@ USE PARKIND1     , ONLY : JPIM, JPRB
 USE YOMHOOK      , ONLY : LHOOK, DR_HOOK
 USE YOMCVER      , ONLY : LVERTFE
 USE YOMDYNA      , ONLY : LRUBC
-USE INTDYN_MOD   , ONLY : YYTXYB
 
 ! -----------------------------------------------------------------------------
 

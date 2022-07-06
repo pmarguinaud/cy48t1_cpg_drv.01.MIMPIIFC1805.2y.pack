@@ -1,6 +1,6 @@
 SUBROUTINE GNHQE_PREH(&
  ! --- INPUT -------------------------------------------
- & YDGEOMETRY,KST,KEND,PREH,PQCHAF, &
+ & LDVERTFE, KPDVAR, YDGEOMETRY,KST,KEND,PREH,PQCHAF, &
  ! --- OUTPUT ------------------------------------------
  & PNHPREH,&
  ! --- OPTIONAL INPUT ----------------------------------
@@ -72,14 +72,16 @@ SUBROUTINE GNHQE_PREH(&
 
 USE GEOMETRY_MOD , ONLY : GEOMETRY
 USE PARKIND1     , ONLY : JPIM, JPRB
-USE YOMCVER      , ONLY : LVERTFE
-USE YOMDYNA      , ONLY : NPDVAR
+
+
 USE YOMHOOK      , ONLY : LHOOK, DR_HOOK
 
 ! -----------------------------------------------------------------------------
 
 IMPLICIT NONE
 
+LOGICAL, INTENT (IN) :: LDVERTFE
+INTEGER (KIND=JPIM), INTENT (IN) :: KPDVAR
 TYPE(GEOMETRY)          ,INTENT(IN)    :: YDGEOMETRY
 INTEGER(KIND=JPIM)      ,INTENT(IN)    :: KST 
 INTEGER(KIND=JPIM)      ,INTENT(IN)    :: KEND 
@@ -111,7 +113,7 @@ ASSOCIATE(NFLEVG=>YDGEOMETRY%YRDIMV%NFLEVG,NPROMA=>YDGEOMETRY%YRDIM%NPROMA)
 
 ! -----------------------------------------------------------------------------
 
-IF ( NPDVAR /= 2 ) THEN
+IF ( KPDVAR /= 2 ) THEN
   ! This routine is coded only for NPDVAR=2 (prognostic variable = Qcha = log(pre/prehyd))
   CALL ABOR1(' GNHQE_PREH 0.1: NPDVAR should be equal to 2.')
 ENDIF
@@ -148,7 +150,7 @@ ENDDO
 
 IF (PRESENT(PDEL_QCHAF)) THEN
 
-  IF (LVERTFE) THEN
+  IF (LDVERTFE) THEN
 
     ! * VFE treatment of [Delta Qcha]:
     CALL ABOR1(' GNHQE_PREH: option not yet coded!')

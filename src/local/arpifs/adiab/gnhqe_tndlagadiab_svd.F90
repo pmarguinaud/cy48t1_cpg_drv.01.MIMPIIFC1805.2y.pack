@@ -1,7 +1,7 @@
 !OCL  NOEVAL
 SUBROUTINE GNHQE_TNDLAGADIAB_SVD(&
  ! --- INPUT -----------------------------------------------------------------
- & YDCST, YDGEOMETRY,KSTART,KPROF,&
+ & LDVERTFE, YDCST, YDGEOMETRY,KSTART,KPROF,&
  & POROGL,POROGM,POROGLM,POROGLL,POROGMM,&
  & PLNPR,PALPH,PREF,PREH,&
  & PUF,PVF,PUH,PVH,PTNDUS,PTNDVS,&
@@ -92,13 +92,14 @@ SUBROUTINE GNHQE_TNDLAGADIAB_SVD(&
 USE GEOMETRY_MOD , ONLY : GEOMETRY
 USE PARKIND1     , ONLY : JPIM, JPRB
 USE YOMHOOK      , ONLY : LHOOK, DR_HOOK
-USE YOMCVER      , ONLY : LVERTFE
+
 USE YOMCST       , ONLY : TCST
 
 !     ------------------------------------------------------------------
 
 IMPLICIT NONE
 
+LOGICAL, INTENT (IN) :: LDVERTFE
 TYPE(TCST)        ,INTENT(IN)    :: YDCST
 TYPE(GEOMETRY)    ,INTENT(IN)    :: YDGEOMETRY
 INTEGER(KIND=JPIM),INTENT(IN)    :: KSTART 
@@ -160,7 +161,7 @@ ASSOCIATE(NPROMA=>YDGEOMETRY%YRDIM%NPROMA,NFLEVG=>YDGEOMETRY%YRDIMV%NFLEVG)
 ZRG2=YDCST%RG*YDCST%RG
 
 ! warning: formerly LVFE_LAPL
-IF (LVERTFE) CALL ABOR1(' GNHQE_TNDLAGADIAB_SVD 1.1: option not yet coded')
+IF (LDVERTFE) CALL ABOR1(' GNHQE_TNDLAGADIAB_SVD 1.1: option not yet coded')
 
   ! ky: in these calculations, for the time being, a term containing [D (1/Kap)/ D log(prehyd)] has been neglected.
 
@@ -210,7 +211,7 @@ ZOTH(KSTART:KPROF,1:NFLEVG)=0.0_JPRB
 
 ! Compute (1/(R Tt)) grad(Gw).(dV/delta)
 ! warning: formerly LVFE_Z_TERM (dead case LVERTFE)
-IF (LVERTFE) CALL ABOR1(' GNHQE_TNDLAGADIAB_SVD 3.1: option not yet coded')
+IF (LDVERTFE) CALL ABOR1(' GNHQE_TNDLAGADIAB_SVD 3.1: option not yet coded')
 
 DO JLEV=1,NFLEVG
   DO JROF=KSTART,KPROF

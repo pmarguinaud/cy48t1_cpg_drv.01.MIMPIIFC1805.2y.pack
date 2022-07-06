@@ -1,7 +1,7 @@
 !OCL  NOEVAL
 SUBROUTINE GNHGRGW(&
  ! --- INPUT -----------------------------------------------------------------
- & YDGEOMETRY,KPROMA,KFLEV,KD,KF,LDGWFDER,&
+ & LDVERTFE, YDGEOMETRY,KPROMA,KFLEV,KD,KF,LDGWFDER,&
  & PRT,PRTL,PRTM,PDVER,PDVERL,PDVERM,&
  & PLNPR,PALPH,&
  & PUS,PVS,PUS_L,PVS_L,PUS_M,PVS_M,&
@@ -111,12 +111,13 @@ SUBROUTINE GNHGRGW(&
 USE GEOMETRY_MOD , ONLY : GEOMETRY
 USE PARKIND1     , ONLY : JPIM, JPRB
 USE YOMHOOK      , ONLY : LHOOK, DR_HOOK
-USE YOMCVER      , ONLY : LVERTFE
+
 
 !     ------------------------------------------------------------------
 
 IMPLICIT NONE
 
+LOGICAL, INTENT (IN) :: LDVERTFE
 TYPE(GEOMETRY)    ,INTENT(IN)    :: YDGEOMETRY
 INTEGER(KIND=JPIM),INTENT(IN)    :: KPROMA
 INTEGER(KIND=JPIM),INTENT(IN)    :: KFLEV
@@ -206,7 +207,7 @@ ENDDO
 
 !*    1.2 Calculation of "grad (gw)" for the Z-term.
 
-IF (LVERTFE) THEN
+IF (LDVERTFE) THEN
 
   ! * Calculation of "grad (gw)" at full levels.
 

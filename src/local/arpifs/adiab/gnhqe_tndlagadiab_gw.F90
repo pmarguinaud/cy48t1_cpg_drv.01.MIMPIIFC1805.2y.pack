@@ -1,7 +1,7 @@
 !OCL  NOEVAL
 SUBROUTINE GNHQE_TNDLAGADIAB_GW(&
  ! --- INPUT -----------------------------------------------------------------
- & YDCST, YDGEOMETRY,KSTART,KPROF,&
+ & LDVFE_GW, LDVFE_LAPL_BC, YDCST, YDGEOMETRY,KSTART,KPROF,&
  & POROGL,POROGM,POROGLM,POROGLL,POROGMM,&
  & PUS,PVS,PTNDUS,PTNDVS,&
  & PLNPR,PALPH,PREF,PREH,&
@@ -91,12 +91,14 @@ USE GEOMETRY_MOD , ONLY : GEOMETRY
 USE PARKIND1     , ONLY : JPIM, JPRB
 USE YOMHOOK      , ONLY : LHOOK, DR_HOOK
 USE YOMCST       , ONLY : TCST
-USE YOMCVER      , ONLY : LVFE_LAPL_BC, LVFE_GW
+
 
 !     ------------------------------------------------------------------
 
 IMPLICIT NONE
 
+LOGICAL, INTENT (IN) :: LDVFE_GW
+LOGICAL, INTENT (IN) :: LDVFE_LAPL_BC
 TYPE(TCST)        ,INTENT(IN)    :: YDCST
 TYPE(GEOMETRY)    ,INTENT(IN)    :: YDGEOMETRY
 INTEGER(KIND=JPIM),INTENT(IN)    :: KSTART 
@@ -174,7 +176,7 @@ ENDDO
 ! * Apply Laplacian (L_kap) operator:  
 !   ZOUT contains ( [Kap/G**2] * [ d [ [D (Gw) / Dt]_adiab ] / d log(prehyd) ] )
 ! warning: formerly LVFE_LAPL
-IF (LVFE_LAPL_BC) THEN
+IF (LDVFE_LAPL_BC) THEN
   ! Only VFD calculation of Laplacian is currently available.
   CALL ABOR1(' GNHQE_TNDLAGADIAB_GW 2a: option not yet coded!')
 ELSE
@@ -190,7 +192,7 @@ ENDDO
 
 ! * Integrate, to compute upper-air [D (Gw) / Dt]_adiab:
 !   This is a "G-type" vertical integral (cf. GPGEO, GPGW).
-IF (LVFE_GW) THEN
+IF (LDVFE_GW) THEN
   ! In this case, [D (Gw) / Dt]_adiab is at full levels (in PTNDGW).
   ! VFE integration to compute PTNDGW is not yet coded.
   CALL ABOR1(' GNHQE_TNDLAGADIAB_GW 2b: option not yet coded!')

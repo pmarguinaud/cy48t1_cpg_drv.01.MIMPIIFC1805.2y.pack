@@ -1,7 +1,7 @@
 !OCL  NOEVAL
 SUBROUTINE GNH_TNDLAGADIAB_GW(&
  ! --- INPUT -----------------------------------------------------------------
- & YDCST, YDGEOMETRY, KFLEV,KPROMA,KSTART,KPROF,&
+ & LDGWADV, LDVERTFE, LDVFE_ECMWF, LDVFE_GW, LDVFE_LAPL_BC, YDCST, YDGEOMETRY, KFLEV,KPROMA,KSTART,KPROF,&
  ! --- OPTIONAL INPUT --------------------------------------------------------
  & POROGL,POROGM,POROGLM,POROGLL,POROGMM,&
  & PUS,PVS,PTNDUS,PTNDVS,&
@@ -117,13 +117,18 @@ USE GEOMETRY_MOD , ONLY : GEOMETRY
 USE PARKIND1     , ONLY : JPIM, JPRB
 USE YOMHOOK      , ONLY : LHOOK, DR_HOOK
 USE YOMCST       , ONLY : TCST
-USE YOMDYNA      , ONLY : LGWADV
-USE YOMCVER      , ONLY : LVERTFE, LVFE_GW, LVFE_LAPL_BC, LVFE_ECMWF
+
+
 
 !     ------------------------------------------------------------------
 
 IMPLICIT NONE
 
+LOGICAL, INTENT (IN) :: LDGWADV
+LOGICAL, INTENT (IN) :: LDVERTFE
+LOGICAL, INTENT (IN) :: LDVFE_ECMWF
+LOGICAL, INTENT (IN) :: LDVFE_GW
+LOGICAL, INTENT (IN) :: LDVFE_LAPL_BC
 TYPE(TCST)        ,INTENT(IN)    :: YDCST
 TYPE(GEOMETRY)    ,INTENT(IN)    :: YDGEOMETRY
 INTEGER(KIND=JPIM),INTENT(IN)    :: KFLEV
@@ -178,7 +183,7 @@ ZRG2=YDCST%RG*YDCST%RG
 !*       1.    COMPUTATION OF [D [Gw]_surf / Dt]_adiab
 !              ---------------------------------------
 
-IF (.NOT.LGWADV) THEN
+IF (.NOT.LDGWADV) THEN
   IF (.NOT.(PRESENT(PDBBC))) &
    & CALL ABOR1(' GNH_TNDLAGADIAB_GW 3a: missing optional output arguments!')
 
@@ -203,7 +208,7 @@ IF (.NOT.LGWADV) THEN
 
   ! ** Treatment of the Laplacian term.
 
-  IF (LVERTFE.AND..NOT.LVFE_LAPL_BC) THEN
+  IF (LDVERTFE.AND..NOT.LDVFE_LAPL_BC) THEN
     ! * PTNDGWH_LAP is not computed without LVFE_LAPL_BC
 
     IF (.NOT.(PRESENT(PDEP).AND.PRESENT(PREF).AND.PRESENT(PREH))) &
@@ -234,7 +239,7 @@ IF (.NOT.LGWADV) THEN
       PTNDGWH_LAP(JROF,KFLEV)=-PDBBC(JROF)
     ENDDO
 
-  ELSEIF (.NOT.LVERTFE) THEN
+  ELSEIF (.NOT.LDVERTFE) THEN
 
     IF (.NOT.(PRESENT(PDEP).AND.PRESENT(PREF).AND.PRESENT(PREH))) &
      & CALL ABOR1(' GNH_TNDLAGADIAB_GW 2Ad: missing optional input arguments!')
@@ -266,7 +271,7 @@ IF (.NOT.LGWADV) THEN
 
   ! ** Treatment of the other terms: zero.
 
-  IF (LVFE_GW) THEN
+  IF (LDVFE_GW) THEN
     IF (.NOT.PRESENT(PTNDGWF_OTH)) &
      & CALL ABOR1(' GNH_TNDLAGADIAB_GW 2Af: missing optional output arguments!')
     PTNDGWF_OTH(KSTART:KPROF,1:KFLEV)=0.0_JPRB
@@ -280,7 +285,7 @@ ELSE
 
   ! ** Treatment of the Laplacian term, and fill PTNDGW[F,H]_OTH with zeros.
 
-  IF (LVFE_GW) THEN
+  IF (LDVFE_GW) THEN
 
     IF (.NOT.(PRESENT(PDELNHPRE).AND.PRESENT(PDELP))) &
      & CALL ABOR1(' GNH_TNDLAGADIAB_GW 2Ba: missing optional input arguments!')
@@ -303,7 +308,7 @@ ELSE
 
     ! * Half levels 1 to nflevg-1.
 
-    IF(LVERTFE .AND. .NOT.LVFE_ECMWF)THEN
+    IF(LDVERTFE .AND. .NOT.LDVFE_ECMWF)THEN
 
       ! pressure departure is derivated using VFE operator from full levels to half levels
       ! but still through transformation from d4->gw and back is FD style

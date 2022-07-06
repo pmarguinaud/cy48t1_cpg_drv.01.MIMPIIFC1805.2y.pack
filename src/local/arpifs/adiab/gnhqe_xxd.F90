@@ -1,6 +1,6 @@
 SUBROUTINE GNHQE_XXD(&
  ! --- INPUT -----------------------------------------------------------------
- & YDGEOMETRY,KFLEV,KPROMA,KST,KEND,PU,PV,PLNPR,PRDELP,PALPH,PRTGR,PSPL,PSPM,PKAP, &
+ & LDRUBC, LDVERTFE, YDGEOMETRY,KFLEV,KPROMA,KST,KEND,PU,PV,PLNPR,PRDELP,PALPH,PRTGR,PSPL,PSPM,PKAP, &
  ! --- OUTPUT ----------------------------------------------------------------
  & PNHXD)
 
@@ -60,13 +60,15 @@ SUBROUTINE GNHQE_XXD(&
 USE GEOMETRY_MOD , ONLY : GEOMETRY
 USE PARKIND1     , ONLY : JPIM, JPRB
 USE YOMHOOK      , ONLY : LHOOK, DR_HOOK
-USE YOMCVER      , ONLY : LVERTFE
-USE YOMDYNA      , ONLY : LRUBC
+
+
 
 ! -----------------------------------------------------------------------------
 
 IMPLICIT NONE
 
+LOGICAL, INTENT (IN) :: LDRUBC
+LOGICAL, INTENT (IN) :: LDVERTFE
 TYPE(GEOMETRY),    INTENT(IN)    :: YDGEOMETRY
 INTEGER(KIND=JPIM),INTENT(IN)    :: KFLEV
 INTEGER(KIND=JPIM),INTENT(IN)    :: KPROMA 
@@ -105,7 +107,7 @@ IF (LHOOK) CALL DR_HOOK('GNHQE_XXD',0,ZHOOK_HANDLE)
 
 ASSOCIATE(YDVAB=>YDGEOMETRY%YRVAB,YDVETA=>YDGEOMETRY%YRVETA)
 
-IF (LRUBC) THEN
+IF (LDRUBC) THEN
   ! Input [etadot (d prehyd / d eta)]_top is not always available there.
   CALL ABOR1(' GNHQE_XXD: LRUBC not coded')
 ENDIF
@@ -119,7 +121,7 @@ ENDDO
 
 ! * Term containing vertical integral
 !   (1/Pi) int_(eta'=0 to eta'=eta) (dB/deta') [vec(V) * grad prehyds] deta'
-IF( LVERTFE )THEN
+IF( LDVERTFE )THEN
   ZIN(KST:KEND,0)=0.0_JPRB
   ZIN(KST:KEND,KFLEV+1)=0.0_JPRB
   DO JLEV=1,KFLEV

@@ -1,7 +1,7 @@
 !OCL  NOEVAL
 SUBROUTINE GNH_TNDLAGADIAB_SPD(&
  ! --- INPUT -----------------------------------------------------------------
- & YDGEOMETRY, KFLEV,KPROMA,KSTART,KPROF,&
+ & KPDVAR, YDGEOMETRY, KFLEV,KPROMA,KSTART,KPROF,&
  & PKAP,P3DIVG,PVVEL,&
  ! --- OUTPUT ----------------------------------------------------------------
  & PTNDPD&
@@ -70,12 +70,13 @@ SUBROUTINE GNH_TNDLAGADIAB_SPD(&
 USE GEOMETRY_MOD , ONLY : GEOMETRY
 USE PARKIND1     , ONLY : JPIM, JPRB
 USE YOMHOOK      , ONLY : LHOOK, DR_HOOK
-USE YOMDYNA      , ONLY : NPDVAR
+
 
 !     ------------------------------------------------------------------
 
 IMPLICIT NONE
 
+INTEGER (KIND=JPIM), INTENT (IN) :: KPDVAR
 TYPE(GEOMETRY)    ,INTENT(IN)    :: YDGEOMETRY
 INTEGER(KIND=JPIM),INTENT(IN)    :: KFLEV
 INTEGER(KIND=JPIM),INTENT(IN)    :: KPROMA 
@@ -102,7 +103,7 @@ IF (LHOOK) CALL DR_HOOK('GNH_TNDLAGADIAB_SPD',0,ZHOOK_HANDLE)
 !*       1.    COMPUTATION OF [D (spd) / Dt]_adiab
 !              -----------------------------------
 
-IF (NPDVAR==2) THEN
+IF (KPDVAR==2) THEN
   DO JLEV=1,KFLEV
     DO JROF=KSTART,KPROF
       ZCPCV=1.0_JPRB/(1.0_JPRB-PKAP(JROF,JLEV))

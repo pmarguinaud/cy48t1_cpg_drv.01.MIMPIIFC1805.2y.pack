@@ -1,6 +1,6 @@
 SUBROUTINE GNHPREH(&
  ! --- INPUT -------------------------------------------
- & YDGEOMETRY, KPROMA,KFLEV,KST,KEND,PSPD,PREH,PDELP,PLNPR,PNHPPI,PNHPRE,&
+ & LDVERTFE, LDVFE_ECMWF, KPDVAR, YDGEOMETRY, KPROMA,KFLEV,KST,KEND,PSPD,PREH,PDELP,PLNPR,PNHPPI,PNHPRE,&
  ! --- OUTPUT ------------------------------------------
  & PNHPREH,PDELNHPRE&
  & )
@@ -66,14 +66,17 @@ SUBROUTINE GNHPREH(&
 
 USE GEOMETRY_MOD , ONLY : GEOMETRY
 USE PARKIND1     , ONLY : JPIM, JPRB
-USE YOMCVER      , ONLY : LVERTFE, LVFE_ECMWF
-USE YOMDYNA      , ONLY : NPDVAR
+
+
 USE YOMHOOK      , ONLY : LHOOK, DR_HOOK
 
 ! -----------------------------------------------------------------------------
 
 IMPLICIT NONE
 
+LOGICAL, INTENT (IN) :: LDVERTFE
+LOGICAL, INTENT (IN) :: LDVFE_ECMWF
+INTEGER (KIND=JPIM), INTENT (IN) :: KPDVAR
 TYPE(GEOMETRY)    ,INTENT(IN)    :: YDGEOMETRY
 INTEGER(KIND=JPIM),INTENT(IN)    :: KPROMA
 INTEGER(KIND=JPIM),INTENT(IN)    :: KFLEV
@@ -121,7 +124,7 @@ IF (LHOOK) CALL DR_HOOK('GNHPREH',0,ZHOOK_HANDLE)
 !    that the sum of PDELNHPRE*(delta eta) on a whole column does not
 !    give exactly PNHPREH(surf)-PNHPREH(top)).
 
-IF ( NPDVAR == 2 ) THEN
+IF ( KPDVAR == 2 ) THEN
 
   ! * Top (the pressure departure "pre - prehyd" is assumed to be zero):
   PNHPREH(KST:KEND,0)=PREH(KST:KEND,0)
@@ -145,7 +148,7 @@ IF ( NPDVAR == 2 ) THEN
 ENDIF
 
 ! * Computation of the total pressure depth "Delta pre" at full levels.
-IF (.NOT.LVERTFE) THEN
+IF (.NOT.LDVERTFE) THEN
   DO JLEV=1,KFLEV
     DO JROF=KST,KEND
       PDELNHPRE(JROF,JLEV)=PNHPREH(JROF,JLEV)-PNHPREH(JROF,JLEV-1)
@@ -162,9 +165,9 @@ ENDIF
 !  half level pressure "pre" is then computed, starting from the
 !  upper boundary condition "pre - prehyd=0".
 
-IF (LVERTFE) THEN
+IF (LDVERTFE) THEN
 
-  IF (LVFE_ECMWF) THEN
+  IF (LDVFE_ECMWF) THEN
 
     ! * Computation of the total pressure depth "Delta pre" at full levels.
     !   Calculation is done using the identity:
@@ -191,7 +194,7 @@ IF (LVERTFE) THEN
 
   ELSE
 
-    IF( NPDVAR == 2 )THEN
+    IF( KPDVAR == 2 )THEN
       ! * Computation of the total pressure depth "Delta pre" at full levels.
       !   Calculation is done using the identity:
       !    Delta pre = Delta prehyd * (pre/prehyd) + pre * Delta (log (pre/prehyd))

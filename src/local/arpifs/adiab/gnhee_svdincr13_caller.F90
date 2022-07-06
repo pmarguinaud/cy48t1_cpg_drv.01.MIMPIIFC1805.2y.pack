@@ -87,6 +87,7 @@ USE YOMCST       , ONLY : RD, RV
 USE YOMCT0       , ONLY : LSPRT
 USE YOMCVER      , ONLY : LVERTFE, LVFE_GW
 USE YOMDYNA      , ONLY : L_RDRY_VD, LVEREGINT
+USE YOMDYNA      , ONLY : NVDVAR, NPDVAR
 USE INTDYN_MOD   , ONLY : YYTHW, YYTXYB
 
 ! -----------------------------------------------------------------------------
@@ -189,7 +190,7 @@ ELSE
 ENDIF
 
 ! * computation of pre/prehyd.
-CALL GNHPRE(YDGEOMETRY,KPROMA,NFLEVG,KSTART,KEND,PSPD,ZPIF,PNHPPI=ZNHPPI)
+CALL GNHPRE(NPDVAR,YDGEOMETRY,KPROMA,NFLEVG,KSTART,KEND,PSPD,ZPIF,PNHPPI=ZNHPPI)
 
 ! * computation of half level wind if relevant
 IF (LVERTFE .AND. LVFE_GW) THEN

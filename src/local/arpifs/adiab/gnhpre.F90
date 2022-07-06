@@ -1,7 +1,7 @@
 !OCL  NOEVAL
 SUBROUTINE GNHPRE(&
  ! --- INPUT -------------------------------------------
- & YDGEOMETRY, KPROMA,KFLEV,KSTART,KEND,PSPD,PREF,&
+ & KPDVAR, YDGEOMETRY, KPROMA,KFLEV,KSTART,KEND,PSPD,PREF,&
  ! --- OPTIONAL INPUT ---------------------------------
  & PKAP,&
  ! --- OPTIONAL OUTPUT ---------------------------------
@@ -66,12 +66,13 @@ SUBROUTINE GNHPRE(&
 USE GEOMETRY_MOD , ONLY : GEOMETRY
 USE PARKIND1     , ONLY : JPIM, JPRB
 USE YOMHOOK      , ONLY : LHOOK, DR_HOOK
-USE YOMDYNA      , ONLY : NPDVAR
+
 
 ! -----------------------------------------------------------------------------
 
 IMPLICIT NONE
 
+INTEGER (KIND=JPIM), INTENT (IN) :: KPDVAR
 TYPE(GEOMETRY),    INTENT(IN)           :: YDGEOMETRY
 INTEGER(KIND=JPIM),INTENT(IN)           :: KPROMA
 INTEGER(KIND=JPIM),INTENT(IN)           :: KFLEV
@@ -97,7 +98,7 @@ REAL(KIND=JPRB) :: ZHOOK_HANDLE
 
 ! -----------------------------------------------------------------------------
 
-IF ( NPDVAR /= 2 ) RETURN
+IF ( KPDVAR /= 2 ) RETURN
 
 IF (LHOOK) CALL DR_HOOK('GNHPRE',0,ZHOOK_HANDLE)
 

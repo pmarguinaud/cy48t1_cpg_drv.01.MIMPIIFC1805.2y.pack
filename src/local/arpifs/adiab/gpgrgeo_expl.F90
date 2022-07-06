@@ -1,7 +1,7 @@
 !OCL  NOEVAL
 SUBROUTINE GPGRGEO_EXPL(&
  ! --- INPUT -----------------------------------------------------------------
- & YDGEOMETRY,KPROMA,KD,KF,KFLEV,&
+ & LDVERTFE, YDGEOMETRY,KPROMA,KD,KF,KFLEV,&
  & PRT,PRTL,PRTM,&
  & PLNPR,PALPH,&
  & POROGL,POROGM,&
@@ -123,12 +123,13 @@ USE YOMHOOK      , ONLY : LHOOK, DR_HOOK
 
 USE GEOMETRY_MOD , ONLY : GEOMETRY
 
-USE YOMCVER      , ONLY : LVERTFE
+
 
 !     ------------------------------------------------------------------
 
 IMPLICIT NONE
 
+LOGICAL, INTENT (IN) :: LDVERTFE
 TYPE(GEOMETRY),    INTENT(IN)    :: YDGEOMETRY
 INTEGER(KIND=JPIM),INTENT(IN)    :: KPROMA 
 INTEGER(KIND=JPIM),INTENT(IN)    :: KFLEV 
@@ -241,7 +242,7 @@ ENDIF
 !*    2.2 Calculation of "grad (gz)" at half levels.
 !         "alpha" and "grad alpha" terms contributions.
 
-IF(LVERTFE) THEN
+IF(LDVERTFE) THEN
   IF (LLNHEE) THEN
     DO JLEV=1,KFLEV
       DO JROF=KD,KF

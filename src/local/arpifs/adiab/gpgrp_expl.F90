@@ -1,7 +1,7 @@
 !OCL  NOEVAL
 SUBROUTINE GPGRP_EXPL(&
  ! --- INPUT -----------------------------------------------------------------
- & YDGEOMETRY,KST,KEND,&
+ & LDVERTFE, YDGEOMETRY,KST,KEND,&
  & PRT,PRTL,PRTM,PREL,PREM,PRTGR,PALPH,&
  & PHIHL,PHIHM,PHIFL,PHIFM,&
  ! --- OUTPUT ----------------------------------------------------------------
@@ -81,12 +81,13 @@ USE YOMHOOK      , ONLY : LHOOK, DR_HOOK
 
 USE GEOMETRY_MOD , ONLY : GEOMETRY
 
-USE YOMCVER      , ONLY : LVERTFE
+
 
 !     ------------------------------------------------------------------
 
 IMPLICIT NONE
 
+LOGICAL, INTENT (IN) :: LDVERTFE
 TYPE(GEOMETRY)    ,INTENT(IN)    :: YDGEOMETRY
 INTEGER(KIND=JPIM),INTENT(IN)    :: KST
 INTEGER(KIND=JPIM),INTENT(IN)    :: KEND
@@ -122,7 +123,7 @@ ASSOCIATE(NFLEVG=>YDGEOMETRY%YRDIMV%NFLEVG,NPROMA=>YDGEOMETRY%YRDIM%NPROMA)
 !*       1.    COMPUTATION OF THE PRESSURE GRADIENT TERM.
 !              ------------------------------------------
 
-IF (LVERTFE) THEN
+IF (LDVERTFE) THEN
 
   ! * The pressure gradient term is directly computed at full levels in
   !   this case and no quantity at half layers is computed.

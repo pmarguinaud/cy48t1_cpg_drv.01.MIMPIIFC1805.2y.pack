@@ -138,7 +138,7 @@ REAL(KIND=JPRB) :: ZHOOK_HANDLE
 
 !     ------------------------------------------------------------------
 
-#include "gpmpfc.intfb.h"
+#include "gpmpfc_pgfl.intfb.h"
 
 !     ------------------------------------------------------------------
 
@@ -186,7 +186,7 @@ ENDIF
 
 IF (LLSTR.AND.(.NOT.LAGPHY)) THEN
   IFLAG=1
-  CALL GPMPFC(YDGMV, YDML_GCONF, YDDYN, NPROMA, NFLEVG, YDCPG_BNDS%KIDIA, YDCPG_BNDS%KFDIA, IFLAG, &
+  CALL GPMPFC_PGFL(YDGMV, YDML_GCONF, YDDYN, NPROMA, NFLEVG, YDCPG_BNDS%KIDIA, YDCPG_BNDS%KFDIA, IFLAG, &
   & PGM, PGMV, PGMVS, PGFL)
 ENDIF
 

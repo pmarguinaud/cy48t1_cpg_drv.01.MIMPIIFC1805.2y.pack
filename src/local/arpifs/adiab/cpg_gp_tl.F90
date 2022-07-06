@@ -277,7 +277,7 @@ REAL(KIND=JPRB) :: ZHOOK_HANDLE
 #include "gpgrptl.intfb.h"
 #include "gpgrxybtl.intfb.h"
 #include "gpinislb.intfb.h"
-#include "gpmpfc.intfb.h"
+#include "gpmpfc_pgfl.intfb.h"
 #include "gphpretl.intfb.h"
 #include "gprcptl.intfb.h"
 #include "gprttl.intfb.h"
@@ -374,7 +374,7 @@ ENDIF
 
 IF(LLSTR) THEN
   IFLAG=0
-  CALL GPMPFC(YDGMV,YDML_GCONF,YDDYN,NPROMA,NFLEVG,KST,KEND,IFLAG,YDGSGEOM%GM,PGMV,PGMVS,PGFL)
+  CALL GPMPFC_PGFL(YDGMV,YDML_GCONF,YDDYN,NPROMA,NFLEVG,KST,KEND,IFLAG,YDGSGEOM%GM,PGMV,PGMVS,PGFL)
 ENDIF
 
 CALL GP_SPVTL(YDGEOMETRY,YDDYN,YDSIMPHL,KST,KEND,&

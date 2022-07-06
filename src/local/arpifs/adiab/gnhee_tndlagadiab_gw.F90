@@ -1,7 +1,7 @@
 !OCL  NOEVAL
 SUBROUTINE GNHEE_TNDLAGADIAB_GW(&
  ! --- INPUT -----------------------------------------------------------------
- & YDCST, YDGEOMETRY,KSTART,KPROF,&
+ & LDVFE_GW, LDVFE_LAPL_BC, KVDVAR, YDCST, YDGEOMETRY,KSTART,KPROF,&
  & POROGL,POROGM,POROGLM,POROGLL,POROGMM,&
  & PUS,PVS,PTNDUS,PTNDVS,&
  & PLNPR,PALPH,PREF,PREH,&
@@ -91,13 +91,16 @@ USE GEOMETRY_MOD , ONLY : GEOMETRY
 USE PARKIND1     , ONLY : JPIM, JPRB
 USE YOMHOOK      , ONLY : LHOOK, DR_HOOK
 USE YOMCST       , ONLY : TCST
-USE YOMDYNA      , ONLY : NVDVAR
-USE YOMCVER      , ONLY : LVFE_LAPL_BC, LVFE_GW
+
+
 
 !     ------------------------------------------------------------------
 
 IMPLICIT NONE
 
+LOGICAL, INTENT (IN) :: LDVFE_GW
+LOGICAL, INTENT (IN) :: LDVFE_LAPL_BC
+INTEGER (KIND=JPIM), INTENT (IN) :: KVDVAR
 TYPE(TCST)        ,INTENT(IN)    :: YDCST
 TYPE(GEOMETRY)    ,INTENT(IN)    :: YDGEOMETRY
 INTEGER(KIND=JPIM),INTENT(IN)    :: KSTART 
@@ -147,7 +150,7 @@ ZRG2=YDCST%RG*YDCST%RG
 !*       1.    COMPUTATION OF [D [Gw]_surf / Dt]_adiab.
 !              ----------------------------------------
 
-IF (NVDVAR==3 .OR. NVDVAR==4) THEN
+IF (KVDVAR==3 .OR. KVDVAR==4) THEN
   ! * Compute [(1/g) D w_surf/Dt]
   DO JROF=KSTART,KPROF
     ZJACOB=POROGLL(JROF)*PUS(JROF)*PUS(JROF) &
@@ -157,7 +160,7 @@ IF (NVDVAR==3 .OR. NVDVAR==4) THEN
     ZACVGF=PTNDVS(JROF)*POROGM(JROF)
     ZINS(JROF)=(ZACUGF+ZACVGF+ZJACOB)/ZRG2
   ENDDO
-ELSEIF (NVDVAR==5) THEN
+ELSEIF (KVDVAR==5) THEN
   ! * Bottom boundary condition is 0
   ZINS(KSTART:KPROF)=0.0_JPRB
 ENDIF
@@ -176,7 +179,7 @@ ENDDO
 ! * Apply Laplacian (LAPL) operator:  
 !   ZOUT contains ( [1/G**2] * [ d [ [D (Gw) / Dt]_adiab ] / d log(prehyd) ] )
 ! warning: formerly LVFE_LAPL
-IF (LVFE_LAPL_BC)&
+IF (LDVFE_LAPL_BC)&
   CALL ABOR1(" GNHEE_TNDLAGADIAB_GW: VFE integration not available for Laplacian BC")
 
 CALL GNHEE_LAPL(YDGEOMETRY,KSTART,KPROF,ZIN,ZINS,PLNPR,PALPH,PREF,PREH,ZOUT)
@@ -188,7 +191,7 @@ DO JLEV=1,NFLEVG
   ENDDO
 ENDDO
 
-IF (LVFE_GW) CALL ABOR1(' GNHEE_TNDLAGADIAB_GW: VFE integration not available for GW')
+IF (LDVFE_GW) CALL ABOR1(' GNHEE_TNDLAGADIAB_GW: VFE integration not available for GW')
 
 ! * Integrate, to compute upper-air [D (Gw) / Dt]_adiab:
 !   This is a "G-type" vertical integral (cf. GPGEO, GPGW).

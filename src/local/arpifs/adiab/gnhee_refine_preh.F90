@@ -1,7 +1,7 @@
 !OCL  NOEVAL
 SUBROUTINE GNHEE_REFINE_PREH(&
  ! --- INPUT -----------------------------------------------------------------
- & YDCST, YDGEOMETRY,KSTART,KPROF,&
+ & LDVERTFE, LDVFE_GW, YDCST, YDGEOMETRY,KSTART,KPROF,&
  & POROGL,POROGM,POROGLM,POROGLL,POROGMM,&
  & PUS,PVS,&
  & PREF,PREH,PDEP,PWH2F,&
@@ -92,12 +92,14 @@ USE GEOMETRY_MOD , ONLY : GEOMETRY
 USE PARKIND1     , ONLY : JPIM, JPRB
 USE YOMHOOK      , ONLY : LHOOK, DR_HOOK
 USE YOMCST       , ONLY : TCST
-USE YOMCVER      , ONLY : LVERTFE, LVFE_GW
+
 
 !     ------------------------------------------------------------------
 
 IMPLICIT NONE
 
+LOGICAL, INTENT (IN) :: LDVERTFE
+LOGICAL, INTENT (IN) :: LDVFE_GW
 TYPE(TCST)        ,INTENT(IN)    :: YDCST
 TYPE(GEOMETRY)    ,INTENT(IN)    :: YDGEOMETRY
 INTEGER(KIND=JPIM),INTENT(IN)    :: KSTART
@@ -152,7 +154,7 @@ ZRG2=YDCST%RG*YDCST%RG
 
 !     ------------------------------------------------------------------
 
-IF (LVERTFE.AND.LVFE_GW) CALL ABOR1(' GNHEE_REFINE_PREH 3.1.20c: option not yet coded!')
+IF (LDVERTFE.AND.LDVFE_GW) CALL ABOR1(' GNHEE_REFINE_PREH 3.1.20c: option not yet coded!')
 
 ! * Update [Delta (pre-prehyd)]_surf/[Delta prehyd]_surf:
 

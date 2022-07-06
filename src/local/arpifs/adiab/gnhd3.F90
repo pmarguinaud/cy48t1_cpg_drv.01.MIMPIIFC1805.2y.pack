@@ -1,6 +1,6 @@
 SUBROUTINE GNHD3( &
  ! --- INPUT -----------------------------------------------------------------
- & YDCST, KFLEV,KPROMA,KSTART,KEND, &
+ & LD_RDRY_VD, YDCST, KFLEV,KPROMA,KSTART,KEND, &
  & PDIV,PNHX,PDVER,PR, &
  & PMAX_D3,LDBOUND_D3, &
  ! --- OUTPUT ----------------------------------------------------------------
@@ -58,13 +58,14 @@ SUBROUTINE GNHD3( &
 
 USE PARKIND1 , ONLY : JPIM     ,JPRB
 USE YOMCST   , ONLY : TCST
-USE YOMDYNA  , ONLY : L_RDRY_VD
+
 USE YOMHOOK  , ONLY : LHOOK    ,DR_HOOK
 
 ! -----------------------------------------------------------------------------
 
 IMPLICIT NONE
 
+LOGICAL, INTENT (IN) :: LD_RDRY_VD
 TYPE (TCST)       ,INTENT(IN)    :: YDCST
 INTEGER(KIND=JPIM),INTENT(IN)    :: KFLEV
 INTEGER(KIND=JPIM),INTENT(IN)    :: KPROMA 
@@ -90,7 +91,7 @@ IF (LHOOK) CALL DR_HOOK('GNHD3',0,ZHOOK_HANDLE)
 
 ! -----------------------------------------------------------------------------
 
-IF (L_RDRY_VD) THEN
+IF (LD_RDRY_VD) THEN
   ! Ratio RD/PR is due to current definition of PDVER (with RD)
   DO JLEV=1,KFLEV
     DO JROF=KSTART,KEND

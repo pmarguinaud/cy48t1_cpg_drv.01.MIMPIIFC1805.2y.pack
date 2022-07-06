@@ -1,7 +1,7 @@
 !OCL  NOEVAL
 SUBROUTINE GNHEE_GRP(&
  ! --- INPUT -----------------------------------------------------------------
- & YDGEOMETRY,KST,KEND,&
+ & LDVERTFE, YDGEOMETRY,KST,KEND,&
  & PRT,PRTL,PRTM,PREL,PREM,PRDELP,PRTGR,PALPH,&
  & PDELNHPRE,PLNNHPREFL,PLNNHPREFM,&
  & PRNHPPI,PQCHAL,PQCHAM,&
@@ -78,12 +78,13 @@ SUBROUTINE GNHEE_GRP(&
 USE GEOMETRY_MOD , ONLY : GEOMETRY
 USE PARKIND1     , ONLY : JPIM, JPRB
 USE YOMHOOK      , ONLY : LHOOK, DR_HOOK
-USE YOMCVER      , ONLY : LVERTFE
+
 
 !     ------------------------------------------------------------------
 
 IMPLICIT NONE
 
+LOGICAL, INTENT (IN) :: LDVERTFE
 TYPE(GEOMETRY)    ,INTENT(IN)    :: YDGEOMETRY
 INTEGER(KIND=JPIM),INTENT(IN)    :: KST 
 INTEGER(KIND=JPIM),INTENT(IN)    :: KEND 
@@ -138,7 +139,7 @@ ENDDO
 
 ! * WE NOW COMPUTE THE PRESSURE GRADIENT TERM:
 
-IF (LVERTFE) THEN
+IF (LDVERTFE) THEN
 
   ! * The pressure gradient term is directly computed at full levels in
   !   this case and no quantity at half layers is computed.

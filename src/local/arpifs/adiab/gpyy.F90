@@ -1,6 +1,6 @@
 SUBROUTINE GPYY(&
  ! --- INPUT -----------------------------------------------------------------
- & YDGEOMETRY,KFLEV,KPROMA,KST,KEND,POROGL,POROGM,PUH,PVH,&
+ & LDVERTFE, LDVFE_GW, YDGEOMETRY,KFLEV,KPROMA,KST,KEND,POROGL,POROGM,PUH,PVH,&
  ! --- OUTPUT -------------------------------------------------------
  & PNHY)
 
@@ -52,12 +52,14 @@ SUBROUTINE GPYY(&
 USE GEOMETRY_MOD , ONLY : GEOMETRY
 USE PARKIND1     , ONLY : JPIM, JPRB
 USE YOMHOOK      , ONLY : LHOOK, DR_HOOK
-USE YOMCVER      , ONLY : LVERTFE, LVFE_GW
+
 
 ! -----------------------------------------------------------------------------
 
 IMPLICIT NONE
 
+LOGICAL, INTENT (IN) :: LDVERTFE
+LOGICAL, INTENT (IN) :: LDVFE_GW
 TYPE(GEOMETRY),    INTENT(IN)        :: YDGEOMETRY
 INTEGER(KIND=JPIM),INTENT(IN)        :: KFLEV
 INTEGER(KIND=JPIM),INTENT(IN)        :: KPROMA 
@@ -86,7 +88,7 @@ ASSOCIATE(YDVAB=>YDGEOMETRY%YRVAB)
 ! -----------------------------------------------------------------------------
 
 
-IF( LVERTFE .AND. LVFE_GW )THEN
+IF( LDVERTFE .AND. LDVFE_GW )THEN
 
   ! LVFE_GW not yet coded
   ! Calculation of ZDGWINCR13 requires a VFE vertical derivative, which uses full-level values of (U,V).

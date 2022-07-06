@@ -1,6 +1,6 @@
 SUBROUTINE GPXX(&
  ! --- INPUT -----------------------------------------------------------------
- & YDGEOMETRY, KFLEV,KPROMA,KSTART,KEND,PHIHL,PHIHM,PHIFL,PHIFM,&
+ & LDVERTFE, YDGEOMETRY, KFLEV,KPROMA,KSTART,KEND,PHIHL,PHIHM,PHIFL,PHIFM,&
  & PLNPR,PRT,&
  & PUF,PVF,PUH,PVH,&
  ! --- OUTPUT ----------------------------------------------------------------
@@ -84,12 +84,13 @@ USE YOMHOOK      , ONLY : LHOOK, DR_HOOK
 
 USE GEOMETRY_MOD , ONLY : GEOMETRY
 
-USE YOMCVER      , ONLY : LVERTFE
+
 
 ! -----------------------------------------------------------------------------
 
 IMPLICIT NONE
 
+LOGICAL, INTENT (IN) :: LDVERTFE
 TYPE(GEOMETRY)    ,INTENT(IN)    :: YDGEOMETRY
 INTEGER(KIND=JPIM),INTENT(IN)    :: KFLEV
 INTEGER(KIND=JPIM),INTENT(IN)    :: KPROMA 
@@ -127,7 +128,7 @@ IF (LHOOK) CALL DR_HOOK('GPXX',0,ZHOOK_HANDLE)
 
 ! -----------------------------------------------------------------------------
 
-IF (LVERTFE) THEN
+IF (LDVERTFE) THEN
 
   ! vertical derivatives of wind
   ZF(KSTART:KEND,0)       = 0.0_JPRB

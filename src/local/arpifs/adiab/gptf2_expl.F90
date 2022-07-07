@@ -146,16 +146,6 @@ ELSE
       ENDIF
     ENDDO
 
-    DO JGFL=1,NUMFLDS
-      IF(YCOMP(JGFL)%LT9) THEN
-        DO JK=1,NFLEVG
-          DO JL=KST,KEN
-            PGFL(JL,JK,YCOMP(JGFL)%MP9) = PGFL(JL,JK,YCOMP(JGFL)%MP)
-          ENDDO
-        ENDDO
-      ENDIF
-    ENDDO
-
     IF(LNHDYN) THEN
       DO JK=1,NFLEVG
         DO JL=KST,KEN
@@ -201,17 +191,6 @@ ELSE
       ENDIF
     ENDDO
 
-    DO JGFL=1,NUMFLDS
-      IF(YCOMP(JGFL)%LT9) THEN
-        DO JK=1,NFLEVG
-          DO JL=KST,KEN
-            PGFL(JL,JK,YCOMP(JGFL)%MP9) = PGFL(JL,JK,YCOMP(JGFL)%MP9)+&
-             & REPSM2*PGFL(JL,JK,YCOMP(JGFL)%MP)  
-          ENDDO
-        ENDDO
-      ENDIF
-    ENDDO
-
     IF(LNHDYN) THEN
       DO JK=1,NFLEVG
         DO JL=KST,KEN
@@ -238,6 +217,34 @@ ELSE
     ENDDO
 
   ENDIF
+
+  IF (LDFSTEP) THEN
+
+    DO JGFL=1,NUMFLDS
+      IF(YCOMP(JGFL)%LT9) THEN
+        DO JK=1,NFLEVG
+          DO JL=KST,KEN
+            PGFL(JL,JK,YCOMP(JGFL)%MP9) = PGFL(JL,JK,YCOMP(JGFL)%MP)
+          ENDDO
+        ENDDO
+      ENDIF
+    ENDDO
+
+  ELSE
+
+    DO JGFL=1,NUMFLDS
+      IF(YCOMP(JGFL)%LT9) THEN
+        DO JK=1,NFLEVG
+          DO JL=KST,KEN
+            PGFL(JL,JK,YCOMP(JGFL)%MP9) = PGFL(JL,JK,YCOMP(JGFL)%MP9)+&
+             & REPSM2*PGFL(JL,JK,YCOMP(JGFL)%MP)  
+          ENDDO
+        ENDDO
+      ENDIF
+    ENDDO
+
+  ENDIF
+  
 
 ENDIF
 

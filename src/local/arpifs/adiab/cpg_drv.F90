@@ -345,11 +345,7 @@ REAL(KIND=JPRB)    :: ZHOOK_HANDLE
 #include "open_output_lfa.intfb.h"
 #include "mf_phys_parallel.intfb.h"
 
-#include "test_ydvars.intfb.h"
-
 !     ------------------------------------------------------------------
-
-CALL TEST_YDVARS (YDVARS, YDFIELDS%YRGFL%YGFL)
 
 IF (LHOOK) CALL DR_HOOK('CPG_DRV', 0, ZHOOK_HANDLE)
 ASSOCIATE(YDDIM=>YDGEOMETRY%YRDIM, YDDIMV=>YDGEOMETRY%YRDIMV, YDGEM=>YDGEOMETRY%YRGEM, YDDYN=>YDMODEL%YRML_DYN%YRDYN, &

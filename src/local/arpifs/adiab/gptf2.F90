@@ -87,7 +87,8 @@ REAL(KIND=JPRB),TARGET,INTENT(INOUT) :: PGMV(YDGEOMETRY%YRDIM%NPROMA,YDGEOMETRY%
 REAL(KIND=JPRB),TARGET,INTENT(INOUT) :: PGMVS(YDGEOMETRY%YRDIM%NPROMA,YDGMV%NDIMGMVS) 
 REAL(KIND=JPRB)   ,INTENT(INOUT) :: PGFL(YDGEOMETRY%YRDIM%NPROMA,YDGEOMETRY%YRDIMV%NFLEVG,YDML_GCONF%YGFL%NDIM) 
 
-#include "gptf2_expl.intfb.h"
+#include "gptf2_expl_2tl.intfb.h"
+#include "gptf2_expl_3tl.intfb.h"
 
 !     ------------------------------------------------------------------
 REAL(KIND=JPRB),POINTER,CONTIGUOUS,DIMENSION(:)   :: Z0SP  , Z0SPL , Z0SPM , Z9SP  , Z9SPL , Z9SPM 
@@ -180,16 +181,17 @@ IF (YT9%MTM   > 0)  Z9TM   => PGMV(:,:,YT9%MTM)
 IF (YT9%MU    > 0)  Z9U    => PGMV(:,:,YT9%MU)                       
 IF (YT9%MV    > 0)  Z9V    => PGMV(:,:,YT9%MV)                       
 
-CALL GPTF2_EXPL(YDGEOMETRY,&
- ! --- INPUT ---------------------------------------------------------
- & YDML_GCONF,YDDYN,KST,KEN,LDFSTEP,&
- ! --- INPUT-OUTPUT --------------------------------------------------
+IF (LTWOTL) THEN
+  CALL GPTF2_EXPL_2TL (YDGEOMETRY, KST, KEN, LDFSTEP, Z0U, Z0V, Z9U, Z9V)
+ELSE
+  CALL GPTF2_EXPL_3TL (YDGEOMETRY, YDML_GCONF, YDDYN, KST, KEN, LDFSTEP, LNHDYN, NVDVAR, &
  & PGFL, &
  & Z0SP  , Z0SPL , Z0SPM , Z9SP  , Z9SPL , Z9SPM, &
  & Z0DIV , Z0NHX , Z0SPD , Z0SPDL, Z0SPDM, Z0SVD , Z0SVDL, &
  & Z0SVDM, Z0T   , Z0TL  , Z0TM  , Z0U   , Z0V   , Z9DIV,  &
  & Z9NHX , Z9SPD , Z9SPDL, Z9SPDM, Z9SVD , Z9SVDL, Z9SVDM, &
  & Z9T   , Z9TL  , Z9TM  , Z9U   , Z9V)
+ENDIF
 
 END ASSOCIATE
 END ASSOCIATE

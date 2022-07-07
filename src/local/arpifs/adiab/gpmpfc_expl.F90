@@ -94,23 +94,18 @@ REAL(KIND=JPRB),INTENT(INOUT) :: PGFL(KPROMA,KFLEV,YDML_GCONF%YGFL%NDIM)
 REAL(KIND=JPRB),INTENT(INOUT),OPTIONAL, DIMENSION(KPROMA,KFLEV) :: P0U, P0V, P0DIV, P0TL, P0TM, P9U, P9V, P0UL, P0VL, P0VOR, P0SPDL, P0SPDM
 REAL(KIND=JPRB),INTENT(INOUT),OPTIONAL, DIMENSION(KPROMA,KFLEV) :: P0SVDL, P0SVDM, P0NHXL, P0NHXM, P9DIV, P9TL, P9TM, P9SPDL, P9SPDM, P9SVDL, P9SVDM
 REAL(KIND=JPRB),INTENT(INOUT),OPTIONAL, DIMENSION(KPROMA) :: P0SPL, P0SPM, P9SPL, P9SPM
-!     ------------------------------------------------------------------
 
-
-INTEGER(KIND=JPIM) :: JLEV,JGFL,JROF
-REAL(KIND=JPRB),CONTIGUOUS,POINTER :: ZGM(:)
-REAL(KIND=JPRB),TARGET :: ZGM0(KPROMA)
-REAL(KIND=JPRB) :: ZHOOK_HANDLE
-
-!     ------------------------------------------------------------------
 
 #include "abor1.intfb.h"
 #include "gpmpfc_expl_part1.intfb.h"
 #include "gpmpfc_pgfl_part2.intfb.h"
 
-!     ------------------------------------------------------------------
+REAL(KIND=JPRB),CONTIGUOUS,POINTER :: ZGM(:)
+REAL(KIND=JPRB),TARGET :: ZGM0(KPROMA)
+
+REAL(KIND=JPRB) :: ZHOOK_HANDLE
+
 IF (LHOOK) CALL DR_HOOK('GPMPFC_EXPL',0,ZHOOK_HANDLE)
-!     ------------------------------------------------------------------
 
 !*       1. APPLY MAP FACTOR.
 !           -----------------

@@ -124,8 +124,11 @@ END SUBROUTINE
 EOF
 
     my ($include) = &F ('.//include[last()]', $d);
-    $include->parentNode->insertAfter (&n ("<include>#include &quot;<filename>$sub.intfb.h</filename>&quot;</include>"), $include);
-    $include->parentNode->insertAfter (&t ("\n"), $include);
+    if ($include)
+      {
+        $include->parentNode->insertAfter (&n ("<include>#include &quot;<filename>$sub.intfb.h</filename>&quot;</include>"), $include);
+        $include->parentNode->insertAfter (&t ("\n"), $include);
+      }
 
 
     my @node;

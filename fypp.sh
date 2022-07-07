@@ -32,6 +32,11 @@ do
     d=arpifs/adiab
   fi
 
+  if [ "$b" = "gpmpfc_expl_part2" ]
+  then
+    d=arpifs/adiab
+  fi
+
 
   /opt/softs/anaconda3/bin/fypp -m os -M . -m yaml -m field_config ./$b.fypp ./$b.F90
 

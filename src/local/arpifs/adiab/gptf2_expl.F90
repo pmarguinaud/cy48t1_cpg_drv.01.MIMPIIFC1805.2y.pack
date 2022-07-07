@@ -94,6 +94,10 @@ REAL(KIND=JPRB),OPTIONAL, INTENT(INOUT),DIMENSION(YDGEOMETRY%YRDIM%NPROMA,YDGEOM
 REAL(KIND=JPRB),OPTIONAL, INTENT(INOUT),DIMENSION(YDGEOMETRY%YRDIM%NPROMA,YDGEOMETRY%YRDIMV%NFLEVG) :: P9T   , P9TL  , P9TM  , P9U   , P9V   
 
 #include "gptf2_expl_2tl.intfb.h"
+#include "gptf2_expl_3tl.intfb.h"
+
+
+
 
 !     ------------------------------------------------------------------
 INTEGER(KIND=JPIM) :: JL,JGFL,JK
@@ -118,129 +122,15 @@ ASSOCIATE(NDIM=>YGFL%NDIM, NUMFLDS=>YGFL%NUMFLDS, YCOMP=>YGFL%YCOMP, &
 !*        1.1   TWO TIME LEVEL           
            
 IF (LTWOTL) THEN
-
   CALL GPTF2_EXPL_2TL (YDGEOMETRY, KST, KEN, LDFSTEP, P0U, P0V, P9U, P9V)
-
 ELSE
-
-!*        1.2   THREE TIME LEVEL
-
-  IF(LDFSTEP) THEN
-    DO JK=1,NFLEVG
-      DO JL=KST,KEN
-        P9U(JL,JK)   = P0U(JL,JK)
-        P9V(JL,JK)   = P0V(JL,JK)
-        P9DIV(JL,JK) = P0DIV(JL,JK)
-      ENDDO
-      IF(NFTHER >= 1) THEN
-        DO JL=KST,KEN
-          P9T(JL,JK)  = P0T(JL,JK)
-          P9TL(JL,JK) = P0TL(JL,JK)
-          P9TM(JL,JK) = P0TM(JL,JK)
-        ENDDO
-      ENDIF
-    ENDDO
-
-    IF(LNHDYN) THEN
-      DO JK=1,NFLEVG
-        DO JL=KST,KEN
-          P9SPD(JL,JK) = P0SPD(JL,JK)
-          P9SVD(JL,JK) = P0SVD(JL,JK)
-          P9SPDL(JL,JK) = P0SPDL(JL,JK)
-          P9SVDL(JL,JK) = P0SVDL(JL,JK)
-          P9SPDM(JL,JK) = P0SPDM(JL,JK)
-          P9SVDM(JL,JK) = P0SVDM(JL,JK)
-        ENDDO
-      ENDDO
-
-      IF( NVDVAR==4 .OR. NVDVAR==5 ) THEN
-        DO JK=1,NFLEVG
-          DO JL=KST,KEN
-            P9NHX(JL,JK) = P0NHX(JL,JK)
-          ENDDO
-        ENDDO
-      ENDIF
-
-    ENDIF
-
-    DO JL=KST,KEN
-      P9SP(JL)  = P0SP(JL)
-      P9SPL(JL) = P0SPL(JL)
-      P9SPM(JL) = P0SPM(JL)
-    ENDDO
-
-  ELSE
-
-    DO JK=1,NFLEVG
-      DO JL=KST,KEN
-        P9U(JL,JK)   = P9U(JL,JK)  +REPS2*P0U(JL,JK)
-        P9V(JL,JK)   = P9V(JL,JK)  +REPS2*P0V(JL,JK)
-        P9DIV(JL,JK) = P9DIV(JL,JK)+REPS2*P0DIV(JL,JK)
-      ENDDO
-      IF(NFTHER >= 1) THEN
-        DO JL=KST,KEN
-          P9T(JL,JK)  = P9T(JL,JK)  +REPS2*P0T(JL,JK)
-          P9TL(JL,JK) = P9TL(JL,JK) +REPS2*P0TL(JL,JK)
-          P9TM(JL,JK) = P9TM(JL,JK) +REPS2*P0TM(JL,JK)
-        ENDDO
-      ENDIF
-    ENDDO
-
-    IF(LNHDYN) THEN
-      DO JK=1,NFLEVG
-        DO JL=KST,KEN
-          P9SPD(JL,JK)  =&
-           & P9SPD(JL,JK)+REPS2*P0SPD(JL,JK)
-          P9SVD(JL,JK)  =&
-           & P9SVD(JL,JK)+REPS2*P0SVD(JL,JK)
-          P9SPDL(JL,JK) =&
-           & P9SPDL(JL,JK)+REPS2*P0SPDL(JL,JK)
-          P9SVDL(JL,JK) =&
-           & P9SVDL(JL,JK)+REPS2*P0SVDL(JL,JK)
-          P9SPDM(JL,JK) =&
-           & P9SPDM(JL,JK)+REPS2*P0SPDM(JL,JK)
-          P9SVDM(JL,JK) =&
-           & P9SVDM(JL,JK)+REPS2*P0SVDM(JL,JK)
-        ENDDO
-      ENDDO
-    ENDIF
-
-    DO JL=KST,KEN
-      P9SP(JL)  = P9SP(JL) +REPS2*P0SP(JL)
-      P9SPL(JL) = P9SPL(JL)+REPS2*P0SPL(JL)
-      P9SPM(JL) = P9SPM(JL)+REPS2*P0SPM(JL)
-    ENDDO
-
-  ENDIF
-
-  IF (LDFSTEP) THEN
-
-    DO JGFL=1,NUMFLDS
-      IF(YCOMP(JGFL)%LT9) THEN
-        DO JK=1,NFLEVG
-          DO JL=KST,KEN
-            PGFL(JL,JK,YCOMP(JGFL)%MP9) = PGFL(JL,JK,YCOMP(JGFL)%MP)
-          ENDDO
-        ENDDO
-      ENDIF
-    ENDDO
-
-  ELSE
-
-    DO JGFL=1,NUMFLDS
-      IF(YCOMP(JGFL)%LT9) THEN
-        DO JK=1,NFLEVG
-          DO JL=KST,KEN
-            PGFL(JL,JK,YCOMP(JGFL)%MP9) = PGFL(JL,JK,YCOMP(JGFL)%MP9)+&
-             & REPSM2*PGFL(JL,JK,YCOMP(JGFL)%MP)  
-          ENDDO
-        ENDDO
-      ENDIF
-    ENDDO
-
-  ENDIF
-  
-
+  CALL GPTF2_EXPL_3TL (YDGEOMETRY, YDML_GCONF, YDDYN, KST, KEN, LDFSTEP, LNHDYN, NVDVAR, &
+ & PGFL, &
+ & P0SP  , P0SPL , P0SPM , P9SP  , P9SPL , P9SPM, &
+ & P0DIV , P0NHX , P0SPD , P0SPDL, P0SPDM, P0SVD , P0SVDL, &
+ & P0SVDM, P0T   , P0TL  , P0TM  , P0U   , P0V   , P9DIV,  &
+ & P9NHX , P9SPD , P9SPDL, P9SPDM, P9SVD , P9SVDL, P9SVDM, &
+ & P9T   , P9TL  , P9TM  , P9U   , P9V)
 ENDIF
 
 !     ------------------------------------------------------------------

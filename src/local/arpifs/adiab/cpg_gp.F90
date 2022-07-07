@@ -228,7 +228,7 @@ TYPE(TYP_DDH)                ,INTENT(INOUT) :: YDDDH
 #include "gp_spv.intfb.h"
 #include "gptf2_expl_2tl.intfb.h"
 #include "gptf2_expl_3tl_part1.intfb.h"
-#include "gptf2_pgfl_3tl_part2.intfb.h"
+#include "gptf2_expl_3tl_part2.intfb.h"
 #include "updsst.intfb.h"
 #include "cpg_gp_hyd.intfb.h"
 #include "cpg_gp_nhee.intfb.h"
@@ -317,8 +317,7 @@ IF(NCURRENT_ITER == 0) THEN
    & P9NHX=YDVARS%NHX%T9, P9SPD=YDVARS%SPD%T9, P9SPDL=YDVARS%SPD%DL9, P9SPDM=YDVARS%SPD%DM9, P9SVD=YDVARS%SVD%T9, &
    & P9SVDL=YDVARS%SVD%DL9, P9SVDM=YDVARS%SVD%DM9, P9T=YDVARS%T%T9, P9TL=YDVARS%T%DL9, P9TM=YDVARS%T%DM9,         &
    & P9U=YDVARS%U%T9, P9V=YDVARS%V%T9)
-    CALL GPTF2_PGFL_3TL_PART2 (YDGEOMETRY, YDMODEL%YRML_GCONF, YDDYN, YDCPG_BNDS%KIDIA, YDCPG_BNDS%KFDIA, &
-                             & YDCPG_OPTS%LFSTEP, PGFL)
+    CALL GPTF2_EXPL_3TL_PART2 (YDGEOMETRY, YDDYN, YDCPG_BNDS%KIDIA, YDCPG_BNDS%KFDIA, YDCPG_OPTS%LFSTEP, YDVARS)
   ENDIF
 ENDIF
 

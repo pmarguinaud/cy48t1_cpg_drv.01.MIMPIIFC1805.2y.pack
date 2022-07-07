@@ -50,3 +50,4 @@ src/local/arpifs/adiab/gprcp_ydvars.F90
 fypp/test_ydvars.fypp
 src/local/arpifs/adiab/test_ydvars.F90
 src/local/arpifs/adiab/gprcp_expl.F90
+src/local/arpifs/adiab/gptf2_expl_3tl_part2.F90

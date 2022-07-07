@@ -22,7 +22,7 @@ do
 
   d=arpifs/module
 
-  if [ "$b" = "gprcp_ydvars" ]
+  if [ "$b" = "gprcp_expl" ]
   then
     d=arpifs/adiab
   fi

@@ -159,7 +159,7 @@ REAL(KIND=JPRB)   ,    INTENT(INOUT), OPTIONAL :: PP1FORC (:,:)
 #include "abor1.intfb.h"
 #include "gphpre_expl.intfb.h"
 #include "gpgrxyb_expl.intfb.h"
-#include "gprcp_ydvars.intfb.h"
+#include "gprcp_expl.intfb.h"
 #include "gprcph.intfb.h"
 #include "gprt.intfb.h"
 #include "gnhpre.intfb.h"
@@ -291,8 +291,8 @@ CALL GPGRXYB_EXPL(LVERTFE, NDLNPR, NPROMA, YDCPG_BNDS%KIDIA, YDCPG_BNDS%KFDIA, N
 
 !*     3.1.3 COMPUTE "R", "Cp" AND "kap=R/Cp".
 
-CALL GPRCP_YDVARS (YDMODEL%YRCST, NPROMA, YDCPG_BNDS%KIDIA, YDCPG_BNDS%KFDIA, NFLEVG, YDVARS=YDVARS, PCP=YDCPG_DYN0%RCP%CP, &
-                 & PR=YDCPG_DYN0%RCP%R, PKAP=YDCPG_DYN0%RCP%KAP)
+CALL GPRCP_EXPL (YDMODEL%YRCST, NPROMA, YDCPG_BNDS%KIDIA, YDCPG_BNDS%KFDIA, NFLEVG, YDVARS=YDVARS, PCP=YDCPG_DYN0%RCP%CP, &
+               & PR=YDCPG_DYN0%RCP%R, PKAP=YDCPG_DYN0%RCP%KAP)
 CALL GPRCPH(YDGEOMETRY, YDCPG_BNDS%KIDIA, YDCPG_BNDS%KFDIA, YDCPG_DYN0%RCP%KAP, Z_KAPH_T0)
 
 !*     3.1.4 COMPUTES "RT" AND ITS GRADIENT.

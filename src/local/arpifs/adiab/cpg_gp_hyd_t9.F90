@@ -33,7 +33,7 @@ LOGICAL,                INTENT(IN)    :: LDMPA
 #include "gpgw.intfb.h"
 #include "gphluv_expl.intfb.h"
 #include "gphpre_expl.intfb.h"
-#include "gprcp_ydvars.intfb.h"
+#include "gprcp_expl.intfb.h"
 #include "gpuvs.intfb.h"
 #include "gpxx.intfb.h"
 
@@ -66,8 +66,8 @@ CALL GPHPRE_EXPL(LAPRXPK, LVERTFE, NDLNPR, RHYDR0, TOPPRES, YDMODEL%YRCST, YDGEO
 
 !*     3.2.3 COMPUTE "R", "Cp" AND "Kap=R/Cp".
 
-CALL GPRCP_YDVARS (YDMODEL%YRCST, YDGEOMETRY%YRDIM%NPROMA, YDCPG_BNDS%KIDIA, YDCPG_BNDS%KFDIA, YDGEOMETRY%YRDIMV%NFLEVG, YDVARS=YDVARS, KGFLTYP=9, &
-                 & PCP=YDCPG_DYN9%RCP%CP, PR=YDCPG_DYN9%RCP%R)
+CALL GPRCP_EXPL (YDMODEL%YRCST, YDGEOMETRY%YRDIM%NPROMA, YDCPG_BNDS%KIDIA, YDCPG_BNDS%KFDIA, YDGEOMETRY%YRDIMV%NFLEVG, YDVARS=YDVARS, KGFLTYP=9, &
+               & PCP=YDCPG_DYN9%RCP%CP, PR=YDCPG_DYN9%RCP%R)
 
 !*     3.2.4 COMPUTE "RT".
 

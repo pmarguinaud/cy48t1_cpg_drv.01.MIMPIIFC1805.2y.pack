@@ -2,12 +2,7 @@ SUBROUTINE GPTF2(YDGEOMETRY,YDGMV,&
  ! --- INPUT ---------------------------------------------------------
  & YDML_GCONF,YDDYN,KST,KEN,LDFSTEP,&
  ! --- INPUT-OUTPUT --------------------------------------------------
- & PGMV,PGMVS,PGFL, &
- & P0SP  , P0SPL , P0SPM , P9SP  , P9SPL , P9SPM, &
- & P0DIV , P0NHX , P0SPD , P0SPDL, P0SPDM, P0SVD , P0SVDL, &
- & P0SVDM, P0T   , P0TL  , P0TM  , P0U   , P0V   , P9DIV,  &
- & P9NHX , P9SPD , P9SPDL, P9SPDM, P9SVD , P9SVDL, P9SVDM, &
- & P9T   , P9TL  , P9TM  , P9U   , P9V)
+ & PGMV,PGMVS,PGFL)
 
 !**** *GPTF2* - Timefilter part 2
 
@@ -88,23 +83,20 @@ TYPE(MODEL_GENERAL_CONF_TYPE),INTENT(IN):: YDML_GCONF
 INTEGER(KIND=JPIM),INTENT(IN)    :: KST 
 INTEGER(KIND=JPIM),INTENT(IN)    :: KEN 
 LOGICAL           ,INTENT(IN)    :: LDFSTEP 
-REAL(KIND=JPRB),TARGET,OPTIONAL,INTENT(INOUT) :: PGMV(YDGEOMETRY%YRDIM%NPROMA,YDGEOMETRY%YRDIMV%NFLEVG,YDGMV%NDIMGMV) 
-REAL(KIND=JPRB),TARGET,OPTIONAL,INTENT(INOUT) :: PGMVS(YDGEOMETRY%YRDIM%NPROMA,YDGMV%NDIMGMVS) 
+REAL(KIND=JPRB),TARGET,INTENT(INOUT) :: PGMV(YDGEOMETRY%YRDIM%NPROMA,YDGEOMETRY%YRDIMV%NFLEVG,YDGMV%NDIMGMV) 
+REAL(KIND=JPRB),TARGET,INTENT(INOUT) :: PGMVS(YDGEOMETRY%YRDIM%NPROMA,YDGMV%NDIMGMVS) 
 REAL(KIND=JPRB)   ,INTENT(INOUT) :: PGFL(YDGEOMETRY%YRDIM%NPROMA,YDGEOMETRY%YRDIMV%NFLEVG,YDML_GCONF%YGFL%NDIM) 
-REAL(KIND=JPRB),TARGET,OPTIONAL,INTENT(INOUT),DIMENSION(YDGEOMETRY%YRDIM%NPROMA)   :: P0SP  , P0SPL , P0SPM , P9SP  , P9SPL , P9SPM 
-REAL(KIND=JPRB),TARGET,OPTIONAL,INTENT(INOUT),DIMENSION(YDGEOMETRY%YRDIM%NPROMA,YDGEOMETRY%YRDIMV%NFLEVG) :: P0DIV , P0NHX , P0SPD , P0SPDL, P0SPDM, P0SVD , P0SVDL
-REAL(KIND=JPRB),TARGET,OPTIONAL,INTENT(INOUT),DIMENSION(YDGEOMETRY%YRDIM%NPROMA,YDGEOMETRY%YRDIMV%NFLEVG) :: P0SVDM, P0T   , P0TL  , P0TM  , P0U   , P0V   , P9DIV 
-REAL(KIND=JPRB),TARGET,OPTIONAL,INTENT(INOUT),DIMENSION(YDGEOMETRY%YRDIM%NPROMA,YDGEOMETRY%YRDIMV%NFLEVG) :: P9NHX , P9SPD , P9SPDL, P9SPDM, P9SVD , P9SVDL, P9SVDM
-REAL(KIND=JPRB),TARGET,OPTIONAL,INTENT(INOUT),DIMENSION(YDGEOMETRY%YRDIM%NPROMA,YDGEOMETRY%YRDIMV%NFLEVG) :: P9T   , P9TL  , P9TM  , P9U   , P9V   
+
+#include "gptf2_expl.intfb.h"
 
 !     ------------------------------------------------------------------
-INTEGER(KIND=JPIM) :: JL,JGFL,JK
-REAL(KIND=JPRB) :: ZHOOK_HANDLE
 REAL(KIND=JPRB),POINTER,CONTIGUOUS,DIMENSION(:)   :: Z0SP  , Z0SPL , Z0SPM , Z9SP  , Z9SPL , Z9SPM 
 REAL(KIND=JPRB),POINTER,CONTIGUOUS,DIMENSION(:,:) :: Z0DIV , Z0NHX , Z0SPD , Z0SPDL, Z0SPDM, Z0SVD , Z0SVDL
 REAL(KIND=JPRB),POINTER,CONTIGUOUS,DIMENSION(:,:) :: Z0SVDM, Z0T   , Z0TL  , Z0TM  , Z0U   , Z0V   , Z9DIV 
 REAL(KIND=JPRB),POINTER,CONTIGUOUS,DIMENSION(:,:) :: Z9NHX , Z9SPD , Z9SPDL, Z9SPDM, Z9SVD , Z9SVDL, Z9SVDM
 REAL(KIND=JPRB),POINTER,CONTIGUOUS,DIMENSION(:,:) :: Z9T   , Z9TL  , Z9TM  , Z9U   , Z9V   
+
+REAL(KIND=JPRB) :: ZHOOK_HANDLE
 
 !     ------------------------------------------------------------------
 
@@ -154,210 +146,50 @@ Z9TM    => NULL ()
 Z9U     => NULL ()
 Z9V     => NULL ()
            
-IF (PRESENT (PGMVS)) THEN           
-  Z0SP  => PGMVS(:,YT0%MSP)                       
-  Z0SPL => PGMVS(:,YT0%MSPL)                       
-  Z0SPM => PGMVS(:,YT0%MSPM)                       
-  Z9SP  => PGMVS(:,YT9%MSP)                       
-  Z9SPL => PGMVS(:,YT9%MSPL)                       
-  Z9SPM => PGMVS(:,YT9%MSPM)                       
-ENDIF
+IF (YT0%MSP  > 0) Z0SP  => PGMVS(:,YT0%MSP)                       
+IF (YT0%MSPL > 0) Z0SPL => PGMVS(:,YT0%MSPL)                       
+IF (YT0%MSPM > 0) Z0SPM => PGMVS(:,YT0%MSPM)                       
+IF (YT9%MSP  > 0) Z9SP  => PGMVS(:,YT9%MSP)                       
+IF (YT9%MSPL > 0) Z9SPL => PGMVS(:,YT9%MSPL)                       
+IF (YT9%MSPM > 0) Z9SPM => PGMVS(:,YT9%MSPM)                       
 
-IF (PRESENT (P0SP )) Z0SP  => P0SP  
-IF (PRESENT (P0SPL)) Z0SPL => P0SPL 
-IF (PRESENT (P0SPM)) Z0SPM => P0SPM 
-IF (PRESENT (P9SP )) Z9SP  => P9SP  
-IF (PRESENT (P9SPL)) Z9SPL => P9SPL 
-IF (PRESENT (P9SPM)) Z9SPM => P9SPM 
+IF (YT0%MDIV  > 0)  Z0DIV  => PGMV(:,:,YT0%MDIV)                       
+IF (YT0%MNHX  > 0)  Z0NHX  => PGMV(:,:,YT0%MNHX)                       
+IF (YT0%MSPD  > 0)  Z0SPD  => PGMV(:,:,YT0%MSPD)                       
+IF (YT0%MSPDL > 0)  Z0SPDL => PGMV(:,:,YT0%MSPDL)                       
+IF (YT0%MSPDM > 0)  Z0SPDM => PGMV(:,:,YT0%MSPDM)                       
+IF (YT0%MSVD  > 0)  Z0SVD  => PGMV(:,:,YT0%MSVD)                       
+IF (YT0%MSVDL > 0)  Z0SVDL => PGMV(:,:,YT0%MSVDL)                       
+IF (YT0%MSVDM > 0)  Z0SVDM => PGMV(:,:,YT0%MSVDM)                       
+IF (YT0%MT    > 0)  Z0T    => PGMV(:,:,YT0%MT)                       
+IF (YT0%MTL   > 0)  Z0TL   => PGMV(:,:,YT0%MTL)                       
+IF (YT0%MTM   > 0)  Z0TM   => PGMV(:,:,YT0%MTM)                       
+IF (YT0%MU    > 0)  Z0U    => PGMV(:,:,YT0%MU)                       
+IF (YT0%MV    > 0)  Z0V    => PGMV(:,:,YT0%MV)                       
+IF (YT9%MDIV  > 0)  Z9DIV  => PGMV(:,:,YT9%MDIV)                       
+IF (YT9%MNHX  > 0)  Z9NHX  => PGMV(:,:,YT9%MNHX)                       
+IF (YT9%MSPD  > 0)  Z9SPD  => PGMV(:,:,YT9%MSPD)                       
+IF (YT9%MSPDL > 0)  Z9SPDL => PGMV(:,:,YT9%MSPDL)                       
+IF (YT9%MSPDM > 0)  Z9SPDM => PGMV(:,:,YT9%MSPDM)                       
+IF (YT9%MSVD  > 0)  Z9SVD  => PGMV(:,:,YT9%MSVD)                       
+IF (YT9%MSVDL > 0)  Z9SVDL => PGMV(:,:,YT9%MSVDL)                       
+IF (YT9%MSVDM > 0)  Z9SVDM => PGMV(:,:,YT9%MSVDM)                       
+IF (YT9%MT    > 0)  Z9T    => PGMV(:,:,YT9%MT)                       
+IF (YT9%MTL   > 0)  Z9TL   => PGMV(:,:,YT9%MTL)                       
+IF (YT9%MTM   > 0)  Z9TM   => PGMV(:,:,YT9%MTM)                       
+IF (YT9%MU    > 0)  Z9U    => PGMV(:,:,YT9%MU)                       
+IF (YT9%MV    > 0)  Z9V    => PGMV(:,:,YT9%MV)                       
 
-IF (PRESENT (PGMV)) THEN
-  Z0DIV  => PGMV(:,:,YT0%MDIV)                       
-  Z0NHX  => PGMV(:,:,YT0%MNHX)                       
-  Z0SPD  => PGMV(:,:,YT0%MSPD)                       
-  Z0SPDL => PGMV(:,:,YT0%MSPDL)                       
-  Z0SPDM => PGMV(:,:,YT0%MSPDM)                       
-  Z0SVD  => PGMV(:,:,YT0%MSVD)                       
-  Z0SVDL => PGMV(:,:,YT0%MSVDL)                       
-  Z0SVDM => PGMV(:,:,YT0%MSVDM)                       
-  Z0T    => PGMV(:,:,YT0%MT)                       
-  Z0TL   => PGMV(:,:,YT0%MTL)                       
-  Z0TM   => PGMV(:,:,YT0%MTM)                       
-  Z0U    => PGMV(:,:,YT0%MU)                       
-  Z0V    => PGMV(:,:,YT0%MV)                       
-  Z9DIV  => PGMV(:,:,YT9%MDIV)                       
-  Z9NHX  => PGMV(:,:,YT9%MNHX)                       
-  Z9SPD  => PGMV(:,:,YT9%MSPD)                       
-  Z9SPDL => PGMV(:,:,YT9%MSPDL)                       
-  Z9SPDM => PGMV(:,:,YT9%MSPDM)                       
-  Z9SVD  => PGMV(:,:,YT9%MSVD)                       
-  Z9SVDL => PGMV(:,:,YT9%MSVDL)                       
-  Z9SVDM => PGMV(:,:,YT9%MSVDM)                       
-  Z9T    => PGMV(:,:,YT9%MT)                       
-  Z9TL   => PGMV(:,:,YT9%MTL)                       
-  Z9TM   => PGMV(:,:,YT9%MTM)                       
-  Z9U    => PGMV(:,:,YT9%MU)                       
-  Z9V    => PGMV(:,:,YT9%MV)                       
-ENDIF
-
-IF (PRESENT (P0DIV )) Z0DIV  => P0DIV  
-IF (PRESENT (P0NHX )) Z0NHX  => P0NHX  
-IF (PRESENT (P0SPD )) Z0SPD  => P0SPD  
-IF (PRESENT (P0SPDL)) Z0SPDL => P0SPDL 
-IF (PRESENT (P0SPDM)) Z0SPDM => P0SPDM 
-IF (PRESENT (P0SVD )) Z0SVD  => P0SVD  
-IF (PRESENT (P0SVDL)) Z0SVDL => P0SVDL 
-IF (PRESENT (P0SVDM)) Z0SVDM => P0SVDM 
-IF (PRESENT (P0T   )) Z0T    => P0T    
-IF (PRESENT (P0TL  )) Z0TL   => P0TL   
-IF (PRESENT (P0TM  )) Z0TM   => P0TM   
-IF (PRESENT (P0U   )) Z0U    => P0U    
-IF (PRESENT (P0V   )) Z0V    => P0V    
-IF (PRESENT (P9DIV )) Z9DIV  => P9DIV  
-IF (PRESENT (P9NHX )) Z9NHX  => P9NHX  
-IF (PRESENT (P9SPD )) Z9SPD  => P9SPD  
-IF (PRESENT (P9SPDL)) Z9SPDL => P9SPDL 
-IF (PRESENT (P9SPDM)) Z9SPDM => P9SPDM 
-IF (PRESENT (P9SVD )) Z9SVD  => P9SVD  
-IF (PRESENT (P9SVDL)) Z9SVDL => P9SVDL 
-IF (PRESENT (P9SVDM)) Z9SVDM => P9SVDM 
-IF (PRESENT (P9T   )) Z9T    => P9T    
-IF (PRESENT (P9TL  )) Z9TL   => P9TL   
-IF (PRESENT (P9TM  )) Z9TM   => P9TM   
-IF (PRESENT (P9U   )) Z9U    => P9U    
-IF (PRESENT (P9V   )) Z9V    => P9V    
-           
-!*       1. PERFORM TIME FILTER (PART 2)           
-!           ----------------------------           
-           
-!*        1.1   TWO TIME LEVEL           
-           
-IF (LTWOTL) THEN
-
-  IF(LDFSTEP) THEN
-    DO JK=1,NFLEVG
-      DO JL=KST,KEN
-        Z9U(JL,JK) = Z0U(JL,JK)
-        Z9V(JL,JK) = Z0V(JL,JK)
-      ENDDO
-    ENDDO
-  ENDIF
-
-ELSE
-
-!*        1.2   THREE TIME LEVEL
-
-  IF(LDFSTEP) THEN
-    DO JK=1,NFLEVG
-      DO JL=KST,KEN
-        Z9U(JL,JK)   = Z0U(JL,JK)
-        Z9V(JL,JK)   = Z0V(JL,JK)
-        Z9DIV(JL,JK) = Z0DIV(JL,JK)
-      ENDDO
-      IF(NFTHER >= 1) THEN
-        DO JL=KST,KEN
-          Z9T(JL,JK)  = Z0T(JL,JK)
-          Z9TL(JL,JK) = Z0TL(JL,JK)
-          Z9TM(JL,JK) = Z0TM(JL,JK)
-        ENDDO
-      ENDIF
-    ENDDO
-
-    DO JGFL=1,NUMFLDS
-      IF(YCOMP(JGFL)%LT9) THEN
-        DO JK=1,NFLEVG
-          DO JL=KST,KEN
-            PGFL(JL,JK,YCOMP(JGFL)%MP9) = PGFL(JL,JK,YCOMP(JGFL)%MP)
-          ENDDO
-        ENDDO
-      ENDIF
-    ENDDO
-
-    IF(LNHDYN) THEN
-      DO JK=1,NFLEVG
-        DO JL=KST,KEN
-          Z9SPD(JL,JK) = Z0SPD(JL,JK)
-          Z9SVD(JL,JK) = Z0SVD(JL,JK)
-          Z9SPDL(JL,JK) = Z0SPDL(JL,JK)
-          Z9SVDL(JL,JK) = Z0SVDL(JL,JK)
-          Z9SPDM(JL,JK) = Z0SPDM(JL,JK)
-          Z9SVDM(JL,JK) = Z0SVDM(JL,JK)
-        ENDDO
-      ENDDO
-
-      IF( NVDVAR==4 .OR. NVDVAR==5 ) THEN
-        DO JK=1,NFLEVG
-          DO JL=KST,KEN
-            Z9NHX(JL,JK) = Z0NHX(JL,JK)
-          ENDDO
-        ENDDO
-      ENDIF
-
-    ENDIF
-
-    DO JL=KST,KEN
-      Z9SP(JL)  = Z0SP(JL)
-      Z9SPL(JL) = Z0SPL(JL)
-      Z9SPM(JL) = Z0SPM(JL)
-    ENDDO
-
-  ELSE
-
-    DO JK=1,NFLEVG
-      DO JL=KST,KEN
-        Z9U(JL,JK)   = Z9U(JL,JK)  +REPS2*Z0U(JL,JK)
-        Z9V(JL,JK)   = Z9V(JL,JK)  +REPS2*Z0V(JL,JK)
-        Z9DIV(JL,JK) = Z9DIV(JL,JK)+REPS2*Z0DIV(JL,JK)
-      ENDDO
-      IF(NFTHER >= 1) THEN
-        DO JL=KST,KEN
-          Z9T(JL,JK)  = Z9T(JL,JK)  +REPS2*Z0T(JL,JK)
-          Z9TL(JL,JK) = Z9TL(JL,JK) +REPS2*Z0TL(JL,JK)
-          Z9TM(JL,JK) = Z9TM(JL,JK) +REPS2*Z0TM(JL,JK)
-        ENDDO
-      ENDIF
-    ENDDO
-
-    DO JGFL=1,NUMFLDS
-      IF(YCOMP(JGFL)%LT9) THEN
-        DO JK=1,NFLEVG
-          DO JL=KST,KEN
-            PGFL(JL,JK,YCOMP(JGFL)%MP9) = PGFL(JL,JK,YCOMP(JGFL)%MP9)+&
-             & REPSM2*PGFL(JL,JK,YCOMP(JGFL)%MP)  
-          ENDDO
-        ENDDO
-      ENDIF
-    ENDDO
-
-    IF(LNHDYN) THEN
-      DO JK=1,NFLEVG
-        DO JL=KST,KEN
-          Z9SPD(JL,JK)  =&
-           & Z9SPD(JL,JK)+REPS2*Z0SPD(JL,JK)
-          Z9SVD(JL,JK)  =&
-           & Z9SVD(JL,JK)+REPS2*Z0SVD(JL,JK)
-          Z9SPDL(JL,JK) =&
-           & Z9SPDL(JL,JK)+REPS2*Z0SPDL(JL,JK)
-          Z9SVDL(JL,JK) =&
-           & Z9SVDL(JL,JK)+REPS2*Z0SVDL(JL,JK)
-          Z9SPDM(JL,JK) =&
-           & Z9SPDM(JL,JK)+REPS2*Z0SPDM(JL,JK)
-          Z9SVDM(JL,JK) =&
-           & Z9SVDM(JL,JK)+REPS2*Z0SVDM(JL,JK)
-        ENDDO
-      ENDDO
-    ENDIF
-
-    DO JL=KST,KEN
-      Z9SP(JL)  = Z9SP(JL) +REPS2*Z0SP(JL)
-      Z9SPL(JL) = Z9SPL(JL)+REPS2*Z0SPL(JL)
-      Z9SPM(JL) = Z9SPM(JL)+REPS2*Z0SPM(JL)
-    ENDDO
-
-  ENDIF
-
-ENDIF
-
-!     ------------------------------------------------------------------
+CALL GPTF2_EXPL(YDGEOMETRY,&
+ ! --- INPUT ---------------------------------------------------------
+ & YDML_GCONF,YDDYN,KST,KEN,LDFSTEP,&
+ ! --- INPUT-OUTPUT --------------------------------------------------
+ & PGFL, &
+ & Z0SP  , Z0SPL , Z0SPM , Z9SP  , Z9SPL , Z9SPM, &
+ & Z0DIV , Z0NHX , Z0SPD , Z0SPDL, Z0SPDM, Z0SVD , Z0SVDL, &
+ & Z0SVDM, Z0T   , Z0TL  , Z0TM  , Z0U   , Z0V   , Z9DIV,  &
+ & Z9NHX , Z9SPD , Z9SPDL, Z9SPDM, Z9SVD , Z9SVDL, Z9SVDM, &
+ & Z9T   , Z9TL  , Z9TM  , Z9U   , Z9V)
 
 END ASSOCIATE
 END ASSOCIATE

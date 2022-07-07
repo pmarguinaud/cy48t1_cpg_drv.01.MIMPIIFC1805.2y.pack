@@ -167,7 +167,7 @@ REAL(KIND=JPRB)        ,INTENT(INOUT), OPTIONAL :: PP1FORC (:,:)
 #include "gnhgrpre.intfb.h"
 #include "gpcty_expl.intfb.h"
 #include "gpcty_forc.intfb.h"
-#include "gpgeo.intfb.h"
+#include "gpgeo_expl.intfb.h"
 #include "gpgrgeo_expl.intfb.h"
 #include "gpflwi.intfb.h"
 #include "gphlwi.intfb.h"
@@ -395,7 +395,7 @@ ENDIF
 ! * "gz" at full levels and half levels.
 
 YDCPG_DYN0%PHI(YDCPG_BNDS%KIDIA:YDCPG_BNDS%KFDIA,NFLEVG)=YDVARS%GEOMETRY%OROG%T0(YDCPG_BNDS%KIDIA:YDCPG_BNDS%KFDIA)
-CALL GPGEO(NPROMA, YDCPG_BNDS%KIDIA, YDCPG_BNDS%KFDIA, NFLEVG, YDCPG_DYN0%PHI, YDCPG_DYN0%PHIF, YDVARS%T%T0, &
+CALL GPGEO_EXPL(LVERTFE, NPROMA, YDCPG_BNDS%KIDIA, YDCPG_BNDS%KFDIA, NFLEVG, YDCPG_DYN0%PHI, YDCPG_DYN0%PHIF, YDVARS%T%T0, &
 & Z_RRED_T0, YDCPG_DYN0%XYB%LNPR, YDCPG_DYN0%XYB%ALPH, YDGEOMETRY%YRVERT_GEOM)
 
 ! * "grad gz" at full levels and half levels.

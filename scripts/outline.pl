@@ -94,7 +94,7 @@ sub sortArgs
   return (@d, @l);
 }
 
-my @INTRINSIC = qw (SIGN MAX MIN MOD JPRB REAL EXP ASIN FOLH SQRT);
+my @INTRINSIC = qw (SIGN MAX MIN MOD JPRB REAL EXP ASIN FOLH SQRT PRESENT);
 my %INTRINSIC = map { ($_, 1) } @INTRINSIC;
 
 
@@ -178,11 +178,17 @@ EOF
             push @expr_n, &F ('.//named-E[string(N)="?"]', $N, $node);
           }
         $loc{$N} = @expr_d > @expr_n ? 0 : 1;
-        my ($decl) = &F ('.//T-decl-stmt[.//EN-decl[string(EN-N)="?"]]', $N, $d);
-        my ($intent) = &F ('./attribute[string(attribute-N)="INTENT"]', $decl);
-        if ($intent)
+        if (my ($decl) = &F ('.//T-decl-stmt[.//EN-decl[string(EN-N)="?"]]', $N, $d))
           {
-            $loc{$N} = 0;
+             my ($intent) = &F ('./attribute[string(attribute-N)="INTENT"]', $decl);
+             if ($intent)
+               {
+                 $loc{$N} = 0;
+               }
+          }
+        else
+          {
+            die $N;
           }
       }
 

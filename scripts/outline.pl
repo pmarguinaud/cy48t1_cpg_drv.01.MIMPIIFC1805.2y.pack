@@ -178,6 +178,12 @@ EOF
             push @expr_n, &F ('.//named-E[string(N)="?"]', $N, $node);
           }
         $loc{$N} = @expr_d > @expr_n ? 0 : 1;
+        my ($decl) = &F ('.//T-decl-stmt[.//EN-decl[string(EN-N)="?"]]', $N, $d);
+        my ($intent) = &F ('./attribute[string(attribute-N)="INTENT"]', $decl);
+        if ($intent)
+          {
+            $loc{$N} = 0;
+          }
       }
 
     my %rank = map { ($N[$_], $_) } (0 .. $#N);

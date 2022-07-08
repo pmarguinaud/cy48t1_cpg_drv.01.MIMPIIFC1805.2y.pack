@@ -230,6 +230,7 @@ REAL(KIND=JPRB) :: ZHOOK_HANDLE
 #include "gpiniddh.intfb.h"
 #include "cpg_pb1.intfb.h"
 #include "mf_phys.intfb.h"
+#include "cpg_gp_tndddh.intfb.h"
 
 !     ------------------------------------------------------------------
 
@@ -264,6 +265,10 @@ IF (CDPART (1:1) == 'X') THEN
   CALL CPG_GP(YDGEOMETRY, YDCPG_BNDS, YDCPG_OPTS, YDCPG_TND, YDCPG_MISC, YDCPG_GPAR, YDCPG_DYN0,                &
   & YDCPG_DYN9, YDMF_PHYS_SURF, YDVARS, YDMODEL, YDFIELDS, PGFL, PGMVTNDSL_DDH, PGFLTNDSL_DDH, YDCPG_SL2%ZVIEW, &
   & PGFLT1, YDCPG_MISC%KOZO, YDDDH)
+
+  IF (YDMODEL%YRML_DIAG%YRLDDH%LRSLDDH.AND.LSLAG) THEN
+    CALL CPG_GP_TNDDDH (YDGEOMETRY, YDCPG_BNDS, YDCPG_DYN0, YDCPG_DYN9, YDVARS, YDMODEL, PGFL, PGMVTNDSL_DDH, PGFLTNDSL_DDH)
+  ENDIF
   
   !     ------------------------------------------------------------------
   

@@ -37,6 +37,11 @@ do
     d=arpifs/adiab
   fi
 
+  if [ "$b" = "gpinislb_part2_expl" ]
+  then
+    d=arpifs/adiab
+  fi
+
   if [ "$b" = "gptf2_expl_3tl_part2" ]
   then
     d=arpifs/adiab

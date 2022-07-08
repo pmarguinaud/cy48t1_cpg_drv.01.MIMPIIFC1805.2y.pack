@@ -220,7 +220,7 @@ TYPE(TYP_DDH)                ,INTENT(INOUT) :: YDDDH
 #include "cp_forcing_ps.intfb.h"
 #include "etenc.intfb.h"
 #include "gpinislb_part1_expl.intfb.h"
-#include "gpinislb_part2_pgfl.intfb.h"
+#include "gpinislb_part2_expl.intfb.h"
 #include "gpinislb_part3_expl.intfb.h"
 #include "gpinozst.intfb.h"
 #include "gpmpfc_expl.intfb.h"
@@ -439,7 +439,7 @@ CALL GPINISLB_PART1_EXPL (LNHDYN, LNHX, LSLAG, LTWOTL, YDGEOMETRY, YGFL, YDDYN, 
                         & PL0=YDVARS%L%T0, PL9=YDVARS%L%T9, PI0=YDVARS%I%T0, PI9=YDVARS%I%T9, &
                         & PR0=YDVARS%R%T0, PR9=YDVARS%R%T9, PS0=YDVARS%S%T0, PS9=YDVARS%S%T9) 
 
-CALL GPINISLB_PART2_PGFL (LSLAG, LTWOTL, YDGEOMETRY, YGFL, YDDYN, YDCPG_BNDS%KIDIA, YDCPG_BNDS%KFDIA, YDCPG_OPTS%ZTE, PGFL, PGFLT1)
+CALL GPINISLB_PART2_EXPL (LSLAG, LTWOTL, YDDYN, YDCPG_BNDS%KIDIA, YDCPG_BNDS%KFDIA, YDCPG_OPTS%ZTE, YDVARS)
 
 CALL GPINISLB_PART3_EXPL (LGWADV, LNHDYN, LVERTFE, LVFE_GW, YDGEOMETRY, YDPTRSLB2, YDCPG_BNDS%KIDIA, YDCPG_BNDS%KFDIA, &
                         & YDCPG_DYN0%CTY%VVEL (:, 1:), YDCPG_DYN0%PREF, YDCPG_SL2%VVEL (:,1:), YDCPG_SL2%GWF (:,1:), &

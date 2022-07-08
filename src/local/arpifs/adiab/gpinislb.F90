@@ -243,6 +243,19 @@ ELSE
    PQSNOW(KST:KEN,1:NFLEVG)=0.0_JPRB
 ENDIF
 
+!*          1.3    PB2[X]1 for continuity equation (GMVS).
+
+IF (LDSLAG) THEN
+  PB2SP1(KST:KEN)=0.0_JPRB
+ELSE
+  IF( NCURRENT_ITER == 0 )THEN
+    PB2SP1(KST:KEN)=PSPT9(KST:KEN)*PTE
+  ELSE
+    PB2SP1(KST:KEN)=0.0_JPRB
+  ENDIF      
+ENDIF
+
+
 !* end outline
 
 IF (LDSLAG.AND.LDTWOTL) THEN
@@ -278,18 +291,6 @@ ELSE !Eularian
       ENDIF
     ENDDO
   ENDIF
-ENDIF
-
-!*          1.3    PB2[X]1 for continuity equation (GMVS).
-
-IF (LDSLAG) THEN
-  PB2SP1(KST:KEN)=0.0_JPRB
-ELSE
-  IF( NCURRENT_ITER == 0 )THEN
-    PB2SP1(KST:KEN)=PSPT9(KST:KEN)*PTE
-  ELSE
-    PB2SP1(KST:KEN)=0.0_JPRB
-  ENDIF      
 ENDIF
 
 !*          2.     PB2[X] for other purposes.

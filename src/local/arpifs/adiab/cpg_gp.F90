@@ -219,9 +219,9 @@ TYPE(TYP_DDH)                ,INTENT(INOUT) :: YDDDH
 #include "cp_forcing.intfb.h"
 #include "cp_forcing_ps.intfb.h"
 #include "etenc.intfb.h"
-#include "gpinislb_part1.intfb.h"
-#include "gpinislb_part2.intfb.h"
-#include "gpinislb_part3.intfb.h"
+#include "gpinislb_part1_expl.intfb.h"
+#include "gpinislb_part2_pgfl.intfb.h"
+#include "gpinislb_part3_expl.intfb.h"
 #include "gpinozst.intfb.h"
 #include "gpmpfc_expl.intfb.h"
 #include "gpnspng.intfb.h"
@@ -432,19 +432,19 @@ ENDIF
 !*       4.    TIME DIMENSION.
 !              ---------------
 
-CALL GPINISLB_PART1 (LNHDYN, LNHX, LSLAG, LTWOTL, YDGEOMETRY, YGFL, YDDYN, YDCPG_BNDS%KIDIA, YDCPG_BNDS%KFDIA, YDCPG_OPTS%ZTE, &
-                   & YDVARS%U%T9, YDVARS%V%T9, YDVARS%T%T9, YDVARS%SPD%T9, YDVARS%SVD%T9, YDCPG_DYN9%NHX, YDVARS%SP%T9, &
-                   & YDVARS%U%T1, YDVARS%V%T1, YDVARS%T%T1, YDVARS%SPD%T1, YDVARS%SVD%T1, YDVARS%NHX%T1, YDVARS%SP%T1, &
-                   & YDCPG_MISC%QICE, YDCPG_MISC%QLI, YDCPG_MISC%QRAIN, YDCPG_MISC%QSNOW, &
-                   & PL0=YDVARS%L%T0, PL9=YDVARS%L%T9, PI0=YDVARS%I%T0, PI9=YDVARS%I%T9, &
-                   & PR0=YDVARS%R%T0, PR9=YDVARS%R%T9, PS0=YDVARS%S%T0, PS9=YDVARS%S%T9) 
+CALL GPINISLB_PART1_EXPL (LNHDYN, LNHX, LSLAG, LTWOTL, YDGEOMETRY, YGFL, YDDYN, YDCPG_BNDS%KIDIA, YDCPG_BNDS%KFDIA, YDCPG_OPTS%ZTE, &
+                        & YDVARS%U%T9, YDVARS%V%T9, YDVARS%T%T9, YDVARS%SPD%T9, YDVARS%SVD%T9, YDCPG_DYN9%NHX, YDVARS%SP%T9, &
+                        & YDVARS%U%T1, YDVARS%V%T1, YDVARS%T%T1, YDVARS%SPD%T1, YDVARS%SVD%T1, YDVARS%NHX%T1, YDVARS%SP%T1, &
+                        & YDCPG_MISC%QICE, YDCPG_MISC%QLI, YDCPG_MISC%QRAIN, YDCPG_MISC%QSNOW, &
+                        & PL0=YDVARS%L%T0, PL9=YDVARS%L%T9, PI0=YDVARS%I%T0, PI9=YDVARS%I%T9, &
+                        & PR0=YDVARS%R%T0, PR9=YDVARS%R%T9, PS0=YDVARS%S%T0, PS9=YDVARS%S%T9) 
 
-CALL GPINISLB_PART2 (LSLAG, LTWOTL, YDGEOMETRY, YGFL, YDDYN, YDCPG_BNDS%KIDIA, YDCPG_BNDS%KFDIA, YDCPG_OPTS%ZTE, PGFL, PGFLT1)
+CALL GPINISLB_PART2_PGFL (LSLAG, LTWOTL, YDGEOMETRY, YGFL, YDDYN, YDCPG_BNDS%KIDIA, YDCPG_BNDS%KFDIA, YDCPG_OPTS%ZTE, PGFL, PGFLT1)
 
-CALL GPINISLB_PART3 (LGWADV, LNHDYN, LVERTFE, LVFE_GW, YDGEOMETRY, YDPTRSLB2, YDCPG_BNDS%KIDIA, YDCPG_BNDS%KFDIA, &
-                   & YDCPG_DYN0%CTY%VVEL (:, 1:), YDCPG_DYN0%PREF, YDCPG_SL2%VVEL (:,1:), YDCPG_SL2%GWF (:,1:), &
-                   & YDCPG_SL2%GDW (:,1:), YDCPG_SL2%GWS (:,1:), YDCPG_DYN0%GWFT, Z_GDW_T0, &
-                   & Z_GWHT_T0(:, NFLEVG))
+CALL GPINISLB_PART3_EXPL (LGWADV, LNHDYN, LVERTFE, LVFE_GW, YDGEOMETRY, YDPTRSLB2, YDCPG_BNDS%KIDIA, YDCPG_BNDS%KFDIA, &
+                        & YDCPG_DYN0%CTY%VVEL (:, 1:), YDCPG_DYN0%PREF, YDCPG_SL2%VVEL (:,1:), YDCPG_SL2%GWF (:,1:), &
+                        & YDCPG_SL2%GDW (:,1:), YDCPG_SL2%GWS (:,1:), YDCPG_DYN0%GWFT, Z_GDW_T0, &
+                        & Z_GWHT_T0(:, NFLEVG))
 
 
 IF (NCURRENT_ITER == 0) THEN

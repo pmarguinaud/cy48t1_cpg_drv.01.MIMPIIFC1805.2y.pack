@@ -148,8 +148,8 @@ REAL(KIND=JPRB) :: ZHOOK_HANDLE
 
 !     ------------------------------------------------------------------
 
-#include "gpinislb_part1.intfb.h"
-#include "gpinislb_part2.intfb.h"
+#include "gpinislb_part1_expl.intfb.h"
+#include "gpinislb_part2_pgfl.intfb.h"
 
 !     ------------------------------------------------------------------
 
@@ -165,12 +165,12 @@ ASSOCIATE(NDIM=>YGFL%NDIM, NDIM1=>YGFL%NDIM1, NUMFLDS=>YGFL%NUMFLDS, &
  & NFLDSLB2=>YDPTRSLB2%NFLDSLB2)
 !     ------------------------------------------------------------------
 
-CALL GPINISLB_PART1 (LDNHDYN, LDNHX, LDSLAG, LDTWOTL, YDGEOMETRY, YGFL, YDDYN, KST, KEN, PTE, &
+CALL GPINISLB_PART1_EXPL (LDNHDYN, LDNHX, LDSLAG, LDTWOTL, YDGEOMETRY, YGFL, YDDYN, KST, KEN, PTE, &
                    & PUT9, PVT9, PTT9, PSPDT9, PSVDT9, PNHX9, PSPT9, PB2U1, PB2V1, PB2T1, &
                    & PB2PD1, PB2VD1, PGMVNHX1, PB2SP1, PQICE, PQLI, PQRAIN, PQSNOW, PL0, &
                    & PL9, PI0, PI9, PR0, PR9, PS0, PS9)
 
-CALL GPINISLB_PART2 (LDSLAG, LDTWOTL, YDGEOMETRY, YGFL, YDDYN, KST, KEN, PTE, PGFL, PGFLT1)
+CALL GPINISLB_PART2_PGFL (LDSLAG, LDTWOTL, YDGEOMETRY, YGFL, YDDYN, KST, KEN, PTE, PGFL, PGFLT1)
 
 !     -------------------------------------------------------------------------
 

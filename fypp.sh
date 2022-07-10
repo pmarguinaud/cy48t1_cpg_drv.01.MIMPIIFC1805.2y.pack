@@ -47,7 +47,7 @@ do
     d=arpifs/adiab
   fi
 
-  if [ "$b" = "gpnspng" ]
+  if [ "$b" = "gpnspng_exp_expl" ]
   then
     d=arpifs/adiab
   fi

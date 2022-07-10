@@ -52,3 +52,4 @@ src/local/arpifs/adiab/test_ydvars.F90
 src/local/arpifs/adiab/gprcp_expl.F90
 src/local/arpifs/adiab/gptf2_expl_3tl_part2.F90
 src/local/arpifs/adiab/gpinislb_part2_expl.F90
+src/local/arpifs/module/gpnspng_expl.F90

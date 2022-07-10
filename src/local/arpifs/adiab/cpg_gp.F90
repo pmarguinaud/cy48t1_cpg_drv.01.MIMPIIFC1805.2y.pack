@@ -221,7 +221,7 @@ TYPE(TYP_DDH)                ,INTENT(INOUT) :: YDDDH
 #include "gpinislb_part3_expl.intfb.h"
 #include "gpinozst.intfb.h"
 #include "gpmpfc_expl.intfb.h"
-#include "gpnspng.intfb.h"
+#include "gpnspng_expl.intfb.h"
 #include "gp_spv.intfb.h"
 #include "gptf2_expl_2tl.intfb.h"
 #include "gptf2_expl_3tl_part1.intfb.h"
@@ -295,7 +295,7 @@ ENDIF
 
 ! new sponge for 2D and 3D models (grid-point GFL only).
 IF (YDMODEL%YRML_DYN%YRSPNG%LNSPONGE) THEN
-  CALL GPNSPNG(YGFL, YDMODEL%YRML_DYN%YRSPNG, NPROMA, NFLEVG, YDCPG_BNDS%KIDIA, YDCPG_BNDS%KFDIA, PGFL)
+  CALL GPNSPNG_EXPL (YDMODEL%YRML_DYN%YRSPNG,NPROMA,NFLEVG,YDCPG_BNDS%KIDIA,YDCPG_BNDS%KFDIA,YDVARS)
 ENDIF
 
 !*     1.4   PART 2 OF TIME FILTER.

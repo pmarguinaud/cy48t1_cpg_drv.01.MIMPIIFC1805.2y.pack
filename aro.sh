@@ -52,7 +52,7 @@ cd $NAM1.$NAM2
 
 # Choose a pack
 
- PACK=/home/gmap/mrpm/marguina/pack/48t1_cpg_drv.01.PGI217.cpu0
+ PACK=/home/gmap/mrpm/marguina/pack/cy48t1_cpg_drv.01.MIMPIIFC1805.2y.pack
 
 # Copy data to $TMPDIR
 
@@ -219,7 +219,8 @@ cat fort.4
 # Run the model; use your mpirun
 
 pack=$PACK
-pack=/home/gmap/mrpm/marguina/pack/48t1_cpg_drv.01.PGI217.cpu0
+#pack=$HOME/pack/cy48t1_cpg_drv_43d0bc961f71744300a71666600beff1589da7b1.gprcp=1.01.MIMPIIFC1805.2y.pack
+#pack=$HOME/pack/cy48t1_cpg_drv_d65247173713658d22f41cf09dec434ecbec2407.gprcp=0.01.MIMPIIFC1805.2y.pack
 
 /opt/softs/mpiauto/mpiauto --verbose --wrap --wrap-stdeo --nouse-slurm-mpi --prefix-mpirun '/usr/bin/time -f "time=%e"' \
     --nnp $NTASK_FC --nn $NNODE_FC --openmp $NOPMP_FC -- $pack/bin/MASTERODB \
@@ -227,8 +228,9 @@ pack=/home/gmap/mrpm/marguina/pack/48t1_cpg_drv.01.PGI217.cpu0
 
 ls -lrt
 
-diffNODE.001_01 NODE.001_01 $pack/ref.pgi/NODE.001_01.$NAM1.$NAM2
-#cp NODE.001_01 $pack/ref.pgi/NODE.001_01.$NAM1.$NAM2
+ diffNODE.001_01 NODE.001_01 $pack/ref.cy48t1_cpg_drv_43d0bc961f71744300a71666600beff1589da7b1.gprcp=1.01.MIMPIIFC1805.2y.pack/NODE.001_01.$NAM1.$NAM2
+#cp NODE.001_01 $PACK/ref.cy48t1_cpg_drv_43d0bc961f71744300a71666600beff1589da7b1.gprcp=1.01.MIMPIIFC1805.2y.pack/NODE.001_01.$NAM1.$NAM2
+#cp NODE.001_01 $PACK/ref.cy48t1_cpg_drv_d65247173713658d22f41cf09dec434ecbec2407.gprcp=0.01.MIMPIIFC1805.2y.pack/NODE.001_01.$NAM1.$NAM2
 
 cd ..
 

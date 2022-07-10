@@ -97,7 +97,9 @@ CONTAINS
 
 #:for d in range (0, rank+1)
     SUBROUTINE COPY_DIM${d}$_CONTIGUOUS (HST, DEV, KDIR)
+#ifdef _OPENACC
     USE OPENACC
+#endif
     ${dtype}$, POINTER :: HST (${shapes[rank]}$), DEV (${shapes[rank]}$)
     INTEGER (KIND=JPIM), INTENT (IN) :: KDIR
     INTEGER (KIND=JPIM) :: ISIZE

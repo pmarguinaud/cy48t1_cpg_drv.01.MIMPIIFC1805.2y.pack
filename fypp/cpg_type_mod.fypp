@@ -12,7 +12,7 @@
 #:set AS_1_KFLEVG             = [ [ '1', 'YDCPG_OPTS%KFLEVG' ] ]
 #:set AS_1_nflevg_2           = [ [ '1', 'NLEV' ], [ '1', '2' ] ]
 #:set AS_0_KFLEVG_6           = [ [ '0', 'YDCPG_OPTS%KFLEVG' ], [ '1', '6' ] ]
-#:set AS_1_KFLEVG_NVCLIS      = [ [ '0', 'YDCPG_OPTS%KFLEVG' ], [ '1', 'YDCPG_OPTS%KVCLIS' ] ]
+#:set AS_1_KFLEVG_NVCLIS      = [ [ '1', 'YDCPG_OPTS%KFLEVG' ], [ '1', 'YDCPG_OPTS%KVCLIS' ] ]
 #:set AS_4D                   = [ [], [] ]
 #:set AS_1_NSW                = [ [ '1', 'YDCPG_OPTS%KSW' ] ]
 

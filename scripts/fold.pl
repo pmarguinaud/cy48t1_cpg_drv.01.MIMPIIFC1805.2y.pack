@@ -12,6 +12,8 @@ my ($F90, $xpath) = @ARGV;
 
 my $d = &Fxtran::fxtran (location => $F90, fopts => [qw (-line-length 1000)]);
 
+my $t0 = $d->textContent;
+
 
 sub normalizeCommas
 {
@@ -35,7 +37,9 @@ for my $x (&F ($xpath, $d))
     &Fxtran::fold ($x);
   }
 
-'FileHandle'->new (">$F90.new")->print ($d->textContent);
+my $t1 = $d->textContent;
+
+'FileHandle'->new (">$F90.new")->print ($t1) if ($t0 ne $t1);
 
 
 

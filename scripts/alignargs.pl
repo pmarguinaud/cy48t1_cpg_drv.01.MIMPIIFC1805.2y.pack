@@ -14,6 +14,8 @@ my $F90 = shift;
 
 my $d = &Fxtran::fxtran (location => $F90, fopts => [qw (-line-length 300)]);
 
+my $t0 = $d->textContent;
+
 my @decl = &F ('.//T-decl-stmt[.//attribute-N[string(.)="INTENT"]', $d);
 
 my %len;
@@ -81,6 +83,8 @@ for my $decl (@decl)
 
   }
 
-'FileHandle'->new (">$F90.new")->print ($d->textContent);
+my $t1 = $d->textContent;
+
+'FileHandle'->new (">$F90.new")->print ($t1) if ($t0 ne $t1);
 
     

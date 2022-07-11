@@ -690,6 +690,7 @@ IMPLICIT NONE
 !very dirty code used at MF with the switch LDRYTL. See cva1.F90
 !Need to be checked and hopefully removed soon...
 RV=RD
+IF (ASSOCIATED (YRCST)) YRCST = TCST_INIT ()
 END SUBROUTINE RVEQUALSRD
 !    ------------------------------------------------------------------
 END MODULE YOMCST

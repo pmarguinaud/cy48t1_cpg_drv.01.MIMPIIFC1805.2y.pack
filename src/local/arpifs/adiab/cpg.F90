@@ -156,6 +156,7 @@ USE YOMTRAJ            , ONLY : TRAJ_PHYS_TYPE, TRAJ_SLAG_TYPE
 USE DDH_MIX            , ONLY : TYP_DDH, SETDDH, CLEANDDH
 USE SPP_MOD            , ONLY : TSPP_CONFIG, TSPP_DATA
 USE YOMTRAJ            , ONLY : LTRAJSAVE, LTRAJSLAG
+USE YEMLBC_INIT,ONLY : LTENC
 USE SC2PRG_MOD,ONLY : SC2PRG
 
 !     ------------------------------------------------------------------
@@ -228,6 +229,7 @@ REAL(KIND=JPRB) :: ZHOOK_HANDLE
 #include "cpg_dyn_eul.intfb.h"
 #include "cpg_dyn_tra.intfb.h"
 #include "cpg_end.intfb.h"
+#include "cpg_gp_tenc.intfb.h"
 #include "cpg_gp.intfb.h"
 #include "cpg_pt_ulp.intfb.h"
 #include "cp_ptrslb1.intfb.h"
@@ -271,6 +273,10 @@ IF (CDPART (1:1) == 'X') THEN
   
   YDCPG_GPAR%ZVIEW(:,:)=0.0_JPRB
   
+  IF (LTENC) THEN
+    CALL CPG_GP_TENC (YDGEOMETRY, YDCPG_BNDS, YDCPG_OPTS, YDVARS, YDMODEL, YDFIELDS)
+  ENDIF
+
   CALL CPG_GP(YDGEOMETRY, YDCPG_BNDS, YDCPG_OPTS, YDCPG_TND, YDCPG_MISC, YDCPG_GPAR, YDCPG_DYN0,          &
   & YDCPG_DYN9, YDMF_PHYS_SURF, YDVARS, YDMODEL, YDFIELDS, YDCPG_SL2, YDDDH)
 

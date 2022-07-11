@@ -228,7 +228,6 @@ REAL(KIND=JPRB) :: ZHOOK_HANDLE
 #include "cpg_dyn_slg.intfb.h"
 #include "cpg_dyn_eul.intfb.h"
 #include "cpg_dyn_tra.intfb.h"
-#include "cpg_end.intfb.h"
 #include "cpg_gp_tenc.intfb.h"
 #include "cpg_gp.intfb.h"
 #include "cpg_pt_ulp.intfb.h"
@@ -238,6 +237,10 @@ REAL(KIND=JPRB) :: ZHOOK_HANDLE
 #include "cpg_pb1.intfb.h"
 #include "mf_phys.intfb.h"
 #include "cpg_gp_tndddh.intfb.h"
+#include "cpg_end_sfc.intfb.h"
+#include "cpg_end_tra.intfb.h"
+#include "cpg_end_map.intfb.h"
+#include "cpg_end_spr.intfb.h"
 
 !     ------------------------------------------------------------------
 
@@ -442,8 +445,17 @@ IF (CDPART (3:3) == 'X') THEN
   !*       6.    FINAL PART OF NON-LAGGED GRID-POINT COMPUTATIONS.
   !              -------------------------------------------------
   
-  CALL CPG_END(YDGEOMETRY, YDMODEL, YDVARS, YDMF_PHYS_SURF, YDCPG_BNDS, YDCPG_OPTS, YDFIELDS%YRGMV, &
-  & YDFIELDS%YRSURF, YDCPG_MISC%QS, PTRAJ_PHYS)
+  CALL CPG_END_SFC (YDMODEL, YDCPG_OPTS, YDMF_PHYS_SURF)
+
+  IF (YDMODEL%YRML_PHY_MF%YRSIMPHL%LTRAJPS) THEN  
+    CALL CPG_END_TRA (YDMF_PHYS_SURF, YDCPG_MISC, YDCPG_BNDS, PTRAJ_PHYS)
+  ENDIF
+
+  CALL CPG_END_MAP (YDGEOMETRY, YDMODEL, YDVARS, YDCPG_BNDS, YDCPG_OPTS)
+
+  IF (LTENC) THEN
+    CALL CPG_END_SPR (YDVARS, YDCPG_BNDS, YDCPG_OPTS)
+  ENDIF
   
   !     ------------------------------------------------------------------
   

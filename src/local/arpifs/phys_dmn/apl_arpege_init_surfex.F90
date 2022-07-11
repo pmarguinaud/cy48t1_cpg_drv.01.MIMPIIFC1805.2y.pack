@@ -120,7 +120,7 @@ IF (YDMODEL%YRML_PHY_MF%YRARPHY%LMSE) THEN
 
 ! Define z0;z0h if it's necessary
 
-  IF (YDCPG_OPTS%KSTEP == 0) THEN
+  IF (YDCPG_OPTS%NSTEP == 0) THEN
 
 !=PARALLEL
 

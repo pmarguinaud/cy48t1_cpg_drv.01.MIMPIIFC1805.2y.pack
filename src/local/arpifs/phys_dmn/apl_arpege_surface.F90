@@ -195,7 +195,7 @@ IF ( YDMODEL%YRML_PHY_MF%YRARPHY%LMSE.AND.YDCPG_OPTS%LCALLSFX ) THEN
   ENDDO
 
   CALL ARO_GROUND_PARAM( YDCPG_BNDS%KBL, YDCPG_OPTS%KGPCOMP, YDCPG_BNDS%KFDIA-YDCPG_BNDS%KIDIA+1, YDCPG_BNDS%KIDIA,                                                                                 &
-  & YDCPG_BNDS%KFDIA, YDCPG_OPTS%KSTEP, IRR, YDMODEL%YRML_PHY_RAD%YRERAD%NSW, YDMODEL%YRML_GCONF%YGFL%NGFL_EXT,                                                                                     &
+  & YDCPG_BNDS%KFDIA, YDCPG_OPTS%NSTEP, IRR, YDMODEL%YRML_PHY_RAD%YRERAD%NSW, YDMODEL%YRML_GCONF%YGFL%NGFL_EXT,                                                                                     &
   & YDGEOMETRY%YRDIM%NDGUNG, YDGEOMETRY%YRDIM%NDGUXG, YDGEOMETRY%YRDIM%NDLUNG, YDGEOMETRY%YRDIM%NDLUXG,                                                                                             &
   & YDMODEL%YRML_PHY_MF%YRARPHY%LSURFEX_KFROM, YDMODEL%YRML_PHY_MF%YRARPHY%LMPA, YDMODEL%YRML_PHY_MF%YRARPHY%CCOUPLING,                                                                             &
   & YDCPG_OPTS%LCONFX, YDCPG_OPTS%NINDAT, PRHGMT, PSTATI, YDMODEL%YRML_GCONF%YRRIP%RSOVR, YDMODEL%YRML_GCONF%YRRIP%RCODEC,                                                                          &

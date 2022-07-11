@@ -102,6 +102,9 @@ my $root = join ('-', sort @root);
 
 my $g = 'GraphViz2'->new (graph => {rankdir => 'LR', ordering => 'out'}, global => {rank => 'source'});
 #my $g = 'GraphViz2'->new (graph => {rankdir => 'TB', ordering => 'out'}, global => {rank => 'source'});
+#
+
+my %k;
 
 while (my ($k, $v) = each (%g))
   {
@@ -112,8 +115,15 @@ while (my ($k, $v) = each (%g))
       {   
         next if ($v =~ m/%/o);
         $g->add_edge (from => $k, to => $v);
-print "$k -- $v\n";
+#print "$k -- $v\n";
+        $k{$k}++;
+        $k{$v}++;
       }   
+  }
+
+for (sort keys (%k))
+  {
+    print $f2f->{$_} || $_, "\n";
   }
 
 $g->run (format => 'svg', output_file => "$root.svg");

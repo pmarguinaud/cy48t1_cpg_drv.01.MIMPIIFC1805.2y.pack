@@ -12,6 +12,8 @@ my $F90 = shift;
 
 my $d = &Fxtran::fxtran (location => $F90, fopts => [qw (-line-length 300)]);
 
+my $t0 = $d->textContent;
+
 my @assoc = &F ('.//associate-construct', $d);
 
 for my $assoc (@assoc)
@@ -34,5 +36,6 @@ for my $assoc (@assoc)
 
   }
 
+my $t1 = $d->textContent;
 
-'FileHandle'->new (">$F90.new")->print ($d->textContent);
+'FileHandle'->new (">$F90.new")->print ($t1) if ($t0 ne $t1);

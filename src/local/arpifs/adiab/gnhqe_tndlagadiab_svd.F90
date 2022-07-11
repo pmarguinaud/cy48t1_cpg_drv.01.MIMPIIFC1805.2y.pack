@@ -152,7 +152,7 @@ REAL(KIND=JPRB) :: ZHOOK_HANDLE
 !     ------------------------------------------------------------------
 
 IF (LHOOK) CALL DR_HOOK('GNHQE_TNDLAGADIAB_SVD',0,ZHOOK_HANDLE)
-ASSOCIATE(NPROMA=>YDGEOMETRY%YRDIM%NPROMA,NFLEVG=>YDGEOMETRY%YRDIMV%NFLEVG)
+ASSOCIATE(NFLEVG=>YDGEOMETRY%YRDIMV%NFLEVG)
 
 !     ------------------------------------------------------------------
 

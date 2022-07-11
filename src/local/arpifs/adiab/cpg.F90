@@ -442,10 +442,8 @@ IF (CDPART (3:3) == 'X') THEN
   !*       6.    FINAL PART OF NON-LAGGED GRID-POINT COMPUTATIONS.
   !              -------------------------------------------------
   
-  CALL CPG_END(YDGEOMETRY, YDMODEL, YDVARS, YDCPG_BNDS, YDCPG_OPTS, YDFIELDS%YRGMV, YDFIELDS%YRSURF, &
-  & YDCPG_MISC%QS, &
-  & YDMF_PHYS_SURF%GSP_RR%PT_T9,          &
-  & PTRAJ_PHYS)
+  CALL CPG_END(YDGEOMETRY, YDMODEL, YDVARS, YDMF_PHYS_SURF, YDCPG_BNDS, YDCPG_OPTS, YDFIELDS%YRGMV, &
+  & YDFIELDS%YRSURF, YDCPG_MISC%QS, PTRAJ_PHYS)
   
   !     ------------------------------------------------------------------
   

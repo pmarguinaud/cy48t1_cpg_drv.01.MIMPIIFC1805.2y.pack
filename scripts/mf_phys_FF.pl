@@ -29,7 +29,7 @@ for my $call (&F ('.//call-stmt[string(procedure-designator)="?"]', $name, $d1))
     my %d2a;
     for my $i (0 .. $#actual)
       {
-#       next if ($dummy[$i]->textContent =~ m/^Y/o);
+        next if ($dummy[$i]->textContent =~ m/^Y/o);
         my $actual = $actual[$i]->textContent;
         next if ($actual =~ m/\(/o);
 #       next unless ($actual =~ m/^(?:YDCPG_DYN0|YDCPG_DYN9|YDCPG_PHY0|YDCPG_PHY9|YDCPG_TND|YDCPG_MISC)%/o);
@@ -42,7 +42,7 @@ for my $call (&F ('.//call-stmt[string(procedure-designator)="?"]', $name, $d1))
 #       next unless ($actual =~ m/^(?:YDCPG_DYN|YDCPG_PHY|YDVARS)/goms);
 #       next unless ($actual =~ m/^(?:YDCPG_DIM|YDMF_PHYS|YDCPG_MISC)/goms);
 #       next unless ($actual =~ m/^(?:YDCPG_OPTS)/goms);
-        next unless ($actual =~ m/^(?:YDMODEL)/goms);
+        next unless ($actual =~ m/^(?:YDMF_PHYS_SURF)/goms);
 #       next unless ($actual =~ m/^(?:YDVARS)/goms);
 #       next unless ($actual =~ m/^(?:YDCPG_BNDS|YDCPG_OPTS|YDMF_PHYS_BASE_STATE|YDCPG_MISC|YDMF_PHYS_SURF|YDMF_PHYS)/goms);
         $actual =~ s/^YL/YD/o;

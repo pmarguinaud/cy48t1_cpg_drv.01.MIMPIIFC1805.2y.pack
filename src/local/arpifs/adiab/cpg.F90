@@ -271,8 +271,6 @@ IF (CDPART (1:1) == 'X') THEN
   !*       3.    READ BUFFERS, COMPUTE AUXILIARY QUANTITIES.
   !              -------------------------------------------
   
-  YDCPG_GPAR%ZVIEW(:,:)=0.0_JPRB
-  
   IF (LTENC) THEN
     CALL CPG_GP_TENC (YDGEOMETRY, YDCPG_BNDS, YDCPG_OPTS, YDVARS, YDMODEL, YDFIELDS)
   ENDIF

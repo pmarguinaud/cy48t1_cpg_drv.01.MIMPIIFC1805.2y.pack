@@ -1,10 +1,6 @@
 !OCL  NOEVAL
-SUBROUTINE GNHEE_LAPL(&
- ! --- INPUT ---------------------------------------------------------------------
- & LDVFE_LAPL_BC,YDGEOMETRY,KSTART,KPROF,PIN,PINS,&
- & PLNPR,PALPH,PREF,PREH,&
- ! --- OUTPUT --------------------------------------------------------------------
- & POUT)  
+SUBROUTINE GNHEE_LAPL(   LDVFE_LAPL_BC, YDGEOMETRY, KSTART, KPROF, PIN, PINS, PLNPR, PALPH, PREF, &
+& PREH, POUT)  
 
 !**** *GNHEE_LAPL* - Computation of [LAPL Z] at full levels, for NHEE model.
 
@@ -109,7 +105,7 @@ REAL(KIND=JPRB) :: ZHOOK_HANDLE
 
 ! -----------------------------------------------------------------------------
 
-IF (LHOOK) CALL DR_HOOK('GNHEE_LAPL',0,ZHOOK_HANDLE)
+IF (LHOOK) CALL DR_HOOK('GNHEE_LAPL', 0, ZHOOK_HANDLE)
 ASSOCIATE(NFLEVG=>YDGEOMETRY%YRDIMV%NFLEVG)
 
 IF (LDVFE_LAPL_BC) CALL ABOR1(' GNHEE_LAPL: VFE Laplacian not coded!')
@@ -159,5 +155,5 @@ ENDDO
 !     ------------------------------------------------------------------
 
 END ASSOCIATE
-IF (LHOOK) CALL DR_HOOK('GNHEE_LAPL',1,ZHOOK_HANDLE)
+IF (LHOOK) CALL DR_HOOK('GNHEE_LAPL', 1, ZHOOK_HANDLE)
 END SUBROUTINE GNHEE_LAPL

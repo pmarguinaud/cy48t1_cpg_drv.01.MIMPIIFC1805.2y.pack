@@ -1,11 +1,6 @@
 !OCL  NOEVAL
-SUBROUTINE GNHPRE(&
- ! --- INPUT -------------------------------------------
- & KPDVAR, YDGEOMETRY, KPROMA,KFLEV,KSTART,KEND,PSPD,PREF,&
- ! --- OPTIONAL INPUT ---------------------------------
- & PKAP,&
- ! --- OPTIONAL OUTPUT ---------------------------------
- & PNHPREF,PNHPPI,PRNHPPI,PDEP,PEQCHAF,PEIQCHAF)
+SUBROUTINE GNHPRE(   KPDVAR, YDGEOMETRY, KPROMA, KFLEV, KSTART, KEND, PSPD, PREF, PKAP, PNHPREF, &
+& PNHPPI, PRNHPPI, PDEP, PEQCHAF, PEIQCHAF)
 
 ! GNHPRE - Computation of the total pressure "pre" at full levels,
 !          from the 'PD' prognostic variable.
@@ -100,7 +95,7 @@ REAL(KIND=JPRB) :: ZHOOK_HANDLE
 
 IF ( KPDVAR /= 2 ) RETURN
 
-IF (LHOOK) CALL DR_HOOK('GNHPRE',0,ZHOOK_HANDLE)
+IF (LHOOK) CALL DR_HOOK('GNHPRE', 0, ZHOOK_HANDLE)
 
 ! -----------------------------------------------------------------------------
 
@@ -173,7 +168,7 @@ ENDIF
 
 ! -----------------------------------------------------------------------------
 
-IF (LHOOK) CALL DR_HOOK('GNHPRE',1,ZHOOK_HANDLE)
+IF (LHOOK) CALL DR_HOOK('GNHPRE', 1, ZHOOK_HANDLE)
 
 END SUBROUTINE GNHPRE
 

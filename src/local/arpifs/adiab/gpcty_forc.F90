@@ -1,10 +1,5 @@
-SUBROUTINE GPCTY_FORC(&
- ! --- INPUT -----------------------------------------------------------------
- & YDCST, YDGEOMETRY, YDML_GCONF,YDPHY2,KST,KEND,&
- & PFORC,&
- & PRE0F, PTT0, PR0,&
- ! --- OUTPUT ----------------------------------------------------------------            
- & PEVEL, PVVEL )
+SUBROUTINE GPCTY_FORC(   YDCST, YDGEOMETRY, YDML_GCONF, YDPHY2, KST, KEND, PFORC, PRE0F, PTT0, PR0, &
+& PEVEL, PVVEL )
 
 !****GPCTY_FORC** -  Computes large scale vertical velocities for hybrid coordinate
 !                    from large scale forcing read in initial file and stored in PFORC
@@ -117,10 +112,10 @@ REAL(KIND=JPRB)    :: ZA, ZB, ZINT, ZSTATI
 REAL(KIND=JPRB)    :: ZHOOK_HANDLE
 
 !     ------------------------------------------------------------------
-IF (LHOOK) CALL DR_HOOK('GPCTY_FORC',0,ZHOOK_HANDLE)
-ASSOCIATE(YDDIM=>YDGEOMETRY%YRDIM,YDDIMV=>YDGEOMETRY%YRDIMV,   YGFL=>YDML_GCONF%YGFL,YDRIP=>YDML_GCONF%YRRIP&
-& )
-ASSOCIATE(NFLEVG=>YDDIMV%NFLEVG,   RSTATI=>YDRIP%RSTATI,   TSPHY=>YDPHY2%TSPHY)
+IF (LHOOK) CALL DR_HOOK('GPCTY_FORC', 0, ZHOOK_HANDLE)
+ASSOCIATE(YDDIM=>YDGEOMETRY%YRDIM, YDDIMV=>YDGEOMETRY%YRDIMV, YGFL=>YDML_GCONF%YGFL, YDRIP=>YDML_GCONF%YRRIP&
+&   )
+ASSOCIATE(NFLEVG=>YDDIMV%NFLEVG, RSTATI=>YDRIP%RSTATI, TSPHY=>YDPHY2%TSPHY)
 !     ------------------------------------------------------------------
 
 ZSTATI=RSTATI-TSPHY*0.5_JPRB
@@ -340,5 +335,5 @@ ENDIF
 
 END ASSOCIATE
 END ASSOCIATE
-IF (LHOOK) CALL DR_HOOK('GPCTY_FORC',1,ZHOOK_HANDLE)
+IF (LHOOK) CALL DR_HOOK('GPCTY_FORC', 1, ZHOOK_HANDLE)
 END SUBROUTINE GPCTY_FORC

@@ -1,8 +1,5 @@
-SUBROUTINE GNHGRPRE(&
- ! --- INPUT -------------------------------------------
- & KPDVAR, YDGEOMETRY, KPROMA,KFLEV,KSTART,KEND,PRTGR,PREL,PREM,PNHPREF,PSPDL,PSPDM,&
- ! --- OUTPUT ------------------------------------------
- & PNHPREFL,PNHPREFM,PLNNHPREFL,PLNNHPREFM,PQCHAL,PQCHAM)
+SUBROUTINE GNHGRPRE(   KPDVAR, YDGEOMETRY, KPROMA, KFLEV, KSTART, KEND, PRTGR, PREL, PREM, PNHPREF, &
+& PSPDL, PSPDM, PNHPREFL, PNHPREFM, PLNNHPREFL, PLNNHPREFM, PQCHAL, PQCHAM)
 
 ! GNHGRPRE - Computation of the horizontal gradient of the
 !            total pressure "pre" at full levels.
@@ -96,7 +93,7 @@ REAL(KIND=JPRB) :: ZHOOK_HANDLE
 
 ! -----------------------------------------------------------------------------
 
-IF (LHOOK) CALL DR_HOOK('GNHGRPRE',0,ZHOOK_HANDLE)
+IF (LHOOK) CALL DR_HOOK('GNHGRPRE', 0, ZHOOK_HANDLE)
 
 ! -----------------------------------------------------------------------------
 
@@ -117,7 +114,7 @@ ENDIF
 
 ! -----------------------------------------------------------------------------
 
-IF (LHOOK) CALL DR_HOOK('GNHGRPRE',1,ZHOOK_HANDLE)
+IF (LHOOK) CALL DR_HOOK('GNHGRPRE', 1, ZHOOK_HANDLE)
 
 END SUBROUTINE GNHGRPRE
 

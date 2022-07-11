@@ -1,14 +1,7 @@
 !OCL  NOEVAL
-SUBROUTINE GNHEE_REFINE_GRP_EXPL(&
- ! --- INPUT -----------------------------------------------------------------
- & LDVERTFE, YDGEOMETRY,KST,KEND,&
- & PRT,PRTL,PRTM,PREL,PREM,PRTGR,PALPH,&
- & PRNHPPI,PQCHAL,PQCHAM,PHIHL,PHIHM,   &
- & PDEP,PREF,PREH,PWWH2F,&
- ! --- OUTPUT ----------------------------------------------------------------
- & PSGRTL,PSGRTM, &
- ! --- INPUT -----------------------------------------------------------------
- & PALPHPLL_DER, PALPHPLM_DER)
+SUBROUTINE GNHEE_REFINE_GRP_EXPL(   LDVERTFE, YDGEOMETRY, KST, KEND, PRT, PRTL, PRTM, PREL, PREM, &
+& PRTGR, PALPH, PRNHPPI, PQCHAL, PQCHAM, PHIHL, PHIHM, PDEP, PREF, PREH, PWWH2F, PSGRTL, PSGRTM,  &
+& PALPHPLL_DER, PALPHPLM_DER)
 
 !**** *GNHEE_REFINE_GRP_EXPL* - Computation of the pressure gradient force term used in the
 !                   RHS of the horizontal wind equation in NHEE model.
@@ -120,7 +113,7 @@ REAL(KIND=JPRB)    :: ZHOOK_HANDLE
 
 !     ------------------------------------------------------------------
 
-IF (LHOOK) CALL DR_HOOK('GNHEE_REFINE_GRP_EXPL',0,ZHOOK_HANDLE)
+IF (LHOOK) CALL DR_HOOK('GNHEE_REFINE_GRP_EXPL', 0, ZHOOK_HANDLE)
 
 ASSOCIATE(NFLEVG=>YDGEOMETRY%YRDIMV%NFLEVG)
 
@@ -235,6 +228,6 @@ ENDIF
 
 END ASSOCIATE
 
-IF (LHOOK) CALL DR_HOOK('GNHEE_REFINE_GRP_EXPL',1,ZHOOK_HANDLE)
+IF (LHOOK) CALL DR_HOOK('GNHEE_REFINE_GRP_EXPL', 1, ZHOOK_HANDLE)
 
 END SUBROUTINE GNHEE_REFINE_GRP_EXPL

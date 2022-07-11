@@ -1,13 +1,7 @@
 !OCL  NOEVAL
-SUBROUTINE GNHQE_TNDLAGADIAB_GW(&
- ! --- INPUT -----------------------------------------------------------------
- & LDVFE_GW, LDVFE_LAPL_BC, YDCST, YDGEOMETRY,KSTART,KPROF,&
- & POROGL,POROGM,POROGLM,POROGLL,POROGMM,&
- & PUS,PVS,PTNDUS,PTNDVS,&
- & PLNPR,PALPH,PREF,PREH,&
- & PEQCHAF,PKAPF,&
- ! --- OUTPUT ----------------------------------------------------------------
- & PTNDGW)  
+SUBROUTINE GNHQE_TNDLAGADIAB_GW(   LDVFE_GW, LDVFE_LAPL_BC, YDCST, YDGEOMETRY, KSTART, KPROF, POROGL, &
+& POROGM, POROGLM, POROGLL, POROGMM, PUS, PVS, PTNDUS, PTNDVS, PLNPR, PALPH, PREF, PREH, PEQCHAF,     &
+& PKAPF, PTNDGW)  
 
 !**** *GNHQE_TNDLAGADIAB_GW* - Computation of the adiabatic contribution of
 !                              [D (Gw) / Dt] in the NHQE model.
@@ -137,7 +131,7 @@ REAL(KIND=JPRB) :: ZHOOK_HANDLE
 
 ! -----------------------------------------------------------------------------
 
-IF (LHOOK) CALL DR_HOOK('GNHQE_TNDLAGADIAB_GW',0,ZHOOK_HANDLE)
+IF (LHOOK) CALL DR_HOOK('GNHQE_TNDLAGADIAB_GW', 0, ZHOOK_HANDLE)
 ASSOCIATE(NFLEVG=>YDGEOMETRY%YRDIMV%NFLEVG)
 
 !     ------------------------------------------------------------------
@@ -180,7 +174,8 @@ IF (LDVFE_LAPL_BC) THEN
   ! Only VFD calculation of Laplacian is currently available.
   CALL ABOR1(' GNHQE_TNDLAGADIAB_GW 2a: option not yet coded!')
 ELSE
-  CALL GNHQE_LKAP(LDVFE_LAPL_BC,YDGEOMETRY,KSTART,KPROF,ZIN,ZINS,PLNPR,PALPH,PREF,PREH,PKAPF,ZOUT)
+  CALL GNHQE_LKAP(LDVFE_LAPL_BC, YDGEOMETRY, KSTART, KPROF, ZIN, ZINS, PLNPR, PALPH, PREF, PREH, &
+  & PKAPF, ZOUT)
 ENDIF
 
 ! * Multiply ZOUT by [G**2/Kap]:
@@ -217,5 +212,5 @@ ENDIF
 !     ------------------------------------------------------------------
 
 END ASSOCIATE
-IF (LHOOK) CALL DR_HOOK('GNHQE_TNDLAGADIAB_GW',1,ZHOOK_HANDLE)
+IF (LHOOK) CALL DR_HOOK('GNHQE_TNDLAGADIAB_GW', 1, ZHOOK_HANDLE)
 END SUBROUTINE GNHQE_TNDLAGADIAB_GW

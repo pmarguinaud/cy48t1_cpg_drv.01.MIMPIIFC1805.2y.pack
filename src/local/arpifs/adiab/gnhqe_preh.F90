@@ -1,12 +1,5 @@
-SUBROUTINE GNHQE_PREH(&
- ! --- INPUT -------------------------------------------
- & LDVERTFE, KPDVAR, YDGEOMETRY,KST,KEND,PREH,PQCHAF, &
- ! --- OUTPUT ------------------------------------------
- & PNHPREH,&
- ! --- OPTIONAL INPUT ----------------------------------
- & PREF,PEQCHAF,PKAPH,&
- ! --- OPTIONAL OUTPUT ---------------------------------
- & PEQCHAH,PDEL_QCHAF)
+SUBROUTINE GNHQE_PREH(   LDVERTFE, KPDVAR, YDGEOMETRY, KST, KEND, PREH, PQCHAF, PNHPREH, PREF, &
+& PEQCHAF, PKAPH, PEQCHAH, PDEL_QCHAF)
 
 ! GNHQE_PREH - Computation of quantities linked to the total pressure "pre" at half levels,
 !              from the "pressure departure" prognostic variable Qcha=log(pre/prehyd).
@@ -108,7 +101,7 @@ REAL(KIND=JPRB) :: ZHOOK_HANDLE
 
 ! -----------------------------------------------------------------------------
 
-IF (LHOOK) CALL DR_HOOK('GNHQE_PREH',0,ZHOOK_HANDLE)
+IF (LHOOK) CALL DR_HOOK('GNHQE_PREH', 0, ZHOOK_HANDLE)
 ASSOCIATE(NFLEVG=>YDGEOMETRY%YRDIMV%NFLEVG)
 
 ! -----------------------------------------------------------------------------
@@ -199,6 +192,6 @@ ENDIF
 ! -----------------------------------------------------------------------------
 
 END ASSOCIATE
-IF (LHOOK) CALL DR_HOOK('GNHQE_PREH',1,ZHOOK_HANDLE)
+IF (LHOOK) CALL DR_HOOK('GNHQE_PREH', 1, ZHOOK_HANDLE)
 END SUBROUTINE GNHQE_PREH
 

@@ -1,18 +1,7 @@
 !OCL  NOEVAL
-SUBROUTINE GPGRGEO_EXPL(&
- ! --- INPUT -----------------------------------------------------------------
- & LDVERTFE, YDGEOMETRY,KPROMA,KD,KF,KFLEV,&
- & PRT,PRTL,PRTM,&
- & PLNPR,PALPH,&
- & POROGL,POROGM,&
- ! --- OUTPUT ----------------------------------------------------------------
- & PHIFL,PHIFM,PHIHL,PHIHM,&
- ! --- OPTIONAL INPUT --------------------------------------------------------
- & LDNHEE,PRNHPPI,PQCHAL,PQCHAM,&
- ! --- OPTIONAL OUTPUT -------------------------------------------------------
- & PNH1L,PNH1M,&
- ! --- OPTIONAL INPUT --------------------------------------------------------
- & PLNPRL_DER, PLNPRM_DER, PALPHL_DER, PALPHM_DER)  
+SUBROUTINE GPGRGEO_EXPL(   LDVERTFE, YDGEOMETRY, KPROMA, KD, KF, KFLEV, PRT, PRTL, PRTM, PLNPR,     &
+& PALPH, POROGL, POROGM, PHIFL, PHIFM, PHIHL, PHIHM, LDNHEE, PRNHPPI, PQCHAL, PQCHAM, PNH1L, PNH1M, &
+& PLNPRL_DER, PLNPRM_DER, PALPHL_DER, PALPHM_DER)  
 
 !**** *GPGRGEO_EXPL* - Computes half and full level gradient of geopotential height "gz".
 
@@ -174,7 +163,7 @@ REAL(KIND=JPRB) :: ZHOOK_HANDLE
 
 !     ------------------------------------------------------------------
 
-IF (LHOOK) CALL DR_HOOK('GPGRGEO_EXPL',0,ZHOOK_HANDLE)
+IF (LHOOK) CALL DR_HOOK('GPGRGEO_EXPL', 0, ZHOOK_HANDLE)
 
 !     ------------------------------------------------------------------
 
@@ -273,8 +262,8 @@ IF(LDVERTFE) THEN
   ZINL(KD:KF,KFLEV+1)=0.0_JPRB
   ZINM(KD:KF,0)=0.0_JPRB
   ZINM(KD:KF,KFLEV+1)=0.0_JPRB
-  CALL VERDISINT(YDGEOMETRY%YRVFE,'IBOT','11',KPROMA,KD,KF,KFLEV,ZINL,ZGPHL)
-  CALL VERDISINT(YDGEOMETRY%YRVFE,'IBOT','11',KPROMA,KD,KF,KFLEV,ZINM,ZGPHM)
+  CALL VERDISINT(YDGEOMETRY%YRVFE, 'IBOT', '11', KPROMA, KD, KF, KFLEV, ZINL, ZGPHL)
+  CALL VERDISINT(YDGEOMETRY%YRVFE, 'IBOT', '11', KPROMA, KD, KF, KFLEV, ZINM, ZGPHM)
 
   DO JLEV=1,KFLEV
     DO JROF=KD,KF
@@ -309,6 +298,6 @@ ENDIF
 
 !     ------------------------------------------------------------------
 
-IF (LHOOK) CALL DR_HOOK('GPGRGEO_EXPL',1,ZHOOK_HANDLE)
+IF (LHOOK) CALL DR_HOOK('GPGRGEO_EXPL', 1, ZHOOK_HANDLE)
 
 END SUBROUTINE GPGRGEO_EXPL

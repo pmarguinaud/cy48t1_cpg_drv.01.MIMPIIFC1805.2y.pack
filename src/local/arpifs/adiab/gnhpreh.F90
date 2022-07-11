@@ -1,9 +1,5 @@
-SUBROUTINE GNHPREH(&
- ! --- INPUT -------------------------------------------
- & LDVERTFE, LDVFE_ECMWF, KPDVAR, YDGEOMETRY, KPROMA,KFLEV,KST,KEND,PSPD,PREH,PDELP,PLNPR,PNHPPI,PNHPRE,&
- ! --- OUTPUT ------------------------------------------
- & PNHPREH,PDELNHPRE&
- & )
+SUBROUTINE GNHPREH(   LDVERTFE, LDVFE_ECMWF, KPDVAR, YDGEOMETRY, KPROMA, KFLEV, KST, KEND, PSPD, &
+& PREH, PDELP, PLNPR, PNHPPI, PNHPRE, PNHPREH, PDELNHPRE  )
 
 ! GNHPREH - Computation of the total pressure "pre" at half levels,
 !           from the "pressure departure" prognostic variable.
@@ -106,7 +102,7 @@ REAL(KIND=JPRB) :: ZHOOK_HANDLE
 
 ! -----------------------------------------------------------------------------
 
-IF (LHOOK) CALL DR_HOOK('GNHPREH',0,ZHOOK_HANDLE)
+IF (LHOOK) CALL DR_HOOK('GNHPREH', 0, ZHOOK_HANDLE)
 
 ! -----------------------------------------------------------------------------
 
@@ -184,7 +180,7 @@ IF (LDVERTFE) THEN
     ZIN(KST:KEND,0)=0.0_JPRB
     ! * Bottom: "[pre/prehyd]_surf=[pre/prehyd]_(l=L)":
     ZIN(KST:KEND,KFLEV+1)=ZIN(KST:KEND,KFLEV)
-    CALL VERDISINT(YDGEOMETRY%YRVFE,'FDER','00',KPROMA,KST,KEND,KFLEV,ZIN,ZDX)
+    CALL VERDISINT(YDGEOMETRY%YRVFE, 'FDER', '00', KPROMA, KST, KEND, KFLEV, ZIN, ZDX)
     DO JLEV=1,KFLEV
       DO JROF=KST,KEND
         PDELNHPRE(JROF,JLEV)=PDELP(JROF,JLEV)*(PNHPPI(JROF,JLEV)&
@@ -205,7 +201,7 @@ IF (LDVERTFE) THEN
       ENDDO
       ZIN(KST:KEND,0)=0.0_JPRB
       ZIN(KST:KEND,KFLEV+1)=0.0_JPRB
-      CALL VERDISINT(YDGEOMETRY%YRVFE,'FDER','01',KPROMA,KST,KEND,KFLEV,ZIN,ZDX)
+      CALL VERDISINT(YDGEOMETRY%YRVFE, 'FDER', '01', KPROMA, KST, KEND, KFLEV, ZIN, ZDX)
       DO JLEV=1,KFLEV
         DO JROF=KST,KEND
           PDELNHPRE(JROF,JLEV)=PDELP(JROF,JLEV)*PNHPPI(JROF,JLEV) &
@@ -220,7 +216,7 @@ ENDIF
 
 ! -----------------------------------------------------------------------------
 
-IF (LHOOK) CALL DR_HOOK('GNHPREH',1,ZHOOK_HANDLE)
+IF (LHOOK) CALL DR_HOOK('GNHPREH', 1, ZHOOK_HANDLE)
 
 END SUBROUTINE GNHPREH
 

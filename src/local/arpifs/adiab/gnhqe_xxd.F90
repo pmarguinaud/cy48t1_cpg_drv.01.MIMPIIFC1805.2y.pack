@@ -1,8 +1,5 @@
-SUBROUTINE GNHQE_XXD(&
- ! --- INPUT -----------------------------------------------------------------
- & LDRUBC, LDVERTFE, YDGEOMETRY,KFLEV,KPROMA,KST,KEND,PU,PV,PLNPR,PRDELP,PALPH,PRTGR,PSPL,PSPM,PKAP, &
- ! --- OUTPUT ----------------------------------------------------------------
- & PNHXD)
+SUBROUTINE GNHQE_XXD(   LDRUBC, LDVERTFE, YDGEOMETRY, KFLEV, KPROMA, KST, KEND, PU, PV, PLNPR, &
+& PRDELP, PALPH, PRTGR, PSPL, PSPM, PKAP, PNHXD)
 
 ! GNHQE_XXD - Diagnose "divergence part" of the NHX-term which appears in the NHQE model.
 !             NHX writes NHX=NHX_s+NHX_d
@@ -101,11 +98,11 @@ REAL(KIND=JPRB) :: ZHOOK_HANDLE
 
 ! -----------------------------------------------------------------------------
 
-IF (LHOOK) CALL DR_HOOK('GNHQE_XXD',0,ZHOOK_HANDLE)
+IF (LHOOK) CALL DR_HOOK('GNHQE_XXD', 0, ZHOOK_HANDLE)
 
 ! -----------------------------------------------------------------------------
 
-ASSOCIATE(YDVAB=>YDGEOMETRY%YRVAB,YDVETA=>YDGEOMETRY%YRVETA)
+ASSOCIATE(YDVAB=>YDGEOMETRY%YRVAB, YDVETA=>YDGEOMETRY%YRVETA)
 
 IF (LDRUBC) THEN
   ! Input [etadot (d prehyd / d eta)]_top is not always available there.
@@ -129,7 +126,7 @@ IF( LDVERTFE )THEN
       ZIN(JROF,JLEV)=YDVAB%VDELB(JLEV)*ZVP(JROF,JLEV)*YDVETA%VFE_RDETAH(JLEV)
     ENDDO
   ENDDO
-  CALL VERDISINT(YDGEOMETRY%YRVFE,'ITOP','11',KPROMA,KST,KEND,KFLEV,ZIN,ZOUT)
+  CALL VERDISINT(YDGEOMETRY%YRVFE, 'ITOP', '11', KPROMA, KST, KEND, KFLEV, ZIN, ZOUT)
 
   ! note that LNPR*RDELP is exactly [1/Pi] at full levels in this case.
   DO JLEV=1,KFLEV
@@ -158,6 +155,6 @@ END ASSOCIATE
 
 ! -----------------------------------------------------------------------------
 
-IF (LHOOK) CALL DR_HOOK('GNHQE_XXD',1,ZHOOK_HANDLE)
+IF (LHOOK) CALL DR_HOOK('GNHQE_XXD', 1, ZHOOK_HANDLE)
 END SUBROUTINE GNHQE_XXD
 

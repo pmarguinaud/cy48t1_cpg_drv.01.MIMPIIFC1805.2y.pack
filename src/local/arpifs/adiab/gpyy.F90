@@ -1,8 +1,5 @@
-SUBROUTINE GPYY(&
- ! --- INPUT -----------------------------------------------------------------
- & LDVERTFE, LDVFE_GW, YDGEOMETRY,KFLEV,KPROMA,KST,KEND,POROGL,POROGM,PUH,PVH,&
- ! --- OUTPUT -------------------------------------------------------
- & PNHY)
+SUBROUTINE GPYY(   LDVERTFE, LDVFE_GW, YDGEOMETRY, KFLEV, KPROMA, KST, KEND, POROGL, POROGM, PUH, &
+& PVH, PNHY)
 
 ! GPYY  - compute Y-term in NHEE model
 !          This routine is called for NVDVAR=5
@@ -82,7 +79,7 @@ REAL(KIND=JPRB) :: ZHOOK_HANDLE
 
 ! -----------------------------------------------------------------------------
 
-IF (LHOOK) CALL DR_HOOK('GPYY',0,ZHOOK_HANDLE)
+IF (LHOOK) CALL DR_HOOK('GPYY', 0, ZHOOK_HANDLE)
 ASSOCIATE(YDVAB=>YDGEOMETRY%YRVAB)
 
 ! -----------------------------------------------------------------------------
@@ -112,7 +109,7 @@ ENDIF
 ! -----------------------------------------------------------------------------
 
 END ASSOCIATE
-IF (LHOOK) CALL DR_HOOK('GPYY',1,ZHOOK_HANDLE)
+IF (LHOOK) CALL DR_HOOK('GPYY', 1, ZHOOK_HANDLE)
 
 END SUBROUTINE GPYY
 

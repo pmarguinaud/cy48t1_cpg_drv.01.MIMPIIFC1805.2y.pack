@@ -1,16 +1,8 @@
 !OCL  NOEVAL
-SUBROUTINE GNHGRGW(&
- ! --- INPUT -----------------------------------------------------------------
- & LDVERTFE, YDGEOMETRY,KPROMA,KFLEV,KD,KF,LDGWFDER,&
- & PRT,PRTL,PRTM,PDVER,PDVERL,PDVERM,&
- & PLNPR,PALPH,&
- & PUS,PVS,PUS_L,PVS_L,PUS_M,PVS_M,&
- & POROGL,POROGM,POROGLM,POROGLL,POROGMM,&
- ! --- OUTPUT ----------------------------------------------------------------
- & PGWFL,PGWFM,PGWHL,PGWHM,&
- ! --- OPTIONAL INPUT --------------------------------------------------------
- & LDNHEE,PRNHPPI,PQCHAL,PQCHAM,&
- & PLNPRL_DER, PLNPRM_DER, PALPHL_DER, PALPHM_DER)
+SUBROUTINE GNHGRGW(   LDVERTFE, YDGEOMETRY, KPROMA, KFLEV, KD, KF, LDGWFDER, PRT, PRTL, PRTM, PDVER, &
+& PDVERL, PDVERM, PLNPR, PALPH, PUS, PVS, PUS_L, PVS_L, PUS_M, PVS_M, POROGL, POROGM, POROGLM,       &
+& POROGLL, POROGMM, PGWFL, PGWFM, PGWHL, PGWHM, LDNHEE, PRNHPPI, PQCHAL, PQCHAM, PLNPRL_DER,         &
+& PLNPRM_DER, PALPHL_DER, PALPHM_DER)
 
 !**** *GNHGRGW* - Computes half and full level gradient of "gw"
 !                 ("g" times the vertical velocity "w").
@@ -174,7 +166,7 @@ REAL(KIND=JPRB) :: ZHOOK_HANDLE
 
 !     ------------------------------------------------------------------
 
-IF (LHOOK) CALL DR_HOOK('GNHGRGW',0,ZHOOK_HANDLE)
+IF (LHOOK) CALL DR_HOOK('GNHGRGW', 0, ZHOOK_HANDLE)
 
 !     ------------------------------------------------------------------
 
@@ -248,8 +240,8 @@ IF (LDVERTFE) THEN
     ZINM(JROF,0)=0.0_JPRB
     ZINM(JROF,KFLEV+1)=0.0_JPRB
   ENDDO
-  CALL VERDISINT(YDGEOMETRY%YRVFE,'IBOT','11',KPROMA,KD,KF,KFLEV,ZINL,ZGPHL)
-  CALL VERDISINT(YDGEOMETRY%YRVFE,'IBOT','11',KPROMA,KD,KF,KFLEV,ZINM,ZGPHM)
+  CALL VERDISINT(YDGEOMETRY%YRVFE, 'IBOT', '11', KPROMA, KD, KF, KFLEV, ZINL, ZGPHL)
+  CALL VERDISINT(YDGEOMETRY%YRVFE, 'IBOT', '11', KPROMA, KD, KF, KFLEV, ZINM, ZGPHM)
 
   DO JL=1,KFLEV
     DO JROF=KD,KF
@@ -338,5 +330,5 @@ ENDIF
 
 !     ------------------------------------------------------------------
 
-IF (LHOOK) CALL DR_HOOK('GNHGRGW',1,ZHOOK_HANDLE)
+IF (LHOOK) CALL DR_HOOK('GNHGRGW', 1, ZHOOK_HANDLE)
 END SUBROUTINE GNHGRGW

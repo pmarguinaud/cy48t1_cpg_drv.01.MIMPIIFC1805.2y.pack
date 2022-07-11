@@ -1,14 +1,7 @@
 !OCL  NOEVAL
-SUBROUTINE GNHQE_TNDLAGADIAB_SVD(&
- ! --- INPUT -----------------------------------------------------------------
- & LDVFE_LAPL_BC, LDVERTFE, YDCST, YDGEOMETRY,KSTART,KPROF,&
- & POROGL,POROGM,POROGLM,POROGLL,POROGMM,&
- & PLNPR,PALPH,PREF,PREH,&
- & PUF,PVF,PUH,PVH,PTNDUS,PTNDVS,&
- & PEQCHAF,PKAPF,&
- & PRDPHI,PGWHL,PGWHM,PDVER,PNHXS,&
- ! --- OUTPUT ----------------------------------------------------------------
- & PTNDVD,PDBBC)
+SUBROUTINE GNHQE_TNDLAGADIAB_SVD(   LDVFE_LAPL_BC, LDVERTFE, YDCST, YDGEOMETRY, KSTART, KPROF,     &
+& POROGL, POROGM, POROGLM, POROGLL, POROGMM, PLNPR, PALPH, PREF, PREH, PUF, PVF, PUH, PVH, PTNDUS, &
+& PTNDVS, PEQCHAF, PKAPF, PRDPHI, PGWHL, PGWHM, PDVER, PNHXS, PTNDVD, PDBBC)
 
 !**** *GNHQE_TNDLAGADIAB_SVD* - Computation of the adiabatic contribution of
 !                               [D (svd) / Dt] in the NHQE model.
@@ -151,7 +144,7 @@ REAL(KIND=JPRB) :: ZHOOK_HANDLE
 
 !     ------------------------------------------------------------------
 
-IF (LHOOK) CALL DR_HOOK('GNHQE_TNDLAGADIAB_SVD',0,ZHOOK_HANDLE)
+IF (LHOOK) CALL DR_HOOK('GNHQE_TNDLAGADIAB_SVD', 0, ZHOOK_HANDLE)
 ASSOCIATE(NFLEVG=>YDGEOMETRY%YRDIMV%NFLEVG)
 
 !     ------------------------------------------------------------------
@@ -186,7 +179,8 @@ ENDDO
 
 ! * Apply Laplacian operator:
 !   ZOUT contains ( [Kap/G**2] * [ d [ [D (Gw) / Dt]_adiab ] / d log(prehyd) ] )
-CALL GNHQE_LKAP(LDVFE_LAPL_BC,YDGEOMETRY,KSTART,KPROF,ZIN,ZINS,PLNPR,PALPH,PREF,PREH,PKAPF,ZOUT)
+CALL GNHQE_LKAP(LDVFE_LAPL_BC, YDGEOMETRY, KSTART, KPROF, ZIN, ZINS, PLNPR, PALPH, PREF, PREH, PKAPF, &
+& ZOUT)
 
 ! * Compute - [1/(R Tt)] [ d [ [D (Gw) / Dt]_adiab ] / d log(prehyd) ]
 !   i.e. - ([G**2/Kap] [PRDPHI] [delta]) * ZOUT
@@ -239,5 +233,5 @@ ENDDO
 !     ------------------------------------------------------------------
 
 END ASSOCIATE
-IF (LHOOK) CALL DR_HOOK('GNHQE_TNDLAGADIAB_SVD',1,ZHOOK_HANDLE)
+IF (LHOOK) CALL DR_HOOK('GNHQE_TNDLAGADIAB_SVD', 1, ZHOOK_HANDLE)
 END SUBROUTINE GNHQE_TNDLAGADIAB_SVD

@@ -1,11 +1,6 @@
 !OCL  NOEVAL
-SUBROUTINE GNH_TNDLAGADIAB_SPD(&
- ! --- INPUT -----------------------------------------------------------------
- & KPDVAR, YDGEOMETRY, KFLEV,KPROMA,KSTART,KPROF,&
- & PKAP,P3DIVG,PVVEL,&
- ! --- OUTPUT ----------------------------------------------------------------
- & PTNDPD&
- & )  
+SUBROUTINE GNH_TNDLAGADIAB_SPD(   KPDVAR, YDGEOMETRY, KFLEV, KPROMA, KSTART, KPROF, PKAP, P3DIVG, &
+& PVVEL, PTNDPD  )  
 
 !**** *GNH_TNDLAGADIAB_SPD* - Computation of the adiabatic contribution of
 !                             [D (spd) / Dt] in the NH model.
@@ -96,7 +91,7 @@ REAL(KIND=JPRB) :: ZHOOK_HANDLE
 
 !     ------------------------------------------------------------------
 
-IF (LHOOK) CALL DR_HOOK('GNH_TNDLAGADIAB_SPD',0,ZHOOK_HANDLE)
+IF (LHOOK) CALL DR_HOOK('GNH_TNDLAGADIAB_SPD', 0, ZHOOK_HANDLE)
 
 !     ------------------------------------------------------------------
 
@@ -114,5 +109,5 @@ ENDIF
 
 !     ------------------------------------------------------------------
 
-IF (LHOOK) CALL DR_HOOK('GNH_TNDLAGADIAB_SPD',1,ZHOOK_HANDLE)
+IF (LHOOK) CALL DR_HOOK('GNH_TNDLAGADIAB_SPD', 1, ZHOOK_HANDLE)
 END SUBROUTINE GNH_TNDLAGADIAB_SPD

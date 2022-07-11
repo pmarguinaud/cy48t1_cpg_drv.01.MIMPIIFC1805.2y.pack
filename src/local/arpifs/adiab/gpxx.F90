@@ -1,13 +1,5 @@
-SUBROUTINE GPXX(&
- ! --- INPUT -----------------------------------------------------------------
- & LDVERTFE, YDGEOMETRY, KFLEV,KPROMA,KSTART,KEND,PHIHL,PHIHM,PHIFL,PHIFM,&
- & PLNPR,PRT,&
- & PUF,PVF,PUH,PVH,&
- ! --- OUTPUT ----------------------------------------------------------------
- & PX,&
- ! --- OPTIONAL INPUT --------------------------------------------------------
- & PNHPPI&
- & )
+SUBROUTINE GPXX(   LDVERTFE, YDGEOMETRY, KFLEV, KPROMA, KSTART, KEND, PHIHL, PHIHM, PHIFL, PHIFM, &
+& PLNPR, PRT, PUF, PVF, PUH, PVH, PX, PNHPPI  )
 
 ! GPXX - Diagnose NHX-term
 
@@ -124,7 +116,7 @@ REAL(KIND=JPRB) :: ZHOOK_HANDLE
 
 ! -----------------------------------------------------------------------------
 
-IF (LHOOK) CALL DR_HOOK('GPXX',0,ZHOOK_HANDLE)
+IF (LHOOK) CALL DR_HOOK('GPXX', 0, ZHOOK_HANDLE)
 
 ! -----------------------------------------------------------------------------
 
@@ -134,9 +126,9 @@ IF (LDVERTFE) THEN
   ZF(KSTART:KEND,0)       = 0.0_JPRB
   ZF(KSTART:KEND,KFLEV+1) = 0.0_JPRB
   ZF(KSTART:KEND,1:KFLEV) = PUF(KSTART:KEND,1:KFLEV)
-  CALL VERDISINT(YDGEOMETRY%YRVFE,'FDER','11',KPROMA,KSTART,KEND,KFLEV,ZF,ZDUF)
+  CALL VERDISINT(YDGEOMETRY%YRVFE, 'FDER', '11', KPROMA, KSTART, KEND, KFLEV, ZF, ZDUF)
   ZF(KSTART:KEND,1:KFLEV) = PVF(KSTART:KEND,1:KFLEV)
-  CALL VERDISINT(YDGEOMETRY%YRVFE,'FDER','11',KPROMA,KSTART,KEND,KFLEV,ZF,ZDVF)
+  CALL VERDISINT(YDGEOMETRY%YRVFE, 'FDER', '11', KPROMA, KSTART, KEND, KFLEV, ZF, ZDVF)
 
   IF (PRESENT(PNHPPI)) THEN
     DO JLEV=1,KFLEV
@@ -188,7 +180,7 @@ ENDIF
 
 ! -----------------------------------------------------------------------------
 
-IF (LHOOK) CALL DR_HOOK('GPXX',1,ZHOOK_HANDLE)
+IF (LHOOK) CALL DR_HOOK('GPXX', 1, ZHOOK_HANDLE)
 
 END SUBROUTINE GPXX
 

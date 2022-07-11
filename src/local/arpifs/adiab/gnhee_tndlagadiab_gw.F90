@@ -1,13 +1,7 @@
 !OCL  NOEVAL
-SUBROUTINE GNHEE_TNDLAGADIAB_GW(&
- ! --- INPUT -----------------------------------------------------------------
- & LDVFE_GW, LDVFE_LAPL_BC, KVDVAR, YDCST, YDGEOMETRY,KSTART,KPROF,&
- & POROGL,POROGM,POROGLM,POROGLL,POROGMM,&
- & PUS,PVS,PTNDUS,PTNDVS,&
- & PLNPR,PALPH,PREF,PREH,&
- & PDEP,&
- ! --- OUTPUT ----------------------------------------------------------------
- & PTNDGW)  
+SUBROUTINE GNHEE_TNDLAGADIAB_GW(   LDVFE_GW, LDVFE_LAPL_BC, KVDVAR, YDCST, YDGEOMETRY, KSTART, KPROF, &
+& POROGL, POROGM, POROGLM, POROGLL, POROGMM, PUS, PVS, PTNDUS, PTNDVS, PLNPR, PALPH, PREF, PREH,      &
+& PDEP, PTNDGW)  
 
 !**** *GNHEE_TNDLAGADIAB_GW* - Computation of the adiabatic contribution of
 !                              [D (Gw) / Dt] in the NHEE model.
@@ -138,7 +132,7 @@ REAL(KIND=JPRB) :: ZHOOK_HANDLE
 
 ! -----------------------------------------------------------------------------
 
-IF (LHOOK) CALL DR_HOOK('GNHEE_TNDLAGADIAB_GW',0,ZHOOK_HANDLE)
+IF (LHOOK) CALL DR_HOOK('GNHEE_TNDLAGADIAB_GW', 0, ZHOOK_HANDLE)
 ASSOCIATE(NFLEVG=>YDGEOMETRY%YRDIMV%NFLEVG)
 
 !     ------------------------------------------------------------------
@@ -182,7 +176,7 @@ ENDDO
 IF (LDVFE_LAPL_BC)&
   CALL ABOR1(" GNHEE_TNDLAGADIAB_GW: VFE integration not available for Laplacian BC")
 
-CALL GNHEE_LAPL(LDVFE_LAPL_BC,YDGEOMETRY,KSTART,KPROF,ZIN,ZINS,PLNPR,PALPH,PREF,PREH,ZOUT)
+CALL GNHEE_LAPL(LDVFE_LAPL_BC, YDGEOMETRY, KSTART, KPROF, ZIN, ZINS, PLNPR, PALPH, PREF, PREH, ZOUT)
 
 ! * Multiply ZOUT by [G**2]:
 DO JLEV=1,NFLEVG
@@ -214,5 +208,5 @@ ENDDO
 !     ------------------------------------------------------------------
 
 END ASSOCIATE
-IF (LHOOK) CALL DR_HOOK('GNHEE_TNDLAGADIAB_GW',1,ZHOOK_HANDLE)
+IF (LHOOK) CALL DR_HOOK('GNHEE_TNDLAGADIAB_GW', 1, ZHOOK_HANDLE)
 END SUBROUTINE GNHEE_TNDLAGADIAB_GW

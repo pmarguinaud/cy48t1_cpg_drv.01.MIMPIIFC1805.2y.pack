@@ -1,4 +1,4 @@
-SUBROUTINE GPHLWI(YDDIMV,KPROMA,KSTART,KPROF,PLNPR,PALPH,PWW,LDVERINT)
+SUBROUTINE GPHLWI(YDDIMV, KPROMA, KSTART, KPROF, PLNPR, PALPH, PWW, LDVERINT)
 
 !**** *GPHLWI* - to half-levels interpolation weights
 
@@ -77,7 +77,7 @@ LOGICAL         :: LL_VERINT
 
 !     ------------------------------------------------------------------
 
-IF (LHOOK) CALL DR_HOOK('GPHLWI',0,ZHOOK_HANDLE)
+IF (LHOOK) CALL DR_HOOK('GPHLWI', 0, ZHOOK_HANDLE)
 ASSOCIATE(NFLEVG=>YDDIMV%NFLEVG)
 
 !     ------------------------------------------------------------------
@@ -112,5 +112,5 @@ ENDDO
 !     ------------------------------------------------------------------
 
 END ASSOCIATE
-IF (LHOOK) CALL DR_HOOK('GPHLWI',1,ZHOOK_HANDLE)
+IF (LHOOK) CALL DR_HOOK('GPHLWI', 1, ZHOOK_HANDLE)
 END SUBROUTINE GPHLWI

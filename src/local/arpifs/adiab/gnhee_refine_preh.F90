@@ -1,14 +1,7 @@
 !OCL  NOEVAL
-SUBROUTINE GNHEE_REFINE_PREH(&
- ! --- INPUT -----------------------------------------------------------------
- & LDVERTFE, LDVFE_GW, YDCST, YDGEOMETRY,KSTART,KPROF,&
- & POROGL,POROGM,POROGLM,POROGLL,POROGMM,&
- & PUS,PVS,&
- & PREF,PREH,PDEP,PWH2F,&
- ! --- INPUT-OUTPUT ----------------------------------------------------------
- & PSGRTL,PSGRTM,PSGRTSL,PSGRTSM, &
- & PTNDU,PTNDV,PTNDU_NOC,PTNDV_NOC,&
- & PTNDUS,PTNDVS,PNHPREH)  
+SUBROUTINE GNHEE_REFINE_PREH(   LDVERTFE, LDVFE_GW, YDCST, YDGEOMETRY, KSTART, KPROF, POROGL, POROGM, &
+& POROGLM, POROGLL, POROGMM, PUS, PVS, PREF, PREH, PDEP, PWH2F, PSGRTL, PSGRTM, PSGRTSL, PSGRTSM,     &
+& PTNDU, PTNDV, PTNDU_NOC, PTNDV_NOC, PTNDUS, PTNDVS, PNHPREH)  
 
 !**** *GNHEE_REFINE_PREH* - Using an iterative algorithm:
 !                           * refine calculation of half level "pre" and full level [Delta pre]
@@ -145,7 +138,7 @@ REAL(KIND=JPRB) :: ZHOOK_HANDLE
 
 ! -----------------------------------------------------------------------------
 
-IF (LHOOK) CALL DR_HOOK('GNHEE_REFINE_PREH',0,ZHOOK_HANDLE)
+IF (LHOOK) CALL DR_HOOK('GNHEE_REFINE_PREH', 0, ZHOOK_HANDLE)
 ASSOCIATE(NFLEVG=>YDGEOMETRY%YRDIMV%NFLEVG)
 
 !     ------------------------------------------------------------------
@@ -203,5 +196,5 @@ ENDDO
 !     ------------------------------------------------------------------
 
 END ASSOCIATE
-IF (LHOOK) CALL DR_HOOK('GNHEE_REFINE_PREH',1,ZHOOK_HANDLE)
+IF (LHOOK) CALL DR_HOOK('GNHEE_REFINE_PREH', 1, ZHOOK_HANDLE)
 END SUBROUTINE GNHEE_REFINE_PREH

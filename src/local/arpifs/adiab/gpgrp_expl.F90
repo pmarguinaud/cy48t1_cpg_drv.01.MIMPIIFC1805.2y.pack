@@ -1,13 +1,6 @@
 !OCL  NOEVAL
-SUBROUTINE GPGRP_EXPL(&
- ! --- INPUT -----------------------------------------------------------------
- & LDVERTFE, YDGEOMETRY,KST,KEND,&
- & PRT,PRTL,PRTM,PREL,PREM,PRTGR,PALPH,&
- & PHIHL,PHIHM,PHIFL,PHIFM,&
- ! --- OUTPUT ----------------------------------------------------------------
- & PSGRTL,PSGRTM,&
- ! --- INPUT -----------------------------------------------------------------
- & PALPHPLL_DER,PALPHPLM_DER)
+SUBROUTINE GPGRP_EXPL(   LDVERTFE, YDGEOMETRY, KST, KEND, PRT, PRTL, PRTM, PREL, PREM, PRTGR, PALPH, &
+& PHIHL, PHIHM, PHIFL, PHIFM, PSGRTL, PSGRTM, PALPHPLL_DER, PALPHPLM_DER)
 
 !**** *GPGRP_EXPL* - Computation of the pressure gradient force term used in the
 !               RHS of the horizontal wind equation in hydrostatic model.
@@ -115,7 +108,7 @@ REAL(KIND=JPRB) :: ZHOOK_HANDLE
 
 !     ------------------------------------------------------------------
 
-IF (LHOOK) CALL DR_HOOK('GPGRP_EXPL',0,ZHOOK_HANDLE)
+IF (LHOOK) CALL DR_HOOK('GPGRP_EXPL', 0, ZHOOK_HANDLE)
 ASSOCIATE(NFLEVG=>YDGEOMETRY%YRDIMV%NFLEVG)
 
 !     ------------------------------------------------------------------
@@ -176,6 +169,6 @@ ENDIF
 
 END ASSOCIATE
 
-IF (LHOOK) CALL DR_HOOK('GPGRP_EXPL',1,ZHOOK_HANDLE)
+IF (LHOOK) CALL DR_HOOK('GPGRP_EXPL', 1, ZHOOK_HANDLE)
 
 END SUBROUTINE GPGRP_EXPL

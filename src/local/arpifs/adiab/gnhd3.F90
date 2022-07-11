@@ -1,10 +1,5 @@
-SUBROUTINE GNHD3( &
- ! --- INPUT -----------------------------------------------------------------
- & LD_RDRY_VD, YDCST, KFLEV,KPROMA,KSTART,KEND, &
- & PDIV,PNHX,PDVER,PR, &
- & PMAX_D3,LDBOUND_D3, &
- ! --- OUTPUT ----------------------------------------------------------------
- & P3DIVG)
+SUBROUTINE GNHD3(    LD_RDRY_VD, YDCST, KFLEV, KPROMA, KSTART, KEND, PDIV, PNHX, PDVER, PR, PMAX_D3, &
+& LDBOUND_D3, P3DIVG)
 
 ! GNHD3 - Diagnose D3-term in the NH model.
 
@@ -87,7 +82,7 @@ REAL(KIND=JPRB) :: ZHOOK_HANDLE
 
 ! -----------------------------------------------------------------------------
 
-IF (LHOOK) CALL DR_HOOK('GNHD3',0,ZHOOK_HANDLE)
+IF (LHOOK) CALL DR_HOOK('GNHD3', 0, ZHOOK_HANDLE)
 
 ! -----------------------------------------------------------------------------
 
@@ -116,7 +111,7 @@ ENDIF
 
 ! -----------------------------------------------------------------------------
 
-IF (LHOOK) CALL DR_HOOK('GNHD3',1,ZHOOK_HANDLE)
+IF (LHOOK) CALL DR_HOOK('GNHD3', 1, ZHOOK_HANDLE)
 
 END SUBROUTINE GNHD3
 

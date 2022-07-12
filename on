@@ -1,0 +1,10 @@
+#!/bin/bash
+
+set -x
+
+for f in $(find src/local/ -name '*.new')
+do
+  d=$(dirname $f)
+  f=$(basename $f .new)
+  mv $d/$f.new $d/$f
+done

@@ -1,0 +1,3 @@
+#!/bin/bash
+
+for f in $(find . -name '*.F90.new'); do vim -d $(dirname $f)/$(basename $f .new) $f; done

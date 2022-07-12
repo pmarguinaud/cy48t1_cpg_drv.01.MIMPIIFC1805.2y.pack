@@ -26,7 +26,7 @@ sub wanted
   my $f = $File::Find::name;
   return if ($seen{&basename ($f)}++);
   my $code = &slurp ($f);
-  my ($s) = ($code =~ m/.*(?:MODULE|FUNCTION|PROGRAM|SUBROUTINE)\s+(\w+)/goms);
+  my ($s) = ($code =~ m/(?:MODULE|FUNCTION|PROGRAM|SUBROUTINE)[ ]+(\w+)/goms);
   return unless ($s);
   $s = uc ($s);
   $f2f{$s} = $f;

@@ -152,7 +152,7 @@ USE YOMGMV                 , ONLY : TGMV
 USE PARKIND1               , ONLY : JPIM, JPRB
 USE YOMHOOK                , ONLY : LHOOK, DR_HOOK
 USE SC2PRG_MOD             , ONLY : SC2PRG
-USE YOMCST                 , ONLY : TCST, RD
+USE YOMCST                 , ONLY : TCST
 USE YOMSTA                 , ONLY : RTSUR
 USE YOMCT0                 , ONLY : LNHDYN, LTWOTL, LNHEE
 USE YOMCT3                 , ONLY : NSTEP
@@ -403,7 +403,7 @@ LLCTC=LPC_CHEAP .AND. NCURRENT_ITER > 0
 
 LLVD5=(NVDVAR==5)
 
-ZCMSLP=RCMSLP0/(RD*RTSUR)
+ZCMSLP=RCMSLP0/(YDCST%RD*RTSUR)
 
 !       1.3  reset to zero ddh arrays and pointers
 

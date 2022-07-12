@@ -1,0 +1,344 @@
+SUBROUTINE ESPNHEESI(&
+ ! --- INPUT -----------------------------------------------------------------
+ & YDCST, YDGEOMETRY,YDLDDH,YDRIP,YDDYN,KM,KMLOC,KSTA,KEND,LDONEM,&
+ ! --- INOUT -----------------------------------------------------------------
+ & PSPVORG,PSPDIVG,PSPTG,PSPSPG,PSPSPDG,PSPSVDG,&
+ & PSPTNDSI_VORG,PSPTNDSI_DIVG,PSPTNDSI_TG,PSPTNDSI_SPDG,PSPTNDSI_SVDG)
+
+!**** *ESPNHEESI* - SPECTRAL SPACE COMPUTATIONS FOR LAM MODEL
+!                   SEMI-IMPLICIT SCHEME (NHEE MODEL)
+
+! !! The structure of ESPNHEESI must remain very close to SPNHEESI !!
+!    Differences between ESPNHEESI and SPNHEESI are for example:
+!    * use of YDGEOMETRY%YRELAP instead of YDGEOMETRY%YRLAP for Laplacian and some indexations.
+!    * no use of option LSIDG.
+!    * no use of option LIMPF.
+
+!     Purpose.
+!     --------
+!       Semi-implicit scheme (inversion of linear system) in the NHEE model.
+!       The unknown in Helmholtz equation is assumed to be the horizontal divergence.
+
+!**   Interface.
+!     ----------
+!        *CALL* *ESPNHEESI(...)
+
+!        Explicit arguments :
+!        --------------------
+!         INPUT:
+!          YDGEOMETRY      : Structure containing geometry
+!          YDLDDH          : Structure containing DDH logical variables
+!          YDRIP           : Structure containing timestep
+!          YDDYN           : Structure containing dynamics
+!          KM              : Zonal wavenumber "m"
+!          KMLOC           : Zonal wavenumber "m" (DM-local numbering)
+!          KSTA            : First column processed
+!          KEND            : Last column processed
+!          LDONEM          : T if only one "m" is processed
+
+!         INOUT:
+!          PSPVORG         : Vorticity columns
+!          PSPDIVG         : Divergence columns
+!          PSPTG           : Temperature columns
+!          PSPSPG          : Surface pressure
+!          PSPSPDG         : Pressure departure variable (Qcha) columns
+!          PSPSVDG         : Vertical divergence variable (d4) columns
+!          PSPTNDSI_VORG   : Vorticity SI tendencies for DDH
+!          PSPTNDSI_DIVG   : Divergence SI tendencies for DDH
+!          PSPTNDSI_TG     : Temperature SI tendencies for DDH
+!          PSPTNDSI_SPDG   : Pressure departure variable (Qcha) SI tendencies for DDH
+!          PSPTNDSI_SVDG   : Vertical divergence variable (d4) SI tendencies for DDH
+
+!     Method.
+!     -------
+
+!     Externals.
+!     ----------
+
+!     Reference.
+!     ----------
+!        ECMWF Research Department documentation of the IFS
+!        Documentation (IDSI)
+
+!     Author.
+!     -------
+!        Karim YESSAD (METEO-FRANCE/CNRM/GMAP)
+!        Date: january 2018
+
+!     Modifications.
+!     --------------
+!     ------------------------------------------------------------------
+
+USE GEOMETRY_MOD , ONLY : GEOMETRY
+USE PARKIND1     , ONLY : JPIM     ,JPRB
+USE YOMHOOK      , ONLY : LHOOK,   DR_HOOK
+USE YOMCST       , ONLY : TCST
+USE YOMMP0       , ONLY : MYSETV
+USE YOMDYN       , ONLY : TDYN
+USE YOMLDDH      , ONLY : TLDDH
+USE YOMRIP       , ONLY : TRIP
+
+!     ------------------------------------------------------------------
+
+IMPLICIT NONE
+
+TYPE (TCST), INTENT (IN) :: YDCST
+TYPE(GEOMETRY)    ,INTENT(IN)    :: YDGEOMETRY
+TYPE(TLDDH)       ,INTENT(IN)    :: YDLDDH
+TYPE(TRIP)        ,INTENT(IN)    :: YDRIP
+TYPE(TDYN)        ,INTENT(IN)    :: YDDYN
+INTEGER(KIND=JPIM),INTENT(IN)    :: KM
+INTEGER(KIND=JPIM),INTENT(IN)    :: KMLOC
+INTEGER(KIND=JPIM),INTENT(IN)    :: KSTA
+INTEGER(KIND=JPIM),INTENT(IN)    :: KEND
+LOGICAL           ,INTENT(IN)    :: LDONEM
+REAL(KIND=JPRB)   ,INTENT(INOUT) :: PSPVORG(:,:)
+REAL(KIND=JPRB)   ,INTENT(INOUT) :: PSPDIVG(:,:)
+REAL(KIND=JPRB)   ,INTENT(INOUT) :: PSPTG(:,:)
+REAL(KIND=JPRB)   ,INTENT(INOUT) :: PSPSPG(:)
+REAL(KIND=JPRB)   ,INTENT(INOUT) :: PSPSPDG(:,:)
+REAL(KIND=JPRB)   ,INTENT(INOUT) :: PSPSVDG(:,:)
+REAL(KIND=JPRB)   ,INTENT(INOUT) :: PSPTNDSI_VORG(:,:)
+REAL(KIND=JPRB)   ,INTENT(INOUT) :: PSPTNDSI_DIVG(:,:)
+REAL(KIND=JPRB)   ,INTENT(INOUT) :: PSPTNDSI_TG(:,:)
+REAL(KIND=JPRB)   ,INTENT(INOUT) :: PSPTNDSI_SPDG(:,:)
+REAL(KIND=JPRB)   ,INTENT(INOUT) :: PSPTNDSI_SVDG(:,:)
+
+!     ------------------------------------------------------------------
+
+!! REAL(KIND=JPRB) :: ZZSPVORG(YDGEOMETRY%YRDIMV%NFLEVG,KSTA:KEND)
+REAL(KIND=JPRB) :: ZZSPDIVG(YDGEOMETRY%YRDIMV%NFLEVG,KSTA:KEND)
+REAL(KIND=JPRB) :: ZZSPTG(YDGEOMETRY%YRDIMV%NFLEVG,KSTA:KEND)
+REAL(KIND=JPRB) :: ZZSPSPG(KSTA:KEND)
+REAL(KIND=JPRB) :: ZZSPSPDG(YDGEOMETRY%YRDIMV%NFLEVG,KSTA:KEND)
+REAL(KIND=JPRB) :: ZZSPSVDG(YDGEOMETRY%YRDIMV%NFLEVG,KSTA:KEND)
+
+REAL(KIND=JPRB) :: ZZERO(KSTA:KEND)
+REAL(KIND=JPRB) :: ZSDIV(YDGEOMETRY%YRDIMV%NFLEVG,KSTA:KEND)
+REAL(KIND=JPRB) :: ZSVED(YDGEOMETRY%YRDIMV%NFLEVG,KSTA:KEND)
+REAL(KIND=JPRB) :: ZRDPRIM_STARSTAR(YDGEOMETRY%YRDIMV%NFLEVG,KSTA:KEND)
+REAL(KIND=JPRB) :: ZRDCHA_STARSTAR(YDGEOMETRY%YRDIMV%NFLEVG,KSTA:KEND)
+REAL(KIND=JPRB) :: Z11(YDGEOMETRY%YRDIMV%NFLEVG,KSTA:KEND)
+REAL(KIND=JPRB) :: Z12(YDGEOMETRY%YRDIMV%NFLEVG,KSTA:KEND)
+REAL(KIND=JPRB) :: Z21(YDGEOMETRY%YRDIMV%NFLEVG,KSTA:KEND)
+REAL(KIND=JPRB) :: Z22(YDGEOMETRY%YRDIMV%NFLEVG,KSTA:KEND)
+REAL(KIND=JPRB) :: Z23(YDGEOMETRY%YRDIMV%NFLEVG,KSTA:KEND)
+REAL(KIND=JPRB) :: ZM2SPDIVG(YDGEOMETRY%YRDIMV%NFLEVG,KSTA:KEND)
+REAL(KIND=JPRB) :: ZTAU_M2SPDIVG(YDGEOMETRY%YRDIMV%NFLEVG,KSTA:KEND)
+REAL(KIND=JPRB) :: ZNU_M2SPDIVG(KSTA:KEND)
+REAL(KIND=JPRB) :: ZSRHS(YDGEOMETRY%YRDIMV%NFLEVG,KSTA:KEND)
+REAL(KIND=JPRB) :: ZSRHS_VES(YDGEOMETRY%YRDIMV%NFLEVG,KSTA:KEND)
+REAL(KIND=JPRB) :: ZZSPDIVG_VES(YDGEOMETRY%YRDIMV%NFLEVG,KSTA:KEND)
+REAL(KIND=JPRB) :: ZLAPDI(KSTA:KEND)
+
+INTEGER(KIND=JPIM) :: IN, IM, ISP, IOFF, ISPCOL, JLEV, JSP
+
+REAL(KIND=JPRB) :: ZBDT, ZBDT2, ZH2, ZC2, ZMBABAR
+REAL(KIND=JPRB) :: ZHOOK_HANDLE
+
+!     ------------------------------------------------------------------
+
+#include "mxmaop.h"
+
+#include "abor1.intfb.h"
+#include "sigam.intfb.h"
+#include "sitnu.intfb.h"
+#include "sidd.intfb.h"
+#include "siseve.intfb.h"
+
+!     ------------------------------------------------------------------
+
+IF (LHOOK) CALL DR_HOOK('ESPNHEESI',0,ZHOOK_HANDLE)
+
+ASSOCIATE( &
+ & NPTRSV=>YDGEOMETRY%YRMP%NPTRSV, NPTRSVF=>YDGEOMETRY%YRMP%NPTRSVF, &
+ & RSTRET=>YDGEOMETRY%YRGEM%RSTRET, &
+ & NFLEVG=>YDGEOMETRY%YRDIMV%NFLEVG, &
+ & SIMO=>YDDYN%SIMO,SIMI=>YDDYN%SIMI,SIVP=>YDDYN%SIVP, &
+ & SITR=>YDDYN%SITR, &
+ & SIFACI=>YDDYN%SIFACI, &
+ & RBTS2=>YDDYN%RBTS2, &
+ & LIMPF=>YDDYN%LIMPF, &
+ & LSIDG=>YDDYN%LSIDG, &
+ & TDT=>YDRIP%TDT, &
+ & LRSIDDH=>YDLDDH%LRSIDDH)
+ 
+!     ------------------------------------------------------------------
+
+!*       0.    PRELIMINARY CALCULATIONS.
+!              -------------------------
+
+IF (LIMPF) CALL ABOR1(' ESPNHEESI: LIMPF=T not available in LAM models')
+IF (LSIDG) CALL ABOR1(' ESPNHEESI: LSIDG=T not available in LAM models')
+
+IF (LDONEM) THEN
+  IOFF=NPTRSVF(MYSETV)-1
+ELSE
+  IOFF=NPTRSV(MYSETV)-1
+ENDIF
+ISPCOL=KEND-KSTA+1
+
+ZBDT=RBTS2*TDT
+ZBDT2=(ZBDT*RSTRET)**2
+
+ZH2=((YDCST%RD*SITR)/YDCST%RG)**2
+ZC2=YDCST%RD*SITR*YDCST%RCPD/YDCST%RCVD
+ZMBABAR=RSTRET*RSTRET
+
+!cdir noloopchg
+DO JSP=KSTA,KEND
+  IN=YDGEOMETRY%YRLAP%NVALUE(JSP+IOFF)
+  IM=YDGEOMETRY%YRELAP%MVALUE(JSP+IOFF)
+  ISP=YDGEOMETRY%YRELAP%NPME(IM)+IN
+  ZLAPDI(JSP)=YDGEOMETRY%YRELAP%RLEPDIM(ISP)
+ENDDO
+
+!     ------------------------------------------------------------------
+
+!*       1.    MEMORY TRANSFER.
+!              ----------------
+
+!! IF (LIMPF) ZZSPVORG(1:NFLEVG,KSTA:KEND)=PSPVORG(1:NFLEVG,KSTA:KEND)
+ZZSPDIVG(1:NFLEVG,KSTA:KEND)=PSPDIVG(1:NFLEVG,KSTA:KEND)
+ZZSPTG  (1:NFLEVG,KSTA:KEND)=PSPTG  (1:NFLEVG,KSTA:KEND)
+ZZSPSPG (         KSTA:KEND)=PSPSPG (         KSTA:KEND)
+ZZSPSPDG(1:NFLEVG,KSTA:KEND)=PSPSPDG(1:NFLEVG,KSTA:KEND)
+ZZSPSVDG(1:NFLEVG,KSTA:KEND)=PSPSVDG(1:NFLEVG,KSTA:KEND)
+
+IF (LRSIDDH) THEN
+  ! DDH memory transfer.
+  !! IF (LIMPF) PSPTNDSI_VORG(1:NFLEVG,KSTA:KEND)=-PSPVORG(1:NFLEVG,KSTA:KEND)
+  PSPTNDSI_DIVG(1:NFLEVG,KSTA:KEND)=-PSPDIVG(1:NFLEVG,KSTA:KEND)
+  PSPTNDSI_TG  (1:NFLEVG,KSTA:KEND)=-PSPTG  (1:NFLEVG,KSTA:KEND)
+  PSPTNDSI_SPDG(1:NFLEVG,KSTA:KEND)=-PSPSPDG(1:NFLEVG,KSTA:KEND)
+  PSPTNDSI_SVDG(1:NFLEVG,KSTA:KEND)=-PSPSVDG(1:NFLEVG,KSTA:KEND)
+  !the case of surface pressure has not been treated yet
+ENDIF
+
+!     ------------------------------------------------------------------
+
+!*       2.    SEMI-IMPLICIT SPECTRAL COMPUTATIONS.
+!              ------------------------------------
+
+!*        2.AB Preliminary initialisations, and RHS of Helmholtz equation.
+
+! * Provides:
+!   a/ ZSDIV = - [ SITR gamma Qcha_rhs - Rd SITR Qcha_rhs - gamma T_rhs - Rd SITR logprehyd_rhs ]
+!   b/ ZSVED = (g TRSI)/(H TARSI) LLstar Qcha_rhs = g/H LLstarstar Qcha_rhs
+CALL SIDD(YDCST, YDGEOMETRY,YDDYN,1,NFLEVG,ZSDIV,ZSVED,ZZSPSPDG,ZZSPTG,ZZSPSPG,ISPCOL)
+
+! * Provides Dprim_star_star in ZRDPRIM_STARSTAR and Dcha_star_star in ZRDCHA_STARSTAR.
+DO JSP=KSTA,KEND
+  DO JLEV=1,NFLEVG
+    ZRDPRIM_STARSTAR(JLEV,JSP)=ZZSPDIVG(JLEV,JSP)-ZBDT*ZLAPDI(JSP)*ZSDIV(JLEV,JSP)
+    ZRDCHA_STARSTAR(JLEV,JSP)=ZZSPSVDG(JLEV,JSP)-ZBDT*ZSVED(JLEV,JSP)
+  ENDDO
+ENDDO
+
+! * Z11 = SIFACI * ZRDCHA_STARSTAR
+CALL MXMAOP(SIFACI,1,NFLEVG,ZRDCHA_STARSTAR,1,NFLEVG,Z11,1,NFLEVG,NFLEVG,NFLEVG,ISPCOL)
+
+! * Z12 = gamma * Z11
+ZZERO(KSTA:KEND)=0.0_JPRB
+CALL SIGAM(YDCST, YDGEOMETRY,YDDYN,1,NFLEVG,Z12,Z11,ZZERO,ISPCOL,NFLEVG)
+
+! * ZSRHS = ZRDPRIM_STARSTAR - ZBDT*ZBDT*ZLAPDI (SITR * Z12 - C**2 * Z11)
+DO JSP=KSTA,KEND
+  DO JLEV=1,NFLEVG
+    ZSRHS(JLEV,JSP)=ZRDPRIM_STARSTAR(JLEV,JSP)-ZBDT*ZBDT*ZLAPDI(JSP)*(SITR*Z12(JLEV,JSP)-ZC2*Z11(JLEV,JSP))
+  ENDDO
+ENDDO
+
+!*        2.C  Invert Helmholtz equation through vertical eigenmodes space.
+
+! * go into vertical eigenmodes space.
+CALL MXMAOP(SIMI,1,NFLEVG,ZSRHS,1,NFLEVG,ZSRHS_VES,1,NFLEVG,NFLEVG,NFLEVG,ISPCOL)
+
+! * solve Helmholtz equation.
+DO JSP=KSTA,KEND
+  DO JLEV=1,NFLEVG
+    ZZSPDIVG_VES(JLEV,JSP)=ZSRHS_VES(JLEV,JSP)/(1.0_JPRB-ZBDT2*SIVP(JLEV)*ZLAPDI(JSP))
+  ENDDO
+ENDDO
+
+! * return into current space; ZZSPDIVG contains DIV'(t+dt).
+CALL MXMAOP(SIMO,1,NFLEVG,ZZSPDIVG_VES,1,NFLEVG,ZZSPDIVG,1,NFLEVG,NFLEVG,NFLEVG,ISPCOL)
+
+!*        2.D  Solve the other equations.
+
+! * ZM2SPDIVG = RSTRET**2 * ZZSPDIVG
+DO JSP=KSTA,KEND
+  DO JLEV=1,NFLEVG
+    ZM2SPDIVG(JLEV,JSP)=ZMBABAR*ZZSPDIVG(JLEV,JSP)
+  ENDDO
+ENDDO
+
+! * ZTAU_M2SPDIVG = tau * ZM2SPDIVG, and ZNU_M2SPDIVG = nu * ZM2SPDIVG
+CALL SITNU(YDCST, YDGEOMETRY,YDDYN,1,NFLEVG,ZM2SPDIVG,ZTAU_M2SPDIVG,ZNU_M2SPDIVG,ISPCOL)
+
+! * Provides final value of vertical divergence variable:
+!   d(t+dt) = SIFACI * [ Dcha_star_star - (ZBDT**2/H**2) LL_star_star (Cpdry [tau ZM2SPDIVG] - C**2 ZM2SPDIVG) ]
+!   Z21=Cpdry [tau ZM2SPDIVG] - C**2 ZM2SPDIVG
+!   Z22=LL_star_star (Cpdry [tau ZM2SPDIVG] - C**2 ZM2SPDIVG)
+!   Z23=Dcha_star_star - (ZBDT**2/H**2) LL_star_star (Cpdry [tau ZM2SPDIVG] - C**2 ZM2SPDIVG)
+DO JSP=KSTA,KEND
+  DO JLEV=1,NFLEVG
+    Z21(JLEV,JSP)=YDCST%RCPD*ZTAU_M2SPDIVG(JLEV,JSP)-ZC2*ZM2SPDIVG(JLEV,JSP)
+  ENDDO
+ENDDO
+CALL SISEVE(YDGEOMETRY,YDDYN,1,NFLEVG,Z21,Z22,ISPCOL)
+DO JSP=KSTA,KEND
+  DO JLEV=1,NFLEVG
+    Z23(JLEV,JSP)=ZRDCHA_STARSTAR(JLEV,JSP)-(ZBDT*ZBDT/ZH2)*Z22(JLEV,JSP)
+  ENDDO
+ENDDO
+CALL MXMAOP(SIFACI,1,NFLEVG,Z23,1,NFLEVG,ZZSPSVDG,1,NFLEVG,NFLEVG,NFLEVG,ISPCOL)
+
+! * Provides final value of Qcha:
+!   Qcha(t+dt) = Qcha_star - ZBDT [(Cpdry/Cvdry) (ZM2SPDIVG + ZZSPSVDG) - (Cpdry/Rdry)(1/SITR) [tau ZM2SPDIVG]]
+DO JSP=KSTA,KEND
+  DO JLEV=1,NFLEVG
+    ZZSPSPDG(JLEV,JSP)=ZZSPSPDG(JLEV,JSP) &
+     & -ZBDT*( (YDCST%RCPD/YDCST%RCVD) * (ZM2SPDIVG(JLEV,JSP)+ZZSPSVDG(JLEV,JSP)) - (YDCST%RCPD/(YDCST%RD*SITR)) * ZTAU_M2SPDIVG(JLEV,JSP) )
+  ENDDO
+ENDDO
+
+! * Provides final value of T:
+!   T(t+dt) = T_star - ZBDT (Rdry*SITR/Cvdry) [ ZM2SPDIVG + ZZSPSVDG ]
+DO JSP=KSTA,KEND
+  DO JLEV=1,NFLEVG
+    ZZSPTG(JLEV,JSP)=ZZSPTG(JLEV,JSP)-ZBDT*(YDCST%RD*SITR/YDCST%RCVD)*(ZM2SPDIVG(JLEV,JSP)+ZZSPSVDG(JLEV,JSP))
+  ENDDO
+ENDDO
+
+! * Provides final value of log(prehyds):
+!   log(prehyds)(t+dt) = log(prehyds)_star - ZBDT * ZNU_M2SPDIVG
+DO JSP=KSTA,KEND
+  ZZSPSPG(JSP)=ZZSPSPG(JSP)-ZBDT*ZNU_M2SPDIVG(JSP)
+ENDDO
+
+!     ------------------------------------------------------------------
+
+!*       3.    COMPUTATION OF SI TERM AT t+dt FOR DDH.
+!              ---------------------------------------
+
+!! IF (LIMPF) PSPVORG(1:NFLEVG,KSTA:KEND)=ZZSPVORG(1:NFLEVG,KSTA:KEND)
+PSPDIVG(1:NFLEVG,KSTA:KEND)=ZZSPDIVG(1:NFLEVG,KSTA:KEND)
+PSPTG  (1:NFLEVG,KSTA:KEND)=ZZSPTG  (1:NFLEVG,KSTA:KEND)
+PSPSPG (         KSTA:KEND)=ZZSPSPG (         KSTA:KEND)
+PSPSPDG(1:NFLEVG,KSTA:KEND)=ZZSPSPDG(1:NFLEVG,KSTA:KEND)
+PSPSVDG(1:NFLEVG,KSTA:KEND)=ZZSPSVDG(1:NFLEVG,KSTA:KEND)
+
+IF (LRSIDDH) THEN
+  !! IF (LIMPF) PSPTNDSI_VORG(1:NFLEVG,KSTA:KEND)=PSPTNDSI_VORG(1:NFLEVG,KSTA:KEND)+PSPVORG(1:NFLEVG,KSTA:KEND)
+  PSPTNDSI_DIVG(1:NFLEVG,KSTA:KEND)=PSPTNDSI_DIVG(1:NFLEVG,KSTA:KEND)+PSPDIVG(1:NFLEVG,KSTA:KEND)
+  PSPTNDSI_TG(1:NFLEVG,KSTA:KEND)=PSPTNDSI_TG(1:NFLEVG,KSTA:KEND)+PSPTG(1:NFLEVG,KSTA:KEND)
+  PSPTNDSI_SPDG(1:NFLEVG,KSTA:KEND)=PSPTNDSI_SPDG(1:NFLEVG,KSTA:KEND)+PSPSPDG(1:NFLEVG,KSTA:KEND)
+  PSPTNDSI_SVDG(1:NFLEVG,KSTA:KEND)=PSPTNDSI_SVDG(1:NFLEVG,KSTA:KEND)+PSPSVDG(1:NFLEVG,KSTA:KEND)
+ENDIF
+
+!     ------------------------------------------------------------------
+
+END ASSOCIATE
+IF (LHOOK) CALL DR_HOOK('ESPNHEESI',1,ZHOOK_HANDLE)
+END SUBROUTINE ESPNHEESI

@@ -1,0 +1,430 @@
+!OCL  NOEVAL
+SUBROUTINE LAVENT(YDCST, YDGEOMETRY,YDGMV,YDRIP,YDML_DYN,YDPARAR,KST,KPROF,KIBL,KSETTLOFF,LD2TLFF1, &
+ & PDTS2,PRDELP,PEVEL,PATND,PGMV,PB1,PB2,PWRL9)
+
+!**** *LAVENT*   Semi-Lagrangian scheme.
+!                Computation of wind components necessary 
+!                to find the SL trajectory.
+
+!     Purpose.
+!     --------
+!          This subroutine computes the wind components at t
+!          at each grid-point of the colocation grid (Gauss
+!          grid and poles at all levels). These quantities will
+!          be used in routine (E)LARMES to find the semi-Lagrangian trajectory.
+
+!**   Interface.
+!     ----------
+!        *CALL* *LAVENT(..)
+
+!        Explicit arguments :
+!        --------------------
+
+!        INPUT:
+!          KST       - first element of work.
+!          KPROF     - depth of work.
+!          KIBL      - index into YDGSGEOM instance in YDGEOMETRY (NPROMA chunks counter)
+!          LD2TLFF1  - .T./.F.: Refined treatement of (2*Omega Vec r) at
+!                      the origin point when there is t-dt (or t in SL2TL)
+!                      physics / Other cases.
+!          PDTS2     - 0.5*(time step) for the first time-integration step of
+!                      a leap-frog scheme or all time-integration steps of
+!                      a two-time level scheme; time step for the following
+!                      time-integration steps of a leap-frog scheme.
+!          PRDELP    - "1/(pressure depth of layers)" at t.
+!          PEVEL     - "etadot (d prehyd/d eta)" at t.
+!          PATND     - adiabatic Lagrangian tendencies.
+
+!        INPUT/OUTPUT:
+!          PGMV      - GMV variables at t-dt and t.
+!          PB1       - "SLBUF1" buffer for interpolations.
+
+!        OUTPUT:
+!          PB2       - "SLBUF2" buffer.
+!          KSETTLOFF - counter for SETTLSTF=T (# of points new scheme activated at each lev)
+!          PWRL9     - vertical velocity at t - dt. (to be eventually stored in trajectory)
+
+!        Implicit arguments :
+!        --------------------
+
+!     Method.
+!     -------
+!        See documentation
+
+!     Externals.
+!     ----------
+!           none
+!           Called by LACDYN.
+
+!     Reference.
+!     ----------
+!             Arpege documentation about semi-Lagrangian scheme.
+
+!     Author.
+!     -------
+!      K. YESSAD (METEO FRANCE/CNRM/GMAP) after old loops 3202 and 3212 of LACDYN.
+!      Original : AUGUST 1995.
+
+! Modifications
+! -------------
+!   N. Wedi and K. Yessad (Jan 2008): different dev for NH model and PC scheme
+!   K. Yessad Aug 2008: rationalisation of dummy argument interfaces + optimis.
+!   F. Vana  15-Oct-2009: NSPLTHOI option
+!   K. Yessad Nov 2009: rm case (lsettlst,lpc_nesct)=(f,f) for sl2tl
+!   K. Yessad (Jan 2011): introduce INTDYN_MOD structures.
+!   F. Vana  22-Feb-2011: NWLAG=4
+!   K. Yessad (Nov 2011): use PATND for RHS of wind equation.
+!   K. Yessad (Oct 2013): allow NESCT or SETTLST for predictor of LPC_CHEAP.
+!   K. Yessad (Oct 2013): use NESCV or SETTLSV for vertical displacement.
+!   K. Yessad (July 2014): Rename some variables, move some variables.
+!   M. Diamantakis (Feb 2014): code for LSETTLSVF=T (SETTLST filter)
+!   F. Vana and M. Diamantakis (Aug 2016): regularization of LSETTLSVF=T
+!   F. Vana and J. Masek   21-Nov-2017: Option LSLDP_CURV
+!   K. Yessad (Feb 2018): remove deep-layer formulations.
+!   F. Vana July 2018: RK4 scheme for trajectory research.
+!   H Petithomme (Dec 2020): turn ZUCOMP to scalar
+! End Modifications
+!------------------------------------------------------------------------------
+
+USE MODEL_DYNAMICS_MOD , ONLY : MODEL_DYNAMICS_TYPE
+USE GEOMETRY_MOD       , ONLY : GEOMETRY
+USE YOMGMV             , ONLY : TGMV
+USE PARKIND1           , ONLY : JPIM, JPRB
+USE YOMHOOK            , ONLY : LHOOK, DR_HOOK
+USE YOMCST             , ONLY : TCST
+USE YOMCT0             , ONLY : LAROME, LTWOTL
+USE YOMCT3             , ONLY : NSTEP
+USE YOMCVER            , ONLY : LVERTFE
+USE YOMDYNA            , ONLY : LPC_FULL, LNESCT, LNESCV, LELTRA, LSETTLST, LSETTLSV
+USE YOMRIP             , ONLY : TRIP
+USE YOMPARAR           , ONLY : TPARAR
+USE INTDYN_MOD         , ONLY : YYTTND
+
+!     ------------------------------------------------------------------
+
+IMPLICIT NONE
+
+TYPE (TCST), INTENT (IN) :: YDCST
+TYPE(GEOMETRY)    ,INTENT(IN)    :: YDGEOMETRY
+TYPE(TGMV)        ,INTENT(INOUT) :: YDGMV
+TYPE(MODEL_DYNAMICS_TYPE),INTENT(IN):: YDML_DYN
+TYPE(TPARAR)      ,INTENT(IN)    :: YDPARAR
+TYPE(TRIP)        ,INTENT(IN)    :: YDRIP
+INTEGER(KIND=JPIM),INTENT(IN)    :: KST
+INTEGER(KIND=JPIM),INTENT(IN)    :: KPROF 
+INTEGER(KIND=JPIM),INTENT(IN)    :: KIBL
+INTEGER(KIND=JPIM),INTENT(OUT)   :: KSETTLOFF(YDGEOMETRY%YRDIMV%NFLEVG)
+LOGICAL           ,INTENT(IN)    :: LD2TLFF1 
+REAL(KIND=JPRB)   ,INTENT(IN)    :: PDTS2 
+REAL(KIND=JPRB)   ,INTENT(IN)    :: PRDELP(YDGEOMETRY%YRDIM%NPROMA,YDGEOMETRY%YRDIMV%NFLEVG)
+REAL(KIND=JPRB)   ,INTENT(IN)    :: PEVEL(YDGEOMETRY%YRDIM%NPROMA,0:YDGEOMETRY%YRDIMV%NFLEVG)
+REAL(KIND=JPRB)   ,INTENT(IN)    :: PATND(YDGEOMETRY%YRDIM%NPROMA,YDGEOMETRY%YRDIMV%NFLEVG,YYTTND%NDIM)
+REAL(KIND=JPRB)   ,INTENT(INOUT) :: PGMV(YDGEOMETRY%YRDIM%NPROMA,YDGEOMETRY%YRDIMV%NFLEVG,YDGMV%NDIMGMV)
+REAL(KIND=JPRB)   ,INTENT(INOUT) :: PB1(YDGEOMETRY%YRDIM%NPROMA,YDML_DYN%YRPTRSLB1%NFLDSLB1)
+REAL(KIND=JPRB)   ,INTENT(OUT)   :: PB2(YDGEOMETRY%YRDIM%NPROMA,YDML_DYN%YRPTRSLB2%NFLDSLB2)
+REAL(KIND=JPRB)   ,INTENT(OUT)   :: PWRL9(YDGEOMETRY%YRDIM%NPROMA,YDGEOMETRY%YRDIMV%NFLEVG)
+!     ------------------------------------------------------------------
+INTEGER(KIND=JPIM) ::JROF, JLEV
+INTEGER(KIND=JPIM) :: ISLB1U9, ISLB1V9
+REAL(KIND=JPRB) :: ZWRL0(YDGEOMETRY%YRDIM%NPROMA,YDGEOMETRY%YRDIMV%NFLEVG)
+REAL(KIND=JPRB) :: ZUSA, ZALPHA,ZUCOMP
+LOGICAL :: LLCT, LLSETTLST, LLNESCT, LLSETTLSV, LLNESCV
+
+REAL(KIND=JPRB) :: ZHOOK_HANDLE
+
+!     ------------------------------------------------------------------
+
+IF (LHOOK) CALL DR_HOOK('LAVENT',0,ZHOOK_HANDLE)
+ASSOCIATE(YDDIM=>YDGEOMETRY%YRDIM,YDDIMV=>YDGEOMETRY%YRDIMV,YDGEM=>YDGEOMETRY%YRGEM, &
+  & YDMP=>YDGEOMETRY%YRMP, YDVAB=>YDGEOMETRY%YRVAB, YDVETA=>YDGEOMETRY%YRVETA, &
+  & YDVFE=>YDGEOMETRY%YRVFE, YDDYN=>YDML_DYN%YRDYN,YDPTRSLB1=>YDML_DYN%YRPTRSLB1,YDPTRSLB2=>YDML_DYN%YRPTRSLB2,&
+  & YDGSGEOM=>YDGEOMETRY%YRGSGEOM(KIBL))
+
+ASSOCIATE(NPROMA=>YDDIM%NPROMA, &
+ & NFLEVG=>YDDIMV%NFLEVG, NFLSA=>YDDIMV%NFLSA, &
+ & LSETFSTAT=>YDDYN%LSETFSTAT, LSETTLSVF=>YDDYN%LSETTLSVF, LSVTSM=>YDDYN%LSVTSM, &
+ & RSCALE=>YDDYN%RSCALE,RSCALEOFF=>YDDYN%RSCALEOFF, LSLDP_CURV=>YDDYN%LSLDP_CURV, &
+ & LSLDP_RK=>YDDYN%LSLDP_RK, NCURRENT_ITER=>YDDYN%NCURRENT_ITER, NFLEVSF=>YDDYN%NFLEVSF, &
+ & NSPLTHOI=>YDDYN%NSPLTHOI, NWLAG=>YDDYN%NWLAG, &
+ & NFOST=>YDRIP%NFOST, &
+ & NDIMGMV=>YDGMV%NDIMGMV, YT0=>YDGMV%YT0, YT9=>YDGMV%YT9, &
+ & MSLB1U9=>YDPTRSLB1%MSLB1U9, MSLB1UF9=>YDPTRSLB1%MSLB1UF9, &
+ & MSLB1UR0=>YDPTRSLB1%MSLB1UR0, MSLB1UR9=>YDPTRSLB1%MSLB1UR9, &
+ & MSLB1ZR0=>YDPTRSLB1%MSLB1ZR0, &
+ & MSLB1V9=>YDPTRSLB1%MSLB1V9, MSLB1VF9=>YDPTRSLB1%MSLB1VF9, &
+ & MSLB1VR0=>YDPTRSLB1%MSLB1VR0, MSLB1VR9=>YDPTRSLB1%MSLB1VR9, &
+ & MSLB1WR0=>YDPTRSLB1%MSLB1WR0, MSLB1WRA=>YDPTRSLB1%MSLB1WRA, &
+ & MSLB1UR00=>YDPTRSLB1%MSLB1UR00, MSLB1VR00=>YDPTRSLB1%MSLB1VR00, &
+ & MSLB1ZR00=>YDPTRSLB1%MSLB1ZR00, MSLB1WR00=>YDPTRSLB1%MSLB1WR00, &
+ & NFLDSLB1=>YDPTRSLB1%NFLDSLB1, &
+ & MSLB2URL=>YDPTRSLB2%MSLB2URL, MSLB2VRL=>YDPTRSLB2%MSLB2VRL, &
+ & MSLB2WRL=>YDPTRSLB2%MSLB2WRL, NFLDSLB2=>YDPTRSLB2%NFLDSLB2, &
+ & LSQUALL=>YDPARAR%LSQUALL, VSQUALL=>YDPARAR%VSQUALL)
+!     ------------------------------------------------------------------
+
+ZUSA=1.0_JPRB/YDCST%RA
+
+LLCT = (LPC_FULL .AND. NCURRENT_ITER > 0)
+
+LLSETTLST=LSETTLST.AND.(.NOT.LELTRA)
+LLNESCT=LNESCT
+LLSETTLSV=LSETTLSV.AND.(.NOT.LELTRA)
+LLNESCV=LNESCV
+
+IF ((NSPLTHOI /= 0).AND.(NWLAG<4)) THEN
+  ISLB1U9  = MSLB1UF9
+  ISLB1V9  = MSLB1VF9
+ELSE
+  ISLB1U9  = MSLB1U9
+  ISLB1V9  = MSLB1V9
+ENDIF  
+
+
+!     * Computation of "etadot" at full levels.
+
+IF(LVERTFE) THEN
+  ! PEVEL is at full levels.
+  DO JLEV=1,NFLEVG
+    DO JROF=KST,KPROF
+      ZWRL0(JROF,JLEV)=PEVEL(JROF,JLEV)&
+       & *(YDVETA%VETAH(JLEV)-YDVETA%VETAH(JLEV-1))*PRDELP(JROF,JLEV)
+    ENDDO
+  ENDDO
+ELSE
+  ! PEVEL is at half levels.
+  DO JLEV=1,NFLEVG
+    DO JROF=KST,KPROF
+      ZWRL0(JROF,JLEV)=&
+       & 0.5_JPRB*(PEVEL(JROF,JLEV)+PEVEL(JROF,JLEV-1))&
+       & *(YDVETA%VETAH(JLEV)-YDVETA%VETAH(JLEV-1))*PRDELP(JROF,JLEV)
+    ENDDO
+  ENDDO
+ENDIF
+
+!     * Computation of wind components necessary to find the SL trajectory.
+
+IF(LTWOTL.AND.LSVTSM) THEN
+  DO JLEV=1,NFLEVG
+    PB1(KST:KPROF,MSLB1WRA+JLEV-NFLSA)=ZWRL0(KST:KPROF,JLEV)
+  ENDDO
+ENDIF
+
+
+IF (LTWOTL.AND.LELTRA) THEN
+
+  ! Use the RHS of momentum equation.
+  DO JLEV=1,NFLEVG
+    DO JROF=KST,KPROF
+      PB1(JROF,MSLB1UR0+JLEV-NFLSA)=&
+       & PGMV(JROF,JLEV,YT0%MU)+0.5_JPRB*PB1(JROF,ISLB1U9+JLEV-NFLSA)&
+       & +PDTS2*PATND(JROF,JLEV,YYTTND%M_TNDU)
+      PB1(JROF,MSLB1VR0+JLEV-NFLSA)=&
+       & PGMV(JROF,JLEV,YT0%MV)+0.5_JPRB*PB1(JROF,ISLB1V9+JLEV-NFLSA)&
+       & +PDTS2*PATND(JROF,JLEV,YYTTND%M_TNDV)
+    ENDDO
+  ENDDO
+
+  DO JLEV=1,NFLEVG
+    PB1(KST:KPROF,MSLB1WR0+JLEV-NFLSA)=ZWRL0(KST:KPROF,JLEV)
+    PB2(KST:KPROF,MSLB2URL+JLEV-1)=PB1(KST:KPROF,MSLB1UR0+JLEV-NFLSA)
+    PB2(KST:KPROF,MSLB2VRL+JLEV-1)=PB1(KST:KPROF,MSLB1VR0+JLEV-NFLSA)
+    PB2(KST:KPROF,MSLB2WRL+JLEV-1)=PB1(KST:KPROF,MSLB1WR0+JLEV-NFLSA)
+  ENDDO
+
+  IF (LD2TLFF1) THEN
+    DO JLEV=1,NFLEVG
+      PB1(KST:KPROF,MSLB1UR9+JLEV-NFLSA)=PGMV(KST:KPROF,JLEV,YT0%MU)
+      PB1(KST:KPROF,MSLB1VR9+JLEV-NFLSA)=PGMV(KST:KPROF,JLEV,YT0%MV)
+    ENDDO
+  ENDIF
+
+ELSEIF (LTWOTL.AND.(.NOT.LELTRA)) THEN
+
+  IF (.NOT.LLCT) THEN
+
+    ! * Cases:
+    !   NSITER=0
+    !   Predictor step of LPC_FULL
+
+    ! -- Horizontal displacement:
+    IF ( NSTEP <= NFOST .OR. LLNESCT ) THEN
+      ! * non-extrapolating scheme X(t+dt) = X(t) 
+      DO JLEV=1,NFLEVG
+        PB1(KST:KPROF,MSLB1UR0+JLEV-NFLSA)=PGMV(KST:KPROF,JLEV,YT0%MU)
+        PB1(KST:KPROF,MSLB1VR0+JLEV-NFLSA)=PGMV(KST:KPROF,JLEV,YT0%MV)
+      ENDDO
+      DO JLEV=1,NFLEVG
+        PB2(KST:KPROF,MSLB2URL+JLEV-1)=PB1(KST:KPROF,MSLB1UR0+JLEV-NFLSA)
+        PB2(KST:KPROF,MSLB2VRL+JLEV-1)=PB1(KST:KPROF,MSLB1VR0+JLEV-NFLSA)
+      ENDDO
+    ELSEIF (LLSETTLST) THEN
+      ! * SETTLS-extrapolating schemes X(t+dt) = f( X(t),X(t-dt) )
+      DO JLEV=1,NFLEVG
+        DO JROF=KST,KPROF
+          PB1(JROF,MSLB1UR0+JLEV-NFLSA)=2.0_JPRB*PGMV(JROF,JLEV,YT0%MU)&
+           & -PGMV(JROF,JLEV,YT9%MU)
+          PB1(JROF,MSLB1VR0+JLEV-NFLSA)=2.0_JPRB*PGMV(JROF,JLEV,YT0%MV)&
+           & -PGMV(JROF,JLEV,YT9%MV)
+        ENDDO
+      ENDDO
+      DO JLEV=1,NFLEVG
+        PB2(KST:KPROF,MSLB2URL+JLEV-1)=PGMV(KST:KPROF,JLEV,YT0%MU)
+        PB2(KST:KPROF,MSLB2VRL+JLEV-1)=PGMV(KST:KPROF,JLEV,YT0%MV)
+      ENDDO
+    ENDIF
+
+    ! -- Vertical displacement:
+    IF ( NSTEP <= NFOST .OR. LLNESCV ) THEN
+      ! * non-extrapolating scheme X(t+dt) = X(t) 
+      DO JLEV=1,NFLEVG
+        PB1(KST:KPROF,MSLB1WR0+JLEV-NFLSA)=ZWRL0(KST:KPROF,JLEV)
+        PB2(KST:KPROF,MSLB2WRL+JLEV-1)=PB1(KST:KPROF,MSLB1WR0+JLEV-NFLSA)
+      ENDDO
+      IF (NSTEP == 0 .AND. LSETTLSVF) PWRL9(KST:KPROF,1:NFLEVG)=0.0_JPRB
+    ELSEIF (LLSETTLSV) THEN
+      ! * SETTLS-extrapolating schemes X(t+dt) = f( X(t),X(t-dt) )
+      IF (LSETTLSVF) THEN
+        ! detect noisy gridpoints which should not be extrapolated
+        DO JLEV=1,NFLEVSF
+          KSETTLOFF(JLEV)=0
+          DO JROF=KST,KPROF
+          ! this is equal to 1-2-1 average for tn-1, tn, tn+1 etadot values where tn+1
+          ! is obtained with 2nd order t-extrapolation 
+            ZALPHA=0.5_JPRB*(1._JPRB - &
+              & TANH(-RSCALE*(ZWRL0(JROF,JLEV)*PGMV(JROF,JLEV,YT9%MEDOT)+RSCALEOFF)))
+
+            PB1(JROF,MSLB1WR0+JLEV-NFLSA)=ZWRL0(JROF,JLEV) + &
+              & ZALPHA*(ZWRL0(JROF,JLEV)-PGMV(JROF,JLEV,YT9%MEDOT))
+            IF (LSETFSTAT) KSETTLOFF(JLEV)=KSETTLOFF(JLEV)+NINT(1.0_JPRB-ZALPHA)
+          ENDDO
+        ENDDO
+        DO JLEV=NFLEVSF+1,NFLEVG
+          DO JROF=KST,KPROF
+            PB1(JROF,MSLB1WR0+JLEV-NFLSA)=2.0_JPRB*ZWRL0(JROF,JLEV)&
+             & -PGMV(JROF,JLEV,YT9%MEDOT)
+          ENDDO
+        ENDDO
+        PWRL9(KST:KPROF,1:NFLEVG)=PGMV(KST:KPROF,1:NFLEVG,YT9%MEDOT)
+      ELSE
+        DO JLEV=1,NFLEVG
+          DO JROF=KST,KPROF
+            PB1(JROF,MSLB1WR0+JLEV-NFLSA)=2.0_JPRB*ZWRL0(JROF,JLEV)&
+             & -PGMV(JROF,JLEV,YT9%MEDOT)
+          ENDDO
+        ENDDO
+#ifdef WITH_MGRIDS
+        IF( YDML_DYN%YR_MGRIDS_ADVECTION%ACTIVE() ) THEN
+          PWRL9(KST:KPROF,1:NFLEVG)=PGMV(KST:KPROF,1:NFLEVG,YT9%MEDOT)
+        ENDIF
+#endif
+      ENDIF
+      PB2(KST:KPROF,MSLB2WRL:MSLB2WRL+NFLEVG-1)=ZWRL0(KST:KPROF,1:NFLEVG)
+    ENDIF
+    PGMV(KST:KPROF,1:NFLEVG,YT9%MEDOT)=ZWRL0(KST:KPROF,1:NFLEVG)
+
+  ELSE 
+
+    ! * Corrector step of LPC_FULL:
+
+    DO JLEV=1,NFLEVG
+      PB1(KST:KPROF,MSLB1UR0+JLEV-NFLSA)=PGMV(KST:KPROF,JLEV,YT9%MU)
+      PB1(KST:KPROF,MSLB1VR0+JLEV-NFLSA)=PGMV(KST:KPROF,JLEV,YT9%MV)
+    ENDDO
+    DO JLEV=1,NFLEVG
+      PB1(KST:KPROF,MSLB1WR0+JLEV-NFLSA)=PGMV(KST:KPROF,JLEV,YT9%MEDOT)
+    ENDDO
+
+    DO JLEV=1,NFLEVG
+      PB2(KST:KPROF,MSLB2URL+JLEV-1)=PGMV(KST:KPROF,JLEV,YT0%MU)
+      PB2(KST:KPROF,MSLB2VRL+JLEV-1)=PGMV(KST:KPROF,JLEV,YT0%MV)
+    ENDDO
+    DO JLEV=1,NFLEVG
+      PB2(KST:KPROF,MSLB2WRL+JLEV-1)=ZWRL0(KST:KPROF,JLEV)
+    ENDDO
+
+  ENDIF
+
+  IF (LD2TLFF1) THEN
+    DO JLEV=1,NFLEVG
+      PB1(KST:KPROF,MSLB1UR9+JLEV-NFLSA)=PGMV(KST:KPROF,JLEV,YT0%MU)
+      PB1(KST:KPROF,MSLB1VR9+JLEV-NFLSA)=PGMV(KST:KPROF,JLEV,YT0%MV)
+    ENDDO
+  ENDIF
+
+ELSE
+
+  ! SL3TL:
+
+  DO JLEV=1,NFLEVG
+    PB1(KST:KPROF,MSLB1UR0+JLEV-NFLSA)=PGMV(KST:KPROF,JLEV,YT0%MU)
+    PB1(KST:KPROF,MSLB1VR0+JLEV-NFLSA)=PGMV(KST:KPROF,JLEV,YT0%MV)
+  ENDDO
+  DO JLEV=1,NFLEVG
+    PB1(KST:KPROF,MSLB1WR0+JLEV-NFLSA)=ZWRL0(KST:KPROF,JLEV)
+    PB2(KST:KPROF,MSLB2URL+JLEV-1)=PB1(KST:KPROF,MSLB1UR0+JLEV-NFLSA)
+    PB2(KST:KPROF,MSLB2VRL+JLEV-1)=PB1(KST:KPROF,MSLB1VR0+JLEV-NFLSA)
+    PB2(KST:KPROF,MSLB2WRL+JLEV-1)=PB1(KST:KPROF,MSLB1WR0+JLEV-NFLSA)
+  ENDDO
+
+  IF (LD2TLFF1) THEN
+    DO JLEV=1,NFLEVG
+      PB1(KST:KPROF,MSLB1UR9+JLEV-NFLSA)=PGMV(KST:KPROF,JLEV,YT9%MU)
+      PB1(KST:KPROF,MSLB1VR9+JLEV-NFLSA)=PGMV(KST:KPROF,JLEV,YT9%MV)
+    ENDDO
+  ENDIF
+
+ENDIF
+
+IF (LAROME.AND.LSQUALL) THEN
+  DO JLEV=1,NFLEVG
+    DO JROF=KST,KPROF
+      PB1(JROF,MSLB1VR0+JLEV-NFLSA)=PB1(JROF,MSLB1VR0+JLEV-NFLSA)+VSQUALL
+      PB2(JROF,MSLB2VRL+JLEV-1)=PB2(JROF,MSLB2VRL+JLEV-1)+VSQUALL
+    ENDDO
+  ENDDO
+ENDIF
+
+! Filling extra buffers for wind interpolation with quantity valid at time t
+! Makes sense for the SETTLS option. In the other case it duplicates the MSLB1[x]R0 content.
+IF (LSLDP_RK) THEN
+  DO JLEV=1,NFLEVG
+    PB1(KST:KPROF,MSLB1UR00+JLEV-NFLSA)=PB2(KST:KPROF,MSLB2URL+JLEV-1)
+    PB1(KST:KPROF,MSLB1VR00+JLEV-NFLSA)=PB2(KST:KPROF,MSLB2VRL+JLEV-1)
+    PB1(KST:KPROF,MSLB1WR00+JLEV-NFLSA)=PB2(KST:KPROF,MSLB2WRL+JLEV-1)
+  ENDDO
+ENDIF
+
+! Transforming horizontal wind components from lat,lon to 3D cartesian x,y,z coordinates
+!    to mitigate the pole singularity.
+! NOTE: This transformation has to be of exact match with the reverse transformation in LARCINA
+IF (LSLDP_CURV) THEN
+  DO JLEV=1,NFLEVG
+    DO JROF=KST,KPROF
+      ZUCOMP=PB1(JROF,MSLB1UR0+JLEV-NFLSA)
+      PB1(JROF,MSLB1ZR0+JLEV-NFLSA)=PB1(JROF,MSLB1VR0+JLEV-NFLSA)*YDGSGEOM%GSQM2(JROF)
+      PB1(JROF,MSLB1UR0+JLEV-NFLSA)=-PB1(JROF,MSLB1UR0+JLEV-NFLSA)*YDGSGEOM%GESLO(JROF)&
+       & -PB1(JROF,MSLB1VR0+JLEV-NFLSA)*YDGSGEOM%GECLO(JROF)*YDGSGEOM%GEMU(JROF)
+      PB1(JROF,MSLB1VR0+JLEV-NFLSA)= ZUCOMP*YDGSGEOM%GECLO(JROF) &
+       & -PB1(JROF,MSLB1VR0+JLEV-NFLSA)*YDGSGEOM%GESLO(JROF)*YDGSGEOM%GEMU(JROF)
+    ENDDO
+  ENDDO
+  IF (LSLDP_RK) THEN
+    DO JLEV=1,NFLEVG
+      DO JROF=KST,KPROF
+        ZUCOMP=PB1(JROF,MSLB1UR00+JLEV-NFLSA)
+        PB1(JROF,MSLB1ZR00+JLEV-NFLSA)= PB1(JROF,MSLB1VR00+JLEV-NFLSA)*YDGSGEOM%GSQM2(JROF)
+        PB1(JROF,MSLB1UR00+JLEV-NFLSA)=-PB1(JROF,MSLB1UR00+JLEV-NFLSA)*YDGSGEOM%GESLO(JROF)&
+         & -PB1(JROF,MSLB1VR00+JLEV-NFLSA)*YDGSGEOM%GECLO(JROF)*YDGSGEOM%GEMU(JROF)
+        PB1(JROF,MSLB1VR00+JLEV-NFLSA)= ZUCOMP*YDGSGEOM%GECLO(JROF) &
+         & -PB1(JROF,MSLB1VR00+JLEV-NFLSA)*YDGSGEOM%GESLO(JROF)*YDGSGEOM%GEMU(JROF)
+      ENDDO
+    ENDDO
+  ENDIF
+ENDIF
+!     ------------------------------------------------------------------
+
+END ASSOCIATE
+END ASSOCIATE
+IF (LHOOK) CALL DR_HOOK('LAVENT',1,ZHOOK_HANDLE)
+END SUBROUTINE LAVENT
+

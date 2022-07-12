@@ -1,7 +1,7 @@
-SUBROUTINE LASSIETL(YDGEOMETRY,YDGMV,YDGMV5,YGFL,YDDYN,KST,KPROF,PRCORI,PGMV,PGMVS,PGFL,&
+SUBROUTINE LASSIEAD(YDGEOMETRY,YDGMV,YDGMV5,YGFL,YDDYN,KST,KPROF,PRCORI,PGMV,PGMVS,PGFL,&
  & PSDIV0,PTOD0,PGAGT0L,PGAGT0M,PGMV5,PGFL5)
 
-!**** *LASSIETL* Semi-Lagrangian scheme.  (tangent-linear version)
+!**** *LASSIEAD* Semi-Lagrangian scheme.  (adjoint version)
 !                Computation of linear terms used in the semi-implicit scheme. 
 
 !     Purpose.
@@ -11,7 +11,7 @@ SUBROUTINE LASSIETL(YDGEOMETRY,YDGMV,YDGMV5,YGFL,YDDYN,KST,KPROF,PRCORI,PGMV,PGM
 
 !**   Interface.
 !     ----------
-!        *CALL* *LASSIETL(..)
+!        *CALL* *LASSIEAD(..)
 
 !        Explicit arguments :
 !        --------------------
@@ -20,11 +20,11 @@ SUBROUTINE LASSIETL(YDGEOMETRY,YDGMV,YDGMV5,YGFL,YDDYN,KST,KPROF,PRCORI,PGMV,PGM
 !          KST      - first element of work.
 !          KPROF    - depth of work.
 !          PRCORI   - Coriolis parameter.
+
+!        INPUT/OUTPUT (INPUT IN TL):
 !          PGMV     - GMV variables at t-dt and t.
 !          PGMVS    - GMVS variables at t-dt and t.
 !          PGFL     - unified_treatment grid-point (GFL) fields.
-
-!        OUTPUT:
 !          PSDIV0   - semi-implicit term at time t for continuity equation
 !                     (Nu*D).
 !          PTOD0    - semi-implicit term at time t for temperature equation
@@ -47,7 +47,7 @@ SUBROUTINE LASSIETL(YDGEOMETRY,YDGMV,YDGMV5,YGFL,YDDYN,KST,KPROF,PRCORI,PGMV,PGM
 
 !     Externals.
 !     ----------
-!           Called by LACDYNTL.
+!           Called by LACDYNAD.
 
 !     Reference.
 !     ----------
@@ -59,11 +59,12 @@ SUBROUTINE LASSIETL(YDGEOMETRY,YDGMV,YDGMV5,YGFL,YDDYN,KST,KPROF,PRCORI,PGMV,PGM
 
 !     Modifications.
 !     --------------
-!     Original : 99/07/20
+!     Original : 99/10/04
 !     Modified 01-01-23 by C. Temperton: case LSPRT=.T. corrected.
 !     Modified by A. Untch 2000-12 : Vertical finite element scheme
+!     Modified 02-01-22 by C. Temperton: case LSPRT=.T. 
 !     M.Hamrud      01-Oct-2003 CY28 Cleaning
-!     M.Jidane  08-04-2006 : Reintro of R dep. on q variables under key
+!     M.Jidane 09-04-2006 : Compute R with q variables under key
 !     K. Yessad Aug 2008: rationalisation of dummy argument interfaces
 !     K. Yessad (Nov 2009): cleanings, remove useless calculations.
 !     ------------------------------------------------------------------
@@ -77,6 +78,7 @@ USE YOMCT0       , ONLY : LTWOTL, LSPRT
 USE YOMDYN       , ONLY : TDYN
 USE YOM_YGFL     , ONLY : TYPE_GFLD
 USE YOMDYNA      , ONLY : LDRY_ECMWF
+USE YOMCST       , ONLY : YRCST
 
 !     ------------------------------------------------------------------
 
@@ -90,10 +92,10 @@ TYPE(TYPE_GFLD)   ,INTENT(IN)    :: YGFL
 INTEGER(KIND=JPIM),INTENT(IN)    :: KST 
 INTEGER(KIND=JPIM),INTENT(IN)    :: KPROF 
 REAL(KIND=JPRB)   ,INTENT(IN)    :: PRCORI(YDGEOMETRY%YRDIM%NPROMA) 
-REAL(KIND=JPRB)   ,INTENT(IN)    :: PGMV(YDGEOMETRY%YRDIM%NPROMA,YDGEOMETRY%YRDIMV%NFLEVG,YDGMV%NDIMGMV)
-REAL(KIND=JPRB)   ,INTENT(IN)    :: PGMVS(YDGEOMETRY%YRDIM%NPROMA,YDGMV%NDIMGMVS)
-REAL(KIND=JPRB)   ,INTENT(IN)    :: PGFL(YDGEOMETRY%YRDIM%NPROMA,YDGEOMETRY%YRDIMV%NFLEVG,YGFL%NDIM)
-REAL(KIND=JPRB)   ,INTENT(OUT)   :: PSDIV0(YDGEOMETRY%YRDIM%NPROMA) 
+REAL(KIND=JPRB)   ,INTENT(INOUT) :: PGMV(YDGEOMETRY%YRDIM%NPROMA,YDGEOMETRY%YRDIMV%NFLEVG,YDGMV%NDIMGMV)
+REAL(KIND=JPRB)   ,INTENT(INOUT) :: PGMVS(YDGEOMETRY%YRDIM%NPROMA,YDGMV%NDIMGMVS)
+REAL(KIND=JPRB)   ,INTENT(INOUT) :: PGFL(YDGEOMETRY%YRDIM%NPROMA,YDGEOMETRY%YRDIMV%NFLEVG,YGFL%NDIM)
+REAL(KIND=JPRB)   ,INTENT(INOUT) :: PSDIV0(YDGEOMETRY%YRDIM%NPROMA) 
 REAL(KIND=JPRB)   ,INTENT(INOUT) :: PTOD0(YDGEOMETRY%YRDIM%NPROMA,YDGEOMETRY%YRDIMV%NFLEVG) 
 REAL(KIND=JPRB)   ,INTENT(INOUT) :: PGAGT0L(YDGEOMETRY%YRDIM%NPROMA,YDGEOMETRY%YRDIMV%NFLEVG) 
 REAL(KIND=JPRB)   ,INTENT(INOUT) :: PGAGT0M(YDGEOMETRY%YRDIM%NPROMA,YDGEOMETRY%YRDIMV%NFLEVG) 
@@ -110,19 +112,25 @@ REAL(KIND=JPRB) :: ZHOOK_HANDLE
 !     ------------------------------------------------------------------
 
 #include "abor1.intfb.h"
-#include "sigam.intfb.h"
+#include "sigamad.intfb.h"
 #include "sitnu.intfb.h"
+#include "sitnuad.intfb.h"
 
 !     ------------------------------------------------------------------
 
-IF (LHOOK) CALL DR_HOOK('LASSIETL',0,ZHOOK_HANDLE)
-ASSOCIATE(YDDIM=>YDGEOMETRY%YRDIM,YDDIMV=>YDGEOMETRY%YRDIMV)
-ASSOCIATE(YQ=>YGFL%YQ,   NPROMA=>YDDIM%NPROMA,   NFLEVG=>YDDIMV%NFLEVG,   LIMPF=>YDDYN%LIMPF,   YT0=>YDGMV%YT0,   &
-& YT5=>YDGMV5%YT5)
+IF (LHOOK) CALL DR_HOOK('LASSIEAD',0,ZHOOK_HANDLE)
+ASSOCIATE(YDDIM=>YDGEOMETRY%YRDIM,YDDIMV=>YDGEOMETRY%YRDIMV,YDGEM=>YDGEOMETRY%YRGEM, &
+  & YDMP=>YDGEOMETRY%YRMP, YDVAB=>YDGEOMETRY%YRVAB, YDVETA=>YDGEOMETRY%YRVETA, YDVFE=>YDGEOMETRY%YRVFE)
+ASSOCIATE(NDIM=>YGFL%NDIM, NDIM5=>YGFL%NDIM5, YQ=>YGFL%YQ, &
+ & NPROMA=>YDDIM%NPROMA, &
+ & NFLEVG=>YDDIMV%NFLEVG, &
+ & LIMPF=>YDDYN%LIMPF, &
+ & NDIMGMV=>YDGMV%NDIMGMV, NDIMGMVS=>YDGMV%NDIMGMVS, YT0=>YDGMV%YT0, &
+ & YT5=>YDGMV5%YT5)
 !     ------------------------------------------------------------------
 
 IF (.NOT.LTWOTL) THEN
-  CALL ABOR1(' LASSIETL: CALLED WITH LTWOTL=.F.')
+  CALL ABOR1(' LASSIEAD: CALLED WITH LTWOTL=.F.')
 ENDIF
 
 IPROFS=KPROF-KST+1
@@ -145,36 +153,7 @@ ENDIF
 
 !     ------------------------------------------------------------------
 
-!      2.   TL CODE.
-
-!     * Computation of Nu*D, Tau*D, Nabla(Gamma*T+Mu*Pi).
-
-!   - Computation of Nu*D (SI term for continuity equation)
-!     and Tau*D (SI term for temperature equation).
-CALL SITNU(YRCST,YDGEOMETRY,YDDYN,NPROMA,1,PGMV(KST,1,YT0%MDIV),PTOD0(KST,1),PSDIV0(KST),IPROFS)
-!   - Computation of Nabla(Gamma*T+Mu*Pi) (SI term for momentum equation).
-CALL SIGAM(YRCST,YDGEOMETRY,YDDYN,NPROMA,1,PGAGT0L(KST,1),PGMV(KST,1,YT0%MTL),PGMVS(KST,YT0%MSPL),&
- & IPROFS,NFLEVG)
-CALL SIGAM(YRCST,YDGEOMETRY,YDDYN,NPROMA,1,PGAGT0M(KST,1),PGMV(KST,1,YT0%MTM),PGMVS(KST,YT0%MSPM),&
- & IPROFS,NFLEVG)
-
-!     * Modify (Tau*D) if (LSPRT=.T.) in temperature equation to compensate
-!       for later multiplication by R/Rd:
-
-IF (LSPRT) THEN
-  DO JLEV=1,NFLEVG
-    DO JROF=KST,KPROF
-      PTOD0(JROF,JLEV)=RD*PTOD0(JROF,JLEV)/ZR5(JROF,JLEV)  
-    ENDDO
-    IF (.NOT. LDRY_ECMWF) THEN
-      DO JROF=KST,KPROF
-        ZR0(JROF,JLEV)=(RV-RD)*PGFL(JROF,JLEV,YQ%MP)
-        PTOD0(JROF,JLEV)=PTOD0(JROF,JLEV)-RD*ZTOD5(JROF,JLEV)*ZR0(JROF,JLEV)&
-          & /(ZR5(JROF,JLEV)*ZR5(JROF,JLEV)) 
-      ENDDO
-    ENDIF
-  ENDDO
-ENDIF
+!      2.   AD CODE.
 
 !     * Add semi-implicit Coriolis terms to Nabla(Gamma*T+Mu*Pi)
 !       if required (LIMPF=.T.).
@@ -182,16 +161,47 @@ ENDIF
 IF (LIMPF) THEN
   DO JLEV=1,NFLEVG
     DO JROF=KST,KPROF
-      PGAGT0L(JROF,JLEV)=PGAGT0L(JROF,JLEV)-PRCORI(JROF)*PGMV(JROF,JLEV,YT0%MV)
-      PGAGT0M(JROF,JLEV)=PGAGT0M(JROF,JLEV)+PRCORI(JROF)*PGMV(JROF,JLEV,YT0%MU)
+      PGMV(JROF,JLEV,YT0%MU)=PGMV(JROF,JLEV,YT0%MU)&
+       & +PRCORI(JROF)*PGAGT0M(JROF,JLEV)
+      PGMV(JROF,JLEV,YT0%MV)=PGMV(JROF,JLEV,YT0%MV)&
+       & -PRCORI(JROF)*PGAGT0L(JROF,JLEV)
     ENDDO
   ENDDO
 ENDIF
+
+!     * Modify (Tau*D) if (LSPRT=.T.) in temperature equation to compensate
+!       for later multiplication by R/Rd:
+
+IF (LSPRT) THEN
+  DO JLEV=1,NFLEVG
+    IF (.NOT. LDRY_ECMWF) THEN
+      DO JROF=KST,KPROF
+        ZR0(JROF,JLEV)=-RD*ZTOD5(JROF,JLEV)*PTOD0(JROF,JLEV)&
+         & /(ZR5(JROF,JLEV)**2)  
+        PGFL(JROF,JLEV,YQ%MP)=PGFL(JROF,JLEV,YQ%MP)+(RV-RD)*ZR0(JROF,JLEV)
+      ENDDO
+    ENDIF
+    DO JROF=KST,KPROF
+      PTOD0(JROF,JLEV)=RD*PTOD0(JROF,JLEV)/ZR5(JROF,JLEV)
+    ENDDO
+  ENDDO
+ENDIF
+
+!     * Computation of Nu*D, Tau*D, Nabla(Gamma*T+Mu*Pi).
+
+!  - Computation of Nabla(Gamma*T+Mu*Pi) (SI term for momentum equation).
+CALL SIGAMAD(YDGEOMETRY,YDDYN,NPROMA,1,PGAGT0L(KST,1),PGMV(KST,1,YT0%MTL),PGMVS(KST,YT0%MSPL),&
+ & IPROFS,NFLEVG)
+CALL SIGAMAD(YDGEOMETRY,YDDYN,NPROMA,1,PGAGT0M(KST,1),PGMV(KST,1,YT0%MTM),PGMVS(KST,YT0%MSPM),&
+ & IPROFS,NFLEVG)
+!  - Computation of Nu*D (SI term for continuity equation)
+!     and Tau*D (SI term for temperature equation).
+CALL SITNUAD(YDGEOMETRY,YDDYN,NPROMA,1,PGMV(KST,1,YT0%MDIV),PTOD0(KST,1),PSDIV0(KST),IPROFS)
 
 !     ------------------------------------------------------------------
 
 END ASSOCIATE
 END ASSOCIATE
-IF (LHOOK) CALL DR_HOOK('LASSIETL',1,ZHOOK_HANDLE)
-END SUBROUTINE LASSIETL
+IF (LHOOK) CALL DR_HOOK('LASSIEAD',1,ZHOOK_HANDLE)
+END SUBROUTINE LASSIEAD
 

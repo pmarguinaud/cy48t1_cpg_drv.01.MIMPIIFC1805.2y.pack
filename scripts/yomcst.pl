@@ -12,6 +12,64 @@ my ($F90) = @ARGV;
 
 my $d = &Fxtran::fxtran (location => $F90, fopts => [qw (-line-length 800)]);
 
+my @s = qw (
+  GP_KAPPAT
+  LATTES
+  LATTE_NL
+  LAVENT
+  SIDD
+  SIGAM
+  SILKAP
+  SINHQE_SEVE
+  SINHQE_VDERI
+  SIPTP
+  SISKAP
+  SITNU
+  ESPCSI
+  ESPNHEESI
+  ESPNHQESI
+  ESPNHSI
+  SILKAPI
+  SPCSI
+  SPNHEESI
+  SPNHQESI
+  SPNHSI
+  SUNHEEBMAT
+  SUNHQEBMAT
+  SUNHQESI
+  ESPCSI
+  ESPNHEESI
+  ESPNHQESI
+  ESPNHSI
+  SI_CCCOR
+  SILKAPI
+  SPCSI
+  SPNHEESI
+  SPNHQESI
+  SPNHSI
+  SUBMAT
+  SUDYN_STABILITY
+  SUNHEEBMAT
+  SUNHQEBMAT
+  SUNHQESI
+  SUNHSI_TESTCONV
+  SUPRECOV
+
+SUNHEESI
+ESPCSI
+SUSI
+SUNHBMAT
+SUNHEEBMAT
+SUNHSI
+
+LATTE_KAPPA
+CPEULDYN
+
+
+);
+
+
+
 for my $ms (['YOMCST', 'CST'], ['YOETHF', 'THF'])
   {
     my ($mod, $str) = @$ms;
@@ -63,6 +121,21 @@ for my $ms (['YOMCST', 'CST'], ['YOETHF', 'THF'])
     $rlt->appendChild (&n ("<rename><use-N><N><n>T$str</n></N></use-N></rename>"));
     
   }    
+
+
+for my $s (@s)
+  {
+    my @call = &F ('.//call-stmt[string(procedure-designator)="?"]', $s, $d);
+    for my $call (@call)
+      {
+        my ($argspec) = &F ('./arg-spec', $call);
+        my ($arg) = &F ('./arg', $argspec);
+        next if ($arg->textContent eq 'YDCST');
+        $argspec->insertBefore (&t (', '), $argspec->firstChild);
+        $argspec->insertBefore (&n ('<arg><named-E><N><n>YDCST</n></N></named-E></arg>'), $argspec->firstChild);
+      }
+  }
+
 
     
 'FileHandle'->new (">$F90.new")->print ($d->textContent);

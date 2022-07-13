@@ -383,7 +383,7 @@ SELF%DDHI  => NULL ()
 
 END SUBROUTINE CPG_DDH_TYPE_FINAL
 
-#:def pcpg_sl_type_methods (ind, vars, use_gfl=False)
+#:def pcpg_sl_type_methods (ind, vars, use_gfl=False, extra_levels=1)
 SUBROUTINE CPG_SL${ind}$_TYPE_INIT (SELF, REGISTRY, NLEV, YDTPTRSLB${ind}$ &
   #:if use_gfl
                                 & , YDMODEL &
@@ -433,11 +433,20 @@ ENDIF
 
 SELF%F_DATA => CREATE_FIELD_WRAP (SELF%ZDATA, PERSISTENT=LLPERSISTENT)
 
+#:set lbound_lev = 1-extra_levels
+#:set extra_levels2 = 2*extra_levels
+#:set ubound_lev = -1+extra_levels2
+#:if ubound_lev == 0
+  #:set ubound_lev = ''
+#:elif ubound_lev > 0
+  #:set ubound_lev = '+' + str (ubound_lev)
+#:endif
+
 #:for var in vars
 IF (YDTPTRSLB${ind}$%MSLB${ind}$${var}$ > 0) THEN
   JFLD = YDTPTRSLB${ind}$%MSLB${ind}$${var}$
   #:if vars[var][N3D]
-  SELF%F_${var}$ => CREATE_FIELD_WRAP (SELF%ZDATA (:, JFLD:JFLD+NLEV+1, :), PERSISTENT=LLPERSISTENT, LBOUNDS=[1,0,1])
+  SELF%F_${var}$ => CREATE_FIELD_WRAP (SELF%ZDATA (:, JFLD:JFLD+NLEV${ubound_lev}$, :), PERSISTENT=LLPERSISTENT, LBOUNDS=[1,${lbound_lev}$,1])
   #:else
   SELF%F_${var}$ => CREATE_FIELD_WRAP (SELF%ZDATA (:, JFLD, :), PERSISTENT=LLPERSISTENT)
   #:endif
@@ -451,15 +460,15 @@ ENDIF
     #:if v.array
     #:elif v.dim == 3
 IF (YGFL%Y${v.name}$%MP_SL1 > 0 .AND. YGFL%Y${v.name}$%MP1 > 0) THEN
-  JFLD = YDTPTRSLB${ind}$%MSLB1GFL9  + (YGFL%Y${v.name}$%MP_SL1-1)*(NLEV+2)
-  SELF%F_${v.name}$ => CREATE_FIELD_WRAP (SELF%ZDATA (:, JFLD:JFLD+NLEV+1, :), PERSISTENT=LLPERSISTENT, LBOUNDS=[1,0,1])
+  JFLD = YDTPTRSLB${ind}$%MSLB1GFL9  + (YGFL%Y${v.name}$%MP_SL1-1)*(NLEV+${extra_levels2}$)
+  SELF%F_${v.name}$ => CREATE_FIELD_WRAP (SELF%ZDATA (:, JFLD:JFLD+NLEV${ubound_lev}$, :), PERSISTENT=LLPERSISTENT, LBOUNDS=[1,${lbound_lev}$,1])
 ELSE
   SELF%F_${v.name}$ => NULL ()
 ENDIF
 IF (YDMODEL%YRML_DYN%YRDYN%LSPLTHOIGFL .OR. (YDMODEL%YRML_DYN%YRDYN%NSPLTHOI /= 0)) THEN
   IF (YGFL%Y${v.name}$%MP_SL1 > 0 .AND. YGFL%Y${v.name}$%MP1 > 0) THEN
-    JFLD = YDTPTRSLB${ind}$%MSLB1GFLF9 + (YGFL%Y${v.name}$%MP_SL1-1)*(NLEV+2)
-    SELF%F_${v.name}$_F => CREATE_FIELD_WRAP (SELF%ZDATA (:, JFLD:JFLD+NLEV+1, :), PERSISTENT=LLPERSISTENT, LBOUNDS=[1,0,1])
+    JFLD = YDTPTRSLB${ind}$%MSLB1GFLF9 + (YGFL%Y${v.name}$%MP_SL1-1)*(NLEV+${extra_levels2}$)
+    SELF%F_${v.name}$_F => CREATE_FIELD_WRAP (SELF%ZDATA (:, JFLD:JFLD+NLEV${ubound_lev}$, :), PERSISTENT=LLPERSISTENT, LBOUNDS=[1,${lbound_lev}$,1])
   ELSE
     SELF%F_${v.name}$_F => NULL ()
   ENDIF
@@ -779,9 +788,9 @@ SELF%ZVIEW => NULL ()
 END SUBROUTINE CPG_SL${ind}$_TYPE_FINAL
 #:enddef
 
-$:pcpg_sl_type_methods ("1", pb1_vars, True)
+$:pcpg_sl_type_methods ("1", pb1_vars, use_gfl=True,  extra_levels=1)
 
-$:pcpg_sl_type_methods ("2", pb2_vars)
+$:pcpg_sl_type_methods ("2", pb2_vars, use_gfl=False, extra_levels=0)
 
 END MODULE CPG_TYPE_MOD
 

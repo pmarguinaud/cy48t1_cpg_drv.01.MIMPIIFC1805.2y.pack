@@ -80,8 +80,6 @@ USE YOMVERT      , ONLY : TOPPRES, LVERTFE
 USE YOMDYNA      , ONLY : LSLHD_STATIC, LAPRXPK, NDLNPR, RHYDR0
 USE YOMDYN       , ONLY : TDYN
 USE YOMCST       , ONLY : TCST
-USE INTDYN_MOD   , ONLY : YYTXYB
-
 
 !     ------------------------------------------------------------------
 

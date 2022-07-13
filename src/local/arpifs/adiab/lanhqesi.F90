@@ -119,7 +119,7 @@ REAL(KIND=JPRB) :: ZHOOK_HANDLE
 
 !     ------------------------------------------------------------------
 
-#include "gprcp_pgfl.intfb.h"
+#include "gprcp_expl.intfb.h"
 #include "sigam.intfb.h"
 #include "sitnu.intfb.h"
 #include "silkap.intfb.h"
@@ -235,14 +235,14 @@ IF (LSPRT) THEN
     !  predictor: treatment of "t" data.
     !  corrector: treatment of provisional "t+dt" data.
     ! So in this case this is always the Y[X]%MP data which are used.
-    CALL GPRCP_PGFL(NPROMA,YDCPG_BNDS%KIDIA,YDCPG_BNDS%KFDIA,NFLEVG,PGFL=PGFL,PR=ZR9)
+    CALL GPRCP_EXPL(YDCST,NPROMA,YDCPG_BNDS%KIDIA,YDCPG_BNDS%KFDIA,NFLEVG,YDVARS=YDVARS,PR=ZR9)  
     DO JLEV=1,NFLEVG
       DO JROF=YDCPG_BNDS%KIDIA,YDCPG_BNDS%KFDIA
         PTOD0(JROF,JLEV)=YDCST%RD*PTOD0(JROF,JLEV)/ZR9(JROF,JLEV)
       ENDDO
     ENDDO
   ELSE
-    CALL GPRCP_PGFL(NPROMA,YDCPG_BNDS%KIDIA,YDCPG_BNDS%KFDIA,NFLEVG,PGFL=PGFL,KGFLTYP=9,PR=ZR9)
+    CALL GPRCP_EXPL(YDCST,NPROMA,YDCPG_BNDS%KIDIA,YDCPG_BNDS%KFDIA,NFLEVG,YDVARS=YDVARS,PR=ZR9,KGFLTYP=9)  
     DO JLEV=1,NFLEVG
       DO JROF=YDCPG_BNDS%KIDIA,YDCPG_BNDS%KFDIA
         PTOD0(JROF,JLEV)=YDCST%RD*PTOD0(JROF,JLEV)/ZR9(JROF,JLEV)

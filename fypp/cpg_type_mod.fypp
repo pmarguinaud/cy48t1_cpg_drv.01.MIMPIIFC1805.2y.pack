@@ -235,7 +235,7 @@ END TYPE CPG_DDH_TYPE
 & 'DBBC1'      : [ False ],  'DPHI1'      : [ False ], &
 & 'USI'        : [ True  ],  'VSI'        : [ True  ], &
 & 'TSI'        : [ True  ],  'PDSI'       : [ True  ], &
-& 'VDSI'       : [ True  ],  'SPSI'       : [ True  ], &
+& 'VDSI'       : [ True  ],  'SPSI'       : [ False ], &
 & 'VVEL'       : [ True  ],  'URL'        : [ True  ], &
 & 'VRL'        : [ True  ],  'WRL'        : [ True  ], &
 & 'URL5'       : [ True  ],  'VRL5'       : [ True  ], &

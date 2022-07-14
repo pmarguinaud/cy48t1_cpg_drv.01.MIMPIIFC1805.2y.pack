@@ -14,10 +14,31 @@
   - {name: VOR, comment: Vorticity}
   - {name: SPD, comment: Pressure departure variable}
   - {name: SVD, comment: Vertical div or velocity variable}
-  - {name: NHX}
+  - {name: CSPDNL}
+  - {name: CSPNL}
+  - {name: CTNL}
+  - {name: CUNL}
+  - {name: CVNL}
+  - {name: CVWVNL}
+  - {name: DPHI}
   - {name: EDOT}
+  - {name: GW}
+  - {name: NHX}
+  - {name: NHY}
   - {name: SGRTL}
   - {name: SGRTM}
+  - {name: SPDNL}
+  - {name: SPDNL_SI}
+  - {name: SPNL}
+  - {name: SPNL_SI}
+  - {name: SVDNL_SI}
+  - {name: TNL}
+  - {name: TNL_SI}
+  - {name: UNL}
+  - {name: UNL_SI}
+  - {name: VNL}
+  - {name: VNL_SI}
+  - {name: VWVNL}
 
 - type: group
   name: GMVS
@@ -26,6 +47,13 @@
   comment: Variables formerly known as GMVS (surface GMV)
   variables:
   - {name: SP, comment: Surface pressure}
+  - {name: SPNL2}
+  - {name: PREHYDS}
+  - {name: DBBC}
+  - {name: CSPPT}
+  - {name: CSPNL2}
+  - {name: CSPRHS}
+  - {name: GWS}
 
 - type: group
   name: GFL

@@ -119,17 +119,26 @@ NEXT:
     for my $expr (@expr) 
       {
         my ($r) = &F ('./R-LT/parens-R', $expr);
+        my $nn = 'element-LT/element';
+        unless ($r)
+          {
+            ($r) = &F ('./R-LT/array-R', $expr);
+            $nn = 'section-subscript-LT/section-subscript/lower-bound',
+          }
+
+        die $expr->textContent unless ($r);
         my ($rlt) = $r->parentNode;
 
         die unless ($r);
-        my @ind = &F ('./element-LT/element/ANY-E', $r);
+        my @ind = &F ("./$nn/ANY-E", $r);
         die $r unless (scalar (@ind) == 2);
-        die $expr unless (($ind[0]->textContent eq 'JROF') && ($ind[1]->nodeName eq 'op-E'));
+
+        die $expr unless (($ind[0]->textContent =~ m/^(?:JROF|KST)$/o) && ($ind[1]->nodeName eq 'op-E'));
         my @e = &F ('.//named-E', $ind[1]);
         die $ind[1] unless (scalar (@e) == 3);
         die unless (($e[1]->textContent eq 'JLEV') && ($e[2]->textContent eq 'NFLSA'));
         my $M = $e[0]->textContent;
-        die unless ($M =~ s/^MSLB1//o);
+        die $expr->textContent unless ($M =~ s/^MSLB1//o);
 
         my ($N) = &F ('./N/n/text()', $expr);
 

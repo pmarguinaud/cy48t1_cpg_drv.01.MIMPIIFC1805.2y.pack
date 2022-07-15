@@ -153,15 +153,25 @@ NEXT:
     for my $expr (@expr) 
       {
         my ($r) = &F ('./R-LT/parens-R', $expr);
+        my $nn = 'element-LT/element';
+
+        unless ($r)
+          {
+            ($r) = &F ('./R-LT/array-R', $expr);
+            $nn = 'section-subscript-LT/section-subscript/lower-bound',
+          }
+
+        die $expr->textContent unless ($r);
         my ($rlt) = $r->parentNode;
 
         die unless ($r);
-        my @ind = &F ('./element-LT/element/ANY-E', $r);
+        
+        my @ind = &F ("./$nn/ANY-E", $r);
         die $r unless (scalar (@ind) == 2);
         if ($ind[1]->nodeName eq 'named-E')
           {
             die &Dumper ([$expr->textContent, [map { $_->textContent } @ind]]) 
-              unless (($ind[0]->textContent eq 'JROF') && ($ind[1]->nodeName eq 'named-E'));
+              unless (($ind[0]->textContent =~ m/^(?:JROF|KST)$/o) && ($ind[1]->nodeName eq 'named-E'));
 
             my $M = $ind[1]->textContent;
             die unless ($M =~ s/^MSLB2//o);
@@ -170,13 +180,14 @@ NEXT:
 
             $N->setData ('YDCPG_SL2');
             $rlt->insertBefore (&n ("<component-R>%<ct>$M</ct></component-R>"), $rlt->firstChild);
+
             $ind[1]->parentNode->previousSibling->unbindNode;
             $ind[1]->parentNode->unbindNode;
           }
         else
           {
             die &Dumper ([$expr->textContent, [map { $_->textContent } @ind]]) 
-              unless (($ind[0]->textContent eq 'JROF') && ($ind[1]->nodeName eq 'op-E'));
+              unless (($ind[0]->textContent =~ m/^(?:JROF|KST)$/o) && ($ind[1]->nodeName eq 'op-E'));
             my @e = &F ('.//named-E', $ind[1]);
             die $ind[1] unless (scalar (@e) == 2);
             die unless ($e[1]->textContent eq 'JLEV');

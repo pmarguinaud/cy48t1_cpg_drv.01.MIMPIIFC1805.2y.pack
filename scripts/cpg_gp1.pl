@@ -130,21 +130,33 @@ NEXT:
         my ($rlt) = $r->parentNode;
 
         die unless ($r);
-        my @ind = &F ("./$nn/ANY-E", $r);
-        die $r unless (scalar (@ind) == 2);
 
-        die $expr unless (($ind[0]->textContent =~ m/^(?:JROF|KST)$/o) && ($ind[1]->nodeName eq 'op-E'));
-        my @e = &F ('.//named-E', $ind[1]);
-        die $ind[1] unless (scalar (@e) == 3);
-        die unless (($e[1]->textContent eq 'JLEV') && ($e[2]->textContent eq 'NFLSA'));
-        my $M = $e[0]->textContent;
-        die $expr->textContent unless ($M =~ s/^MSLB1//o);
 
-        my ($N) = &F ('./N/n/text()', $expr);
+        if ($r->nodeName eq 'parens-R')
+          {
+            my @ind = &F ("./$nn/ANY-E", $r);
+            die $expr->textContent unless (scalar (@ind) == 2);
 
-        $N->setData ('YDCPG_SL1');
-        $rlt->insertBefore (&n ("<component-R>%<ct>$M</ct></component-R>"), $rlt->firstChild);
-        $ind[1]->replaceNode (&n ('<named-E><N><n>JLEV</n></N></named-E>'));
+            die $expr unless (($ind[0]->textContent =~ m/^(?:JROF|KST|YDCPG_BNDS%KIDIA)$/o) && ($ind[1]->nodeName eq 'op-E'));
+            my @e = &F ('.//named-E', $ind[1]);
+            die $ind[1] unless (scalar (@e) == 3);
+    
+            die unless (($e[1]->textContent eq 'JLEV') && ($e[2]->textContent eq 'NFLSA'));
+            my $M = $e[0]->textContent;
+            die $expr->textContent unless ($M =~ s/^MSLB1//o);
+
+            my ($N) = &F ('./N/n/text()', $expr);
+
+            $N->setData ('YDCPG_SL1');
+            $rlt->insertBefore (&n ("<component-R>%<ct>$M</ct></component-R>"), $rlt->firstChild);
+            $ind[1]->replaceNode (&n ('<named-E><N><n>JLEV</n></N></named-E>'));
+          }
+        else
+          {
+
+          }
+   
+
       }
 
     

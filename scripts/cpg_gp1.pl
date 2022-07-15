@@ -64,8 +64,10 @@ for my $F90 (@ARGV)
                   }
               }
     
+            my @ex = qw (SGRT UN VN CSPDN CSPN CTN CUN CVN CVWVN SPDN SPN TN VWVN);
 
-            if (($y eq 'SGRT') && ($t =~ m/^(?:DL|DM)9?$/o))
+
+            if ((grep { $y eq $_ } @ex) && ($t =~ m/^(?:DL|DM)9?$/o))
               {
                 my ($d, $T) = ($t =~ m/^D(M|L)(9)?$/o);
                 $T ||= '0';
@@ -151,9 +153,46 @@ NEXT:
             $rlt->insertBefore (&n ("<component-R>%<ct>$M</ct></component-R>"), $rlt->firstChild);
             $ind[1]->replaceNode (&n ('<named-E><N><n>JLEV</n></N></named-E>'));
           }
+        elsif ($r->nodeName eq 'array-R')
+          {
+            my @ind = &F ("./section-subscript-LT/section-subscript", $r);
+            die unless ($ind[0]->textContent =~ m/:/o);
+            my @e = &F ('.//named-E', $ind[1]);
+            if (scalar (@e) == 3)
+              {
+                die unless (($e[1]->textContent eq 'JLEV') && ($e[2]->textContent eq 'NFLSA'));
+                my $M = $e[0]->textContent;
+                die $expr->textContent unless ($M =~ s/^MSLB1//o);
+
+                my ($N) = &F ('./N/n/text()', $expr);
+
+                $N->setData ('YDCPG_SL1');
+                $rlt->insertBefore (&n ("<component-R>%<ct>$M</ct></component-R>"), $rlt->firstChild);
+                $ind[1]->replaceNode (&n ('<named-E><N><n>JLEV</n></N></named-E>'));
+              }
+            elsif (scalar (@e) == 1)
+              {
+                my $M = $e[0]->textContent;
+                die $expr->textContent unless ($M =~ s/^MSLB1//o);
+                my ($N) = &F ('./N/n/text()', $expr);
+
+                $N->setData ('YDCPG_SL1');
+                $rlt->insertBefore (&n ("<component-R>%<ct>$M</ct></component-R>"), $rlt->firstChild);
+                $r->unbindNode ();
+                my $sp = $rlt->previousSibling;
+                if ($sp && ($sp->nodeName eq '#text') && ($sp->data =~ m/^\s+$/o))
+                  {
+                    $sp->unbindNode ();
+                  }
+              }
+            else
+              {
+                die;
+              }
+          }
         else
           {
-
+            die $expr;
           }
    
 
@@ -170,7 +209,7 @@ NEXT:
         unless ($r)
           {
             ($r) = &F ('./R-LT/array-R', $expr);
-            $nn = 'section-subscript-LT/section-subscript/lower-bound',
+            $nn = 'section-subscript-LT/section-subscript';
           }
 
         die $expr->textContent unless ($r);
@@ -178,9 +217,32 @@ NEXT:
 
         die unless ($r);
         
-        my @ind = &F ("./$nn/ANY-E", $r);
+        my @ind = &F ("./$nn/node()", $r);
+
+
         die $r unless (scalar (@ind) == 2);
-        if ($ind[1]->nodeName eq 'named-E')
+
+
+        if ($ind[1]->nodeName eq 'lower-bound')
+          {
+            my $M = $ind[1]->textContent;
+            die unless ($M =~ s/^MSLB2//o);
+
+            my ($N) = &F ('./N/n/text()', $expr);
+
+            $N->setData ('YDCPG_SL2');
+            $rlt->insertBefore (&n ("<component-R>%<ct>$M</ct></component-R>"), $rlt->firstChild);
+
+            $ind[1]->parentNode->previousSibling->unbindNode;
+            $ind[1]->parentNode->unbindNode;
+
+                my $sp = $rlt->previousSibling;
+                if ($sp && ($sp->nodeName eq '#text') && ($sp->data =~ m/^\s+$/o))
+                  {
+                    $sp->unbindNode ();
+                  }
+          }
+        elsif ($ind[1]->nodeName eq 'named-E')
           {
             die &Dumper ([$expr->textContent, [map { $_->textContent } @ind]]) 
               unless (($ind[0]->textContent =~ m/^(?:JROF|KST)$/o) && ($ind[1]->nodeName eq 'named-E'));
@@ -216,6 +278,13 @@ NEXT:
 
     
 #   print $d->textContent;
+#
+    my @r = &F ('.//named-E[string(N)="YDCPG_SL2"]/R-LT/array-R', $d);
+    for my $r (@r)
+      {
+        next unless ($r->textContent eq '(:)');
+        $r->unbindNode ();
+      }
     
     'FileHandle'->new (">$F90.new")->print ($d->textContent);
     

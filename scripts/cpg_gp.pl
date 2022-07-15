@@ -8,7 +8,7 @@ use File::Basename;
 use lib $Bin;
 use Fxtran;
 
-for my $F90 ("src/local/arpifs/adiab/cpg_gp_nhee.F90")
+for my $F90 (@ARGV)
   {
 
     my $d = &Fxtran::fxtran (location => $F90, fopts => [qw (-line-length 200)]);

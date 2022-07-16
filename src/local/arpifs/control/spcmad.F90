@@ -1,0 +1,291 @@
+SUBROUTINE SPCMAD(YDGEOMETRY,YDML_GCONF,YDDYN,CDCONF,YDSP)
+
+!**** *SPCMAD* - Interface for spectral calculations (adjoint code).
+
+!     Purpose.
+!     --------
+
+!**   Interface.
+!     ----------
+!        *CALL* *SPCMAD(...)
+
+!     Explicit arguments :
+!     --------------------
+!      CDCONF - configuration of work (see doc.)
+!               CDCONF='0': nothing done
+!               CDCONF='A': SI scheme and horizontal diffusion done.
+!               CDCONF='I': SI scheme done; no horizontal diffusion.
+
+!     Implicit arguments :
+!     --------------------
+!                            NONE.
+!     Method.
+!     -------
+
+!     Externals.
+!     ----------
+
+!     Reference.
+!     ----------
+!        ECMWF Research Department documentation of the IFS
+
+!     Author.
+!     -------
+!      Mats Hamrud and Philippe Courtier  *ECMWF*
+!      Original : 87-11-24
+
+!     Modifications.
+!     --------------
+!      M.Hamrud      01-Oct-2003 CY28 Cleaning
+!      M.Hamrud      10-Jan-2004 CY28R1 Cleaning
+!      08-Feb-2005 K. Yessad     NH in ARPEGE
+!      K. Yessad 15-May-2006: memory optimisations for stretched geometry
+!      T.Wilhelmsson 09-09-30: Remove LFULLM requirement for LIMPF
+!      K. Yessad (Feb 2012): simplifications for tests and CDCONF.
+!      T. Wilhelmsson and K. Yessad (Oct 2013) Geometry and setup refactoring.
+!     ------------------------------------------------------------------
+
+USE MODEL_GENERAL_CONF_MOD , ONLY : MODEL_GENERAL_CONF_TYPE
+USE GEOMETRY_MOD           , ONLY : GEOMETRY
+USE PARKIND1               , ONLY : JPIM, JPRB
+USE YOMHOOK                , ONLY : LHOOK, DR_HOOK
+USE YOMLUN                 , ONLY : NULOUT
+USE YOMCT0                 , ONLY : LR3D
+USE YOMSP                  , ONLY : SPVOR_FLT, SPDIV_FLT
+USE YOMMP0                 , ONLY : MYSETN, NPRTRV
+USE YOMDYN                 , ONLY : TDYN
+USE YOMDYNA                , ONLY : LGRADSP
+USE SPECTRAL_FIELDS_MOD    , ONLY : SPECTRAL_FIELD, ASSIGNMENT(=)
+
+!     ------------------------------------------------------------------
+
+IMPLICIT NONE
+
+TYPE(GEOMETRY)               , INTENT(IN)    :: YDGEOMETRY
+TYPE(TDYN)                   , INTENT(INOUT) :: YDDYN
+TYPE(MODEL_GENERAL_CONF_TYPE), INTENT(INOUT) :: YDML_GCONF
+CHARACTER(LEN=1)             , INTENT(IN)    :: CDCONF 
+TYPE(SPECTRAL_FIELD)         , INTENT(INOUT) :: YDSP
+
+!     ------------------------------------------------------------------
+
+INTEGER(KIND=JPIM) :: IEND, IM, IMLOC, ISTA, JMLOC
+
+LOGICAL :: LLONEM
+LOGICAL :: LLDOSI, LLDOHD
+
+REAL(KIND=JPRB),ALLOCATABLE ::  ZSPVORG(:,:)
+REAL(KIND=JPRB),ALLOCATABLE ::  ZSPDIVG(:,:)
+REAL(KIND=JPRB),ALLOCATABLE ::  ZSPTG  (:,:)
+REAL(KIND=JPRB),ALLOCATABLE ::  ZSPSPDG(:,:)
+REAL(KIND=JPRB),ALLOCATABLE ::  ZSPSVDG(:,:)
+REAL(KIND=JPRB),ALLOCATABLE ::  ZSPSPG (:)
+REAL(KIND=JPRB),ALLOCATABLE ::  ZSPTALLG(:,:)
+REAL(KIND=JPRB),ALLOCATABLE ::  ZSPAUX (:,:)
+REAL(KIND=JPRB),ALLOCATABLE ::  ZSPAUXG(:,:)
+
+REAL(KIND=JPRB),ALLOCATABLE :: ZZPS(:)
+
+REAL(KIND=JPRB) :: ZHOOK_HANDLE
+
+!     ------------------------------------------------------------------
+
+#include "abor1.intfb.h"
+#include "brptob.intfb.h"
+#include "spcsiad.intfb.h"
+#include "spchorad.intfb.h"
+#include "trmtos.intfb.h"
+#include "trstom.intfb.h"
+#include "spcimpfpostad.intfb.h"
+#include "spcimpfinitad.intfb.h"
+#include "spfilt.intfb.h"
+
+!     ------------------------------------------------------------------
+
+IF (LHOOK) CALL DR_HOOK('SPCMAD',0,ZHOOK_HANDLE)
+ASSOCIATE(YDDIM=>YDGEOMETRY%YRDIM,YDDIMV=>YDGEOMETRY%YRDIMV,YDGEM=>YDGEOMETRY%YRGEM, YDMP=>YDGEOMETRY%YRMP,YDLAP=>YDGEOMETRY%YRLAP)
+ASSOCIATE(NSMAX=>YDDIM%NSMAX, NSPEC2=>YDDIM%NSPEC2, NUMP=>YDDIM%NUMP, &
+ & NFLEVG=>YDDIMV%NFLEVG, NFLSUR=>YDDIMV%NFLSUR, &
+ & LIMPF=>YDDYN%LIMPF, LSIDG=>YDDYN%LSIDG, &
+ & NPTRMF=>YDMP%NPTRMF, NSPEC2V=>YDMP%NSPEC2V, NSPEC2VF=>YDMP%NSPEC2VF, &
+ & NSPSTAF=>YDMP%NSPSTAF)
+!     ------------------------------------------------------------------
+
+ALLOCATE(ZZPS(NSPEC2))
+IF(YDMP%NPSP==1)ZZPS=YDSP%SP
+
+IF (LSIDG) THEN
+  LLONEM=.TRUE.
+ELSE
+  LLONEM=.FALSE.
+ENDIF
+
+IF (CDCONF == 'P') THEN
+
+  !       * FILTERING OF FULL-POS SPECTRAL FIELDS.
+
+  WRITE (NULOUT,*) 'NO ADJOINT FULL-POS AVAILABLE'
+  CALL ABOR1('SPCMAD: NO ADJOINT POST-PROCESSING')
+
+ELSEIF(CDCONF == 'A'.OR.CDCONF == 'I') THEN
+
+ IF (LR3D) THEN
+
+  CALL GSTATS(36,0)
+
+  ! * HORIZONTAL DIFFUSION, FILTERING ECPOS FIELDS, NUDGING.
+  LLDOHD=(CDCONF == 'A')
+
+  IF (LLDOHD .AND. NSPEC2 > 0) THEN
+    ! * Copies of surface pressure and temperature are required on all PE's
+    ALLOCATE(ZSPTALLG(NFLEVG,NSPEC2))
+    IF(NPRTRV > 1) CALL BRPTOB(YDGEOMETRY,ZZPS,YDSP%T,ZSPTALLG)
+    CALL SPCHORAD(YDGEOMETRY,YDML_GCONF,YDDYN,1,NSPEC2,YDSP%VOR,YDSP%DIV,YDSP%T,YDSP%GFL,ZZPS,ZSPTALLG)
+    DEALLOCATE(ZSPTALLG)
+
+    IF( LGRADSP ) THEN
+      ! same as forward
+      CALL SPFILT(YDGEOMETRY,1,NSPEC2,SPVOR_FLT,SPDIV_FLT)
+    ENDIF
+  ENDIF
+
+  ! * SEMI-IMPLICIT SCMEME AND TRANSPOSITIONS.
+  LLDOSI=(CDCONF == 'A'.OR.CDCONF == 'I')
+
+  IF (LLDOSI) THEN
+
+    ALLOCATE(ZSPVORG(NFLEVG,MAX(NSPEC2V,NSPEC2VF)))
+    ALLOCATE(ZSPDIVG(NFLEVG,MAX(NSPEC2V,NSPEC2VF)))
+    ALLOCATE(ZSPTG  (NFLEVG,MAX(NSPEC2V,NSPEC2VF)))
+    ALLOCATE(ZSPSPDG(NFLEVG,MAX(NSPEC2V,NSPEC2VF)))
+    ALLOCATE(ZSPSVDG(NFLEVG,MAX(NSPEC2V,NSPEC2VF)))
+    ALLOCATE(ZSPSPG (MAX(NSPEC2V,NSPEC2VF)))
+
+    IF (LIMPF) THEN
+      ALLOCATE(ZSPAUX(NFLSUR,NSPEC2))
+      ALLOCATE(ZSPAUXG(NFLEVG,MAX(NSPEC2V,NSPEC2VF)))
+    ENDIF
+
+    IF (LIMPF) THEN
+      CALL GSTATS(1029,0)
+!$OMP PARALLEL DO SCHEDULE(STATIC,1) PRIVATE(JMLOC,IM,ISTA,IEND)
+      DO JMLOC=1,NUMP
+        IM=YDLAP%MYMS(JMLOC)
+        ISTA=YDLAP%NASM0(IM)
+        IEND=ISTA+2*(NSMAX+1-IM)-1
+        CALL SPCIMPFPOSTAD(YDGEOMETRY,YDML_GCONF%YRRIP,YDDYN,IM,ISTA,IEND,YDSP%VOR,YDSP%DIV)
+      ENDDO
+!$OMP END PARALLEL DO
+      CALL GSTATS(1029,1)
+    ENDIF
+
+    ! * Transpose spectral data to vertical columns
+    !   Vorticity is only required if LIMPF=.T.
+
+    CALL GSTATS(36,2)
+    CALL GSTATS(86,0)
+    CALL TRMTOS(YDGEOMETRY,PSPVOR=YDSP%VOR,PSPDIV=YDSP%DIV,PSPT=YDSP%T,PSPSPD=YDSP%SPD,&
+     & PSPSVD=YDSP%SVD,PSPSP=ZZPS,&
+     & PSPVORG=ZSPVORG,PSPDIVG=ZSPDIVG,PSPTG=ZSPTG,PSPSPDG=ZSPSPDG,&
+     & PSPSVDG=ZSPSVDG,PSPSPG=ZSPSPG,&
+     & LDFULLM=LLONEM)
+
+    CALL GSTATS(86,2)
+    CALL GSTATS(36,3)
+    IF (LLONEM) THEN
+
+      !   * Each zonal wave number has to be treated separately
+
+      CALL GSTATS(1030,0)
+!$OMP PARALLEL DO SCHEDULE(STATIC,1) PRIVATE(JMLOC,IM,ISTA,IEND)
+      DO JMLOC=NPTRMF(MYSETN),NPTRMF(MYSETN+1)-1
+        IM=YDLAP%MYMS(JMLOC)
+        ISTA=NSPSTAF(IM)
+        IEND=ISTA+2*(NSMAX+1-IM)-1
+        CALL SPCSIAD(YDGEOMETRY,YDML_GCONF%YRRIP,YDDYN,IM,JMLOC,ISTA,IEND,LLONEM,&
+         & ZSPAUXG,ZSPVORG,ZSPDIVG,ZSPTG,ZSPSPG)
+      ENDDO
+!$OMP END PARALLEL DO
+      CALL GSTATS(1030,1)
+
+    ELSE
+
+      !   * All spectral colunms can be done in one go
+
+      IF (NSPEC2V > 0) THEN
+        IM=-999
+        IMLOC=-999
+        CALL SPCSIAD(YDGEOMETRY,YDML_GCONF%YRRIP,YDDYN,IM,IMLOC,1,NSPEC2V,LLONEM,&
+         & ZSPAUXG,ZSPVORG,ZSPDIVG,ZSPTG,ZSPSPG)
+      ENDIF
+    ENDIF
+
+    ! * Transpose spectral data back to level structure
+
+    CALL GSTATS(36,1)
+    CALL GSTATS(86,3)
+    IF (LIMPF) THEN
+      CALL TRSTOM(&
+        & YDGEOMETRY,PSPVORG=ZSPVORG,PSPDIVG=ZSPDIVG,PSPTG=ZSPTG,PSPSPDG=ZSPSPDG,&
+        & PSPSVDG=ZSPSVDG,PSPSPG=ZSPSPG,PSPAUXG=ZSPAUXG,&
+        & PSPVOR=YDSP%VOR,PSPDIV=YDSP%DIV,PSPT=YDSP%T,PSPSPD=YDSP%SPD,&
+        & PSPSVD=YDSP%SVD,PSPSP=ZZPS,PSPAUX=ZSPAUX,&
+        & LDFULLM=LLONEM,LDNEEDPS=.FALSE.)
+    ELSE
+      CALL TRSTOM(&
+        & YDGEOMETRY,PSPVORG=ZSPVORG,PSPDIVG=ZSPDIVG,PSPTG=ZSPTG,PSPSPDG=ZSPSPDG,&
+        & PSPSVDG=ZSPSVDG,PSPSPG=ZSPSPG,&
+        & PSPVOR=YDSP%VOR,PSPDIV=YDSP%DIV,PSPT=YDSP%T,PSPSPD=YDSP%SPD,&
+        & PSPSVD=YDSP%SVD,PSPSP=ZZPS,&
+        & LDFULLM=LLONEM,LDNEEDPS=.FALSE.)
+    ENDIF
+    CALL GSTATS(86,1)
+
+    IF (LIMPF) THEN
+      CALL GSTATS(1031,0)
+!$OMP PARALLEL DO SCHEDULE(STATIC,1) PRIVATE(JMLOC,IM,ISTA,IEND)
+      DO JMLOC=1,NUMP
+        IM=YDLAP%MYMS(JMLOC)
+        ISTA=YDLAP%NASM0(IM)
+        IEND=ISTA+2*(NSMAX+1-IM)-1
+        CALL SPCIMPFINITAD(YDGEOMETRY,YDML_GCONF%YRRIP,YDDYN,IM,ISTA,IEND,YDSP%VOR,ZSPAUX)
+      ENDDO
+!$OMP END PARALLEL DO
+      CALL GSTATS(1031,1)
+    ENDIF
+
+    IF (ALLOCATED(ZSPVORG)) DEALLOCATE(ZSPVORG)
+    IF (ALLOCATED(ZSPDIVG)) DEALLOCATE(ZSPDIVG)
+    IF (ALLOCATED(ZSPTG)) DEALLOCATE(ZSPTG)
+    IF (ALLOCATED(ZSPSPDG)) DEALLOCATE(ZSPSPDG)
+    IF (ALLOCATED(ZSPSVDG)) DEALLOCATE(ZSPSVDG)
+    IF (ALLOCATED(ZSPSPG)) DEALLOCATE(ZSPSPG)
+    IF (ALLOCATED(ZSPAUX)) DEALLOCATE(ZSPAUX)
+    IF (ALLOCATED(ZSPAUXG)) DEALLOCATE(ZSPAUXG)
+
+  ENDIF ! LLDOSI
+
+ ELSE
+
+  CALL ABOR1('SPCMAD MUST NOT BE CALLED FOR THIS VALUE OF NCONF')
+
+ ENDIF ! LR3D
+
+ELSE
+
+  IF (CDCONF /= '0') THEN
+    WRITE (NULOUT,*) 'CDCONF(9:9) = ', CDCONF
+    CALL ABOR1('SPCMAD: CONFIGURATION NOT ALLOWED: CHECK CDCONF')
+  ENDIF
+
+ENDIF
+
+IF(YDMP%NPSP==1)YDSP%SP=ZZPS
+DEALLOCATE(ZZPS)
+
+!     ------------------------------------------------------------------
+
+END ASSOCIATE
+END ASSOCIATE
+IF (LHOOK) CALL DR_HOOK('SPCMAD',1,ZHOOK_HANDLE)
+END SUBROUTINE SPCMAD

@@ -1,0 +1,285 @@
+SUBROUTINE LASCAW_CLO_TL(KFLEV,KPROM,KST,KPROF,LDT_SLHD,LDSLHDHEAT,PSLHDKMIN,PDLO,PKAPPA,PKAPPAT,&
+ & PDLO5,PKAPPA5,PKAPPAT5,PCLO,PCLOSLD,PCLOSLT,PCLO5,PCLOSLD5,PCLOSLT5)
+
+!     ------------------------------------------------------------------
+
+!**** *LASCAW_CLO_TL  -  Weights for semi-LAgrangian interpolator:
+!                        Computes PCLO and PCLOSLD/T for one layer
+!                        (high-order meridian weights)
+!                        TL + trajectory code
+
+!      Can be also called for zonal high-order weights if plane geometry
+!       (no need to code a specific ELASCAW_CLA_TL).
+
+!     Purpose.
+!     --------
+
+!**   Interface.
+!     ----------
+!        *CALL* *LASCAW_CLO_TL( ... )
+
+!        Explicit arguments :
+!        --------------------
+
+!        * INPUT:
+!        KFLEV    - Vertical dimension
+!        KPROM    - horizontal dimension.
+!        KST      - first element of arrays where computations are performed.
+!        KPROF    - depth of work.
+!        LDT_SLHD - keys for SLHD.
+!        LDSLHDHEAT   - If true, the triggering function for heat variables differs from the one for momentum variables
+!        PSLHDKMIN - either HOISLH or SLHDKMIN
+!        PDLO     - distances for horizontal linear interpolations in longitude.
+!        PKAPPA   - kappa function ("coefficient of SLHD").
+!        PKAPPAT  - kappa function ("coefficient of SLHD") on T.
+!        PDLO5    - cf. PDLO (trajectory).
+!        PKAPPA5  - cf. PKAPPA (trajectory).
+!        PKAPPAT5 - cf. PKAPPAT (trajectory).
+
+!        * OUTPUT:
+!        PCLO     - weights for horizontal cubic interpolations in longitude.
+!        PCLOSLD  - cf. PCLO, SLHD case.
+!        PCLOSLT  - cf. PCLO, SLHD case on T.
+!        PCLO5    - cf. PCLO (trajectory).
+!        PCLOSLD5 - cf. PCLOSLD (trajectory).
+!        PCLOSLT5 - cf. PCLOSLT (trajectory).
+
+!        Implicit arguments :
+!        --------------------
+
+!     Method.
+!     -------
+!        See documentation about semi-Lagrangian scheme.
+
+!     Externals.
+!     ----------
+
+!        No external.
+!        Called by some (E)LASCAWTL routines.
+
+!     Reference.
+!     ----------
+
+!     Author.
+!     -------
+!        K. YESSAD, after former LASCAWTL code (JAN 2009).
+!        METEO-FRANCE, CNRM/GMAP.
+
+!     Modifications.
+!     --------------
+!      F. Vana 13-feb-2014 SLHD weights for heat variables
+!      F. Vana 21-Nov-2017: Option LHOISLT
+!     ------------------------------------------------------------------
+
+USE PARKIND1 , ONLY : JPIM     ,JPRB
+USE YOMHOOK  , ONLY : LHOOK    ,DR_HOOK 
+
+! arp/ifs dependencies to be solved later.
+USE YOMDYNA  , ONLY : SLHDKMAX ,SLHDEPSH,SLHDKREF
+
+!     ------------------------------------------------------------------
+
+IMPLICIT NONE
+
+INTEGER(KIND=JPIM), INTENT(IN)  :: KFLEV
+INTEGER(KIND=JPIM), INTENT(IN)  :: KPROM
+INTEGER(KIND=JPIM), INTENT(IN)  :: KST
+INTEGER(KIND=JPIM), INTENT(IN)  :: KPROF
+LOGICAL           , INTENT(IN)  :: LDT_SLHD(3)
+LOGICAL           , INTENT(IN)  :: LDSLHDHEAT
+REAL(KIND=JPRB)   , INTENT(IN)  :: PSLHDKMIN
+REAL(KIND=JPRB)   , INTENT(IN)  :: PDLO(KPROM,KFLEV)
+REAL(KIND=JPRB)   , INTENT(IN)  :: PKAPPA(KPROM,KFLEV)
+REAL(KIND=JPRB)   , INTENT(IN)  :: PKAPPAT(KPROM,KFLEV)
+REAL(KIND=JPRB)   , INTENT(IN)  :: PDLO5(KPROM,KFLEV)
+REAL(KIND=JPRB)   , INTENT(IN)  :: PKAPPA5(KPROM,KFLEV)
+REAL(KIND=JPRB)   , INTENT(IN)  :: PKAPPAT5(KPROM,KFLEV)
+REAL(KIND=JPRB)   , INTENT(OUT) :: PCLO(KPROM,KFLEV,3)
+REAL(KIND=JPRB)   , INTENT(OUT) :: PCLOSLD(KPROM,KFLEV,3)
+REAL(KIND=JPRB)   , INTENT(OUT) :: PCLOSLT(KPROM,KFLEV,3)
+REAL(KIND=JPRB)   , INTENT(OUT) :: PCLO5(KPROM,KFLEV,3)
+REAL(KIND=JPRB)   , INTENT(OUT) :: PCLOSLD5(KPROM,KFLEV,3)
+REAL(KIND=JPRB)   , INTENT(OUT) :: PCLOSLT5(KPROM,KFLEV,3)
+
+!     ------------------------------------------------------------------
+
+INTEGER(KIND=JPIM) :: JROF,JLEV
+REAL(KIND=JPRB) :: ZWA1,ZWA2,ZWA3,ZWD1,ZWD2,ZWD3,ZWH1,ZWH2,ZWH3
+REAL(KIND=JPRB) :: ZWDS1,ZWDS2,ZWDS3,ZWL1,ZWL2,ZWL3
+REAL(KIND=JPRB) :: ZWA15,ZWA25,ZWA35,ZWD15,ZWD25,ZWD35,ZWH15,ZWH25,ZWH35
+REAL(KIND=JPRB) :: ZWDS15,ZWDS25,ZWDS35,ZWL15,ZWL25,ZWL35
+REAL(KIND=JPRB) :: Z1M2EPSH, ZSIGN, ZSLHDKMIN
+LOGICAL :: LLSLHD,LLSLHDQUAD,LLSLHD_OLD
+REAL(KIND=JPRB) :: ZHOOK_HANDLE
+
+!     ------------------------------------------------------------------
+
+REAL(KIND=JPRB),PARAMETER :: PP6_R=1.0_JPRB/6.0_JPRB
+REAL(KIND=JPRB) :: PD
+REAL(KIND=JPRB) :: FLAG1, FLAG2, FLAG3, FDLAG1, FDLAG2, FDLAG3
+REAL(KIND=JPRB) :: FQUAD1, FQUAD2, FQUAD3, FDQUAD1, FDQUAD2, FDQUAD3
+
+! weights for cubic Lagrange interpolation (regular nodes)
+FLAG1(PD)= 0.5_JPRB*(PD+1.0_JPRB)   *(PD-1.0_JPRB)*(PD-2.0_JPRB)
+FLAG2(PD)=-0.5_JPRB*(PD+1.0_JPRB)*PD              *(PD-2.0_JPRB)
+FLAG3(PD)= PP6_R   *(PD+1.0_JPRB)*PD*(PD-1.0_JPRB)
+FDLAG1(PD)= 0.5_JPRB*(3.0_JPRB*PD*PD-4.0_JPRB*PD-1.0_JPRB)
+FDLAG2(PD)=-0.5_JPRB*(3.0_JPRB*PD*PD-2.0_JPRB*PD-2.0_JPRB)
+FDLAG3(PD)= PP6_R   *(3.0_JPRB*PD*PD-1.0_JPRB)
+
+! weights for quadratic SLHD interpolation (regular nodes)
+FQUAD1(PD)=(1.0_JPRB-PD)*(1.0_JPRB+0.25_JPRB*PD)
+FQUAD2(PD)=PD*(1.25_JPRB-0.25_JPRB*PD)
+FQUAD3(PD)=0.25_JPRB*PD*(PD-1.0_JPRB)
+FDQUAD1(PD)=-0.5_JPRB*PD - 0.75_JPRB
+FDQUAD2(PD)=-0.5_JPRB*PD + 1.25_JPRB
+FDQUAD3(PD)= 0.5_JPRB*PD - 0.25_JPRB
+
+!     ------------------------------------------------------------------
+IF (LHOOK) CALL DR_HOOK('LASCAW_CLO_TL',0,ZHOOK_HANDLE)
+!     ------------------------------------------------------------------
+
+LLSLHD=LDT_SLHD(1)
+LLSLHDQUAD=LDT_SLHD(2)
+LLSLHD_OLD=LDT_SLHD(3)
+
+! * Auxiliary quantity for Laplacian smoother:
+Z1M2EPSH=1.0_JPRB-2.0_JPRB*SLHDEPSH
+
+! * Calculation of PCLO and PCLOSLD/T, PCLO5 and PCLOSLD/T5:
+DO JLEV=1,KFLEV
+!CDIR NODEP
+DO JROF=KST,KPROF
+
+  ! a/ Trajectory code (in particuliar computes PCLO5 and PCLOSLD/T5):
+
+#if defined(NECSX)
+  ! scalar variable initialization (to meet vectorization condition)
+  ZWA15=0._JPRB
+  ZWA25=0._JPRB
+  ZWA35=0._JPRB
+  ZWD15=0._JPRB
+  ZWD25=0._JPRB
+  ZWD35=0._JPRB
+  ZWDS15=0._JPRB
+  ZWDS25=0._JPRB
+  ZWDS35=0._JPRB
+#endif
+
+  ZWH15=FLAG1(PDLO5(JROF,JLEV))
+  ZWH25=FLAG2(PDLO5(JROF,JLEV))
+  ZWH35=FLAG3(PDLO5(JROF,JLEV))
+  IF (LLSLHDQUAD) THEN
+    ZWL15=FQUAD1(PDLO5(JROF,JLEV))
+    ZWL25=FQUAD2(PDLO5(JROF,JLEV))
+    ZWL35=FQUAD3(PDLO5(JROF,JLEV))
+  ELSEIF (LLSLHD_OLD) THEN
+    ZWL25=PDLO5(JROF,JLEV)
+    ZWL15=1.0_JPRB-ZWL25
+    ZWL35=0.0_JPRB
+  ENDIF
+
+  IF (LLSLHD) THEN
+    ZSIGN=SIGN(0.5_JPRB,PKAPPA5(JROF,JLEV))
+    ZSLHDKMIN=(0.5_JPRB+ZSIGN)*PSLHDKMIN - (ZSIGN-0.5_JPRB)*SLHDKREF
+    ZWA15=ZWH15+ZSLHDKMIN*(ZWL15-ZWH15)
+    ZWA25=ZWH25+ZSLHDKMIN*(ZWL25-ZWH25)
+    ZWA35=ZWH35+ZSLHDKMIN*(ZWL35-ZWH35)
+    ZWD15=ZWH15+SLHDKMAX*(ZWL15-ZWH15)
+    ZWD25=ZWH25+SLHDKMAX*(ZWL25-ZWH25)
+    ZWD35=ZWH35+SLHDKMAX*(ZWL35-ZWH35)
+    ZWDS15=Z1M2EPSH*ZWD15+SLHDEPSH*ZWD25
+    ZWDS25=SLHDEPSH*ZWD15+Z1M2EPSH*ZWD25
+    ZWDS35=SLHDEPSH*ZWD25+ZWD35
+    PCLO5(JROF,JLEV,1)=ZWA15
+    PCLO5(JROF,JLEV,2)=ZWA25
+    PCLO5(JROF,JLEV,3)=ZWA35
+    PCLOSLD5(JROF,JLEV,1)=ZWA15+ABS(PKAPPA5(JROF,JLEV))*(ZWDS15-ZWA15)
+    PCLOSLD5(JROF,JLEV,2)=ZWA25+ABS(PKAPPA5(JROF,JLEV))*(ZWDS25-ZWA25)
+    PCLOSLD5(JROF,JLEV,3)=ZWA35+ABS(PKAPPA5(JROF,JLEV))*(ZWDS35-ZWA35)
+    IF (LDSLHDHEAT) THEN
+      PCLOSLT5(JROF,JLEV,1)=ZWA15+ABS(PKAPPAT5(JROF,JLEV))*(ZWDS15-ZWA15)
+      PCLOSLT5(JROF,JLEV,2)=ZWA25+ABS(PKAPPAT5(JROF,JLEV))*(ZWDS25-ZWA25)
+      PCLOSLT5(JROF,JLEV,3)=ZWA35+ABS(PKAPPAT5(JROF,JLEV))*(ZWDS35-ZWA35)
+    ENDIF
+  ELSEIF (LLSLHDQUAD) THEN
+    ZWA15=ZWH15+PSLHDKMIN*(ZWL15-ZWH15)
+    ZWA25=ZWH25+PSLHDKMIN*(ZWL25-ZWH25)
+    ZWA35=ZWH35+PSLHDKMIN*(ZWL35-ZWH35)
+    PCLO5(JROF,JLEV,1)=ZWA15
+    PCLO5(JROF,JLEV,2)=ZWA25
+    PCLO5(JROF,JLEV,3)=ZWA35
+  ELSE
+    PCLO5(JROF,JLEV,1)=ZWH15
+    PCLO5(JROF,JLEV,2)=ZWH25
+    PCLO5(JROF,JLEV,3)=ZWH35
+  ENDIF
+
+  ! b/ TL code (in particuliar computes PCLO and PCLOSLD/T):
+
+#if defined(NECSX)
+  ! scalar variable initialization (to meet vectorization condition)
+  ZWA1=0._JPRB
+  ZWA2=0._JPRB
+  ZWA3=0._JPRB
+  ZWD1=0._JPRB
+  ZWD2=0._JPRB
+  ZWD3=0._JPRB
+  ZWDS1=0._JPRB
+  ZWDS2=0._JPRB
+  ZWDS3=0._JPRB
+#endif
+
+  ZWH1=FDLAG1(PDLO5(JROF,JLEV))*PDLO(JROF,JLEV)
+  ZWH2=FDLAG2(PDLO5(JROF,JLEV))*PDLO(JROF,JLEV)
+  ZWH3=FDLAG3(PDLO5(JROF,JLEV))*PDLO(JROF,JLEV)
+  IF (LLSLHDQUAD) THEN
+    ZWL1=FDQUAD1(PDLO5(JROF,JLEV))*PDLO(JROF,JLEV)
+    ZWL2=FDQUAD2(PDLO5(JROF,JLEV))*PDLO(JROF,JLEV)
+    ZWL3=FDQUAD3(PDLO5(JROF,JLEV))*PDLO(JROF,JLEV)
+  ELSEIF (LLSLHD_OLD) THEN
+    ZWL2=PDLO(JROF,JLEV)
+    ZWL1=-ZWL2
+    ZWL3=0.0_JPRB
+  ENDIF
+
+  IF (LLSLHD) THEN
+    ZWA1=ZWH1+ZSLHDKMIN*(ZWL1-ZWH1)
+    ZWA2=ZWH2+ZSLHDKMIN*(ZWL2-ZWH2)
+    ZWA3=ZWH3+ZSLHDKMIN*(ZWL3-ZWH3)
+    ZWD1=ZWH1+SLHDKMAX*(ZWL1-ZWH1)
+    ZWD2=ZWH2+SLHDKMAX*(ZWL2-ZWH2)
+    ZWD3=ZWH3+SLHDKMAX*(ZWL3-ZWH3)
+    ZWDS1=Z1M2EPSH*ZWD1+SLHDEPSH*ZWD2
+    ZWDS2=SLHDEPSH*ZWD1+Z1M2EPSH*ZWD2
+    ZWDS3=SLHDEPSH*ZWD2+ZWD3
+    PCLO(JROF,JLEV,1)=ZWA1
+    PCLO(JROF,JLEV,2)=ZWA2
+    PCLO(JROF,JLEV,3)=ZWA3
+    PCLOSLD(JROF,JLEV,1)=ZWA1+PKAPPA(JROF,JLEV)*(ZWDS15-ZWA15)+ABS(PKAPPA5(JROF,JLEV))*(ZWDS1-ZWA1)
+    PCLOSLD(JROF,JLEV,2)=ZWA2+PKAPPA(JROF,JLEV)*(ZWDS25-ZWA25)+ABS(PKAPPA5(JROF,JLEV))*(ZWDS2-ZWA2)
+    PCLOSLD(JROF,JLEV,3)=ZWA3+PKAPPA(JROF,JLEV)*(ZWDS35-ZWA35)+ABS(PKAPPA5(JROF,JLEV))*(ZWDS3-ZWA3)
+    IF (LDSLHDHEAT) THEN
+      PCLOSLT(JROF,JLEV,1)=ZWA1+PKAPPAT(JROF,JLEV)*(ZWDS15-ZWA15)+ABS(PKAPPAT5(JROF,JLEV))*(ZWDS1-ZWA1)
+      PCLOSLT(JROF,JLEV,2)=ZWA2+PKAPPAT(JROF,JLEV)*(ZWDS25-ZWA25)+ABS(PKAPPAT5(JROF,JLEV))*(ZWDS2-ZWA2)
+      PCLOSLT(JROF,JLEV,3)=ZWA3+PKAPPAT(JROF,JLEV)*(ZWDS35-ZWA35)+ABS(PKAPPAT5(JROF,JLEV))*(ZWDS3-ZWA3)
+    ENDIF
+  ELSEIF (LLSLHDQUAD) THEN
+    ZWA1=ZWH1+PSLHDKMIN*(ZWL1-ZWH1)
+    ZWA2=ZWH2+PSLHDKMIN*(ZWL2-ZWH2)
+    ZWA3=ZWH3+PSLHDKMIN*(ZWL3-ZWH3)
+    PCLO(JROF,JLEV,1)=ZWA1
+    PCLO(JROF,JLEV,2)=ZWA2
+    PCLO(JROF,JLEV,3)=ZWA3
+  ELSE
+    PCLO(JROF,JLEV,1)=ZWH1
+    PCLO(JROF,JLEV,2)=ZWH2
+    PCLO(JROF,JLEV,3)=ZWH3
+  ENDIF
+
+ENDDO
+ENDDO
+
+!     ------------------------------------------------------------------
+IF (LHOOK) CALL DR_HOOK('LASCAW_CLO_TL',1,ZHOOK_HANDLE)
+END SUBROUTINE LASCAW_CLO_TL

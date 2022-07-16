@@ -1,0 +1,296 @@
+SUBROUTINE GPRCPAD(KPROMA,KSTART,KPROF,KFLEV,PQ,PQI,PQL,PQR,PQS,PQG,&
+ & PCP,PR,PKAP,PCP5,PR5,PGFL,KGFLTYP,LDTHERMACT)  
+
+!**** *GPRCPAD* - Computes Cp, R and R/Cp from Q, adjoint
+
+!     Purpose.
+!     --------
+!           COMPUTES CP AND R  AND R/CP FROM Q
+
+!**   Interface.
+!     ----------
+!        *CALL* *GPRCPAD(..)*
+
+!        Explicit arguments :
+!        --------------------
+
+!        INPUT:
+!          KPROMA               - dimensioning.
+!          KSTART               - start of work.
+!          KPROF                - depth of work.
+!          KFLEV                - number of layers.
+
+!        INPUT/OUTPUT:
+!          PQ(KPROMA,KFLEV)     - specific humidity.
+!          PQI(KPROMA,KFLEV)    - ice.
+!          PQL(KPROMA,KFLEV)    - liquid water.
+!          PQR(KPROMA,KFLEV)    - rain.
+!          PQS(KPROMA,KFLEV)    - snow.
+!          PQG(KPROMA,KFLEV)    - graupel.
+
+!          PCP(KPROMA,KFLEV)    - CP
+!          PR(KPROMA,KFLEV)     - R
+
+!        OUTPUT:
+!          PKAP(KPROMA,KFLEV)   - KAPPA
+
+!        INPUT (trajectory):
+!          PCP5(KPROMA,KFLEV)   - CP (trajectory)
+!          PR5(KPROMA,KFLEV)    - R (trajectory)
+
+!        Implicit arguments :  Physical constants from YOMCST
+!        --------------------
+
+!     Method.
+!     -------
+!        See documentation
+!        NOTE! This is NOT an strict linearization of the corresponding
+!        non-linear routine, some q-related terms have been supressed
+
+!     Externals.  None.
+!     ----------
+
+!     Reference.
+!     ----------
+!        ECMWF Research Department documentation of the IFS
+
+!     Author.
+!     -------
+!      Mats Hamrud and Philippe Courtier  *ECMWF*
+!      Original : 88-02-04
+
+!     Modifications.
+!     --------------
+!      M.Hamrud      01-Oct-2003 CY28 Cleaning
+!      Y.Seity : 04-02-18 : add rain, graupel and snow 
+!      L.Isaksen     15-Jun-2005 Supress R dep. on q variables
+!      M.Hamrud      15-Jan-2006  Revised GPRCP
+!      M. Jidane : 06-04-2006 Re-introduction of R dep. on q variables under key
+!      K. Yessad (Jan 2011): more compact rewriting.
+!     ------------------------------------------------------------------
+
+USE PARKIND1 , ONLY : JPIM, JPRB
+USE YOMHOOK  , ONLY : LHOOK, DR_HOOK
+USE YOMCST   , ONLY : RD, RV, RCPD, RCPV, RCW, RCS
+USE YOM_YGFL , ONLY : YGFL
+USE YOMDYNA  , ONLY : LDRY_ECMWF
+
+!     ------------------------------------------------------------------
+
+IMPLICIT NONE
+
+INTEGER(KIND=JPIM),INTENT(IN)    :: KPROMA 
+INTEGER(KIND=JPIM),INTENT(IN)    :: KFLEV 
+INTEGER(KIND=JPIM),INTENT(IN)    :: KSTART 
+INTEGER(KIND=JPIM),INTENT(IN)    :: KPROF 
+REAL(KIND=JPRB),OPTIONAL   ,INTENT(INOUT) :: PQ(KPROMA,KFLEV) 
+REAL(KIND=JPRB),OPTIONAL   ,INTENT(INOUT) :: PQI(KPROMA,KFLEV) 
+REAL(KIND=JPRB),OPTIONAL   ,INTENT(INOUT) :: PQL(KPROMA,KFLEV) 
+REAL(KIND=JPRB),OPTIONAL   ,INTENT(INOUT) :: PQR(KPROMA,KFLEV) 
+REAL(KIND=JPRB),OPTIONAL   ,INTENT(INOUT) :: PQS(KPROMA,KFLEV) 
+REAL(KIND=JPRB),OPTIONAL   ,INTENT(INOUT) :: PQG(KPROMA,KFLEV) 
+REAL(KIND=JPRB),OPTIONAL   ,INTENT(INOUT) :: PGFL(KPROMA,KFLEV,YGFL%NDIM) 
+REAL(KIND=JPRB),OPTIONAL   ,INTENT(INOUT) :: PCP(KPROMA,KFLEV) 
+REAL(KIND=JPRB),OPTIONAL   ,INTENT(INOUT) :: PR(KPROMA,KFLEV) 
+REAL(KIND=JPRB),OPTIONAL   ,INTENT(INOUT) :: PKAP(KPROMA,KFLEV) 
+REAL(KIND=JPRB),OPTIONAL   ,INTENT(IN)    :: PCP5(KPROMA,KFLEV) 
+REAL(KIND=JPRB),OPTIONAL   ,INTENT(IN)    :: PR5(KPROMA,KFLEV) 
+INTEGER(KIND=JPIM),OPTIONAL,INTENT(IN)    :: KGFLTYP
+LOGICAL,OPTIONAL,INTENT(IN) :: LDTHERMACT   ! To allow calls independent of YGFL 
+
+!     ------------------------------------------------------------------
+
+REAL(KIND=JPRB) :: ZCP(KPROMA,KFLEV)
+REAL(KIND=JPRB) :: ZR(KPROMA,KFLEV)
+REAL(KIND=JPRB) :: ZKAP(KPROMA,KFLEV)
+
+INTEGER(KIND=JPIM) :: JLEV, JLON, JGFL
+INTEGER(KIND=JPIM) :: IACT(YGFL%NUMFLDS),IPT(YGFL%NUMFLDS),INUMACT,IGFL,IGFLTYP
+LOGICAL :: LLGFL,LLQ,LLQL,LLQI,LLQR,LLQS,LLQG,LLKAP
+LOGICAL :: LLQ_THERMACT,LLQL_THERMACT,LLQI_THERMACT,LLQR_THERMACT,LLQS_THERMACT,LLQG_THERMACT
+REAL(KIND=JPRB) :: ZPCP_R5,ZPCP_R2
+REAL(KIND=JPRB) :: ZHOOK_HANDLE
+
+#include "abor1.intfb.h"
+
+!     ------------------------------------------------------------------
+
+IF (LHOOK) CALL DR_HOOK('GPRCPAD',0,ZHOOK_HANDLE)
+ASSOCIATE(NDIM=>YGFL%NDIM, NUMFLDS=>YGFL%NUMFLDS, YCOMP=>YGFL%YCOMP, &
+ & YG=>YGFL%YG, YI=>YGFL%YI, YL=>YGFL%YL, YQ=>YGFL%YQ, YR=>YGFL%YR, YS=>YGFL%YS)
+
+!     ------------------------------------------------------------------
+
+!*       1.    COMPUTES R AND CP AND KAPPA.
+!              ----------------------------
+
+LLGFL = PRESENT(PGFL)
+IF(.NOT. LLGFL) THEN
+  LLQ  = PRESENT(PQ)
+  LLQL = PRESENT(PQL)
+  LLQI = PRESENT(PQI)
+  LLQR = PRESENT(PQR)
+  LLQS = PRESENT(PQS)
+  LLQG = PRESENT(PQG)
+  IF(PRESENT(LDTHERMACT)) THEN
+    LLQ_THERMACT=LDTHERMACT
+    LLQL_THERMACT=LDTHERMACT
+    LLQI_THERMACT=LDTHERMACT
+    LLQR_THERMACT=LDTHERMACT
+    LLQS_THERMACT=LDTHERMACT
+    LLQG_THERMACT=LDTHERMACT
+  ELSE
+    LLQ_THERMACT=YQ%LTHERMACT
+    LLQL_THERMACT=YL%LTHERMACT
+    LLQI_THERMACT=YI%LTHERMACT
+    LLQR_THERMACT=YR%LTHERMACT
+    LLQS_THERMACT=YS%LTHERMACT
+    LLQG_THERMACT=YG%LTHERMACT
+  ENDIF
+ENDIF
+
+LLKAP=PRESENT(PKAP).AND.PRESENT(PR5).AND.PRESENT(PCP5)
+
+! * compute IPT:
+IF(LLGFL) THEN
+  IGFLTYP = 0
+  IF(PRESENT(KGFLTYP)) IGFLTYP=KGFLTYP
+  INUMACT = 0
+  DO JGFL=1,NUMFLDS
+    IF(YCOMP(JGFL)%LTHERMACT) THEN
+      INUMACT = INUMACT+1
+      IACT(INUMACT) = JGFL
+      IF(IGFLTYP == 0) THEN
+        IPT(INUMACT) = YCOMP(JGFL)%MP
+      ELSEIF(IGFLTYP == 1) THEN
+        IPT(INUMACT) = YCOMP(JGFL)%MP1
+      ELSEIF(IGFLTYP == 5) THEN
+        IPT(INUMACT) = YCOMP(JGFL)%MP5
+      ELSEIF(IGFLTYP == 9) THEN
+        IPT(INUMACT) = YCOMP(JGFL)%MP9
+      ELSEIF(IGFLTYP == 101) THEN
+        IPT(INUMACT) = YCOMP(JGFL)%MP_SL1
+      ELSE
+        CALL ABOR1('GPRCPAD:UNKNOWN GFL TYPE')
+      ENDIF
+    ENDIF
+  ENDDO
+ENDIF
+
+! * fill ZR,ZCP,ZKAP from PR,PCP,PKAP:
+IF (PRESENT(PR)) THEN
+  ZR(KSTART:KPROF,1:KFLEV)=PR(KSTART:KPROF,1:KFLEV)
+  PR(KSTART:KPROF,1:KFLEV)=0.0_JPRB
+ELSE
+  ZR(KSTART:KPROF,1:KFLEV)=0.0_JPRB
+ENDIF
+IF (PRESENT(PCP)) THEN 
+  ZCP(KSTART:KPROF,1:KFLEV)=PCP(KSTART:KPROF,1:KFLEV)
+  PCP(KSTART:KPROF,1:KFLEV)=0.0_JPRB
+ELSE
+  ZCP(KSTART:KPROF,1:KFLEV)=0.0_JPRB
+ENDIF
+IF (LLKAP) THEN
+  ZKAP(KSTART:KPROF,1:KFLEV)=PKAP(KSTART:KPROF,1:KFLEV)
+  PKAP(KSTART:KPROF,1:KFLEV)=0.0_JPRB
+ELSE
+  ZKAP(KSTART:KPROF,1:KFLEV)=0.0_JPRB
+ENDIF
+
+! * compute ZR,ZCP,ZKAP:
+IF(LLGFL) THEN
+  DO JLEV=1,KFLEV
+    IF(LLKAP) THEN
+      DO JLON=KSTART,KPROF
+        ZPCP_R5=1.0_JPRB/PCP5(JLON,JLEV)
+        ZPCP_R2=ZPCP_R5*ZPCP_R5
+        IF (.NOT. LDRY_ECMWF) ZR(JLON,JLEV)=ZR(JLON,JLEV)+ZKAP(JLON,JLEV)*ZPCP_R5
+        ZCP(JLON,JLEV)=ZCP(JLON,JLEV)-(PR5(JLON,JLEV)*ZPCP_R2)*ZKAP(JLON,JLEV)  
+        ZKAP(JLON,JLEV)=0.0_JPRB
+      ENDDO
+    ENDIF
+    IF(INUMACT == 0) THEN
+      DO JLON=KSTART,KPROF
+        ZCP(JLON,JLEV) = 0.0_JPRB
+      ENDDO
+    ENDIF
+    DO JGFL=INUMACT,1,-1
+      IGFL = IACT(JGFL)
+      IF(JGFL == 1) THEN
+        DO JLON=KSTART,KPROF
+          PGFL(JLON,JLEV,IPT(JGFL)) = PGFL(JLON,JLEV,IPT(JGFL))+&
+           & (YCOMP(IGFL)%RCP-RCPD)*ZCP(JLON,JLEV)
+          ZCP(JLON,JLEV)=0.0_JPRB
+        ENDDO
+      ELSE
+        DO JLON=KSTART,KPROF
+          PGFL(JLON,JLEV,IPT(JGFL)) = PGFL(JLON,JLEV,IPT(JGFL))+&
+           & (YCOMP(IGFL)%RCP-RCPD)*ZCP(JLON,JLEV)
+          ZCP(JLON,JLEV)=0.0_JPRB
+        ENDDO
+      ENDIF
+    ENDDO
+    IF (LDRY_ECMWF) THEN   
+      ZR(KSTART:KPROF,JLEV)=0.0_JPRB
+    ELSE
+      ! take account of active GFL and final zeroing of ZR; not yet coded
+      CALL ABOR1(' GPRCPAD: case not yet coded')
+    ENDIF
+  ENDDO
+ELSE
+  DO JLEV=1,KFLEV
+    IF(LLKAP) THEN
+      DO JLON=KSTART,KPROF
+        ZPCP_R5=1.0_JPRB/PCP5(JLON,JLEV)
+        ZPCP_R2=ZPCP_R5*ZPCP_R5
+        IF (.NOT. LDRY_ECMWF) ZR(JLON,JLEV)=ZR(JLON,JLEV)+ZKAP(JLON,JLEV)*ZPCP_R5
+        ZCP(JLON,JLEV)=ZCP(JLON,JLEV)-(PR5(JLON,JLEV)*ZPCP_R2)*ZKAP(JLON,JLEV)  
+        ZKAP(JLON,JLEV)=0.0_JPRB
+      ENDDO
+    ENDIF
+    IF(LLQ .AND. LLQ_THERMACT) THEN
+      DO JLON=KSTART,KPROF
+        PQ(JLON,JLEV) =PQ(JLON,JLEV)+(RCPV-RCPD)*ZCP(JLON,JLEV)
+        IF (.NOT. LDRY_ECMWF) PQ(JLON,JLEV)=PQ(JLON,JLEV)+(RV-RD)*ZR(JLON,JLEV)
+      ENDDO
+    ENDIF
+    IF(LLQL .AND. LLQL_THERMACT) THEN
+      DO JLON=KSTART,KPROF
+        PQL(JLON,JLEV)=PQL(JLON,JLEV)+(RCW-RCPD)*ZCP(JLON,JLEV)
+        IF (.NOT. LDRY_ECMWF) PQL(JLON,JLEV)=PQL(JLON,JLEV)-RD*ZR(JLON,JLEV)
+      ENDDO
+    ENDIF
+    IF(LLQI .AND. LLQI_THERMACT) THEN
+      DO JLON=KSTART,KPROF
+        PQI(JLON,JLEV)=PQI(JLON,JLEV)+(RCS-RCPD)*ZCP(JLON,JLEV)
+        IF (.NOT. LDRY_ECMWF) PQI(JLON,JLEV)=PQI(JLON,JLEV)-RD*ZR(JLON,JLEV)
+      ENDDO
+    ENDIF
+    IF(LLQR .AND. LLQR_THERMACT) THEN
+      DO JLON=KSTART,KPROF
+        PQR(JLON,JLEV)=PQR(JLON,JLEV)+(RCW-RCPD)*ZCP(JLON,JLEV)
+        IF (.NOT. LDRY_ECMWF) PQR(JLON,JLEV)=PQR(JLON,JLEV)-RD*ZR(JLON,JLEV)
+      ENDDO
+    ENDIF
+    IF(LLQS .AND. LLQS_THERMACT) THEN
+      DO JLON=KSTART,KPROF
+        PQS(JLON,JLEV)=PQS(JLON,JLEV)+(RCS-RCPD)*ZCP(JLON,JLEV)
+        IF (.NOT. LDRY_ECMWF) PQS(JLON,JLEV)=PQS(JLON,JLEV)-RD*ZR(JLON,JLEV)
+      ENDDO
+    ENDIF
+    IF(LLQG .AND. LLQG_THERMACT) THEN
+      DO JLON=KSTART,KPROF
+        PQG(JLON,JLEV)=PQG(JLON,JLEV)+(RCS-RCPD)*ZCP(JLON,JLEV)
+        IF (.NOT. LDRY_ECMWF) PQG(JLON,JLEV)=PQG(JLON,JLEV)-RD*ZR(JLON,JLEV)
+      ENDDO
+    ENDIF
+    ZCP(KSTART:KPROF,JLEV)=0.0_JPRB
+    ZR(KSTART:KPROF,JLEV)=0.0_JPRB
+  ENDDO
+ENDIF
+
+!     ------------------------------------------------------------------
+
+END ASSOCIATE
+IF (LHOOK) CALL DR_HOOK('GPRCPAD',1,ZHOOK_HANDLE)
+END SUBROUTINE GPRCPAD

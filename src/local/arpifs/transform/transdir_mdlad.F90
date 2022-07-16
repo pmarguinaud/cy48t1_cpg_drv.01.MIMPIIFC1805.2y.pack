@@ -1,0 +1,175 @@
+SUBROUTINE TRANSDIR_MDLAD(YDGEOMETRY,YDGFL,YDGMV,CDCONF,KNFTHER,YDSP)
+
+!**** *TRANSDIR_MDLAD * - Direct transforms for model (adjoint)
+
+!     Purpose.  Perform direct transform (gridpoint to spectral)
+!     --------
+
+!     Explicit arguments : 
+!     --------------------
+!        CDCONF - configuration of work
+
+!        Called by TRANSDIRHAD
+
+!     Externals.
+!     ----------
+!     DIR_TRANSAD - inverse transform (TRANS library)
+
+!     Reference.
+!     ----------
+!        ECMWF Research Department documentation of the IFS
+
+!     Author.
+!     -------
+!        Mats Hamrud *ECMWF*
+
+!     Modifications.
+!     --------------
+!        Original : 00-10-25
+!        Modified : 03-08-01 M.Hamrud - GFL introduction
+!        M.Hamrud      01-Oct-2003 CY28 Cleaning
+
+!     ------------------------------------------------------------------
+
+USE GEOMETRY_MOD       , ONLY : GEOMETRY
+USE YOMGFL             , ONLY : TGFL
+USE YOMGMV             , ONLY : TGMV
+USE PARKIND1           , ONLY : JPIM, JPRB
+USE YOMHOOK            , ONLY : LHOOK, DR_HOOK
+USE YOMMP0             , ONLY : MYSETV
+USE YOMSP              , ONLY : SPVOR_FLT, SPDIV_FLT  
+USE YOMDYNA            , ONLY : LGRADSP
+USE SPECTRAL_FIELDS_MOD, ONLY : SPECTRAL_FIELD, ASSIGNMENT(=)
+!     ------------------------------------------------------------------
+
+IMPLICIT NONE
+
+TYPE(GEOMETRY)      ,INTENT(IN)    :: YDGEOMETRY
+TYPE(TGFL)          ,INTENT(INOUT) :: YDGFL
+TYPE(TGMV)          ,INTENT(INOUT) :: YDGMV
+CHARACTER(LEN=1)    ,INTENT(IN)    :: CDCONF
+INTEGER(KIND=JPIM)  ,INTENT(IN)    :: KNFTHER
+TYPE(SPECTRAL_FIELD),INTENT(INOUT) :: YDSP
+!     ------------------------------------------------------------------
+REAL(KIND=JPRB)    :: ZSP(1,YDGEOMETRY%YRDIM%NSPEC2)
+INTEGER(KIND=JPIM) :: IVSETSC(1)
+INTEGER(KIND=JPIM) :: IST,IOFF,IDIM3
+LOGICAL :: LLOK, LLG
+REAL(KIND=JPRB), ALLOCATABLE :: ZGRAD(:,:,:,:)
+REAL(KIND=JPRB) :: ZHOOK_HANDLE
+INTEGER(KIND=JPIM) :: JKGLO, JLEV, IBL, JROF, ICEND
+!     ------------------------------------------------------------------
+
+#include "dir_transad.h"
+
+#include "abor1.intfb.h"
+
+!     ------------------------------------------------------------------
+IF (LHOOK) CALL DR_HOOK('TRANSDIR_MDLAD',0,ZHOOK_HANDLE)
+ASSOCIATE(YDDIM=>YDGEOMETRY%YRDIM,YDDIMV=>YDGEOMETRY%YRDIMV, &
+  & YDGEM=>YDGEOMETRY%YRGEM, YDMP=>YDGEOMETRY%YRMP, YGFL=>YDGFL%YGFL)
+ASSOCIATE(NUMFLDS1=>YGFL%NUMFLDS1, NUMSPFLDS1=>YGFL%NUMSPFLDS1, &
+ & NGPBLKS=>YDDIM%NGPBLKS, NPROMA=>YDDIM%NPROMA, NRESOL=>YDDIM%NRESOL, &
+ & NSPEC2=>YDDIM%NSPEC2, &
+ & NFLEVG=>YDDIMV%NFLEVG, &
+ & NGPTOT=>YDGEM%NGPTOT, &
+ & GFLT1=>YDGFL%GFLT1, &
+ & GMV=>YDGMV%GMV, GMVT1=>YDGMV%GMVT1, GMVT1S=>YDGMV%GMVT1S, YT0=>YDGMV%YT0, &
+ & YT1=>YDGMV%YT1, &
+ & NBSETLEV=>YDMP%NBSETLEV, NBSETSP=>YDMP%NBSETSP)
+!     ------------------------------------------------------------------
+
+LLOK=CDCONF == 'A'.OR.CDCONF == 'G'
+IF(.NOT.LLOK)THEN
+  CALL ABOR1('TRANSDIR_MDLAD - UNKNOWN CONFIGURATION ')
+ENDIF
+LLG=CDCONF == 'G'
+
+IVSETSC(1) = NBSETSP
+IF(NBSETSP == MYSETV) THEN
+  IST = 1
+ELSE
+  IST = 0
+ENDIF
+
+CALL GSTATS(1872,0)
+IF(NBSETSP == MYSETV) THEN
+  ZSP(IST,:) = YDSP%SP(:)
+ENDIF
+CALL GSTATS(1872,1)
+
+IF(NUMSPFLDS1>0) THEN
+  IOFF=NUMFLDS1-NUMSPFLDS1
+  IDIM3=NUMSPFLDS1
+ENDIF
+
+IF(LLG) THEN
+! Configuration where grid-point VOR,DIV transformed to spectral (for Jb calc.)
+  IF(NUMSPFLDS1>0) THEN
+    CALL DIR_TRANSAD(PSPSC2=ZSP(1:IST,:),PSPSC3A=YDSP%SP3D(:,:,1:2+KNFTHER),&
+     & PSPSC3B=YDSP%GFL,&
+     & KRESOL=NRESOL,KPROMA=NPROMA,KVSETSC2=IVSETSC(1:1),&
+     & KVSETSC3A=NBSETLEV,KVSETSC3B=NBSETLEV,&
+     & PGP2=GMVT1S(:,1:YT1%NDIMS,:),&
+     & PGP3A=GMVT1(:,:,1:YT1%NDIM,:),PGP3B=GFLT1(:,:,IOFF+1:IOFF+IDIM3,:))  
+  ELSE
+    CALL DIR_TRANSAD(PSPSC2=ZSP(1:IST,:),PSPSC3A=YDSP%SP3D(:,:,1:2+KNFTHER),&
+     & KRESOL=NRESOL,KPROMA=NPROMA,KVSETSC2=IVSETSC(1:1),&
+     & KVSETSC3A=NBSETLEV,&
+     & PGP2=GMVT1S(:,1:YT1%NDIMS,:),&
+     & PGP3A=GMVT1(:,:,1:YT1%NDIM,:))  
+  ENDIF
+ELSE
+
+  IF( LGRADSP ) THEN
+    ALLOCATE(ZGRAD(NPROMA,NFLEVG,2,NGPBLKS))
+    ZGRAD(:,:,:,:)=0.0_JPRB
+    CALL DIR_TRANSAD(PSPVOR=SPVOR_FLT,PSPDIV=SPDIV_FLT,KVSETUV=NBSETLEV,&
+     & KRESOL=NRESOL,KPROMA=NPROMA,PGPUV=ZGRAD)
+    !$OMP PARALLEL DO SCHEDULE(DYNAMIC,1) &
+    !$OMP& PRIVATE (JKGLO,IBL,ICEND) &
+    !$OMP& PRIVATE (JROF,JLEV)
+    DO JKGLO=1,NGPTOT,NPROMA
+      IBL=(JKGLO-1)/NPROMA+1
+      ICEND=MIN(NPROMA,NGPTOT-JKGLO+1)
+      DO JLEV=1,NFLEVG
+        DO JROF=1,ICEND
+          ! store the difference unfiltered-filtered rhs
+          GMV(JROF,JLEV,YT0%MSGRTL,IBL) = GMV(JROF,JLEV,YT0%MSGRTL,IBL)+ZGRAD(JROF,JLEV,1,IBL)
+          GMV(JROF,JLEV,YT0%MSGRTM,IBL) = GMV(JROF,JLEV,YT0%MSGRTM,IBL)+ZGRAD(JROF,JLEV,2,IBL)
+        ENDDO
+      ENDDO
+    ENDDO
+    !$OMP END PARALLEL DO
+    DEALLOCATE(ZGRAD)
+  ENDIF
+
+  IF(NUMSPFLDS1>0) THEN
+    CALL DIR_TRANSAD(PSPVOR=YDSP%VOR,PSPDIV=YDSP%DIV,&
+     & PSPSC2=ZSP(1:IST,:),PSPSC3A=YDSP%HV,&
+     & PSPSC3B=YDSP%GFL,&
+     & KRESOL=NRESOL,KPROMA=NPROMA,KVSETUV=NBSETLEV,KVSETSC2=IVSETSC(1:1),&
+     & KVSETSC3A=NBSETLEV,KVSETSC3B=NBSETLEV,&
+     & PGPUV=GMVT1(:,:,1:2,:),PGP2=GMVT1S(:,1:YT1%NDIMS,:),&
+     & PGP3A=GMVT1(:,:,3:YT1%NDIM,:),PGP3B=GFLT1(:,:,IOFF+1:IOFF+IDIM3,:))  
+  ELSE
+    CALL DIR_TRANSAD(PSPVOR=YDSP%VOR,PSPDIV=YDSP%DIV,&
+     & PSPSC2=ZSP(1:IST,:),PSPSC3A=YDSP%HV,&
+     & KRESOL=NRESOL,KPROMA=NPROMA,KVSETUV=NBSETLEV,KVSETSC2=IVSETSC(1:1),&
+     & KVSETSC3A=NBSETLEV,&
+     & PGPUV=GMVT1(:,:,1:2,:),PGP2=GMVT1S(:,1:YT1%NDIMS,:),&
+     & PGP3A=GMVT1(:,:,3:YT1%NDIM,:))  
+  ENDIF
+ENDIF
+
+CALL GSTATS(1823,0)
+IF(NBSETSP == MYSETV) THEN
+  YDSP%SP(:) = ZSP(IST,:)
+ENDIF
+CALL GSTATS(1823,1)
+
+!     ------------------------------------------------------------------
+END ASSOCIATE
+END ASSOCIATE
+IF (LHOOK) CALL DR_HOOK('TRANSDIR_MDLAD',1,ZHOOK_HANDLE)
+END SUBROUTINE TRANSDIR_MDLAD

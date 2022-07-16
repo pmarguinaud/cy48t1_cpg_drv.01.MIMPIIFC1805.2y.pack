@@ -1,0 +1,204 @@
+SUBROUTINE GPGRXYBAD(&
+ ! --- INPUT --------------------------------------
+ & KPROMA,KD,KF,KFLEV,YDVAB,&
+ ! --- INPUT IN TL --------------------------------
+ & PREL,PREM,PXYB,&
+ ! --- OUTPUT IN TL -------------------------------
+ & PXYBDER,&
+ ! --- INPUT (TRAJECTORY) -------------------------
+ & PRE5L,PRE5M,PXYB5,PXYBDER5)  
+
+!**** *GPGRXYBAD* - AD of routine "GPGRXYB".
+!                 Computation of the horizontal gradient of quantities
+!                 "alpha" and "delta" at model levels.
+
+!     Purpose.
+!     --------
+
+!      See GPGRXYB
+
+!**   Interface.
+!     ----------
+!        *CALL* *GPGRXYBAD(...)
+
+!        Explicit arguments :
+!        --------------------
+!         * INPUT:
+!           KPROMA       : horizontal dimension
+!           KD           : start of work
+!           KF           : working length
+!           KFLEV        : number of levels
+!           YDVAB        : contains information about hybrid vertical coordinate
+
+!         * INPUT IN TL:
+!           PREL         : zonal component of "grad prehyds"
+!           PREM         : meridian component of "grad prehyds"
+!           PXYB         : contains pressure depth, "delta", "alpha".
+
+!         * OUTPUT IN TL:
+!           PXYBDER      : contains grad(delta), grad(alpha), grad(alpha + log prehyd)
+
+!         * INPUT-TRAJECTORY:
+!           PRE5L,PRE5M,PXYB5,PXYBDER5
+
+!        Implicit arguments :   None.
+!        --------------------
+
+!     Method.
+!     -------
+!        See documentation
+
+!     Externals.    None.
+!     ----------
+
+!     Reference.
+!     ----------
+
+!     Author.
+!     -------
+!        K. YESSAD
+
+!     Modifications.
+!     --------------
+!        Original : March 2006
+!     K. Yessad (Dec 2008): remove dummy CDLOCK
+!     K. Yessad (Jan 2011): introduce INTDYN_MOD structures.
+!     K. Yessad (Dec 2011): use YDVAB.
+!     ------------------------------------------------------------------
+
+USE PARKIND1  , ONLY : JPIM, JPRB
+USE YOMHOOK   , ONLY : LHOOK, DR_HOOK
+USE YOMDYNA   , ONLY : NDLNPR
+USE YOMCVER   , ONLY : LVERTFE 
+USE YOMVERT   , ONLY : TVAB
+USE INTDYN_MOD, ONLY : YYTXYB, YYTXYBT, YYTXYBDER, YYTXYBDERT
+
+!     ------------------------------------------------------------------
+
+IMPLICIT NONE
+
+INTEGER(KIND=JPIM),INTENT(IN)    :: KPROMA 
+INTEGER(KIND=JPIM),INTENT(IN)    :: KFLEV 
+INTEGER(KIND=JPIM),INTENT(IN)    :: KD 
+INTEGER(KIND=JPIM),INTENT(IN)    :: KF 
+TYPE(TVAB)        ,INTENT(IN)    :: YDVAB
+REAL(KIND=JPRB)   ,INTENT(INOUT) :: PREL(KPROMA) 
+REAL(KIND=JPRB)   ,INTENT(INOUT) :: PREM(KPROMA) 
+REAL(KIND=JPRB)   ,INTENT(INOUT) :: PXYB(KPROMA,KFLEV,YYTXYB%NDIM) 
+REAL(KIND=JPRB)   ,INTENT(INOUT) :: PXYBDER(KPROMA,KFLEV,YYTXYBDER%NDIM) 
+REAL(KIND=JPRB)   ,INTENT(IN)    :: PRE5L(KPROMA) 
+REAL(KIND=JPRB)   ,INTENT(IN)    :: PRE5M(KPROMA) 
+REAL(KIND=JPRB)   ,INTENT(IN)    :: PXYB5(KPROMA,KFLEV,YYTXYBT%NDIM) 
+REAL(KIND=JPRB)   ,INTENT(IN)    :: PXYBDER5(KPROMA,KFLEV,YYTXYBDERT%NDIM) 
+
+!     ------------------------------------------------------------------
+
+REAL(KIND=JPRB) :: ZCOEFA(KPROMA), ZCOEFAPL(KPROMA), ZCOEFD(KPROMA)
+
+INTEGER(KIND=JPIM) :: JLEV, JROF
+REAL(KIND=JPRB) :: ZHOOK_HANDLE
+
+!     ------------------------------------------------------------------
+
+IF (LHOOK) CALL DR_HOOK('GPGRXYBAD',0,ZHOOK_HANDLE)
+
+!     ------------------------------------------------------------------
+
+!*    2/ Calculation of "grad (alpha + log prehyd)" at full levels
+!        discretised as "grad alpha + (grad prehyd) / prehyd ",
+!        and calculation of "grad alpha" at full levels.
+
+IF(.NOT.LVERTFE) THEN
+  IF(NDLNPR == 0) THEN
+    DO JLEV=1,KFLEV
+      ZCOEFA(KD:KF)=0.0_JPRB
+      ZCOEFAPL(KD:KF)=0.0_JPRB
+      DO JROF=KD,KF
+        ZCOEFA(JROF)=ZCOEFA(JROF) &
+         & +PRE5L(JROF)*PXYBDER(JROF,JLEV,YYTXYBDER%M_ALPHL)+PRE5M(JROF)*PXYBDER(JROF,JLEV,YYTXYBDER%M_ALPHM)
+        PREL(JROF)=PREL(JROF)+PXYBDER5(JROF,JLEV,YYTXYBDERT%M_COEFA)*PXYBDER(JROF,JLEV,YYTXYBDER%M_ALPHL)
+        PREM(JROF)=PREM(JROF)+PXYBDER5(JROF,JLEV,YYTXYBDERT%M_COEFA)*PXYBDER(JROF,JLEV,YYTXYBDER%M_ALPHM)
+        ZCOEFAPL(JROF)=ZCOEFAPL(JROF) &
+         & +PRE5L(JROF)*PXYBDER(JROF,JLEV,YYTXYBDER%M_ALPHPLL)+PRE5M(JROF)*PXYBDER(JROF,JLEV,YYTXYBDER%M_ALPHPLM)
+        PREL(JROF)=PREL(JROF)+PXYBDER5(JROF,JLEV,YYTXYBDERT%M_COEFAPL)*PXYBDER(JROF,JLEV,YYTXYBDER%M_ALPHPLL)
+        PREM(JROF)=PREM(JROF)+PXYBDER5(JROF,JLEV,YYTXYBDERT%M_COEFAPL)*PXYBDER(JROF,JLEV,YYTXYBDER%M_ALPHPLM)
+        ZCOEFAPL(JROF)=ZCOEFAPL(JROF)+ZCOEFA(JROF)
+        PXYB(JROF,JLEV,YYTXYB%M_RTGR)=PXYB(JROF,JLEV,YYTXYB%M_RTGR)-ZCOEFA(JROF)
+        PXYB(JROF,JLEV,YYTXYB%M_RPRE)=PXYB(JROF,JLEV,YYTXYB%M_RPRE)+YDVAB%VBH(JLEV)*ZCOEFAPL(JROF)
+      ENDDO
+    ENDDO
+  ELSEIF(NDLNPR == 1) THEN
+    ! ky: for NH purpose, not yet validated.
+    DO JLEV=1,KFLEV
+      ZCOEFA(KD:KF)=0.0_JPRB
+      ZCOEFAPL(KD:KF)=0.0_JPRB
+      DO JROF=KD,KF
+        ZCOEFA(JROF)=ZCOEFA(JROF) &
+         & +PRE5L(JROF)*PXYBDER(JROF,JLEV,YYTXYBDER%M_ALPHL)+PRE5M(JROF)*PXYBDER(JROF,JLEV,YYTXYBDER%M_ALPHM)
+        PREL(JROF)=PREL(JROF)+PXYBDER5(JROF,JLEV,YYTXYBDERT%M_COEFA)*PXYBDER(JROF,JLEV,YYTXYBDER%M_ALPHL)
+        PREM(JROF)=PREM(JROF)+PXYBDER5(JROF,JLEV,YYTXYBDERT%M_COEFA)*PXYBDER(JROF,JLEV,YYTXYBDER%M_ALPHM)
+        ZCOEFAPL(JROF)=ZCOEFAPL(JROF) &
+         & +PRE5L(JROF)*PXYBDER(JROF,JLEV,YYTXYBDER%M_ALPHPLL)+PRE5M(JROF)*PXYBDER(JROF,JLEV,YYTXYBDER%M_ALPHPLM)
+        PREL(JROF)=PREL(JROF)+PXYBDER5(JROF,JLEV,YYTXYBDERT%M_COEFAPL)*PXYBDER(JROF,JLEV,YYTXYBDER%M_ALPHPLL)
+        PREM(JROF)=PREM(JROF)+PXYBDER5(JROF,JLEV,YYTXYBDERT%M_COEFAPL)*PXYBDER(JROF,JLEV,YYTXYBDER%M_ALPHPLM)
+        ZCOEFA(JROF)=ZCOEFA(JROF)+ZCOEFAPL(JROF)
+        PXYB(JROF,JLEV,YYTXYB%M_RTGR)=PXYB(JROF,JLEV,YYTXYB%M_RTGR)+ZCOEFAPL(JROF)
+        PXYB(JROF,JLEV,YYTXYB%M_RPP)=PXYB(JROF,JLEV,YYTXYB%M_RPP) &
+         & -(YDVAB%VC(JLEV)*PXYB5(JROF,JLEV,YYTXYBT%M_ALPH)/PXYB5(JROF,JLEV,YYTXYBT%M_LNPR))*ZCOEFA(JROF)
+        PXYB(JROF,JLEV,YYTXYB%M_ALPH)=PXYB(JROF,JLEV,YYTXYB%M_ALPH) &
+         & -(YDVAB%VC(JLEV)*PXYB5(JROF,JLEV,YYTXYBT%M_RPP)/PXYB5(JROF,JLEV,YYTXYBT%M_LNPR))*ZCOEFA(JROF)
+        PXYB(JROF,JLEV,YYTXYB%M_LNPR)=PXYB(JROF,JLEV,YYTXYB%M_LNPR) &
+         & +( YDVAB%VC(JLEV)*PXYB5(JROF,JLEV,YYTXYBT%M_RPP)*PXYB5(JROF,JLEV,YYTXYBT%M_ALPH) &
+         & /(PXYB5(JROF,JLEV,YYTXYBT%M_LNPR)*PXYB5(JROF,JLEV,YYTXYBT%M_LNPR)) )*ZCOEFA(JROF)
+      ENDDO
+    ENDDO
+  ENDIF
+ENDIF
+
+!     ------------------------------------------------------------------
+
+!*    1/ Calculation of "grad delta" at full levels.
+
+IF(LVERTFE) THEN
+  DO JLEV=1,KFLEV
+    ZCOEFD(KD:KF)=0.0_JPRB
+    DO JROF=KD,KF
+      ZCOEFD(JROF)=ZCOEFD(JROF) &
+       & +PRE5L(JROF)*PXYBDER(JROF,JLEV,YYTXYBDER%M_LNPRL)+PRE5M(JROF)*PXYBDER(JROF,JLEV,YYTXYBDER%M_LNPRM)
+      PREL(JROF)=PREL(JROF)+PXYBDER5(JROF,JLEV,YYTXYBDERT%M_COEFD)*PXYBDER(JROF,JLEV,YYTXYBDER%M_LNPRL)
+      PREM(JROF)=PREM(JROF)+PXYBDER5(JROF,JLEV,YYTXYBDERT%M_COEFD)*PXYBDER(JROF,JLEV,YYTXYBDER%M_LNPRM)
+      PXYB(JROF,JLEV,YYTXYB%M_RDELP)=PXYB(JROF,JLEV,YYTXYB%M_RDELP) &
+       & +YDVAB%VDELB(JLEV)*PXYB5(JROF,JLEV,YYTXYBT%M_LNPR)*ZCOEFD(JROF)
+      PXYB(JROF,JLEV,YYTXYB%M_RTGR)=PXYB(JROF,JLEV,YYTXYB%M_RTGR)-PXYB5(JROF,JLEV,YYTXYBT%M_LNPR)*ZCOEFD(JROF)
+      PXYB(JROF,JLEV,YYTXYB%M_LNPR)=PXYB(JROF,JLEV,YYTXYB%M_LNPR) &
+       & +(YDVAB%VDELB(JLEV)*PXYB5(JROF,JLEV,YYTXYBT%M_RDELP)-PXYB5(JROF,JLEV,YYTXYBT%M_RTGR))*ZCOEFD(JROF)
+    ENDDO
+  ENDDO
+ELSE
+  DO JLEV=1,KFLEV
+    ZCOEFD(KD:KF)=0.0_JPRB
+    DO JROF=KD,KF
+      ZCOEFD(JROF)=ZCOEFD(JROF) &
+       & +PRE5L(JROF)*PXYBDER(JROF,JLEV,YYTXYBDER%M_LNPRL)+PRE5M(JROF)*PXYBDER(JROF,JLEV,YYTXYBDER%M_LNPRM)
+      PREL(JROF)=PREL(JROF)+PXYBDER5(JROF,JLEV,YYTXYBDERT%M_COEFD)*PXYBDER(JROF,JLEV,YYTXYBDER%M_LNPRL)
+      PREM(JROF)=PREM(JROF)+PXYBDER5(JROF,JLEV,YYTXYBDERT%M_COEFD)*PXYBDER(JROF,JLEV,YYTXYBDER%M_LNPRM)
+      PXYB(JROF,JLEV,YYTXYB%M_RPP)=PXYB(JROF,JLEV,YYTXYB%M_RPP)-YDVAB%VC(JLEV)*ZCOEFD(JROF)
+    ENDDO
+  ENDDO
+ENDIF
+
+!     ------------------------------------------------------------------
+
+!*    0/ Final set to zero.
+
+PXYBDER(KD:KF,1:KFLEV,YYTXYBDER%M_LNPRL)=0.0_JPRB
+PXYBDER(KD:KF,1:KFLEV,YYTXYBDER%M_LNPRM)=0.0_JPRB
+PXYBDER(KD:KF,1:KFLEV,YYTXYBDER%M_ALPHL)=0.0_JPRB
+PXYBDER(KD:KF,1:KFLEV,YYTXYBDER%M_ALPHM)=0.0_JPRB
+PXYBDER(KD:KF,1:KFLEV,YYTXYBDER%M_ALPHPLL)=0.0_JPRB
+PXYBDER(KD:KF,1:KFLEV,YYTXYBDER%M_ALPHPLM)=0.0_JPRB
+
+!     ------------------------------------------------------------------
+
+IF (LHOOK) CALL DR_HOOK('GPGRXYBAD',1,ZHOOK_HANDLE)
+END SUBROUTINE GPGRXYBAD

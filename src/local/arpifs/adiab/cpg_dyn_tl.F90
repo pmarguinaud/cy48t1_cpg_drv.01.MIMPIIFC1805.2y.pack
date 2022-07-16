@@ -1,0 +1,397 @@
+#ifdef RS6K
+@PROCESS NOCHECK
+#endif
+SUBROUTINE CPG_DYN_TL(YDGEOMETRY,YDGMV,YDGMV5,YDSURF5,&
+ ! --- INPUT ----------------------------------------------------------
+ & YDMODEL,KST,KEND,KSTGLO,PBETADT,PDT,&
+ & PSLHDA,PSLHDD0,&
+ & KIBL,POROGL,POROGM,&
+ & PRE0,PRDELP0,PHI0,PHIF0,PCTY0,PKENE0,PATND,&
+ & PGFL,&
+ ! --- INPUT/OUTPUT ---------------------------------------------------
+ & KSETTLOFF,PGMV,PGMVS,&
+ & PB1,PB2,PGMVT1,PGMVT1S,PGFLT1,&
+ ! --- TRAJECTORY-INPUT -----------------------------------------------
+ & PRE5,PRDELP5,PHI5,PCTY5,PSD_VF5,&
+ ! --- TRAJECTORY-INOUT -----------------------------------------------
+ & PB15,PGMV5,PGMV5S,PGFL5,PTRAJ_SLAG)
+
+!**** *CPG_DYN_TL* - Tan. lin. grid point calculations: non lagged dynamics.
+
+!     Purpose.
+!     --------
+!           Tan. lin. grid point calculations: non lagged dynamics
+!           + simple physics.
+
+!**   Interface.
+!     ----------
+!        *CALL* *CPG_DYN_TL(...)*
+
+!        Explicit arguments :
+!        --------------------
+
+!     INPUT:
+!     ------
+!        KST       : first element of work.
+!        KEND      : last element of work.
+!        KSTGLO    : global offset.
+!        PBETADT   : BETADT or 0 according to configuration.
+!        PDT       : For a leap-frog scheme (three time level scheme):
+!                   'dt' at the first time-step, '2 dt' otherwise.
+!                    For a 2TL SL scheme: timestep 'dt'.
+!        PSLHDA    : Scaling factor of the deformation in f(d) function
+!                    (including the model resolution correction)
+!        PSLHDD0   : Treshold for deformation tensor enhancement
+!        KIBL      : index into YRCSGEOM/YRGSGEOM instances in YDGEOMETRY
+!        POROGL    : zonal component of "grad(surf orography)"
+!        POROGM    : meridian component of "grad(surf orography)"
+!        PRE0      : hydrostatic pressure "prehyd" at half levels at time t.
+!        PRDELP0   : 1/(hydrostatic pressure depth of layers) at t.
+!        PHI0      : geopotential height "gz" at t at half levels.
+!        PHIF0     : geopotential height "gz" at t at full levels.
+!        PCTY0     : contains vertical velocities, vertical integral of divergence at t.
+!        PKENE0    : kinetic energy at t.
+!        PATND     : adiabatic Lagrangian tendencies.
+!        PGFL      : unified_treatment grid-point fields at t.
+
+!     INPUT/OUTPUT:
+!     -------------
+!        PGMV      : GMV variables at t-dt and t.
+!        PGMVS     : GMVS variables at t-dt and t.
+!        PB1       : "SLBUF1" buffer.
+!        PB2       : "SLBUF2" buffer.
+!        PGMVT1    : GMV variables at t+dt.
+!        PGMVT1S   : GMVS variables at t+dt.
+!        PGFLT1    : t+dt term for the unified_treatment of grid-point fields
+!                    (as input contains the non lagged physics).
+
+!     TRAJECTORY (INPUT):
+!     -------------------
+!       PRE5,PRDELP5,
+!       PHI5,
+!       PCTY5,
+!       PSD_VF5,
+!       They are computed in CPG5_GP, see in CPG5_GP for comments.
+!       PTRAJ_SLAG : Trajectory used in SL scheme stored in NL model
+
+!     TRAJECTORY (INOUT):
+!     -------------------
+!       PB15      : Semi-Lagrangian buffer 15 (cf. PB1 but for trajectory).
+!       PGMV5     : GMV variables at t-dt and t (trajectory).
+!       PGMV5S    : GMVS variables at t-dt and t (trajectory).
+!       PGFL5     : GFL variables at t-dt and t (trajectory).
+
+!        Implicit arguments :
+!        --------------------
+
+!     Method.
+!     -------
+!        See documentation
+
+!     Externals.
+!     ----------
+
+!     Reference.
+!     ----------
+!        ECMWF Research Department documentation of the IFS
+
+!     Author.
+!     -------
+!        K. Yessad, after CPGTL (old part 4 of CPGTL)
+
+! Modifications
+! -------------
+!   Original     : 12 Jul 2004.
+!   Modified by K. Yessad 21-Mar-2006: CPEULDYNTL instead of CPDYNTL+GNHDYNTL.
+!   17-Apr-2007 S. Ivatek-S Over dimensioning of PGPNH and PGPNH5 to NFGPNH+1,
+!                          boundary checking problem if NFGPNH=0 bf
+!   N. Wedi and K. Yessad (Jan 2008): different dev for NH model and PC scheme
+!   K. Yessad (Dec 2008): remove dummy CDLOCK and some useless dummy arg
+!   F. Vana  13-Jan-2009: TL/AD of SLHD
+!   K. Yessad (Aug 2009): remove NTRSLTYPE/=2 cases
+!   K. Yessad (Aug 2009): remove LPC_OLD in TL and AD codes.
+!   K. Yessad (Nov 2009): cleanings, DT/Dt now pre-computed in CPG_GP_TL.
+!   K. Yessad (Jan 2011): introduce INTDYN_MOD structures.
+!   K. Yessad (Dec 2011): various modifications.
+!   K. Yessad (Nov 2012): simplify testings.
+!   F. Vana  28-Nov-2013 : Redesigned trajectory handling
+!   F. Vana  13-Feb-2014: separate buffer for KAPPAT
+!   M. Diamantakis (Dec 2013): code for LSETTLSVF=true
+!   T. Wilhelmsson (Sept 2013) Geometry and setup refactoring.
+!   K. Yessad (July 2014): Move some variables.
+!   F. Vana  17-Feb-2015: Fix for GFL fields trajectory
+!   F. Vana    21-Nov-2017: Option LSLDP_CURV
+!   F. Vana   July 2018: RK4 scheme for trajectory research.
+!   E. Arbogast (Sep 2018): SURF comes from trajectory and is intent IN
+! End Modifications
+!------------------------------------------------------------------------------
+
+USE TYPE_MODEL   , ONLY : MODEL
+USE GEOMETRY_MOD , ONLY : GEOMETRY
+USE SURFACE_FIELDS_MIX , ONLY : TSURF
+USE YOMGMV   , ONLY : TGMV
+USE PARKIND1 , ONLY : JPIM, JPRB
+USE YOMHOOK  , ONLY : LHOOK, DR_HOOK
+USE YOMCT0   , ONLY : LSLAG, LTWOTL, LSPRT
+USE YOMDYNA  , ONLY : LSLHD, LSLHD_STATIC
+USE YOMVWRK  , ONLY : NTRSLTYPE
+USE INTDYN_MOD,ONLY : YYTTND, YYTCTY5, YYTCTY0
+USE YOMTRAJ  , ONLY : TRAJ_SLAG_TYPE, LPRTTRAJ
+USE YOMLUN   , ONLY : NULOUT
+
+!     ------------------------------------------------------------------
+
+IMPLICIT NONE
+
+TYPE(GEOMETRY)      ,INTENT(IN)    :: YDGEOMETRY
+TYPE(TGMV)          ,INTENT(INOUT) :: YDGMV
+TYPE(TGMV)          ,INTENT(INOUT) :: YDGMV5
+TYPE(TSURF)         ,INTENT(IN)    :: YDSURF5
+TYPE(MODEL)         ,INTENT(INOUT) :: YDMODEL
+INTEGER(KIND=JPIM)  ,INTENT(IN)    :: KST
+INTEGER(KIND=JPIM)  ,INTENT(IN)    :: KEND
+INTEGER(KIND=JPIM)  ,INTENT(IN)    :: KSTGLO
+INTEGER(KIND=JPIM)  ,INTENT(OUT)   :: KSETTLOFF(YDGEOMETRY%YRDIMV%NFLEVG)
+REAL(KIND=JPRB)     ,INTENT(IN)    :: PBETADT
+REAL(KIND=JPRB)     ,INTENT(IN)    :: PDT
+REAL(KIND=JPRB)     ,INTENT(IN)    :: PSLHDA(YDGEOMETRY%YRDIM%NPROMA)
+REAL(KIND=JPRB)     ,INTENT(IN)    :: PSLHDD0(YDGEOMETRY%YRDIM%NPROMA)
+INTEGER(KIND=JPIM)  ,INTENT(IN)    :: KIBL
+REAL(KIND=JPRB)     ,INTENT(IN)    :: POROGL(YDGEOMETRY%YRDIM%NPROMA)
+REAL(KIND=JPRB)     ,INTENT(IN)    :: POROGM(YDGEOMETRY%YRDIM%NPROMA)
+REAL(KIND=JPRB)     ,INTENT(IN)    :: PRE0(YDGEOMETRY%YRDIM%NPROMA,0:YDGEOMETRY%YRDIMV%NFLEVG)
+REAL(KIND=JPRB)     ,INTENT(IN)    :: PRDELP0(YDGEOMETRY%YRDIM%NPROMA,YDGEOMETRY%YRDIMV%NFLEVG)
+REAL(KIND=JPRB)     ,INTENT(IN)    :: PHI0(YDGEOMETRY%YRDIM%NPROMA,0:YDGEOMETRY%YRDIMV%NFLEVG)
+REAL(KIND=JPRB)     ,INTENT(IN)    :: PHIF0(YDGEOMETRY%YRDIM%NPROMA,YDGEOMETRY%YRDIMV%NFLEVG)
+REAL(KIND=JPRB)     ,INTENT(IN)    :: PCTY0(YDGEOMETRY%YRDIM%NPROMA,0:YDGEOMETRY%YRDIMV%NFLEVG,YYTCTY0%NDIM)
+REAL(KIND=JPRB)     ,INTENT(IN)    :: PKENE0(YDGEOMETRY%YRDIM%NPROMA,YDGEOMETRY%YRDIMV%NFLEVG)
+REAL(KIND=JPRB)     ,INTENT(IN)    :: PATND(YDGEOMETRY%YRDIM%NPROMA,YDGEOMETRY%YRDIMV%NFLEVG,YYTTND%NDIM)
+REAL(KIND=JPRB)     ,INTENT(IN)    :: PGFL(YDGEOMETRY%YRDIM%NPROMA,YDGEOMETRY%YRDIMV%NFLEVG,YDMODEL%YRML_GCONF%YGFL%NDIM)
+REAL(KIND=JPRB)     ,INTENT(INOUT) :: PGMV(YDGEOMETRY%YRDIM%NPROMA,YDGEOMETRY%YRDIMV%NFLEVG,YDGMV%NDIMGMV)
+REAL(KIND=JPRB)     ,INTENT(INOUT) :: PGMVS(YDGEOMETRY%YRDIM%NPROMA,YDGMV%NDIMGMVS)
+REAL(KIND=JPRB)     ,INTENT(INOUT) :: PB1(YDGEOMETRY%YRDIM%NPROMA,YDMODEL%YRML_DYN%YRPTRSLB1%NFLDSLB1)
+REAL(KIND=JPRB)     ,INTENT(INOUT) :: PB2(YDGEOMETRY%YRDIM%NPROMA,YDMODEL%YRML_DYN%YRPTRSLB2%NFLDSLB2)
+REAL(KIND=JPRB)     ,INTENT(INOUT) :: PGMVT1(YDGEOMETRY%YRDIM%NPROMA,YDGEOMETRY%YRDIMV%NFLEVG,YDGMV%YT1%NDIM)
+REAL(KIND=JPRB)     ,INTENT(INOUT) :: PGMVT1S(YDGEOMETRY%YRDIM%NPROMA,YDGMV%YT1%NDIMS)
+REAL(KIND=JPRB)     ,INTENT(INOUT) :: PGFLT1(YDGEOMETRY%YRDIM%NPROMA,YDGEOMETRY%YRDIMV%NFLEVG,YDMODEL%YRML_GCONF%YGFL%NDIM1)
+REAL(KIND=JPRB)     ,INTENT(IN)    :: PRE5(YDGEOMETRY%YRDIM%NPROMA,0:YDGEOMETRY%YRDIMV%NFLEVG)
+REAL(KIND=JPRB)     ,INTENT(IN)    :: PRDELP5(YDGEOMETRY%YRDIM%NPROMA,YDGEOMETRY%YRDIMV%NFLEVG)
+REAL(KIND=JPRB)     ,INTENT(IN)    :: PHI5(YDGEOMETRY%YRDIM%NPROMA,0:YDGEOMETRY%YRDIMV%NFLEVG)
+REAL(KIND=JPRB)     ,INTENT(IN)    :: PCTY5(YDGEOMETRY%YRDIM%NPROMA,0:YDGEOMETRY%YRDIMV%NFLEVG,YYTCTY5%NDIM)
+REAL(KIND=JPRB)     ,INTENT(IN)    :: PSD_VF5(YDGEOMETRY%YRDIM%NPROMA,YDSURF5%YSD_VFD%NDIM)
+REAL(KIND=JPRB)     ,INTENT(INOUT) :: PB15(YDGEOMETRY%YRDIM%NPROMA,YDMODEL%YRML_DYN%YRPTRSLB15%NFLDSLB15)
+REAL(KIND=JPRB)     ,INTENT(INOUT) :: PGMV5(YDGEOMETRY%YRDIM%NPROMA,YDGEOMETRY%YRDIMV%NFLEVG,YDGMV5%YT5%NDIM)
+REAL(KIND=JPRB)     ,INTENT(INOUT) :: PGMV5S(YDGEOMETRY%YRDIM%NPROMA,YDGMV5%YT5%NDIMS)
+REAL(KIND=JPRB)     ,INTENT(INOUT) :: PGFL5(YDGEOMETRY%YRDIM%NPROMA,YDGEOMETRY%YRDIMV%NFLEVG,YDMODEL%YRML_GCONF%YGFL%NDIM5)
+TYPE(TRAJ_SLAG_TYPE),INTENT(IN)    :: PTRAJ_SLAG
+!     ------------------------------------------------------------------
+INTEGER(KIND=JPIM)    :: JGFL, JJOFF, JJGFL
+REAL(KIND=JPRB)       :: ZTSTEP
+REAL(KIND=JPRB)       :: ZWRL95(YDGEOMETRY%YRDIM%NPROMA,YDGEOMETRY%YRDIMV%NFLEVG)
+
+REAL(KIND=JPRB) :: ZHOOK_HANDLE
+
+!     ------------------------------------------------------------------
+
+#include "cpeuldyntl.intfb.h"
+#include "lacdyntl.intfb.h"
+#include "vdiflcztl.intfb.h"
+
+!     ------------------------------------------------------------------
+
+IF (LHOOK) CALL DR_HOOK('CPG_DYN_TL',0,ZHOOK_HANDLE)
+ASSOCIATE(YDDIM=>YDGEOMETRY%YRDIM,YDDIMV=>YDGEOMETRY%YRDIMV,YDGEM=>YDGEOMETRY%YRGEM, YDVAB=>YDGEOMETRY%YRVAB, &
+ &  YDDYN=>YDMODEL%YRML_DYN%YRDYN,YDPHY=>YDMODEL%YRML_PHY_MF%YRPHY,YDPTRSLB2=>YDMODEL%YRML_DYN%YRPTRSLB2, &
+ & YDPTRSLB1=>YDMODEL%YRML_DYN%YRPTRSLB1,YDRIP=>YDMODEL%YRML_GCONF%YRRIP, &
+  & YGFL=>YDMODEL%YRML_GCONF%YGFL,YDEPHY=>YDMODEL%YRML_PHY_EC%YREPHY,YDPTRSLB15=>YDMODEL%YRML_DYN%YRPTRSLB15, &
+  & YDPHLC=>YDMODEL%YRML_PHY_SLIN%YRPHLC,YDVDF=>YDMODEL%YRML_PHY_G%YRVDF)
+
+ASSOCIATE(NDIM=>YGFL%NDIM, NDIM1=>YGFL%NDIM1, NDIM5=>YGFL%NDIM5, &
+ & NUMFLDS=>YGFL%NUMFLDS, YCOMP=>YGFL%YCOMP, &
+ & NPROMA=>YDDIM%NPROMA, &
+ & NFLEN=>YDDIMV%NFLEN, NFLEVG=>YDDIMV%NFLEVG, NFLSA=>YDDIMV%NFLSA, &
+ & L2TLFF=>YDDYN%L2TLFF, LADVF=>YDDYN%LADVF, LSETTLSVF=>YDDYN%LSETTLSVF, &
+ & LSLHDHEAT=>YDDYN%LSLHDHEAT, LSLDP_CURV=>YDDYN%LSLDP_CURV, &
+ & LSLDP_RK=>YDDYN%LSLDP_RK, LEPHYS=>YDEPHY%LEPHYS, &
+ & NDIMGMV=>YDGMV%NDIMGMV, NDIMGMVS=>YDGMV%NDIMGMVS, YT0=>YDGMV%YT0, &
+ & YT1=>YDGMV%YT1, YT9=>YDGMV%YT9, &
+ & YT5=>YDGMV5%YT5, LMPHYS=>YDPHY%LMPHYS, &
+ & LSPHLC=>YDPHLC%LSPHLC, &
+ & NFLDSLB1=>YDPTRSLB1%NFLDSLB1, &
+ & MSLB1C95=>YDPTRSLB15%MSLB1C95, MSLB1GFL95=>YDPTRSLB15%MSLB1GFL95, &
+ & MSLB1SP95=>YDPTRSLB15%MSLB1SP95, MSLB1T05=>YDPTRSLB15%MSLB1T05, &
+ & MSLB1T95=>YDPTRSLB15%MSLB1T95, MSLB1U05=>YDPTRSLB15%MSLB1U05, &
+ & MSLB1U95=>YDPTRSLB15%MSLB1U95, MSLB1UR05=>YDPTRSLB15%MSLB1UR05, &
+ & MSLB1V05=>YDPTRSLB15%MSLB1V05, MSLB1V95=>YDPTRSLB15%MSLB1V95, &
+ & MSLB1VR05=>YDPTRSLB15%MSLB1VR05, MSLB1WR05=>YDPTRSLB15%MSLB1WR05, &
+ & MSLB1UR005=>YDPTRSLB15%MSLB1UR005, MSLB1VR005=>YDPTRSLB15%MSLB1VR005, &
+ & MSLB1ZR005=>YDPTRSLB15%MSLB1ZR005, MSLB1WR005=>YDPTRSLB15%MSLB1WR005, &
+ & MSLB1ZR05=>YDPTRSLB15%MSLB1ZR05, NFLDSLB15=>YDPTRSLB15%NFLDSLB15, &
+ & MSLB2KAPPA5=>YDPTRSLB2%MSLB2KAPPA5, MSLB2KAPPAT5=>YDPTRSLB2%MSLB2KAPPAT5, &
+ & MSLB2Q15=>YDPTRSLB2%MSLB2Q15, MSLB2T15=>YDPTRSLB2%MSLB2T15, &
+ & MSLB2U15=>YDPTRSLB2%MSLB2U15, MSLB2URL5=>YDPTRSLB2%MSLB2URL5, &
+ & MSLB2V15=>YDPTRSLB2%MSLB2V15, MSLB2VRL5=>YDPTRSLB2%MSLB2VRL5, &
+ & MSLB2WRL5=>YDPTRSLB2%MSLB2WRL5, NFLDSLB2=>YDPTRSLB2%NFLDSLB2, &
+ & TSTEP=>YDRIP%TSTEP, &
+ & YSD_VF=>YDSURF5%YSD_VF, YSD_VFD=>YDSURF5%YSD_VFD)
+!     ------------------------------------------------------------------
+
+!*       2.    Semi-lagrangian scheme 
+!              -----------------------
+
+!* Cases nsiter=0, predictor and corrector for lpc_full.
+
+IF (LSLAG) THEN
+
+!*       2.0   Reading trajectory for etadot from t-dt
+
+  IF (LSETTLSVF) THEN
+    ZWRL95(KST:KEND,1:NFLEVG) = PTRAJ_SLAG%PWRL95(KST:KEND,1:NFLEVG)
+    IF (LPRTTRAJ.AND.PTRAJ_SLAG%LASTCHUNK) WRITE(NULOUT,*) 'GREPTRAJ READ TRAJ_SLAG%PWRL95 IN CPG_DYN_TL'
+  ENDIF
+
+!*       2.1   Semi-lagrangian dynamics (not lagged part).
+
+  CALL LACDYNTL(YDGEOMETRY,YDGMV,YDGMV5,YDMODEL,KST,KEND,PBETADT,PDT,PSLHDA,PSLHDD0,&
+   & KIBL,POROGL,POROGM,&
+   & PGFL,PRE0,PRDELP0,PCTY0,PATND,KSETTLOFF,ZWRL95,&
+   & PGMV(1,1,1),PGMVS(1,1),PB1(1,1),PB2(1,1),PGMVT1(1,1,1),PGMVT1S(1,1),&
+   & PGFL5,PRE5,PRDELP5,PCTY5,PGMV5(1,1,1),PGMV5S(1,1),PB15(1,1))
+
+!*       2.2   simplified physics.
+
+  IF (((.NOT.LMPHYS).OR.LEPHYS).AND.LSPHLC) THEN
+    IF (LTWOTL) THEN
+      CALL VDIFLCZTL(YDVDF,YDVAB,YDPHLC,KST,KEND,NPROMA,NFLEVG,PDT,&
+       & PSD_VF5(1,YSD_VF%YLSM%MP),PHI5,&
+       & PHI0,PHIF0,&
+       & PGMV(1,1,YT0%MU),PGMV(1,1,YT0%MV),PGMV(1,1,YT0%MT),&
+       & PGMVT1(1,1,YT1%MU),PGMVT1(1,1,YT1%MV),PGMVT1(1,1,YT1%MT))
+    ELSE
+      CALL VDIFLCZTL(YDVDF,YDVAB,YDPHLC,KST,KEND,NPROMA,NFLEVG,PDT,&
+       & PSD_VF5(1,YSD_VF%YLSM%MP),PHI5,&
+       & PHI0,PHIF0,&
+       & PGMV(1,1,YT9%MU),PGMV(1,1,YT9%MV),PGMV(1,1,YT9%MT),&
+       & PGMVT1(1,1,YT1%MU),PGMVT1(1,1,YT1%MV),PGMVT1(1,1,YT1%MT))
+    ENDIF
+  ENDIF
+
+ENDIF
+
+!     ------------------------------------------------------------------
+
+!*       3.    Eulerian scheme.
+!              ----------------
+
+!* Cases nsiter=0, predictor and corrector for lpc_full.
+
+IF (.NOT.LSLAG) THEN
+
+!*       3.1   Dynamics with Eulerian advection treatment
+
+  CALL CPEULDYNTL(YDGEOMETRY,YDGMV,YDGMV5,YGFL,YDMODEL%YRML_DYN,YDPHY,KST,KEND,PBETADT,PDT,&
+   & KIBL,PGFL,PKENE0,PCTY0,&
+   & PRE0,PRDELP0,PATND,&
+   & PGFLT1,PGMVT1(1,1,1),PGMVT1S(1,1),PGMV(1,1,1),PGMVS(1,1),&
+   & PB2(1,1),&
+   & PGMV5(1,1,1),PGFL5,PCTY5,PRE5,PRDELP5)
+
+!*       3.2   Simple physics.
+
+  IF (((.NOT.LMPHYS).OR.LEPHYS).AND.LSPHLC) THEN
+    CALL VDIFLCZTL(YDVDF,YDVAB,YDPHLC,KST,KEND,NPROMA,NFLEVG,PDT,&
+     & PSD_VF5(1,YSD_VF%YLSM%MP),PHI5,&
+     & PHI0,PHIF0,&
+     & PGMV(1,1,YT9%MU),PGMV(1,1,YT9%MV),PGMV(1,1,YT9%MT),&
+     & PGMVT1(1,1,YT1%MU),PGMVT1(1,1,YT1%MV),PGMVT1(1,1,YT1%MT))
+  ENDIF
+
+ENDIF
+
+!     ------------------------------------------------------------------
+
+!        4.    Read elements for semi-lagrangian trajectory into PB.
+!              -----------------------------------------------------
+
+! Note: In the case of LSLAG,LSPRT=F,T some of the following quantities are required.
+!       The present code thus will not work properly with this setting.
+
+IF (LSLAG .AND. NTRSLTYPE == 2) THEN
+  ZTSTEP=TSTEP
+  IF (ZTSTEP==0._JPRB) ZTSTEP=1._JPRB
+
+  PB15(KST:KEND,MSLB1U95+1-NFLSA:MSLB1U95+NFLEVG-NFLSA)=PTRAJ_SLAG%PUL95(KST:KEND,1:NFLEVG)
+  PB15(KST:KEND,MSLB1V95+1-NFLSA:MSLB1V95+NFLEVG-NFLSA)=PTRAJ_SLAG%PVL95(KST:KEND,1:NFLEVG)
+  PB15(KST:KEND,MSLB1T95+1-NFLSA:MSLB1T95+NFLEVG-NFLSA)=PTRAJ_SLAG%PTL95(KST:KEND,1:NFLEVG)
+  DO JGFL=1,NUMFLDS
+    IF(YCOMP(JGFL)%LADV) THEN
+      JJOFF=(NFLEN-NFLSA+1)*(YCOMP(JGFL)%MP_SL1-1)-NFLSA
+      ! Find the corresponding NL field in GFL buffers (assuming %MP are not redefined)
+      DO JJGFL=1,SIZE(PTRAJ_SLAG%IGFLL95)
+        IF (YCOMP(JGFL)%MP == PTRAJ_SLAG%IGFLL95(JJGFL)) THEN
+          PB15(KST:KEND,MSLB1GFL95+1+JJOFF:MSLB1GFL95+NFLEVG+JJOFF) =&
+           & PTRAJ_SLAG%PGFLL95(KST:KEND,1:NFLEVG,JJGFL)
+          EXIT  ! we are done
+        ENDIF
+      ENDDO
+    ENDIF
+  ENDDO
+  PB15(KST:KEND,MSLB1C95+1-NFLSA:MSLB1C95+NFLEVG-NFLSA)=PTRAJ_SLAG%PCL95(KST:KEND,1:NFLEVG)*ZTSTEP
+  PB15(KST:KEND,MSLB1U05+1-NFLSA:MSLB1U05+NFLEVG-NFLSA)=PTRAJ_SLAG%PUL05(KST:KEND,1:NFLEVG)*ZTSTEP
+  PB15(KST:KEND,MSLB1V05+1-NFLSA:MSLB1V05+NFLEVG-NFLSA)=PTRAJ_SLAG%PVL05(KST:KEND,1:NFLEVG)*ZTSTEP
+  PB15(KST:KEND,MSLB1T05+1-NFLSA:MSLB1T05+NFLEVG-NFLSA)=PTRAJ_SLAG%PTL05(KST:KEND,1:NFLEVG)*ZTSTEP
+  IF (LADVF.AND.L2TLFF) THEN
+    PB2(KST:KEND,MSLB2U15:MSLB2U15+NFLEVG-1)=PTRAJ_SLAG%PUT15(KST:KEND,1:NFLEVG)
+    PB2(KST:KEND,MSLB2V15:MSLB2V15+NFLEVG-1)=PTRAJ_SLAG%PVT15(KST:KEND,1:NFLEVG)
+  ENDIF
+  IF (LSPRT) THEN
+    PB2(KST:KEND,MSLB2T15:MSLB2T15+NFLEVG-1)=PTRAJ_SLAG%PTT15(KST:KEND,1:NFLEVG)
+    PB2(KST:KEND,MSLB2Q15:MSLB2Q15+NFLEVG-1)=PTRAJ_SLAG%PQT15(KST:KEND,1:NFLEVG)
+  ENDIF
+  PB15(KST:KEND,MSLB1UR05+1-NFLSA:MSLB1UR05+NFLEVG-NFLSA)=PTRAJ_SLAG%PURL05(KST:KEND,1:NFLEVG)
+  PB15(KST:KEND,MSLB1VR05+1-NFLSA:MSLB1VR05+NFLEVG-NFLSA)=PTRAJ_SLAG%PVRL05(KST:KEND,1:NFLEVG)
+  IF (LSLDP_CURV) THEN
+    PB15(KST:KEND,MSLB1ZR05+1-NFLSA:MSLB1ZR05+NFLEVG-NFLSA)=PTRAJ_SLAG%PZRL05(KST:KEND,1:NFLEVG)
+  ENDIF
+  PB15(KST:KEND,MSLB1WR05+1-NFLSA:MSLB1WR05+NFLEVG-NFLSA)=PTRAJ_SLAG%PWRL05(KST:KEND,1:NFLEVG)
+  IF (LSLDP_RK) THEN
+    PB15(KST:KEND,MSLB1UR005+1-NFLSA:MSLB1UR005+NFLEVG-NFLSA)=PTRAJ_SLAG%PURL005(KST:KEND,1:NFLEVG)
+    PB15(KST:KEND,MSLB1VR005+1-NFLSA:MSLB1VR005+NFLEVG-NFLSA)=PTRAJ_SLAG%PVRL005(KST:KEND,1:NFLEVG)
+    IF (LSLDP_CURV) THEN
+      PB15(KST:KEND,MSLB1ZR005+1-NFLSA:MSLB1ZR005+NFLEVG-NFLSA)=PTRAJ_SLAG%PZRL005(KST:KEND,1:NFLEVG)
+    ENDIF
+    PB15(KST:KEND,MSLB1WR005+1-NFLSA:MSLB1WR005+NFLEVG-NFLSA)=PTRAJ_SLAG%PWRL005(KST:KEND,1:NFLEVG)
+  ENDIF
+  PB2(KST:KEND,MSLB2URL5:MSLB2URL5+NFLEVG-1)=PTRAJ_SLAG%PURL5(KST:KEND,1:NFLEVG)
+  PB2(KST:KEND,MSLB2VRL5:MSLB2VRL5+NFLEVG-1)=PTRAJ_SLAG%PVRL5(KST:KEND,1:NFLEVG)
+  PB2(KST:KEND,MSLB2WRL5:MSLB2WRL5+NFLEVG-1)=PTRAJ_SLAG%PWRL5(KST:KEND,1:NFLEVG)
+  IF (LSLHD) THEN
+    IF (LSLHD_STATIC) THEN
+      ! In case of static SLHD (= different two standard SL interpolations)
+      ! KAPPA becomes trivial, hence no need to save it from NL model.
+      PB2(KST:KEND,MSLB2KAPPA5:MSLB2KAPPA5+NFLEVG-1)=1._JPRB
+    ELSE
+      PB2(KST:KEND,MSLB2KAPPA5:MSLB2KAPPA5+NFLEVG-1)=PTRAJ_SLAG%PKAPPA5(KST:KEND,1:NFLEVG)
+    ENDIF
+    IF (LSLHDHEAT) THEN
+      IF (LSLHD_STATIC) THEN
+        PB2(KST:KEND,MSLB2KAPPAT5:MSLB2KAPPAT5+NFLEVG-1)=1._JPRB
+      ELSE
+        PB2(KST:KEND,MSLB2KAPPAT5:MSLB2KAPPAT5+NFLEVG-1)=PTRAJ_SLAG%PKAPPAT5(KST:KEND,1:NFLEVG)
+      ENDIF
+    ENDIF
+  ENDIF
+  PB15(KST:KEND,MSLB1SP95)=PTRAJ_SLAG%PX95(KST:KEND)
+  IF (LPRTTRAJ.AND.PTRAJ_SLAG%LASTCHUNK) WRITE(NULOUT,*)'GREPTRAJ READ TRAJ_SLAG in CPG_DYN_TL'
+
+  ! ky: top and bottom values of PB15 are currently filled in LACDYNTL->LAVABOTL
+  ! but for ntrsltype=2 I think that it is more logical to fill them here.
+
+ENDIF
+
+!     ------------------------------------------------------------------
+
+END ASSOCIATE
+END ASSOCIATE
+IF (LHOOK) CALL DR_HOOK('CPG_DYN_TL',1,ZHOOK_HANDLE)
+END SUBROUTINE CPG_DYN_TL

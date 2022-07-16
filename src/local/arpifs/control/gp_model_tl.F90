@@ -1,0 +1,419 @@
+#ifdef RS6K
+@PROCESS NOCHECK
+#endif
+SUBROUTINE GP_MODEL_TL(YDGEOMETRY,YDFIELDS,YDMTRAJ,YDMODEL,CDCONF,LD_DFISTEP, &
+ &                     PII0,YDSURF5,PTRAJEC,PTRAJEC_OOPS,YDPHYSMWAVE5,YDACV)
+
+! GP_MODEL_TL - Model (Tangent Linear)
+
+! Purpose
+! -------
+!   Interface to Tangent linear grid-point model
+
+! Interface
+! ---------
+!   CDCONF - configuration of work (see doc.)
+
+! Externals
+! ---------
+!   See the "include" topic below.
+
+! Method
+! ------
+
+! Reference
+! ---------
+!   ECMWF Research Department documentation of the IFS
+
+! Author
+! ------
+!   Deborah Salmond (ECMWF)
+
+! Modifications
+! -------------
+!   06-Mar-2001 C. Fischer  Merge LAM version into global code
+!      Mar-2002 J. Vivoda   PC schemes for NH dynamics (LPC_XXXX keys)
+!   01-Oct-2003 M. Hamrud   CY28 Cleaning
+!   10-Jun-2004 J. Masek    NH cleaning (LPC_NOTR, LFULLIMP)
+!   01-Jul-2004 K. Yessad   Make clearer the tests for PC scheme.
+!      Jul-2004 K. Yessad   Modularization of CPGTL according to CPG.
+!     C. Fischer   01-03-06: Merge LAM version into global code
+!     J.Vivoda (03-2002) PC schemes for NH dynamics (LPC_XXXX keys) 
+!     M.Hamrud     01-Oct-2003 CY28 Cleaning
+!   03-03-2006  R.Brozkova set T1 arrays to zero for security (extension zone problem)
+!   05-04-2002  M. Jidane  : CY31 Phasing
+!   01-08-2006  D. Salmond : 4D-Var rain assimilation
+!   04-Jun-2007 M. Jidane  : Fix NSLCORE bug
+!   25-Apr-2008 A. Geer    : Multiple sensor 4D-Var rain assimilation
+!   23-Sep-2008 A. Geer    : Allow ADTEST to work with 4D-Var rain assimilation
+!   09-Mar-2009 W. Bell    : Add azimuth angle for windsat-like sensors
+!   16-Dec-2009 F. Karbou  : Allow surface emissivity estimation
+!   04-Dec-2009 H. Hersbach: Tag for surface field update
+!   21-Sep-2010 A. Geer    : Streamline the all-sky code
+!   G.Mozdzynski (Jan 2011): OOPS cleaning, use of derived type SL_STRUCT
+!   G.Mozdzynski (Feb 2011): OOPS cleaning, use of derived type TGSGEOM
+!   J.Hague      (Sep 2011): L_OK now set in SCAN2M
+!   11-Jan-2012 A. Geer    : Remove rain assimilation (MWAVE) - it's in HOP now
+!   19-Mar_2012 F. Vana    : bug fix for LSPRT
+!   13-Jun-2012 A. Geer    : Trajectory ambiguity means some GFL5 are filled by callpartl
+!   10-Aug-2012 P. Lopez   : Added rain gauge assimilation
+!   T. Wilhelmsson (Sept 2013) Geometry and setup refactoring.
+!   F. Vana  28-Nov-2013   : Redesigned trajectory handling
+!   E. Arbogast 11-09-2018 : Pass meta data for trajectory surface fields
+!   S. Massart 19-Feb-2019 : Augmented control variable and solar constant optimisation
+! End Modifications
+!------------------------------------------------------------------------------
+
+USE TYPE_MODEL   , ONLY : MODEL
+USE GEOMETRY_MOD , ONLY : GEOMETRY
+USE FIELDS_MOD   , ONLY : FIELDS
+USE MTRAJ_MOD    , ONLY : MTRAJ
+USE PARKIND1     , ONLY : JPIM, JPRB
+USE YOMHOOK      , ONLY : LHOOK, DR_HOOK
+USE YOMCT0       , ONLY : LR2D, LSLAG, LELAM
+USE YOMLCZ       , ONLY : GPFORCEU ,GPFORCEV ,GPFORCET ,GPFORCEQ   
+USE YOMVRTL      , ONLY : LOBSTL
+USE YOMGBRAD     , ONLY : LEGBRAD_ACTIVE
+USE YOMRAINGG    , ONLY : LERAINGG_ACTIVE
+USE YOMCT3       , ONLY : NSTEP
+USE YOMDYNA      , ONLY : LGRADSP
+USE YOMTRAJ      , ONLY : TRAJ_TYPE
+USE YOMTRAJ_OOPS , ONLY : TRAJ_TYPE_OOPS
+USE SURFACE_FIELDS_MIX , ONLY : TSURF
+USE YOE_PHYS_MWAVE, ONLY : TEPHYSMWAVE
+USE TYPE_ACV      , ONLY : ACV_CONTAINER
+
+!    -------------------------------------------------------------------
+
+IMPLICIT NONE
+
+TYPE(GEOMETRY)    ,INTENT(IN)    :: YDGEOMETRY
+TYPE(FIELDS)      ,INTENT(INOUT) :: YDFIELDS
+TYPE(MTRAJ)       ,INTENT(INOUT) :: YDMTRAJ
+TYPE(MODEL)       ,INTENT(INOUT) :: YDMODEL
+CHARACTER(LEN=9)  ,INTENT(IN)    :: CDCONF
+LOGICAL           ,INTENT(IN)    :: LD_DFISTEP
+REAL(KIND=JPRB)   ,INTENT(IN)    :: PII0
+TYPE(TSURF)       ,INTENT(IN)    :: YDSURF5
+TYPE(TRAJ_TYPE)        ,OPTIONAL,INTENT(INOUT) :: PTRAJEC
+TYPE(TRAJ_TYPE_OOPS)   ,OPTIONAL,INTENT(INOUT) :: PTRAJEC_OOPS
+TYPE(TEPHYSMWAVE)      ,OPTIONAL,INTENT(INOUT) :: YDPHYSMWAVE5
+TYPE(ACV_CONTAINER)   ,OPTIONAL ,INTENT(INOUT)  :: YDACV
+!    -------------------------------------------------------------------
+REAL(KIND=JPRB), ALLOCATABLE :: ZSLBUF1AUX(:,:), ZSLBUF1(:,:)
+REAL(KIND=JPRB), ALLOCATABLE :: ZSLBUF15AUX(:,:), ZSLBUF15(:,:)
+REAL(KIND=JPRB), ALLOCATABLE :: ZSLBUF2(:,:,:)
+
+INTEGER(KIND=JPIM) :: IBL, ICEND, IGPCOMP, JKGLO, JROF, JFLD, JBL, J
+
+REAL(KIND=JPRB) :: ZZZ
+
+REAL(KIND=JPRB)   :: ZFORCEU(YDGEOMETRY%YRDIM%NPROMA,YDGEOMETRY%YRDIMV%NFLEVG,YDGEOMETRY%YRDIM%NGPBLKS)
+REAL(KIND=JPRB)   :: ZFORCEV(YDGEOMETRY%YRDIM%NPROMA,YDGEOMETRY%YRDIMV%NFLEVG,YDGEOMETRY%YRDIM%NGPBLKS)
+REAL(KIND=JPRB)   :: ZFORCET(YDGEOMETRY%YRDIM%NPROMA,YDGEOMETRY%YRDIMV%NFLEVG,YDGEOMETRY%YRDIM%NGPBLKS)
+REAL(KIND=JPRB)   :: ZFORCEQ(YDGEOMETRY%YRDIM%NPROMA,YDGEOMETRY%YRDIMV%NFLEVG,YDGEOMETRY%YRDIM%NGPBLKS)
+
+REAL(KIND=JPRB) :: ZHOOK_HANDLE
+
+!    -------------------------------------------------------------------
+
+#include "call_sl_tl.intfb.h"
+#include "cpg2lagtl.intfb.h"
+#include "cpg2tl.intfb.h"
+#include "cpglagtl.intfb.h"
+#include "cpg_drv_tl.intfb.h"
+#include "ec_phys_drv_tl.intfb.h"
+
+!    -------------------------------------------------------------------
+
+IF (LHOOK) CALL DR_HOOK('GP_MODEL_TL',0,ZHOOK_HANDLE)
+ASSOCIATE(YDGFL5=>YDMTRAJ%YRGFL5, YDGMV5=>YDMTRAJ%YRGMV5, YDGFL=>YDFIELDS%YRGFL,YDGMV=>YDFIELDS%YRGMV, &
+ &  YDSURF=>YDFIELDS%YRSURF, YDDIM=>YDGEOMETRY%YRDIM, YDDIMV=>YDGEOMETRY%YRDIMV, &
+ & YDGEM=>YDGEOMETRY%YRGEM, YDPTRSLB1=>YDMODEL%YRML_DYN%YRPTRSLB1, &
+ & YDPTRSLB2=>YDMODEL%YRML_DYN%YRPTRSLB2,YDPHY2=>YDMODEL%YRML_PHY_MF%YRPHY2,YDPHNC=>YDMODEL%YRML_PHY_SLIN%YRPHNC, &
+ & YGFL=>YDMODEL%YRML_GCONF%YGFL,YDEPHY=>YDMODEL%YRML_PHY_EC%YREPHY,YDPTRSLB15=>YDMODEL%YRML_DYN%YRPTRSLB15)
+
+ASSOCIATE(NDIM0=>YGFL%NDIM0, NDIM1=>YGFL%NDIM1, NDIM5=>YGFL%NDIM5, &
+ & NGPBLKS=>YDDIM%NGPBLKS, NPROMA=>YDDIM%NPROMA, &
+ & NFLEVG=>YDDIMV%NFLEVG, &
+ & LEGBRAD=>YDEPHY%LEGBRAD, LEPHYS=>YDEPHY%LEPHYS, LERAINGG=>YDEPHY%LERAINGG, &
+ & NPRACCL=>YDEPHY%NPRACCL, &
+ & NGPTOT=>YDGEM%NGPTOT, NGPTOT_CAP=>YDGEM%NGPTOT_CAP, &
+ & GFL=>YDGFL%GFL, &
+ & GFL5=>YDGFL5%GFL5, &
+ & GMV=>YDGMV%GMV, GMVS=>YDGMV%GMVS, YT0=>YDGMV%YT0, YT1=>YDGMV%YT1, &
+ & YT9=>YDGMV%YT9, &
+ & GMV5=>YDGMV5%GMV5, GMV5S=>YDGMV5%GMV5S, YT5=>YDGMV5%YT5, &
+ & LETRAJP=>YDPHNC%LETRAJP, &
+ & NFLDSLB1=>YDPTRSLB1%NFLDSLB1, &
+ & NFLDSLB15=>YDPTRSLB15%NFLDSLB15, &
+ & NFLDSLB2=>YDPTRSLB2%NFLDSLB2, &
+ & SD_VD=>YDSURF%SD_VD, SD_VN=>YDSURF%SD_VN, SP_RR=>YDSURF%SP_RR, &
+ & SP_SB=>YDSURF%SP_SB, SP_SG=>YDSURF%SP_SG, YDUPD=>YDSURF%YDUPD, &
+ & TSPHY=>YDPHY2%TSPHY, YDSL=>YDMODEL%YRML_DYN%YRSL)
+!    -------------------------------------------------------------------
+!    -------------------------------------------------------------------
+!*       1.    INITIALISATION
+!    -------------------------------------------------------------------
+
+! Total number of grid points - ndglg*ndlon in global / ndguxg*ndlon in LAM
+! used for model computations
+
+! Changed NGPTOT into IGPCOMP in order to pass properly
+! the scan of NSLCORE values for the LAM models
+IF(.NOT.LELAM) THEN
+  IGPCOMP=NGPTOT
+ELSE
+  IGPCOMP=MIN(NGPTOT,NGPTOT_CAP)
+ENDIF
+
+CALL GSTATS(1227,0)
+IF(.NOT.ALLOCATED(YDGMV%GMVT1)) THEN
+  ALLOCATE(YDGMV%GMVT1(NPROMA,NFLEVG,YT1%NDIM,NGPBLKS))
+!$OMP PARALLEL DO SCHEDULE(STATIC) PRIVATE(J)
+  DO J=1,NGPBLKS
+!cdir collapse
+    YDFIELDS%YRGMV%GMVT1(:,:,:,J)=0.0_JPRB
+  ENDDO
+!$OMP END PARALLEL DO
+ENDIF
+IF(.NOT.ALLOCATED(YDGMV%GMVT1S)) THEN
+  ALLOCATE(YDGMV%GMVT1S(NPROMA,YT1%NDIMS,NGPBLKS))
+!$OMP PARALLEL DO SCHEDULE(STATIC) PRIVATE(J)
+  DO J=1,NGPBLKS
+!cdir collapse
+    YDFIELDS%YRGMV%GMVT1S(:,:,J)=0.0_JPRB
+  ENDDO
+!$OMP END PARALLEL DO
+ENDIF
+IF(.NOT.ALLOCATED(YDGFL%GFLT1)) THEN
+  ALLOCATE(YDGFL%GFLT1(NPROMA,NFLEVG,NDIM1,NGPBLKS))
+!$OMP PARALLEL DO SCHEDULE(STATIC) PRIVATE(J)
+  DO J=1,NGPBLKS
+!cdir collapse
+    YDFIELDS%YRGFL%GFLT1(:,:,:,J)=0.0_JPRB
+  ENDDO
+!$OMP END PARALLEL DO
+ENDIF
+
+IF (.NOT.ALLOCATED(ZSLBUF1)) ALLOCATE(ZSLBUF1(YDSL%NASLB1,NFLDSLB1))
+IF (YDSL%NSLPAD > 0)THEN
+!$OMP PARALLEL DO SCHEDULE(STATIC) PRIVATE(J)
+  DO J=1,NFLDSLB1
+    ZSLBUF1(:,J)=HUGE(ZZZ)
+  ENDDO
+!$OMP END PARALLEL DO
+ENDIF
+IF (.NOT.ALLOCATED(ZSLBUF15)) ALLOCATE(ZSLBUF15(YDSL%NASLB1,NFLDSLB15))
+IF (YDSL%NSLPAD > 0)THEN
+!$OMP PARALLEL DO SCHEDULE(STATIC) PRIVATE(J)
+  DO J=1,NFLDSLB15
+    ZSLBUF15(:,J)=HUGE(ZZZ)
+  ENDDO
+!$OMP END PARALLEL DO
+ENDIF
+
+IF (.NOT.ALLOCATED(ZSLBUF2)) ALLOCATE(ZSLBUF2(NPROMA,NFLDSLB2,NGPBLKS))
+!$OMP PARALLEL DO SCHEDULE(STATIC) PRIVATE(J)
+DO J=1,NGPBLKS
+!cdir collapse
+  ZSLBUF2(:,:,J)=0.0_JPRB
+ENDDO
+!$OMP END PARALLEL DO
+CALL GSTATS(1227,1)
+
+IF(LEGBRAD .AND. MOD((NSTEP+1)*NINT(TSPHY),NPRACCL) == 0)THEN
+  LEGBRAD_ACTIVE=.TRUE.
+ELSE
+  LEGBRAD_ACTIVE=.FALSE.
+ENDIF 
+
+IF(LERAINGG .AND. MOD((NSTEP+1)*NINT(TSPHY),3600) == 0)THEN
+  LERAINGG_ACTIVE=.TRUE.
+ELSE
+  LERAINGG_ACTIVE=.FALSE.
+ENDIF 
+
+!    -------------------------------------------------------------------
+!*       2.    DYNAMICS
+!    -------------------------------------------------------------------
+
+CALL GSTATS(1006,0)
+
+IF(.NOT.LR2D) THEN
+
+  CALL CPG_DRV_TL(YDGEOMETRY,YDGMV,YDGMV5,YDSURF5,YDMODEL,&
+   & CDCONF(4:4),IGPCOMP,YDSL,&
+   & GPFORCEU(:,:,:,0),GPFORCEV(:,:,:,0),&
+   & GPFORCET(:,:,:,0),GPFORCEQ(:,:,:,0),&
+   & GMV,GMVS,GFL,&
+   & ZSLBUF1,ZSLBUF2,YDGMV%GMVT1,YDGMV%GMVT1S,YDGFL%GFLT1,&
+   & ZSLBUF15,GMV5,GMV5S,GFL5,PTRAJEC=PTRAJEC,PTRAJEC_OOPS=PTRAJEC_OOPS)
+
+  IF(CDCONF(6:6) == 'V' .AND. (.NOT.LOBSTL)) THEN
+    DO JBL=1,NGPBLKS
+      IF( LGRADSP ) THEN
+        GMV(:,:,1:YT0%NDIM-2,JBL)=GMV(:,:,1:YT0%NDIM-2,JBL)+GMV5(:,:,1:YT5%NDIM,JBL)
+      ELSE
+        GMV(:,:,1:YT0%NDIM,JBL)=GMV(:,:,1:YT0%NDIM,JBL)+GMV5(:,:,1:YT5%NDIM,JBL)
+      ENDIF
+      GMVS(:,1:YT0%NDIMS,JBL)=GMVS(:,1:YT0%NDIMS,JBL)+GMV5S(:,1:YT5%NDIMS,JBL)
+      GFL(:,:,1:NDIM0,JBL)=GFL(:,:,1:NDIM0,JBL)+GFL5(:,:,1:NDIM5,JBL)  
+    ENDDO
+  ENDIF
+
+ELSE
+
+!$OMP PARALLEL PRIVATE(JKGLO,ICEND,IBL,&
+!$OMP&ZSLBUF1AUX,ZSLBUF15AUX,JROF,JFLD)
+
+  IF (.NOT.ALLOCATED(ZSLBUF1AUX))  ALLOCATE(ZSLBUF1AUX(NPROMA,NFLDSLB1))
+  IF (.NOT.ALLOCATED(ZSLBUF15AUX)) ALLOCATE(ZSLBUF15AUX(NPROMA,NFLDSLB15))
+
+!$OMP DO SCHEDULE(DYNAMIC,1)
+  DO JKGLO=1,IGPCOMP,NPROMA
+    ICEND=MIN(NPROMA,IGPCOMP-JKGLO+1)
+    IBL=(JKGLO-1)/NPROMA+1
+
+    IF(PRESENT(PTRAJEC_OOPS)) CALL ABOR1('GP_MODEL_TL: CPG2 not done yet for OOPS')
+    CALL CPG2TL(YDGEOMETRY,YDGMV,YDMODEL%YRML_GCONF,YDMODEL%YRML_DYN,CDCONF(4:4),ICEND,JKGLO,&
+     & ZSLBUF1AUX,ZSLBUF2(1,1,IBL),GMV(:,:,:,IBL),GMVS(:,:,IBL),&
+     & IBL,&
+     & GMV(:,:,YT0%MU,IBL)  ,GMV(:,:,YT0%MV,IBL),&
+     & GMV(:,:,YT0%MUL,IBL) ,GMV(:,:,YT0%MVL,IBL),&
+     & GMV(:,:,YT0%MDIV,IBL),&
+     & GMV(:,:,YT0%MVOR,IBL),GMVS(:,YT0%MSP,IBL),&
+     & GMVS(:,YT0%MSPL,IBL),&
+     & GMVS(:,YT0%MSPM,IBL),&
+     & GMV(:,:,YT9%MU,IBL) ,GMV(:,:,YT9%MV,IBL),&
+     & GMV(:,:,YT9%MDIV,IBL),&
+     & GMVS(:,YT9%MSP,IBL),&
+     & GMVS(:,YT9%MSPL,IBL),GMVS(:,YT9%MSPM,IBL),&
+     & YDGMV%GMVT1(:,:,YT1%MU,IBL)  ,YDGMV%GMVT1(:,:,YT1%MV,IBL),&
+     & YDGMV%GMVT1S(:,YT1%MSP,IBL),&
+     & GMV5(:,:,YT5%MU,IBL)  ,GMV5(:,:,YT5%MV,IBL),&
+     & GMV5(:,:,YT5%MUL,IBL) ,GMV5(:,:,YT5%MVL,IBL),&
+     & GMV5(:,:,YT5%MDIV,IBL),&
+     & GMV5(:,:,YT5%MVOR,IBL),GMV5S(:,YT5%MSP,IBL),&
+     & GMV5S(:,YT5%MSPL,IBL),&
+     & GMV5S(:,YT5%MSPM,IBL),PTRAJEC%SLAG(IBL))  
+
+    ! move data from blocked form to latitude (NASLB1) form
+    IF (LSLAG) THEN
+      DO JFLD=1,NFLDSLB1
+        DO JROF=JKGLO,MIN(JKGLO-1+NPROMA,IGPCOMP)
+          ZSLBUF1(YDSL%NSLCORE(JROF),JFLD)=ZSLBUF1AUX(JROF-JKGLO+1,JFLD)
+        ENDDO
+      ENDDO
+    ENDIF
+
+    IF(CDCONF(6:6) == 'V' .AND. (.NOT.LOBSTL)) THEN
+      IF( LGRADSP ) THEN
+        YDFIELDS%YRGMV%GMV(:,:,1:YT0%NDIM-2,IBL)=YDFIELDS%YRGMV%GMV(:,:,1:YT0%NDIM-2,IBL)+YDMTRAJ%YRGMV5%GMV5(:,:,1:YT5%NDIM,IBL)
+      ELSE
+        YDFIELDS%YRGMV%GMV(:,:,1:YT0%NDIM,IBL)=YDFIELDS%YRGMV%GMV(:,:,1:YT0%NDIM,IBL)+YDMTRAJ%YRGMV5%GMV5(:,:,1:YT5%NDIM,IBL)
+      ENDIF
+      YDFIELDS%YRGMV%GMVS(:,1:YT0%NDIMS,IBL)=YDFIELDS%YRGMV%GMVS(:,1:YT0%NDIMS,IBL)+YDMTRAJ%YRGMV5%GMV5S(:,1:YT5%NDIMS,IBL)
+      YDFIELDS%YRGFL%GFL(:,:,1:NDIM0,IBL)=YDFIELDS%YRGFL%GFL(:,:,1:NDIM0,IBL)+YDMTRAJ%YRGFL5%GFL5(:,:,1:NDIM5,IBL)  
+    ENDIF
+  ENDDO
+!$OMP END DO
+  IF (ALLOCATED(ZSLBUF1AUX)) DEALLOCATE(ZSLBUF1AUX)
+  IF (ALLOCATED(ZSLBUF15AUX)) DEALLOCATE(ZSLBUF15AUX)
+
+!$OMP END PARALLEL
+
+ENDIF ! LR2D
+
+CALL GSTATS(1006,1)
+
+!    -------------------------------------------------------------------
+!*       3.    SEMI_LAGRANGIAN INTERPOLATION
+!    -------------------------------------------------------------------
+
+IF(LSLAG.AND..NOT.LR2D)THEN
+
+  CALL CALL_SL_TL(YDGEOMETRY,YDGMV,YDMODEL,YDSL,ZSLBUF1,ZSLBUF15,ZSLBUF2,YDGMV%GMVT1,YDGMV%GMVT1S,YDGFL%GFLT1)
+
+  DEALLOCATE(ZSLBUF1)
+  DEALLOCATE(ZSLBUF15)
+
+ENDIF
+
+!    -------------------------------------------------------------------
+!*       4.    ECMWF Physics (Tangent Linear)
+!    -------------------------------------------------------------------
+
+
+IF(LEPHYS .AND. LETRAJP .AND. .NOT.LR2D)THEN
+
+IF(PRESENT(PTRAJEC))THEN
+  CALL EC_PHYS_DRV_TL(YDGEOMETRY,YDGMV,YDSURF,YDMODEL,IGPCOMP,&
+    & ZSLBUF2,&
+    & GMV,GMVS,GFL,GFL5,YDGMV%GMVT1,YDGMV%GMVT1S,YDGFL%GFLT1,&
+    & SP_SB,SP_SG,SP_RR,SD_VN,SD_VD,&
+    & YDFIELDS%YEC_PHYS_FIELDS%YRTILEPROP,&
+    & YDFIELDS%YEC_PHYS_FIELDS%YRPHYSMWAVE,&
+    & GPFORCEU(:,:,:,0),GPFORCEV(:,:,:,0),&
+    & GPFORCET(:,:,:,0),GPFORCEQ(:,:,:,0),&
+    & PII0,&
+    & PTRAJEC=PTRAJEC,&
+    & YDPHYSMWAVE5=YDPHYSMWAVE5,YDACV=YDACV)
+ELSE
+  CALL EC_PHYS_DRV_TL(YDGEOMETRY,YDGMV,YDSURF,YDMODEL,IGPCOMP,&
+    & ZSLBUF2,&
+    & GMV,GMVS,GFL,GFL5,YDGMV%GMVT1,YDGMV%GMVT1S,YDGFL%GFLT1,&
+    & SP_SB,SP_SG,SP_RR,SD_VN,SD_VD,&
+    & YDFIELDS%YEC_PHYS_FIELDS%YRTILEPROP,&
+    & YDFIELDS%YEC_PHYS_FIELDS%YRPHYSMWAVE,&
+    & ZFORCEU(:,:,:),ZFORCEV(:,:,:),&
+    & ZFORCET(:,:,:),ZFORCEQ(:,:,:),&
+    & PII0,&
+    & PTRAJEC_OOPS=PTRAJEC_OOPS,&
+    & YDPHYSMWAVE5=YDPHYSMWAVE5,YDACV=YDACV)
+ENDIF
+
+  ! Tag that surface fields have been updated
+  YDUPD%L_OK=.TRUE.
+
+  ! Tag that PHYS_MWAVE arrays have been filled in if LEMWAVE
+  YDFIELDS%YEC_PHYS_FIELDS%YRPHYSMWAVE%LPHYS_MWAVE_FILLED_IN=YDMODEL%YRML_PHY_EC%YREPHY%LEMWAVE
+  YDPHYSMWAVE5%LPHYS_MWAVE_FILLED_IN=YDMODEL%YRML_PHY_EC%YREPHY%LEMWAVE
+ENDIF
+
+!    -------------------------------------------------------------------
+!*       5.    TRANSFER TO T+DT ARRAYS
+!    -------------------------------------------------------------------
+
+IF(.NOT.LR2D) THEN
+  CALL CPGLAGTL(YDGEOMETRY,YDGMV,YDMODEL%YRML_GCONF,YDMODEL%YRML_DYN%YRDYN,YDPTRSLB2,IGPCOMP,ZSLBUF2,&
+   & GMV,GMVS,GFL,YDGMV%GMVT1,YDGMV%GMVT1S,YDGFL%GFLT1)
+ELSE
+  CALL GSTATS(1008,0)
+!$OMP PARALLEL DO SCHEDULE(STATIC) PRIVATE(JKGLO,ICEND,IBL)
+  DO JKGLO=1,IGPCOMP,NPROMA
+    ICEND=MIN(NPROMA,IGPCOMP-JKGLO+1)
+    IBL=(JKGLO-1)/NPROMA+1
+
+    CALL CPG2LAGTL(YDGEOMETRY,YDGMV,YDMODEL%YRML_GCONF,YDMODEL%YRML_DYN,ICEND,YDSL,IBL,&
+     & ZSLBUF1,ZSLBUF2(1,1,IBL),GMV(:,:,:,IBL),GMVS(:,:,IBL),&
+     & YDGMV%GMVT1(:,:,YT1%MU,IBL)  ,YDGMV%GMVT1(:,:,YT1%MV,IBL),&
+     & YDGMV%GMVT1S(:,YT1%MSP,IBL))  
+  ENDDO
+!$OMP END PARALLEL DO
+  CALL GSTATS(1008,1)
+ENDIF ! LR2D
+
+!    -------------------------------------------------------------------
+!*       6.    DEALLOCATIONS
+!    -------------------------------------------------------------------
+
+IF (ALLOCATED(ZSLBUF1)) DEALLOCATE(ZSLBUF1)
+IF (ALLOCATED(ZSLBUF15)) DEALLOCATE(ZSLBUF15)
+IF (ALLOCATED(ZSLBUF2)) DEALLOCATE(ZSLBUF2)
+
+!    -------------------------------------------------------------------
+END ASSOCIATE
+END ASSOCIATE
+IF (LHOOK) CALL DR_HOOK('GP_MODEL_TL',1,ZHOOK_HANDLE)
+END SUBROUTINE GP_MODEL_TL

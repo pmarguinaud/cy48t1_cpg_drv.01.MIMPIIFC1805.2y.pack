@@ -1,0 +1,581 @@
+!option! -O nomove
+SUBROUTINE LARMES_RK_TL(YDGEOMETRY,YDRIP,YDML_DYN,KST,KPROF,YDSL,KSTABUF,PB1,PB15,PB2,&
+ & PLSDEPI,KIBL,&
+ & PSCO,PLEV,PCCO,&
+ & KL0,KLH0,KLEV,PLSCAW,PRSCAW,&
+ & PSCO5,PLEV5,PCCO5,PUS5,PVS5,PZS5,& 
+ & PLSCAW5,PRSCAW5)
+
+!---- should be compiled for Cray with -hcontiguous----
+
+!**** *LARMES_RK_TL - semi-LAgrangian scheme:
+!                Research of the origin point on the Sphere by 4th order Runge-Kutta method.
+
+!     Purpose.
+!     --------
+
+!     The computation of the location of the interpolation point of
+!     the lagrangian trajectory is performed by an 4th order Runge-Kutta method. 
+!     Note the final trajectory is composite of sub-trajectories on great circle.
+!     Finally we find the departure (origin) point "O".
+
+!**   Interface.
+!     ----------
+!        *CALL* *LARMES_RK_TL(...)
+
+!        Explicit arguments :
+!        --------------------
+
+!        INPUT:
+!          KST      - first element of arrays where computations are performed.
+!          KPROF    - depth of work.
+!          YDSL     - SL_STRUCT definition
+!          KSTABUF  - for a latitude IGL, KSTABUF(IGL) is the
+!                     address of the element corresponding to
+!                     (ILON=1,IGL) in the NPROMA arrays.
+!          PB15     - SLBUF1-buffer for interpolations (trajectory).
+!          PB2      - SLBUF2-buf to communicate info from non lag. to lag. dyn.
+!          PLSDEPI  - (Number of points by latitude) / (2 * PI) .
+!          KIBL     - index into YRCSGEOM/YRGSGEOM instances in YDGEOMETRY
+
+!        OUTPUT:
+!          PSCO     - information about geographic position of interpol. point.
+!          PLEV     - vertical coordinate of the interpolation point.
+!          PCCO     - information about comput. space position of interpol. point.
+!          KL0      - index of the four western points
+!                     of the 16 points interpolation grid.
+!          KLH0     - second value of index of the four western points
+!                     of the 16 points interpolation grid if needed.
+!          KLEV     - lower level of the vertical interpolation
+!                     grid needed for vertical interpolations.
+!          PLSCAW   - linear weights (distances) for interpolations.
+!          PRSCAW   - non-linear weights for interpolations.
+
+!        TRAJECTORY:
+!          PB15     - SLBUF1-buffer for interpolations.              (in)
+!          PSCO5    - cf. PSCO                                       (in)
+!          PLEV5    - cf. PLEV                                       (in)
+!          PCCO5    - cf. PCCO                                       (out)
+!          P[U/V/Z]S5  - stage winds (horiz. only)                   (in)
+!          PLSCAW5  - linear weights (distances) for interpolations  (out)
+!          PRSCAW5  - non-linear weights for interpolations.         (out)
+
+
+
+!        Implicit arguments :
+!        --------------------
+
+!     Method.
+!     -------
+!        See documentation about semi-Lagrangian scheme.
+
+!     Externals.
+!     ----------
+!        Calls  LARCINATL
+!        Is called by LAPINEATL (3D model)
+
+!     Reference.
+!     ----------
+
+!     Author.
+!     -------
+!      F. VANA  after LARMES5 and LARMES_RK
+!      Original : MAY 2018
+
+!     Modifications.
+!     --------------
+!   F. Vana October 2018: Extended LSLDP_CURV.
+!   F. Vana  26-Feb-2019: Vertical quintic interpolation.
+!   F. Vana  12-Mar-2019: Make the scheme implicit following Lobatto IIIA type
+
+! End Modifications
+!     ------------------------------------------------------------------
+
+USE PARKIND1  , ONLY : JPIM, JPRB
+USE YOMHOOK   , ONLY : LHOOK, DR_HOOK
+
+USE MODEL_DYNAMICS_MOD , ONLY : MODEL_DYNAMICS_TYPE
+USE GEOMETRY_MOD , ONLY : GEOMETRY
+USE YOMCT0    , ONLY : LTWOTL
+USE YOMDYNA   , ONLY : LRALTVDISP, LELTRA
+USE YOMRIP    , ONLY : TRIP
+USE EINT_MOD  , ONLY : SL_STRUCT
+
+!     ------------------------------------------------------------------
+
+IMPLICIT NONE
+
+TYPE(GEOMETRY)    ,INTENT(IN)    :: YDGEOMETRY
+TYPE(MODEL_DYNAMICS_TYPE),INTENT(IN):: YDML_DYN
+TYPE(TRIP)        ,INTENT(IN)    :: YDRIP
+INTEGER(KIND=JPIM),INTENT(IN)    :: KST
+INTEGER(KIND=JPIM),INTENT(IN)    :: KPROF
+TYPE(SL_STRUCT)   ,INTENT(INOUT) :: YDSL
+INTEGER(KIND=JPIM),INTENT(IN)    :: KSTABUF(YDSL%NDGSAH:YDSL%NDGENH)
+REAL(KIND=JPRB)   ,INTENT(IN)    :: PB1(YDSL%NASLB1,YDML_DYN%YRPTRSLB1%NFLDSLB1)
+REAL(KIND=JPRB)   ,INTENT(IN)    :: PB15(YDSL%NASLB1,YDML_DYN%YRPTRSLB15%NFLDSLB15)
+REAL(KIND=JPRB)   ,INTENT(IN)    :: PB2(YDGEOMETRY%YRDIM%NPROMA,YDML_DYN%YRPTRSLB2%NFLDSLB2)
+REAL(KIND=JPRB)   ,INTENT(IN)    :: PLSDEPI(YDSL%NDGSAH:YDSL%NDGENH)
+INTEGER(KIND=JPIM),INTENT(IN)    :: KIBL
+REAL(KIND=JPRB)   ,INTENT(INOUT) :: PSCO(YDGEOMETRY%YRDIM%NPROMA,YDGEOMETRY%YRDIMV%NFLEVG, &
+  &                                      YDML_DYN%YYTSCO%NDIM)
+REAL(KIND=JPRB)   ,INTENT(INOUT) :: PLEV(YDGEOMETRY%YRDIM%NPROMA,YDGEOMETRY%YRDIMV%NFLEVG)
+REAL(KIND=JPRB)   ,INTENT(INOUT) :: PCCO(YDGEOMETRY%YRDIM%NPROMA,YDGEOMETRY%YRDIMV%NFLEVG, &
+  &                                      YDML_DYN%YYTCCO%NDIM)
+INTEGER(KIND=JPIM),INTENT(INOUT) :: KL0(YDGEOMETRY%YRDIM%NPROMA,YDGEOMETRY%YRDIMV%NFLEVG,0:3, &
+  &                                       YDML_DYN%YRDYN%NITMP,3)
+INTEGER(KIND=JPIM),INTENT(INOUT) :: KLH0(YDGEOMETRY%YRDIM%NPROMA,YDGEOMETRY%YRDIMV%NFLEVG,0:3)
+INTEGER(KIND=JPIM),INTENT(INOUT) :: KLEV(YDGEOMETRY%YRDIM%NPROMA,YDGEOMETRY%YRDIMV%NFLEVG)
+REAL(KIND=JPRB)   ,INTENT(INOUT) :: PLSCAW(YDGEOMETRY%YRDIM%NPROMA,YDGEOMETRY%YRDIMV%NFLEVG, &
+  &                                       YDML_DYN%YYTLSCAW%NDIM)
+REAL(KIND=JPRB)   ,INTENT(INOUT) :: PRSCAW(YDGEOMETRY%YRDIM%NPROMA,YDGEOMETRY%YRDIMV%NFLEVG, &
+  &                                       YDML_DYN%YYTRSCAW%NDIM)
+! -------------  trajectory ------------------------------
+REAL(KIND=JPRB)   ,INTENT(IN)    :: PSCO5(YDGEOMETRY%YRDIM%NPROMA,YDGEOMETRY%YRDIMV%NFLEVG, &
+  &                                       YDML_DYN%YYTSCO%NDIM,YDML_DYN%YRDYN%NITMP,2:3)
+REAL(KIND=JPRB)   ,INTENT(IN)    :: PLEV5(YDGEOMETRY%YRDIM%NPROMA,YDGEOMETRY%YRDIMV%NFLEVG, &
+  &                                       YDML_DYN%YRDYN%NITMP,2:3)
+REAL(KIND=JPRB)   ,INTENT(INOUT)    :: PCCO5(YDGEOMETRY%YRDIM%NPROMA,YDGEOMETRY%YRDIMV%NFLEVG, &
+  &                                       YDML_DYN%YYTCCO%NDIM,YDML_DYN%YRDYN%NITMP,3)
+REAL(KIND=JPRB)   ,INTENT(IN)    :: PUS5(YDGEOMETRY%YRDIM%NPROMA,YDGEOMETRY%YRDIMV%NFLEVG, &
+  &                                       3,YDML_DYN%YRDYN%NITMP)
+REAL(KIND=JPRB)   ,INTENT(IN)    :: PVS5(YDGEOMETRY%YRDIM%NPROMA,YDGEOMETRY%YRDIMV%NFLEVG, &
+  &                                       3,YDML_DYN%YRDYN%NITMP)
+REAL(KIND=JPRB)   ,INTENT(IN)    :: PZS5(YDGEOMETRY%YRDIM%NPROMA,YDGEOMETRY%YRDIMV%NFLEVG, &
+  &                                       3,YDML_DYN%YRDYN%NITMP)
+REAL(KIND=JPRB)   ,INTENT(INOUT)    :: PLSCAW5(YDGEOMETRY%YRDIM%NPROMA,YDGEOMETRY%YRDIMV%NFLEVG, &
+  &                                       YDML_DYN%YYTLSCAW%NDIM,YDML_DYN%YRDYN%NITMP,3)
+REAL(KIND=JPRB)   ,INTENT(INOUT)    :: PRSCAW5(YDGEOMETRY%YRDIM%NPROMA,YDGEOMETRY%YRDIMV%NFLEVG, &
+  &                                       YDML_DYN%YYTRSCAW%NDIM,YDML_DYN%YRDYN%NITMP,3)
+
+!     ------------------------------------------------------------------
+
+INTEGER(KIND=JPIM) :: IROT
+INTEGER(KIND=JPIM) :: ITIP
+INTEGER(KIND=JPIM) :: JITER
+INTEGER(KIND=JPIM) :: JLEV
+INTEGER(KIND=JPIM) :: JROF
+
+LOGICAL :: LLO
+LOGICAL :: LLSLHD, LLSLHDQUAD, LLSLHD_OLD
+
+REAL(KIND=JPRB) :: ZDTS22, ZDTS62, ZDTSA, ZINT, ZLEVO, ZNOR2, ZSPHSV
+REAL(KIND=JPRB) :: ZPU5, ZPV5, ZNOR25, ZSPHSV5, ZLEVO5
+
+REAL(KIND=JPRB) :: ZVETAON, ZVETAOX
+
+REAL(KIND=JPRB) :: ZPU, ZPV
+REAL(KIND=JPRB) :: ZPU0, ZPV0, ZPZ0, ZPW0
+REAL(KIND=JPRB) :: ZPU05, ZPV05, ZPZ05
+
+REAL(KIND=JPRB) :: ZU0(YDGEOMETRY%YRDIM%NPROMA,YDGEOMETRY%YRDIMV%NFLEVG)
+REAL(KIND=JPRB) :: ZV0(YDGEOMETRY%YRDIM%NPROMA,YDGEOMETRY%YRDIMV%NFLEVG)
+REAL(KIND=JPRB) :: ZZ0(YDGEOMETRY%YRDIM%NPROMA,YDGEOMETRY%YRDIMV%NFLEVG)
+
+REAL(KIND=JPRB) :: ZUF0(YDGEOMETRY%YRDIM%NPROMA,YDGEOMETRY%YRDIMV%NFLEVG)
+REAL(KIND=JPRB) :: ZVF0(YDGEOMETRY%YRDIM%NPROMA,YDGEOMETRY%YRDIMV%NFLEVG)
+REAL(KIND=JPRB) :: ZZF0(YDGEOMETRY%YRDIM%NPROMA,YDGEOMETRY%YRDIMV%NFLEVG)
+REAL(KIND=JPRB) :: ZWF0(YDGEOMETRY%YRDIM%NPROMA,YDGEOMETRY%YRDIMV%NFLEVG)
+
+REAL(KIND=JPRB) :: ZUS(YDGEOMETRY%YRDIM%NPROMA,YDGEOMETRY%YRDIMV%NFLEVG,3)
+REAL(KIND=JPRB) :: ZVS(YDGEOMETRY%YRDIM%NPROMA,YDGEOMETRY%YRDIMV%NFLEVG,3)
+REAL(KIND=JPRB) :: ZZS(YDGEOMETRY%YRDIM%NPROMA,YDGEOMETRY%YRDIMV%NFLEVG,3)
+REAL(KIND=JPRB) :: ZWS(YDGEOMETRY%YRDIM%NPROMA,YDGEOMETRY%YRDIMV%NFLEVG,3)
+
+REAL(KIND=JPRB) :: ZHOOK_HANDLE
+
+! unused arguments in call to LARCINATL:
+! a) input arrays - will not be used since LSLHD was set to .FALSE.
+!    in LAPINEA before call to LARMES_RK_TL/ELARMES_RK_TL => dimensions can be
+!    contracted
+REAL(KIND=JPRB) :: ZUN_KAPPA(1),ZUN_KAPPAT(1),ZUN_KAPPA5(1),ZUN_KAPPAT5(1)
+! b) output arrays - dimensions kept for safety
+INTEGER(KIND=JPIM) :: INOWENO(YDGEOMETRY%YRDIM%NPROMA,YDGEOMETRY%YRDIMV%NFLEVG)
+
+!     ------------------------------------------------------------------
+
+#include "abor1.intfb.h"
+#include "larcinatl.intfb.h"
+
+!     ------------------------------------------------------------------
+
+IF (LHOOK) CALL DR_HOOK('LARMES_RK_TL',0,ZHOOK_HANDLE)
+ASSOCIATE(YDDIM=>YDGEOMETRY%YRDIM,YDDIMV=>YDGEOMETRY%YRDIMV,YDGEM=>YDGEOMETRY%YRGEM, &
+ & YDMP=>YDGEOMETRY%YRMP, YDSTA=>YDGEOMETRY%YRSTA, YDVAB=>YDGEOMETRY%YRVAB, &
+ & YDVETA=>YDGEOMETRY%YRVETA, YDLAP=>YDGEOMETRY%YRLAP, YDCSGLEG=>YDGEOMETRY%YRCSGLEG,  &
+ & YDVSPLIP=>YDGEOMETRY%YRVSPLIP, YDVSLETA=>YDGEOMETRY%YRVSLETA, &
+ & YDHSLMER=>YDGEOMETRY%YRHSLMER, YDCSGEOM=>YDGEOMETRY%YRCSGEOM(KIBL), &
+ & YDGSGEOM=>YDGEOMETRY%YRGSGEOM(KIBL),  &
+ & YDSPGEOM=>YDGEOMETRY%YSPGEOM,YDDYN=>YDML_DYN%YRDYN,YDPTRSLB15=>YDML_DYN%YRPTRSLB15,  &
+ & YDPTRSLB1=>YDML_DYN%YRPTRSLB1,YDPTRSLB2=>YDML_DYN%YRPTRSLB2)
+ASSOCIATE(NPROMA=>YDDIM%NPROMA, &
+ & NFLEN=>YDDIMV%NFLEN, NFLEVG=>YDDIMV%NFLEVG, NFLSA=>YDDIMV%NFLSA, &
+ & LFINDVSEP=>YDDYN%LFINDVSEP, LSVTSM=>YDDYN%LSVTSM, NITMP=>YDDYN%NITMP, &
+ & RPRES_SVTSM=>YDDYN%RPRES_SVTSM, VETAON=>YDDYN%VETAON, VETAOX=>YDDYN%VETAOX, &
+ & LSLDP_CURV=>YDDYN%LSLDP_CURV, &
+ & MSLB1UR05=>YDPTRSLB15%MSLB1UR05, MSLB1VR05=>YDPTRSLB15%MSLB1VR05, &
+ & MSLB1ZR05=>YDPTRSLB15%MSLB1ZR05, MSLB1WR05=>YDPTRSLB15%MSLB1WR05, &
+ & MSLB1UR005=>YDPTRSLB15%MSLB1UR005, MSLB1VR005=>YDPTRSLB15%MSLB1VR005, &
+ & MSLB1ZR005=>YDPTRSLB15%MSLB1ZR005, MSLB1WR005=>YDPTRSLB15%MSLB1WR005, &
+ & MSLB1UR0=>YDPTRSLB1%MSLB1UR0, MSLB1VR0=>YDPTRSLB1%MSLB1VR0, &
+ & MSLB1ZR0=>YDPTRSLB1%MSLB1ZR0, MSLB1WR0=>YDPTRSLB1%MSLB1WR0, &
+ & MSLB1UR00=>YDPTRSLB1%MSLB1UR00, MSLB1VR00=>YDPTRSLB1%MSLB1VR00, &
+ & MSLB1ZR00=>YDPTRSLB1%MSLB1ZR00, MSLB1WR00=>YDPTRSLB1%MSLB1WR00, &
+ & NFLDSLB15=>YDPTRSLB15%NFLDSLB15, &
+ & MSLB2URL5=>YDPTRSLB2%MSLB2URL5, &
+ & MSLB2VRL5=>YDPTRSLB2%MSLB2VRL5, MSLB2WRL5=>YDPTRSLB2%MSLB2WRL5, &
+ & MSLB2URL=>YDPTRSLB2%MSLB2URL, &
+ & MSLB2VRL=>YDPTRSLB2%MSLB2VRL, MSLB2WRL=>YDPTRSLB2%MSLB2WRL, &
+ & NFLDSLB2=>YDPTRSLB2%NFLDSLB2, &
+ & RDTS22=>YDRIP%RDTS22, RDTS62=>YDRIP%RDTS62, RDTSA=>YDRIP%RDTSA, &
+ & RTDT=>YDRIP%RTDT)
+
+!     ------------------------------------------------------------------
+
+!*       1.    PRELIMINARY INITIALISATIONS AND TESTS.
+!              --------------------------------------
+
+!*       1.2   Miscellaneous preliminary initialisations.
+
+! LLO.OR.LELTRA should now be always T for SL2TL.
+IF (LTWOTL) THEN
+  LLO=.NOT.LELTRA
+ELSE
+  LLO=.FALSE.
+ENDIF
+
+IF(LLO.OR.LELTRA) THEN
+  ZDTS22=RDTS22*4._JPRB
+  ZDTSA=RDTSA*2._JPRB
+  ZDTS62=RDTS62*4._JPRB
+ELSE
+  ! this case may occur only for SL3TL scheme.
+  IF (LTWOTL) CALL ABOR1(' LARMES_RK_TL 1.2 ')
+  ZDTS22=RDTS22
+  ZDTSA=RDTSA
+  ZDTS62=RDTS62
+ENDIF
+
+! deactivate computation of SLHD weights
+LLSLHD     =.FALSE.
+LLSLHDQUAD =.FALSE.
+LLSLHD_OLD =.FALSE.
+
+!*       1.3   Computation of weights for smooth interpolation at arrival point.
+
+IF(LSVTSM .OR. LRALTVDISP .OR. LELTRA) THEN
+  CALL ABOR1('NOT CODED')
+ENDIF
+
+!     ------------------------------------------------------------------
+
+!*       2.    ITERATIONS.
+!              -----------
+ 
+ZVETAON=(1.0_JPRB-VETAON)*YDVETA%VETAH(0)+VETAON*YDVETA%VETAF(1)
+ZVETAOX=(1.0_JPRB-VETAOX)*YDVETA%VETAH(NFLEVG)+VETAOX*YDVETA%VETAF(NFLEVG)
+
+
+! Preparatory stage setting values for 1-th iteration
+JITER=1
+
+DO JLEV=1,NFLEVG
+  DO JROF=KST,KPROF
+
+    ! * computations on horizontal plans.
+
+    ! convert arrival point wind to Cartesian space for later averaging
+    ! Arrival point wind
+    ZPU0= +PB2(JROF,MSLB2URL+JLEV-1)*YDGSGEOM%GNORDM(JROF)&
+     &    -PB2(JROF,MSLB2VRL+JLEV-1)*YDGSGEOM%GNORDL(JROF)  
+    ZPV0= +PB2(JROF,MSLB2URL+JLEV-1)*YDGSGEOM%GNORDL(JROF)&
+     &    +PB2(JROF,MSLB2VRL+JLEV-1)*YDGSGEOM%GNORDM(JROF)
+
+    ! Arrival point wind converted to Cartesian space
+    ZU0(JROF,JLEV)=-ZPU0*YDGSGEOM%GESLO(JROF)             &
+     &             -ZPV0*YDGSGEOM%GECLO(JROF)*YDGSGEOM%GEMU(JROF)
+    ZV0(JROF,JLEV)= ZPU0*YDGSGEOM%GECLO(JROF)             &
+     &             -ZPV0*YDGSGEOM%GESLO(JROF)*YDGSGEOM%GEMU(JROF)
+    ZZ0(JROF,JLEV)= ZPV0*YDGSGEOM%GSQM2(JROF)
+
+    ZPU5=PB2(JROF,MSLB2URL5+JLEV-1)
+    ZPV5=PB2(JROF,MSLB2VRL5+JLEV-1)
+    ZPU =PB2(JROF,MSLB2URL+JLEV-1)
+    ZPV =PB2(JROF,MSLB2VRL+JLEV-1)
+
+    ZNOR25=( ZPU5*ZPU5 + ZPV5*ZPV5 )
+    ZSPHSV5=ZDTSA*(1.0_JPRB-ZDTS62*ZNOR25)
+
+    ZNOR2=2.0_JPRB*(ZPU5*ZPU + ZPV5*ZPV )
+    PSCO(JROF,JLEV,YDML_DYN%YYTSCO%M_COPHI)=-ZDTS22*ZNOR2
+    ZSPHSV=-ZDTSA*ZDTS62*ZNOR2
+    ZINT=(ZPU*YDGSGEOM%GNORDL(JROF)+ZPV*YDGSGEOM%GNORDM(JROF))*ZSPHSV5 &
+     & + (ZPU5*YDGSGEOM%GNORDL(JROF)+ZPV5*YDGSGEOM%GNORDM(JROF))*ZSPHSV
+    PSCO(JROF,JLEV,YDML_DYN%YYTSCO%M_SINLA)= &
+     & YDGSGEOM%GEMU(JROF)*PSCO(JROF,JLEV,YDML_DYN%YYTSCO%M_COPHI)-ZINT*YDGSGEOM%GSQM2(JROF)
+    PSCO(JROF,JLEV,YDML_DYN%YYTSCO%M_COSCO)= &
+     & YDGSGEOM%GSQM2(JROF)*PSCO(JROF,JLEV,YDML_DYN%YYTSCO%M_COPHI)+ZINT*YDGSGEOM%GEMU(JROF)
+    PSCO(JROF,JLEV,YDML_DYN%YYTSCO%M_SINCO)= &
+     & -( ZPU*YDGSGEOM%GNORDM(JROF) -ZPV*YDGSGEOM%GNORDL(JROF) )*ZSPHSV5  &
+     & -( ZPU5*YDGSGEOM%GNORDM(JROF) -ZPV5*YDGSGEOM%GNORDL(JROF) )*ZSPHSV
+
+    ! * computations on a vertical.
+    ZPW0=PB2(JROF,MSLB2WRL+JLEV-1)
+    ZLEVO=-RTDT*ZPW0
+    ZLEVO5=PLEV5(JROF,JLEV,JITER,3)
+    IF (ZLEVO5 <= ZVETAON) THEN
+      ZLEVO=0.0_JPRB
+    ELSEIF (ZLEVO5 >= ZVETAOX) THEN
+      ZLEVO=0.0_JPRB
+    ENDIF
+    PLEV(JROF,JLEV)=ZLEVO  
+
+  ENDDO
+ENDDO
+
+! Interpolation
+
+ITIP=1
+IROT = 0 
+
+! Extra interpolation for t+dt extrapolated wind.
+! Used for stages 1 (half) and 3 (full)
+CALL LARCINATL(YDGEOMETRY,YDML_DYN,KST,KPROF,YDSL,KSTABUF,LLSLHD,LLSLHDQUAD,LLSLHD_OLD,&
+ & ITIP,IROT,.FALSE.,PLSDEPI,&
+ & KIBL,PSCO,PLEV,PSCO5(:,:,:,JITER,3),PLEV5(:,:,JITER,3),&
+ & ZUN_KAPPA,ZUN_KAPPA5,ZUN_KAPPAT,ZUN_KAPPAT5,&
+ & PB1(1,MSLB1UR00),PB1(1,MSLB1VR00),PB1(1,MSLB1ZR00),PB1(1,MSLB1WR00),&
+ & PB15(1,MSLB1UR005),PB15(1,MSLB1VR005),PB15(1,MSLB1ZR005),PB15(1,MSLB1WR005),&
+ & PCCO,ZUS(:,:,3),ZVS(:,:,3),ZZS(:,:,3),ZWS(:,:,3),PCCO5(:,:,:,JITER,3),&
+ & KL0(:,:,:,JITER,3),KLH0,KLEV,PLSCAW,PRSCAW,&
+ & PLSCAW5(:,:,:,JITER,3),PRSCAW5(:,:,:,JITER,3),INOWENO)
+
+
+!  Iterations starts
+
+
+DO JITER=2,NITMP
+
+  !*       2.1   DETERMINATION OF THE MEDIUM POINT "M" OR THE ORIGIN POINT "O".
+
+  ! Computation of the norm of the real "(a/rs)*wind" vector.
+  ! Computation of the angle (PHI=DT . NORM OF V ON RADIUS)**2
+  ! then computation of the coordinates of the medium point "M".
+  ! If (LLO=T or LELTRA=T) the origin point "O" is computed
+  ! instead of the medium point "M".
+
+
+  ! STAGE 1 (arrival point, t+dt) ============================================================
+
+  ! Second interpolation to complete extrapolated wind by SETTLS
+  CALL LARCINATL(YDGEOMETRY,YDML_DYN,KST,KPROF,YDSL,KSTABUF,LLSLHD,LLSLHDQUAD,LLSLHD_OLD,&
+   & ITIP,IROT,.FALSE.,PLSDEPI,&
+   & KIBL,PSCO,PLEV,PSCO5(:,:,:,JITER-1,3),PLEV5(:,:,JITER-1,3),&
+   & ZUN_KAPPA,ZUN_KAPPA5,ZUN_KAPPAT,ZUN_KAPPAT5,&
+   & PB1(1,MSLB1UR0),PB1(1,MSLB1VR0),PB1(1,MSLB1ZR0),PB1(1,MSLB1WR0),&
+   & PB15(1,MSLB1UR05),PB15(1,MSLB1VR05),PB15(1,MSLB1ZR05),PB15(1,MSLB1WR05),&
+   & PCCO,ZUF0,ZVF0,ZZF0,ZWF0,PCCO5(:,:,:,JITER,1),&
+   & KL0(:,:,:,JITER,1),KLH0,KLEV,PLSCAW,PRSCAW,&
+   & PLSCAW5(:,:,:,JITER,1),PRSCAW5(:,:,:,JITER,1),INOWENO)
+
+  IF (JITER == 2) THEN
+    ! Stage 2 (middle point, t+0.5dt)
+    ! Averaging wind by SETTLS to arrival point in Cartesian space
+    ZUS(KST:KPROF,1:NFLEVG,2)=0.5_JPRB*(ZUF0(KST:KPROF,1:NFLEVG) &
+      &                                +ZU0(KST:KPROF,1:NFLEVG))
+    ZVS(KST:KPROF,1:NFLEVG,2)=0.5_JPRB*(ZVF0(KST:KPROF,1:NFLEVG) &
+      &                                +ZV0(KST:KPROF,1:NFLEVG))
+    ZZS(KST:KPROF,1:NFLEVG,2)=0.5_JPRB*(ZZF0(KST:KPROF,1:NFLEVG) &
+      &                                +ZZ0(KST:KPROF,1:NFLEVG))
+    ZWS(KST:KPROF,1:NFLEVG,2)=0.5_JPRB*(ZWF0(KST:KPROF,1:NFLEVG) &
+      &                                +PB2(KST:KPROF,MSLB2WRL:MSLB2WRL+NFLEVG-1))
+  ENDIF
+
+  ! Extrapolating wind by SETTLS to arrival point in Cartesian space
+  ZUS(KST:KPROF,1:NFLEVG,1)=ZUF0(KST:KPROF,1:NFLEVG)-ZUS(KST:KPROF,1:NFLEVG,3) &
+    &                              +ZU0(KST:KPROF,1:NFLEVG)
+  ZVS(KST:KPROF,1:NFLEVG,1)=ZVF0(KST:KPROF,1:NFLEVG)-ZVS(KST:KPROF,1:NFLEVG,3) &
+    &                              +ZV0(KST:KPROF,1:NFLEVG)
+  ZZS(KST:KPROF,1:NFLEVG,1)=ZZF0(KST:KPROF,1:NFLEVG)-ZZS(KST:KPROF,1:NFLEVG,3) &
+    &                              +ZZ0(KST:KPROF,1:NFLEVG)
+  ZWS(KST:KPROF,1:NFLEVG,1)=ZWF0(KST:KPROF,1:NFLEVG)-ZWS(KST:KPROF,1:NFLEVG,3) &
+    &                              +PB2(KST:KPROF,MSLB2WRL:MSLB2WRL+NFLEVG-1)
+
+
+  ! STAGE 2 (midpoint, t+0.5dt) ==============================================================
+  ! Here we however compute the departure point position using then obvious SETTLS averaging into M
+
+  DO JLEV=1,NFLEVG
+    DO JROF=KST,KPROF
+
+      ! * computations on horizontal plans.
+      ZPU05=(5._JPRB*PUS5(JROF,JLEV,1,JITER)+8._JPRB*PUS5(JROF,JLEV,2,JITER-1) &
+       &            -PUS5(JROF,JLEV,3,JITER-1))/12._JPRB
+      ZPV05=(5._JPRB*PVS5(JROF,JLEV,1,JITER)+8._JPRB*PVS5(JROF,JLEV,2,JITER-1) &
+       &            -PVS5(JROF,JLEV,3,JITER-1))/12._JPRB
+      ZPZ05=(5._JPRB*PZS5(JROF,JLEV,1,JITER)+8._JPRB*PZS5(JROF,JLEV,2,JITER-1) &
+       &            -PZS5(JROF,JLEV,3,JITER-1))/12._JPRB
+
+      ZPU0=(5._JPRB*ZUS(JROF,JLEV,1)+8._JPRB*ZUS(JROF,JLEV,2)-ZUS(JROF,JLEV,3))/12._JPRB
+      ZPV0=(5._JPRB*ZVS(JROF,JLEV,1)+8._JPRB*ZVS(JROF,JLEV,2)-ZVS(JROF,JLEV,3))/12._JPRB
+      ZPZ0=(5._JPRB*ZZS(JROF,JLEV,1)+8._JPRB*ZZS(JROF,JLEV,2)-ZZS(JROF,JLEV,3))/12._JPRB
+
+      ! Convert wind back to lat,lon at Arrival point
+      ZPU5 = -ZPU05*YDGSGEOM%GESLO(JROF)                     &
+       &     +ZPV05*YDGSGEOM%GECLO(JROF)
+      ZPV5 = -ZPU05*YDGSGEOM%GECLO(JROF)*YDGSGEOM%GEMU(JROF) &
+       &     -ZPV05*YDGSGEOM%GESLO(JROF)*YDGSGEOM%GEMU(JROF) &
+       &     +ZPZ05*YDGSGEOM%GSQM2(JROF)
+
+      ZPU = -ZPU0*YDGSGEOM%GESLO(JROF)                     &
+       &    +ZPV0*YDGSGEOM%GECLO(JROF)
+      ZPV = -ZPU0*YDGSGEOM%GECLO(JROF)*YDGSGEOM%GEMU(JROF) &
+       &    -ZPV0*YDGSGEOM%GESLO(JROF)*YDGSGEOM%GEMU(JROF) &
+       &    +ZPZ0*YDGSGEOM%GSQM2(JROF)
+
+      ZNOR25=( ZPU5*ZPU5 + ZPV5*ZPV5 )
+      ZSPHSV5=ZDTSA*(1.0_JPRB-ZDTS62*ZNOR25)
+
+      ZNOR2=2.0_JPRB*(ZPU5*ZPU + ZPV5*ZPV )
+      PSCO(JROF,JLEV,YDML_DYN%YYTSCO%M_COPHI)=-ZDTS22*ZNOR2
+      ZSPHSV=-ZDTSA*ZDTS62*ZNOR2
+      ZINT  =ZPV5*ZSPHSV + ZSPHSV5*ZPV
+      PSCO(JROF,JLEV,YDML_DYN%YYTSCO%M_SINLA)= &
+       & YDGSGEOM%GEMU(JROF)*PSCO(JROF,JLEV,YDML_DYN%YYTSCO%M_COPHI)-ZINT*YDGSGEOM%GSQM2(JROF)
+      PSCO(JROF,JLEV,YDML_DYN%YYTSCO%M_COSCO)= &
+       & YDGSGEOM%GSQM2(JROF)*PSCO(JROF,JLEV,YDML_DYN%YYTSCO%M_COPHI)+ZINT*YDGSGEOM%GEMU(JROF)
+      PSCO(JROF,JLEV,YDML_DYN%YYTSCO%M_SINCO)=-ZPU5*ZSPHSV-ZPU*ZSPHSV5
+
+      ! * computations on a vertical.
+      ZPW0 =(5._JPRB*ZWS(JROF,JLEV,1)+8._JPRB*ZWS(JROF,JLEV,2)-ZWS(JROF,JLEV,3))/12._JPRB
+      ZLEVO=-RTDT*ZPW0
+      ZLEVO5=PLEV5(JROF,JLEV,JITER,2)
+      IF (ZLEVO5 <= ZVETAON) THEN
+        ZLEVO=0.0_JPRB
+      ELSEIF (ZLEVO5 >= ZVETAOX) THEN
+        ZLEVO=0.0_JPRB
+      ENDIF
+      PLEV(JROF,JLEV)=ZLEVO  
+
+    ENDDO
+  ENDDO
+
+
+  ! Interpolation for stage 2
+  CALL LARCINATL(YDGEOMETRY,YDML_DYN,KST,KPROF,YDSL,KSTABUF,LLSLHD,LLSLHDQUAD,LLSLHD_OLD,&
+   & ITIP,IROT,.FALSE.,PLSDEPI,&
+   & KIBL,PSCO,PLEV,PSCO5(1,1,1,JITER,2),PLEV5(1,1,JITER,2),&
+   & ZUN_KAPPA,ZUN_KAPPA5,ZUN_KAPPAT,ZUN_KAPPAT5,&
+   & PB1(1,MSLB1UR0),PB1(1,MSLB1VR0),PB1(1,MSLB1ZR0),PB1(1,MSLB1WR0),&
+   & PB15(1,MSLB1UR05),PB15(1,MSLB1VR05),PB15(1,MSLB1ZR05),PB15(1,MSLB1WR05),&
+   & PCCO,ZUF0,ZVF0,ZZF0,ZWF0,PCCO5(:,:,:,JITER,2),&
+   & KL0(1,1,0,JITER,2),KLH0,KLEV,PLSCAW,PRSCAW,&
+   & PLSCAW5(1,1,1,JITER,2),PRSCAW5(1,1,1,JITER,2),INOWENO)
+
+  ! New wind stage 2
+  ! Stage 2 (middle point, t+0.5dt)
+  ! Averaging wind by SETTLS to arrival point in Cartesian space
+  ZUS(KST:KPROF,1:NFLEVG,2)=0.5_JPRB*(ZUF0(KST:KPROF,1:NFLEVG) &
+   &                                 +ZU0(KST:KPROF,1:NFLEVG))
+  ZVS(KST:KPROF,1:NFLEVG,2)=0.5_JPRB*(ZVF0(KST:KPROF,1:NFLEVG) &
+   &                                 +ZV0(KST:KPROF,1:NFLEVG))
+  ZZS(KST:KPROF,1:NFLEVG,2)=0.5_JPRB*(ZZF0(KST:KPROF,1:NFLEVG) &
+   &                                 +ZZ0(KST:KPROF,1:NFLEVG))
+  ZWS(KST:KPROF,1:NFLEVG,2)=0.5_JPRB*(ZWF0(KST:KPROF,1:NFLEVG) &
+   &                                 +PB2(KST:KPROF,MSLB2WRL:MSLB2WRL+NFLEVG-1))
+
+
+  ! STAGE 3 (departure point, t) =============================================================
+  DO JLEV=1,NFLEVG
+    DO JROF=KST,KPROF
+
+      ! * computations on horizontal plans.
+      ZPU05=(PUS5(JROF,JLEV,1,JITER)+4._JPRB*PUS5(JROF,JLEV,2,JITER) &
+       &    +PUS5(JROF,JLEV,3,JITER-1))/6._JPRB
+      ZPV05=(PVS5(JROF,JLEV,1,JITER)+4._JPRB*PVS5(JROF,JLEV,2,JITER) &
+       &    +PVS5(JROF,JLEV,3,JITER-1))/6._JPRB
+      ZPZ05=(PZS5(JROF,JLEV,1,JITER)+4._JPRB*PZS5(JROF,JLEV,2,JITER) &
+       &    +PZS5(JROF,JLEV,3,JITER-1))/6._JPRB
+
+      ZPU0=(ZUS(JROF,JLEV,1)+4._JPRB*ZUS(JROF,JLEV,2)+ZUS(JROF,JLEV,3))/6._JPRB
+      ZPV0=(ZVS(JROF,JLEV,1)+4._JPRB*ZVS(JROF,JLEV,2)+ZVS(JROF,JLEV,3))/6._JPRB
+      ZPZ0=(ZZS(JROF,JLEV,1)+4._JPRB*ZZS(JROF,JLEV,2)+ZZS(JROF,JLEV,3))/6._JPRB
+
+      ! Convert wind back to lat,lon at Arrival point
+      ZPU5= -ZPU05*YDGSGEOM%GESLO(JROF)                     &
+       &    +ZPV05*YDGSGEOM%GECLO(JROF)
+      ZPV5= -ZPU05*YDGSGEOM%GECLO(JROF)*YDGSGEOM%GEMU(JROF) &
+       &    -ZPV05*YDGSGEOM%GESLO(JROF)*YDGSGEOM%GEMU(JROF) &
+       &    +ZPZ05*YDGSGEOM%GSQM2(JROF)
+
+      ZPU = -ZPU0*YDGSGEOM%GESLO(JROF)                     &
+       &    +ZPV0*YDGSGEOM%GECLO(JROF)
+      ZPV = -ZPU0*YDGSGEOM%GECLO(JROF)*YDGSGEOM%GEMU(JROF) &
+       &    -ZPV0*YDGSGEOM%GESLO(JROF)*YDGSGEOM%GEMU(JROF) &
+       &    +ZPZ0*YDGSGEOM%GSQM2(JROF)
+
+      ZNOR25=( ZPU5*ZPU5 + ZPV5*ZPV5 )
+      ZSPHSV5=ZDTSA*(1.0_JPRB-ZDTS62*ZNOR25)
+
+      ZNOR2=2.0_JPRB*(ZPU5*ZPU + ZPV5*ZPV )
+      PSCO(JROF,JLEV,YDML_DYN%YYTSCO%M_COPHI)=-ZDTS22*ZNOR2
+      ZSPHSV=-ZDTSA*ZDTS62*ZNOR2
+      ZINT  =ZPV5*ZSPHSV + ZSPHSV5*ZPV
+      PSCO(JROF,JLEV,YDML_DYN%YYTSCO%M_SINLA)= &
+       & YDGSGEOM%GEMU(JROF)*PSCO(JROF,JLEV,YDML_DYN%YYTSCO%M_COPHI)-ZINT*YDGSGEOM%GSQM2(JROF)
+      PSCO(JROF,JLEV,YDML_DYN%YYTSCO%M_COSCO)= &
+       & YDGSGEOM%GSQM2(JROF)*PSCO(JROF,JLEV,YDML_DYN%YYTSCO%M_COPHI)+ZINT*YDGSGEOM%GEMU(JROF)
+      PSCO(JROF,JLEV,YDML_DYN%YYTSCO%M_SINCO)=-ZPU5*ZSPHSV-ZPU*ZSPHSV5
+
+      ! * computations on a vertical.
+      ZPW0=(ZWS(JROF,JLEV,1)+4._JPRB*ZWS(JROF,JLEV,2)+ZWS(JROF,JLEV,3))/6._JPRB
+      ZLEVO=-RTDT*ZPW0
+      ZLEVO5=PLEV5(JROF,JLEV,JITER,3)
+      IF (ZLEVO5 <= ZVETAON) THEN
+        ZLEVO=0.0_JPRB
+      ELSEIF (ZLEVO5 >= ZVETAOX) THEN
+        ZLEVO=0.0_JPRB
+      ENDIF
+      PLEV(JROF,JLEV)=ZLEVO  
+
+    ENDDO
+  ENDDO
+
+  ! Interpolation for stage 3
+  IF (JITER /= NITMP) THEN
+    CALL LARCINATL(YDGEOMETRY,YDML_DYN,KST,KPROF,YDSL,KSTABUF,LLSLHD,LLSLHDQUAD,LLSLHD_OLD,&
+     & ITIP,IROT,.FALSE.,PLSDEPI,&
+     & KIBL,PSCO,PLEV,PSCO5(:,:,:,JITER,3),PLEV5(:,:,JITER,3),&
+     & ZUN_KAPPA,ZUN_KAPPA5,ZUN_KAPPAT,ZUN_KAPPAT5,&
+     & PB1(1,MSLB1UR00),PB1(1,MSLB1VR00),PB1(1,MSLB1ZR00),PB1(1,MSLB1WR00),&
+     & PB15(1,MSLB1UR005),PB15(1,MSLB1VR005),PB15(1,MSLB1ZR005),PB15(1,MSLB1WR005),&
+     & PCCO,ZUS(:,:,3),ZVS(:,:,3),ZZS(:,:,3),ZWS(:,:,3),PCCO5(:,:,:,JITER,3),&
+     & KL0(:,:,:,JITER,3),KLH0,KLEV,PLSCAW,PRSCAW,&
+     & PLSCAW5(:,:,:,JITER,3),PRSCAW5(:,:,:,JITER,3),INOWENO)
+    ! New wind stage 3 overwrites Z[x]S
+  ENDIF
+
+
+ENDDO   ! end of JITER
+
+
+!     ------------------------------------------------------------------
+
+!*       3.    COMPUTATION OF THE ORIGIN POINT "O" COORDINATES.
+!              ------------------------------------------------
+
+IF (.NOT.(LLO.OR.LELTRA)) THEN
+
+  ! this case may occur only for SL3TL scheme.
+  IF (LTWOTL) CALL ABOR1(' LARMES_RK_TL 3 ')
+  CALL ABOR1(' LARMES_RK_TL: 3TL scheme not coded for RK4 trajectory research. ')
+
+ENDIF
+
+
+!     ------------------------------------------------------------------
+
+END ASSOCIATE
+END ASSOCIATE
+IF (LHOOK) CALL DR_HOOK('LARMES_RK_TL',1,ZHOOK_HANDLE)
+END SUBROUTINE LARMES_RK_TL

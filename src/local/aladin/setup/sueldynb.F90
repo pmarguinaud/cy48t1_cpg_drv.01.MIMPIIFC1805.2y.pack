@@ -1,0 +1,148 @@
+SUBROUTINE SUELDYNB(YDGEOMETRY,YDDYN,YDEDYN,YGFL)
+
+!**** *SUELDYNB * - Routine to allocate space for ALADIN variables
+!     Arrays allocated under SUEDYN after reading NAMDYN and NEMDYN.
+
+!     Purpose.
+!     --------
+
+!**   Interface.
+!     ----------
+!        *CALL* *SUELDYNB*
+
+!     Explicit arguments :  None
+!     --------------------
+
+!     Implicit arguments :
+!     --------------------
+!        Pointers of comdecks
+
+!     Method.
+!     -------
+
+!     Externals.
+!     ----------
+
+!     Reference.
+!     ----------
+!        ARPEGE/ALADIN documentation
+
+!     Author.
+!     -------
+!        K. YESSAD (METEO-FRANCE/CNRM/GMAP) after routine SUELLO.
+!        Original : Dec 2003.
+
+!     Modifications.
+!     --------------
+!        I. Santos, I. Martinez : Mar 2010 - New arrays for RTM variable map factor
+!        B. Bochenek 15-04-2013 - Phasing cy40, coherence with modified modules
+!        O. Marsden: June 2015 CY42 YRGMV, YRGFL, YRSURF, YRGMV5, and YRGFL5 are now passed by argument
+!        K. Yessad (June 2017): Introduce NHQE model.
+!        K. Yessad (June 2018): Alternate NHEE SI scheme elimination.
+!     ------------------------------------------------------------------
+
+USE GEOMETRY_MOD , ONLY : GEOMETRY
+USE PARKIND1  ,ONLY : JPRB
+USE YOMHOOK   ,ONLY : LHOOK,   DR_HOOK
+
+USE YOMLUN   , ONLY : NULOUT
+USE YOMCT0   , ONLY : LNHDYN, LNHEE
+USE YOMDYNA  , ONLY : LSLHD_W  ,LSLHD_SVD ,LGRADSP, LSI_NHEE
+USE YEMDYN   , ONLY : TEDYN
+USE YOMDYN   , ONLY : TDYN
+USE YOM_YGFL , ONLY : TYPE_GFLD
+
+!     ------------------------------------------------------------------
+
+IMPLICIT NONE
+
+TYPE(GEOMETRY), INTENT(INOUT) :: YDGEOMETRY
+TYPE(TDYN)     ,INTENT(INOUT) :: YDDYN
+TYPE(TEDYN)    ,INTENT(INOUT) :: YDEDYN
+TYPE(TYPE_GFLD),INTENT(INOUT) :: YGFL
+REAL(KIND=JPRB) :: ZHOOK_HANDLE
+
+!     ------------------------------------------------------------------
+IF (LHOOK) CALL DR_HOOK('SUELDYNB',0,ZHOOK_HANDLE)
+
+ASSOCIATE( &
+ & LESIDG=>YDEDYN%LESIDG, &
+ & NSECPLG=>YDGEOMETRY%YREDIM%NSECPLG, &
+ & NFLEVG=>YDGEOMETRY%YRDIMV%NFLEVG, &
+ & NSMAX=>YDGEOMETRY%YRDIM%NSMAX, NSPEC=>YDGEOMETRY%YRDIM%NSPEC, &
+ & NGPTOT=>YDGEOMETRY%YRGEM%NGPTOT)
+!     ------------------------------------------------------------------
+
+!*       1.    ALLOCATE SPACE FOR ARRAYS.
+!              --------------------------
+
+! * Semi-implicit scheme for ALADIN real map factor.
+IF (LESIDG) THEN
+  ALLOCATE(YDDYN%SIHEG(NFLEVG,NSPEC,3))
+  WRITE(NULOUT,9990) 'SIHEG    ',SIZE(YDDYN%SIHEG),SHAPE(YDDYN%SIHEG)
+  ALLOCATE(YDDYN%SIHEG2(NFLEVG,NSMAX+1,2:3))
+  WRITE(NULOUT,9990) 'SIHEG2   ',SIZE(YDDYN%SIHEG2),SHAPE(YDDYN%SIHEG2)
+  IF (LNHEE.AND.(.NOT.LSI_NHEE)) THEN
+    ALLOCATE(YDDYN%SIHEGB(NFLEVG,NSPEC,3))
+    WRITE(NULOUT,9990) 'SIHEGB   ',SIZE(YDDYN%SIHEGB),SHAPE(YDDYN%SIHEGB)
+    ALLOCATE(YDDYN%SIHEGB2(NFLEVG,NSMAX+1,2:3))
+    WRITE(NULOUT,9990) 'SIHEGB2  ',SIZE(YDDYN%SIHEGB2),SHAPE(YDDYN%SIHEGB2)
+  ENDIF
+ENDIF
+
+IF(LGRADSP) THEN
+  ALLOCATE(YDEDYN%REFILV(NFLEVG,NSECPLG))
+  WRITE(NULOUT,9990) 'REFILV   ',SIZE(YDEDYN%REFILV  ),SHAPE(YDEDYN%REFILV  )
+  ALLOCATE(YDEDYN%REFILD(NFLEVG,NSECPLG))
+  WRITE(NULOUT,9990) 'REFILD   ',SIZE(YDEDYN%REFILD  ),SHAPE(YDEDYN%REFILD  )
+ENDIF
+ALLOCATE(YDEDYN%RDIVORE(NFLEVG,NSECPLG))
+WRITE(NULOUT,9990) 'RDIVORE  ',SIZE(YDEDYN%RDIVORE  ),SHAPE(YDEDYN%RDIVORE  )
+ALLOCATE(YDEDYN%RDIDIVE(NFLEVG,NSECPLG))
+WRITE(NULOUT,9990) 'RDIDIVE  ',SIZE(YDEDYN%RDIDIVE  ),SHAPE(YDEDYN%RDIDIVE  )
+ALLOCATE(YDEDYN%RDITE  (NFLEVG,NSECPLG))
+WRITE(NULOUT,9990) 'RDITE    ',SIZE(YDEDYN%RDITE    ),SHAPE(YDEDYN%RDITE    )
+ALLOCATE(YDEDYN%RDIGFLE(NFLEVG,NSECPLG,YGFL%NUMSPFLDS))
+WRITE(NULOUT,9990) 'RDIGFLE   ',SIZE(YDEDYN%RDIGFLE),SHAPE(YDEDYN%RDIGFLE)
+IF(LNHDYN) THEN
+  ALLOCATE(YDEDYN%RDIPDE (NFLEVG,NSECPLG))
+  WRITE(NULOUT,9990) 'RDIPDE   ',SIZE(YDEDYN%RDIPDE   ),SHAPE(YDEDYN%RDIPDE   )
+  ALLOCATE(YDEDYN%RDIVDE (NFLEVG,NSECPLG))
+  WRITE(NULOUT,9990) 'RDIVDE   ',SIZE(YDEDYN%RDIVDE   ),SHAPE(YDEDYN%RDIVDE   )
+ELSE
+  ! ** ??? useless in this case ??? **
+  ALLOCATE(YDEDYN%RDIPDE (NFLEVG,NSECPLG))
+  WRITE(NULOUT,9990) 'RDIPDE   ',SIZE(YDEDYN%RDIPDE   ),SHAPE(YDEDYN%RDIPDE   )
+  ALLOCATE(YDEDYN%RDIVDE (NFLEVG,NSECPLG))
+  WRITE(NULOUT,9990) 'RDIVDE   ',SIZE(YDEDYN%RDIVDE   ),SHAPE(YDEDYN%RDIVDE   )
+ENDIF
+ALLOCATE(YDEDYN%RDISPE (NSECPLG))
+WRITE(NULOUT,9990) 'RDISPE   ',SIZE(YDEDYN%RDISPE   ),SHAPE(YDEDYN%RDISPE   )
+
+IF (LSLHD_W) THEN
+  ALLOCATE(YDEDYN%RDSVORE(NFLEVG,NSECPLG))
+  WRITE(NULOUT,9990) 'RDSVORE  ',SIZE(YDEDYN%RDSVORE  ),SHAPE(YDEDYN%RDSVORE  )
+  ALLOCATE(YDEDYN%RDSDIVE(NFLEVG,NSECPLG))
+  WRITE(NULOUT,9990) 'RDSDIVE  ',SIZE(YDEDYN%RDSDIVE  ),SHAPE(YDEDYN%RDSDIVE  )
+ENDIF
+IF(LNHDYN.AND.LSLHD_SVD) THEN
+  ALLOCATE(YDEDYN%RDSVDE(NFLEVG,NSECPLG))
+  WRITE(NULOUT,9990) 'RDSVDE  ',SIZE(YDEDYN%RDSVDE  ),SHAPE(YDEDYN%RDSVDE  )
+ENDIF
+
+! * SLHD
+! ky: for SLHD.. arrays it is recommended to allocate them even if LSLHD=F,
+!     to avoid false alarms in "bound checking" runs,
+!     because they are passed to SLag routines via dummy arg.
+ALLOCATE(YDDYN%SLHDA(NGPTOT))
+ALLOCATE(YDDYN%SLHDD0(NGPTOT))
+
+!     ------------------------------------------------------------------
+
+9990 FORMAT(1X,'ARRAY ',A10,' ALLOCATED ',8I8)
+
+!     ------------------------------------------------------------------
+
+END ASSOCIATE
+IF (LHOOK) CALL DR_HOOK('SUELDYNB',1,ZHOOK_HANDLE)
+END SUBROUTINE SUELDYNB

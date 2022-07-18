@@ -21,7 +21,7 @@ USE GEOMETRY_MOD           , ONLY : GEOMETRY
 USE PARKIND1               , ONLY : JPIM, JPRB
 USE YOMHOOK                , ONLY : LHOOK, DR_HOOK
 USE YOMCT0                 , ONLY : LNHDYN   ,LALLOPR
-USE YOMDYNA                , ONLY : LNHX
+USE YOMDYNA                , ONLY : YRDYNA
 USE YOMLUN                 , ONLY : NULOUT
 
 !     ------------------------------------------------------------------
@@ -150,7 +150,7 @@ IF (LNHDYN) THEN
   YDSPDDH%SPTNDHD_SPD(:,:)= 0.0_JPRB
   YDSPDDH%SPTNDHD_SVD(:,:)= 0.0_JPRB
 ENDIF
-IF (LNHX) YDSPDDH%SPTNDHD_SNHX(:,:)= 0.0_JPRB
+IF (YRDYNA%LNHX) YDSPDDH%SPTNDHD_SNHX(:,:)= 0.0_JPRB
 
 YDSPDDH%SPTNDHD_GFL(:,:,:)= 0.0_JPRB
 

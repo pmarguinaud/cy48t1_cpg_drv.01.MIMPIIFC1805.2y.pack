@@ -77,7 +77,7 @@ USE YOMCST       , ONLY : RD, RV, YRCST
 USE YOMCT0       , ONLY : LTWOTL, LSPRT
 USE YOMDYN       , ONLY : TDYN
 USE YOM_YGFL     , ONLY : TYPE_GFLD
-USE YOMDYNA      , ONLY : LDRY_ECMWF
+USE YOMDYNA      , ONLY : YRDYNA
 USE YOMCST       , ONLY : YRCST
 
 !     ------------------------------------------------------------------
@@ -174,7 +174,7 @@ ENDIF
 
 IF (LSPRT) THEN
   DO JLEV=1,NFLEVG
-    IF (.NOT. LDRY_ECMWF) THEN
+    IF (.NOT. YRDYNA%LDRY_ECMWF) THEN
       DO JROF=KST,KPROF
         ZR0(JROF,JLEV)=-RD*ZTOD5(JROF,JLEV)*PTOD0(JROF,JLEV)&
          & /(ZR5(JROF,JLEV)**2)  

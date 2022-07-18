@@ -87,7 +87,7 @@ USE GEOMETRY_MOD , ONLY : GEOMETRY
 USE PARKIND1     , ONLY : JPIM, JPRB
 USE YOMHOOK      , ONLY : LHOOK, DR_HOOK
 USE YOMCT0       , ONLY : LNHDYN
-USE YOMDYNA      , ONLY : LNHX
+USE YOMDYNA      , ONLY : YRDYNA
 USE YOMMP0       , ONLY : NPRTRV, NPRTRN, NPRCIDS, MYSETV, MYSETN, MYSETW, MYSETM, myproc
 USE YOMTAG       , ONLY : MTAGMS
 USE MPL_MODULE   , ONLY : MPL_SEND, MPL_RECV, MPL_WAIT, MPL_WAITANY, JP_NON_BLOCKING_STANDARD, JP_BLOCKING_STANDARD
@@ -231,7 +231,7 @@ ENDIF
 !   to allow to call TRMTOS with these optional arguments even in the
 !   hydrostatic model (that avoids to duplicate all the CALL TRMTOS according
 !   to the value of "LNHX" in the callers).
-IF (LNHX) THEN
+IF (YRDYNA%LNHX) THEN
   IF(PRESENT(PSPSNHX)) THEN
     IF(PRESENT(PSPSNHXG)) THEN
       LLSNHX=.TRUE.

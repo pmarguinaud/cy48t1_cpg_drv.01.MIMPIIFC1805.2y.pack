@@ -104,7 +104,7 @@ USE YOMCST                 , ONLY : RD
 USE YOMSTA                 , ONLY : RTSUR
 USE YOMCT0                 , ONLY : LTWOTL
 USE YOMCVER                , ONLY : LVERTFE
-USE YOMDYNA                , ONLY : LSETTLS
+USE YOMDYNA                , ONLY : YRDYNA
 USE INTDYN_MOD             , ONLY : YYTTND
 
 !     ------------------------------------------------------------------
@@ -192,7 +192,7 @@ ZCMSLP=RCMSLP0/(RD*RTSUR)
 
 ! * LSETTLS is replaced by LLSETTLSW=.FALSE. for wind-eqn if VESL>0 because
 !   stable extrapolation deteriorates scores without improving stability.
-LLSETTLSW=LSETTLS.AND.(.NOT.(PESGP > PESGM))
+LLSETTLSW=YRDYNA%LSETTLS.AND.(.NOT.(PESGP > PESGM))
 
 IF (LTWOTL) THEN
 
@@ -241,7 +241,7 @@ ENDDO
 
 IF (LTWOTL) THEN
 
-  CALL LATTEX_DNT_AD(YDGEOMETRY,YDML_GCONF%YRRIP,YDDYN,KST,KPROF,LSETTLS,NTLAG,PESGP,PESGM,&
+  CALL LATTEX_DNT_AD(YDGEOMETRY,YDML_GCONF%YRRIP,YDDYN,KST,KPROF,YRDYNA%LSETTLS,NTLAG,PESGP,PESGM,&
    & PGMV(1,1,YT0%MT),ZMOY1T,PB2(1,MSLB2TSI),&
    & PGMV(1,1,YT9%MTNL),PGMVT1(1,1,YT1%MT),&
    & PB1(1,MSLB1T0),PB1(1,MSLB1T9))

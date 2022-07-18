@@ -157,7 +157,7 @@ USE GEOMETRY_MOD , ONLY : GEOMETRY
 USE PARKIND1     , ONLY : JPIM, JPRB
 USE YOMHOOK      , ONLY : LHOOK, DR_HOOK
 USE EINT_MOD     , ONLY : SL_STRUCT
-USE YOMDYNA      , ONLY : LHOISLT
+USE YOMDYNA      , ONLY : YRDYNA
 
 !     ------------------------------------------------------------------
 
@@ -309,7 +309,7 @@ IWLAG=KXLAG(4)
 ! * Input variable IWIS for LASCAW.
 IF (KWISA == 1) THEN
   ! * trajectory research.
-  IF (LHOISLT) THEN
+  IF (YRDYNA%LHOISLT) THEN
     IWIS=202
   ELSE
     IWIS=201

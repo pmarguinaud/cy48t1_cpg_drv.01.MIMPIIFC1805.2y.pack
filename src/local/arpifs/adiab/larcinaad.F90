@@ -159,7 +159,7 @@ USE GEOMETRY_MOD       , ONLY : GEOMETRY
 USE PARKIND1           , ONLY : JPIM, JPRB
 USE YOMHOOK            , ONLY : LHOOK, DR_HOOK
 USE YOMCST             , ONLY : RPI
-USE YOMDYNA            , ONLY : LHOISLT, LSLTVWENO, LRHSVWENO
+USE YOMDYNA            , ONLY : YRDYNA
 USE YOMVAR             , ONLY : LVECADIN, LSLADREP
 USE ALGORITHM_STATE_MOD, ONLY : GET_NSIM4D
 USE YOMLUN             , ONLY : NULERR
@@ -329,10 +329,10 @@ ENDDO
 !     * Computation of ISEP
 IF (KTIP == 1) THEN
   ! * trajectory research.
-  IF (LHOISLT) THEN
+  IF (YRDYNA%LHOISLT) THEN
     IWIS=102
     ISEP=KVSEPC
-    IF (LSLTVWENO) THEN
+    IF (YRDYNA%LSLTVWENO) THEN
       IWENO=3
       ISEP=KVSEPC+2
     ENDIF
@@ -342,7 +342,7 @@ IF (KTIP == 1) THEN
   ENDIF
 ELSEIF (KTIP == 3) THEN
   ! * origin point interpolations.
-  IF (LRHSVWENO) THEN
+  IF (YRDYNA%LRHSVWENO) THEN
     IWIS=106
     IWENO=3
     ISEP=KVSEPC+2
@@ -373,7 +373,7 @@ IF (KTIP == 1) THEN
   !CDIR COLLAPSE
   PRSCAW(:,:,:)=0.0_JPRB
 
-  IF (LSLTVWENO) THEN
+  IF (YRDYNA%LSLTVWENO) THEN
 
 
     !* High order interpolation with WENO along vertical
@@ -538,7 +538,7 @@ IF (KTIP == 1) THEN
       ENDDO
     ENDIF
 
-  ELSEIF (LHOISLT) THEN
+  ELSEIF (YRDYNA%LHOISLT) THEN
     !*  High order interpolation on 32 point stencil
     IF( LSLADREP )THEN
       ALLOCATE(ZSIGN(NPROMA,32,NFLEVG,2))

@@ -113,7 +113,7 @@ USE PARKIND1           , ONLY : JPIM, JPRB
 USE YOMHOOK            , ONLY : LHOOK, DR_HOOK
 USE YOMCST             , ONLY : RD
 USE YOMCT0             , ONLY : LTWOTL
-USE YOMDYNA            , ONLY : LPC_FULL, LPC_CHEAP, LNESC, LSETTLS
+USE YOMDYNA            , ONLY : YRDYNA
 USE YOMCT3             , ONLY : NSTEP
 USE YOMCVER            , ONLY : LVERTFE
 USE YOMRIP             , ONLY : TRIP
@@ -186,8 +186,8 @@ ASSOCIATE(NPROMA=>YDDIM%NPROMA,   NFLEVG=>YDDIMV%NFLEVG, NFLSA=>YDDIMV%NFLSA,   
 ! 1. AUXILIARITIES
 !############################################
 
-LLCT = LPC_FULL .AND. NCURRENT_ITER > 0 ! corrector for LPC_FULL
-LLCTC = LPC_CHEAP .AND. NCURRENT_ITER > 0
+LLCT = YRDYNA%LPC_FULL .AND. NCURRENT_ITER > 0 ! corrector for LPC_FULL
+LLCTC = YRDYNA%LPC_CHEAP .AND. NCURRENT_ITER > 0
 
 ZXIDT0=1.0_JPRB+XIDT
 ZXIDT9=1.0_JPRB+XIDT
@@ -238,7 +238,7 @@ IF (LTWOTL) THEN
     ! or case nsiter=0.
     !############################################
 
-    IF (LPC_CHEAP.AND.(.NOT.LNESC)) THEN
+    IF (YRDYNA%LPC_CHEAP.AND.(.NOT.YRDYNA%LNESC)) THEN
       ! LPC_CHEAP=T is currently coded for LNESC only
       !  (for LNESC=F interpolated quantities are not the same ones
       !  at the predictor and corrector steps, and the LPC_CHEAP code
@@ -274,7 +274,7 @@ IF (LTWOTL) THEN
 
       ZSPNLT0=0.0_JPRB
 
-      IF( .NOT.LNESC )THEN
+      IF( .NOT.YRDYNA%LNESC )THEN
         ! save of nonlinear residual at time t
         ! to be used as nonlinear residual at time t-dt next time step
         DO JROF=KST,KPROF
@@ -296,7 +296,7 @@ IF (LTWOTL) THEN
       ! Fill PB1(.,MSLB1C9),PGMVT1S(.,YT1%MSP),ZSPNLT_FE:
       IF (NVLAG == 2 .OR. NVLAG == 3) THEN
 
-        IF ( NSTEP <= NFOST .OR. LNESC ) THEN
+        IF ( NSTEP <= NFOST .OR. YRDYNA%LNESC ) THEN
 
           IF (LVERTFE) THEN
             DO JROF=KST,KPROF
@@ -314,7 +314,7 @@ IF (LTWOTL) THEN
              & +PESGM*PB1(JROF,MSLB1C9+JLEV-NFLSA)
           ENDDO
 
-        ELSEIF (LSETTLS) THEN
+        ELSEIF (YRDYNA%LSETTLS) THEN
 
           IF( LVERTFE )THEN
             DO JROF=KST,KPROF

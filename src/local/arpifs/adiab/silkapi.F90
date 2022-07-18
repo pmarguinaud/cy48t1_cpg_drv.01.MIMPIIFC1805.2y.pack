@@ -55,7 +55,7 @@ SUBROUTINE SILKAPI(YDCST, YDGEOMETRY,YDDYN,KOPT,KLEV,KLON,KNLON,PIN,POUT)
 
 USE GEOMETRY_MOD , ONLY : GEOMETRY
 USE YOMDYN       , ONLY : TDYN
-USE YOMDYNA      , ONLY : LNHQE_C2
+USE YOMDYNA      , ONLY : YRDYNA
 USE YOMCVER      , ONLY : LVFE_LAPL_BC
 USE YOMCST       , ONLY : TCST
 USE PARKIND1     , ONLY : JPIM, JPRB
@@ -128,7 +128,7 @@ ENDDO
 
 ZCOEF=YDCST%RCPD/(YDCST%RD*YDCST%RD*YDDYN%SITR)
 
-IF (LNHQE_C2) THEN
+IF (YRDYNA%LNHQE_C2) THEN
 
   ! * VFD treatment of LLsstar_kap**-1, constraint C2 is ensured
   !   LLsstar_kap**-1 Z = - ( Cpd/(Rd*Rd*Tstar) (gamma tau + Rd Tstar nu) + QQstar ) Sstar_kap**-1 (Tastar/Tstar) Z

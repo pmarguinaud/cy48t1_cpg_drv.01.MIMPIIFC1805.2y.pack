@@ -73,7 +73,7 @@ USE PARKIND1     , ONLY : JPIM, JPRB
 USE YOMHOOK      , ONLY : LHOOK, DR_HOOK
 USE YOMDYN       , ONLY : TDYN
 USE YOMCVER      , ONLY : LVERTFE, LVFE_LAPL_BC
-USE YOMDYNA      , ONLY : LNHEE_REFINE_PREH_BBC, LNHEE_REFINE_SILAPL
+USE YOMDYNA      , ONLY : YRDYNA
 
 !     ------------------------------------------------------------------
 
@@ -132,7 +132,7 @@ ASSOCIATE(NFLEVG=>YDGEOMETRY%YRDIMV%NFLEVG,   SILNPR=>YDDYN%SILNPR,   SIPR=>YDDY
 IF( .NOT.(LVERTFE.AND.LVFE_LAPL_BC) )THEN
 
   ! --- Finite differences ---
-  IF (LNHEE_REFINE_SILAPL) THEN
+  IF (YRDYNA%LNHEE_REFINE_SILAPL) THEN
   ! * Compute the coefficients "A" and "C" at full level 1:
   !   "A" must be zero if the top pressure of the model is zero.
      ZPRTOP = YDVAB%VAH(0)+YDVAB%VBH(0)*SIPR
@@ -195,7 +195,7 @@ IF( .NOT.(LVERTFE.AND.LVFE_LAPL_BC) )THEN
 
 
      ZQBBC = 0.0_JPRB
-     IF (LNHEE_REFINE_PREH_BBC) ZQBBC=1.0_JPRB
+     IF (YRDYNA%LNHEE_REFINE_PREH_BBC) ZQBBC=1.0_JPRB
 
    ! * Compute the coefficients "A" and "C" at full level nflevg-1:
      ZA(NFLEVG-1) = SITLAF(NFLEVG-2)/(SILNPR(NFLEVG-1)*(SITLAF(NFLEVG-1)-SITLAF(NFLEVG-2)))
@@ -365,7 +365,7 @@ IF(LVERTFE)THEN
 ELSE
 
   ! --- Finite differences ---
-  IF (LNHEE_REFINE_SILAPL) THEN
+  IF (YRDYNA%LNHEE_REFINE_SILAPL) THEN
     ! * Compute the coefficients A and C at full levels 2 to nflevg-1:
     DO JLEV = 3, NFLEVG-2
        ZA(JLEV) = SITLAF(JLEV-1)/(SILNPR(JLEV)*(SITLAF(JLEV)-SITLAF(JLEV-1)))

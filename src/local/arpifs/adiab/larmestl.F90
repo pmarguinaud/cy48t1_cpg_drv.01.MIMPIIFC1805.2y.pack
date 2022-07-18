@@ -114,7 +114,7 @@ USE PARKIND1           , ONLY : JPIM, JPRB
 USE YOMHOOK            , ONLY : LHOOK, DR_HOOK
 USE SC2PRG_MOD         , ONLY : SC2PRG
 USE YOMCT0             , ONLY : LTWOTL
-USE YOMDYNA            , ONLY : LELTRA
+USE YOMDYNA            , ONLY : YRDYNA
 USE YOMRIP             , ONLY : TRIP
 USE EINT_MOD           , ONLY : SL_STRUCT
 
@@ -234,12 +234,12 @@ CALL SC2PRG(MSLB1ZR0  ,PB1      ,ZSLB1ZR0)
 
 ! in practical LLO.OR.LELTRA is now always T
 IF (LTWOTL) THEN
-  LLO=.NOT.LELTRA
+  LLO=.NOT.YRDYNA%LELTRA
 ELSE
   LLO=.FALSE.
 ENDIF
 
-IF(LLO.OR.LELTRA) THEN
+IF(LLO.OR.YRDYNA%LELTRA) THEN
   ZDTS22=RDTS22*4
   ZDTSA=RDTSA*2
   ZDTS62=RDTS62*4
@@ -276,7 +276,7 @@ DO JITER=1,NITMP
         ! * computations on horizontal plans.
 
         ! When relevant convert arrival point wind to cartesian space
-        IF (LSLDP_CURV.AND.(.NOT.LELTRA)) THEN  
+        IF (LSLDP_CURV.AND.(.NOT.YRDYNA%LELTRA)) THEN  
           ! Arrival point wind
           ZPU0= +PB2(JROF,MSLB2URL+JLEV-1)*YDGSGEOM%GNORDM(JROF)&
            &    -PB2(JROF,MSLB2VRL+JLEV-1)*YDGSGEOM%GNORDL(JROF)  
@@ -314,7 +314,7 @@ DO JITER=1,NITMP
 
         ZWF(JROF,JLEV)=PB2(JROF,MSLB2WRL+JLEV-1)
         ZLEVO=-RTDT*PB2(JROF,MSLB2WRL+JLEV-1)
-        IF(LLO.OR.LELTRA) THEN
+        IF(LLO.OR.YRDYNA%LELTRA) THEN
           ZLEVO5=PLEV5(JROF,JLEV,JITER)
           IF (ZLEVO5 <= ZVETAON) THEN
             ZLEVO=0.0_JPRB
@@ -335,7 +335,7 @@ DO JITER=1,NITMP
         ! * ZPU,ZPV are the coordinates of VM in the local repere
         !   related to F.
 
-        IF(LSLDP_CURV.AND.LELTRA) THEN
+        IF(LSLDP_CURV.AND.YRDYNA%LELTRA) THEN
           ! Convert Departure point wind back to lat,lon at Arrival point
           ZPU5 = -PUF5(JROF,JLEV,JITER-1)*YDGSGEOM%GESLO(JROF)                      &
            &     +PVF5(JROF,JLEV,JITER-1)*YDGSGEOM%GECLO(JROF)
@@ -348,7 +348,7 @@ DO JITER=1,NITMP
           ZPV =  -ZUF(JROF,JLEV)*YDGSGEOM%GECLO(JROF)*YDGSGEOM%GEMU(JROF)  &
            &     -ZVF(JROF,JLEV)*YDGSGEOM%GESLO(JROF)*YDGSGEOM%GEMU(JROF)  &
            &     +ZZF(JROF,JLEV)*YDGSGEOM%GSQM2(JROF)
-        ELSEIF(LELTRA) THEN
+        ELSEIF(YRDYNA%LELTRA) THEN
           ZPU5= PCCO5(JROF,JLEV,YDTCCO%M_RQX,JITER-1)*PUF5(JROF,JLEV,JITER-1)&
            & +PCCO5(JROF,JLEV,YDTCCO%M_RQY,JITER-1)*PVF5(JROF,JLEV,JITER-1)  
           ZPU= PCCO(JROF,JLEV,YDTCCO%M_RQX)*PUF5(JROF,JLEV,JITER-1)&
@@ -416,7 +416,7 @@ DO JITER=1,NITMP
         ! * computations on a vertical.
 
         ZLEVO=-RTDT*ZWF(JROF,JLEV)
-        IF(LLO.OR.LELTRA) THEN
+        IF(LLO.OR.YRDYNA%LELTRA) THEN
           ZLEVO5=PLEV5(JROF,JLEV,JITER)
           IF (ZLEVO5 <= ZVETAON) THEN
             ZLEVO=0.0_JPRB

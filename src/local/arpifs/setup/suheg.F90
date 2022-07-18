@@ -48,7 +48,7 @@ USE GEOMETRY_MOD , ONLY : GEOMETRY
 USE PARKIND1 , ONLY : JPIM, JPRB
 USE YOMHOOK  , ONLY : LHOOK, DR_HOOK
 USE YOMCT0   , ONLY : LNHDYN, LNHEE, LNHQE
-USE YOMDYNA  , ONLY : LSI_NHEE
+USE YOMDYNA  , ONLY : YRDYNA
 USE YOMDYN   , ONLY : TDYN
 USE YOMLUN   , ONLY : NULOUT
 USE YOMRIP   , ONLY : TRIP
@@ -104,12 +104,12 @@ IF (.NOT.LNHDYN) THEN
   ELSE
     LLCOMPSIHEG=.FALSE.
   ENDIF
-ELSEIF (LNHEE.AND.(.NOT.LSI_NHEE)) THEN
+ELSEIF (LNHEE.AND.(.NOT.YRDYNA%LSI_NHEE)) THEN
   ! Contrary to the hydrostatic case, the test on SITIME
   ! and the resetting of SITIME is already done in SUNHSI, so it has not to be redone there.
   ! For the time being, SUHEG should not be called in this case, but that may change in the future.
   LLCOMPSIHEG=.FALSE.
-ELSEIF (LNHEE.AND.LSI_NHEE) THEN
+ELSEIF (LNHEE.AND.YRDYNA%LSI_NHEE) THEN
   ! Contrary to the hydrostatic case, the test on SITIME
   ! and the resetting of SITIME is already done in SUNHEESI, so it has not to be redone there.
   LLCOMPSIHEG=.TRUE.

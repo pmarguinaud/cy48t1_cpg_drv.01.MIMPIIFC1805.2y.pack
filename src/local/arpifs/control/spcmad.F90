@@ -54,7 +54,7 @@ USE YOMCT0                 , ONLY : LR3D
 USE YOMSP                  , ONLY : SPVOR_FLT, SPDIV_FLT
 USE YOMMP0                 , ONLY : MYSETN, NPRTRV
 USE YOMDYN                 , ONLY : TDYN
-USE YOMDYNA                , ONLY : LGRADSP
+USE YOMDYNA                , ONLY : YRDYNA
 USE SPECTRAL_FIELDS_MOD    , ONLY : SPECTRAL_FIELD, ASSIGNMENT(=)
 
 !     ------------------------------------------------------------------
@@ -143,7 +143,7 @@ ELSEIF(CDCONF == 'A'.OR.CDCONF == 'I') THEN
     CALL SPCHORAD(YDGEOMETRY,YDML_GCONF,YDDYN,1,NSPEC2,YDSP%VOR,YDSP%DIV,YDSP%T,YDSP%GFL,ZZPS,ZSPTALLG)
     DEALLOCATE(ZSPTALLG)
 
-    IF( LGRADSP ) THEN
+    IF( YRDYNA%LGRADSP ) THEN
       ! same as forward
       CALL SPFILT(YDGEOMETRY,1,NSPEC2,SPVOR_FLT,SPDIV_FLT)
     ENDIF

@@ -61,7 +61,7 @@ USE GEOMETRY_MOD           , ONLY : GEOMETRY
 USE PARKIND1               , ONLY : JPIM, JPRB
 USE YOMHOOK                , ONLY : LHOOK, DR_HOOK
 USE YOMMP0                 , ONLY : MYSETV, NPRTRV
-USE YOMDYNA                , ONLY : LSLHD_STATIC, LSLHD_W
+USE YOMDYNA                , ONLY : YRDYNA
 USE YOMDYN                 , ONLY : TDYN
 USE YOMNUD                 , ONLY : LNUDG
 
@@ -142,7 +142,7 @@ IF (LSTRHD) THEN
 
   !           2.1  Diffusion when stretching.
 
-  IF (LSLHD_W.AND.(.NOT.LSLHD_STATIC)) THEN
+  IF (YRDYNA%LSLHD_W.AND.(.NOT.YRDYNA%LSLHD_STATIC)) THEN
 
     ! * Additional diffusion
     !   The order in ZSPX_HDS, ZSPY_HDS and also in RDHS is assumed to be
@@ -153,7 +153,7 @@ IF (LSTRHD) THEN
     !   This piece of code must remain consistent with the equivalent one done
     !   in SUHDU and SUALDYNB.
     IVTHS=0
-    IF (LSLHD_W) IVTHS=IVTHS+2
+    IF (YRDYNA%LSLHD_W) IVTHS=IVTHS+2
     ILL=IVTHS*NFLEVL
 
     ! * Allocate ZSPX_HDS,ZSPY_HDS, then fill them with zeros.
@@ -390,7 +390,7 @@ ELSE
         ENDDO
       ENDIF
     ENDIF
-    IF (LSLHD_W.AND.(.NOT.LSLHD_STATIC)) THEN
+    IF (YRDYNA%LSLHD_W.AND.(.NOT.YRDYNA%LSLHD_STATIC)) THEN
       ! * Additional diffusion 
 !CDIR NODEP
       DO JLEV=1,NFLEVL

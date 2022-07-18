@@ -131,7 +131,7 @@ USE YOMCT0     , ONLY : LECMWF    ,NCONF    ,LR3D     ,LR2D     ,LARPEGEF,&
  &                      LAROME,LOBSC1,LSCREEN,LSFXLSM, LELAM, CNMEXP
 USE YOMVRTL    , ONLY : L131TL
 USE YOMVAR     , ONLY : LREPRO4DVAR
-USE YOMDYNA    , ONLY : LGWADV
+USE YOMDYNA    , ONLY : YRDYNA
 USE YOMDYNCORE , ONLY : LAQUA, LHELDSUAREZ
 USE CRMDIMS    , ONLY : CRMBUFSIZE
 USE YOMFPC     , ONLY : TNAMFPMPHYS
@@ -1795,7 +1795,7 @@ IF( LRCOEF .AND. ((.NOT.LMPHYS).OR.LEPHYS.OR.LAGPHY) ) THEN
 ENDIF
 
 ! * Use NDPSFI=1 when not available or inconsistent with some other options?
-IF(LGWADV .AND. (NDPSFI==1)) THEN
+IF(YRDYNA%LGWADV .AND. (NDPSFI==1)) THEN
   ! * these two options actually can run together on an informatic
   !   point of view, but the current assumptions done with LGWADV=T
   !   are that a particle which is on the Earth surface remains

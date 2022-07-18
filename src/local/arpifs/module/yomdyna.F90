@@ -61,6 +61,8 @@ SAVE
 !  T: first compute "LAPL [(pre-prehyd)/prehyd]", then compute RHS of (gw) equation.
 !  F: first compute RHS of (gw) equation, then compute "LAPL [(pre-prehyd)/prehyd]".
 
+TYPE TDYNA
+
 INTEGER(KIND=JPIM) :: NPDVAR
 INTEGER(KIND=JPIM) :: NVDVAR
 INTEGER(KIND=JPIM) :: ND4SYS
@@ -255,6 +257,10 @@ LOGICAL :: LDRY_ECMWF
 ! L_RDRY_VD      : .T.: define vertical divergence with R_dry
 !                  .F.: define vertical divergence with R_moist
 LOGICAL :: L_RDRY_VD
+
+END TYPE TDYNA
+
+TYPE (TDYNA), TARGET :: YRDYNA
 
 ! ----------------------------------------------------------------------
 END MODULE YOMDYNA

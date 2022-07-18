@@ -1897,9 +1897,7 @@ CONTAINS
     USE YOMCT3,     ONLY : NSTEP
     USE YOMCVER,    ONLY : LVFE_GW, LVERTFE, LVFE_LAPL_BC, LVFE_ECMWF
     USE YOMVERT,    ONLY : TOPPRES
-    USE YOMDYNA,    ONLY : NVDVAR, ND4SYS, LPC_FULL, LNHX, LSLHD, LGWADV, LNHXDER, LPC_CHEAP, &
-                         & L3DTURB, LGRADSP, LRUBC, L_RDRY_VD, LAPRXPK, NDLNPR, RHYDR0, NPDVAR, &
-                         & LRDBBC, LNHEE_SVDLAPL_FIRST, LNHEE_REFINE_GRP, LNHEE_REFINE_PREH_BBC, LVEREGINT
+    USE YOMDYNA,    ONLY : YRDYNA
     USE YOMDYNCORE, ONLY : RPLDARE, RPLRG
     USE YOMLSFORC,  ONLY : LSPS_FRC, LSW_FRC, LSOMEGA_FRC
     USE YOMLUN,     ONLY : NULOUT
@@ -1924,52 +1922,52 @@ CONTAINS
     SELF%LXTGST  = YDFIELDS%YRXFU%LXTGST
     SELF%LXXGST  = YDFIELDS%YRXFU%LXXGST
 
-    SELF%L3DTURB               = L3DTURB  
-    SELF%LAPRXPK               = LAPRXPK 
+    SELF%L3DTURB               = YRDYNA%L3DTURB  
+    SELF%LAPRXPK               = YRDYNA%LAPRXPK 
     SELF%LAROME                = LAROME
     SELF%LAROME                = LAROME 
     SELF%LCALLSFX              = LCALLSFX 
     SELF%LCORWAT               = LCORWAT
     SELF%LELAM                 = LELAM
-    SELF%LGRADSP               = LGRADSP
-    SELF%LGWADV                = LGWADV
+    SELF%LGRADSP               = YRDYNA%LGRADSP
+    SELF%LGWADV                = YRDYNA%LGWADV
     SELF%LNHDYN                = LNHDYN
     SELF%LNHEE                 = LNHEE
-    SELF%LNHEE_REFINE_GRP      = LNHEE_REFINE_GRP
-    SELF%LNHEE_REFINE_PREH_BBC = LNHEE_REFINE_PREH_BBC
-    SELF%LNHEE_SVDLAPL_FIRST   = LNHEE_SVDLAPL_FIRST
+    SELF%LNHEE_REFINE_GRP      = YRDYNA%LNHEE_REFINE_GRP
+    SELF%LNHEE_REFINE_PREH_BBC = YRDYNA%LNHEE_REFINE_PREH_BBC
+    SELF%LNHEE_SVDLAPL_FIRST   = YRDYNA%LNHEE_SVDLAPL_FIRST
     SELF%LNHQE                 = LNHQE
-    SELF%LNHXDER               = LNHXDER
-    SELF%LNHX                  = LNHX
+    SELF%LNHXDER               = YRDYNA%LNHXDER
+    SELF%LNHX                  = YRDYNA%LNHX
     SELF%LNUDG                 = LNUDG
-    SELF%LPC_CHEAP             = LPC_CHEAP
-    SELF%LPC_FULL              = LPC_FULL
-    SELF%LRDBBC                = LRDBBC
-    SELF%L_RDRY_VD             = L_RDRY_VD 
+    SELF%LPC_CHEAP             = YRDYNA%LPC_CHEAP
+    SELF%LPC_FULL              = YRDYNA%LPC_FULL
+    SELF%LRDBBC                = YRDYNA%LRDBBC
+    SELF%L_RDRY_VD             = YRDYNA%L_RDRY_VD 
     SELF%LRPLANE               = LRPLANE
-    SELF%LRUBC                 = LRUBC 
+    SELF%LRUBC                 = YRDYNA%LRUBC 
     SELF%LSFORC                = LSFORC
     SELF%LSFORCS               = LSFORCS 
     SELF%LSFORCS               = LSFORCS  
     SELF%LSLAG                 = LSLAG
-    SELF%LSLHD                 = LSLHD
+    SELF%LSLHD                 = YRDYNA%LSLHD
     SELF%LSOMEGA_FRC           = LSOMEGA_FRC
     SELF%LSPRT                 = LSPRT
     SELF%LSPS_FRC              = LSPS_FRC
     SELF%LSW_FRC               = LSW_FRC
     SELF%LTWOTL                = LTWOTL
-    SELF%LVEREGINT             = LVEREGINT
+    SELF%LVEREGINT             = YRDYNA%LVEREGINT
     SELF%LVERTFE               = LVERTFE
     SELF%LVFE_ECMWF            = LVFE_ECMWF
     SELF%LVFE_GW               = LVFE_GW
     SELF%LVFE_LAPL_BC          = LVFE_LAPL_BC
-    SELF%ND4SYS                = ND4SYS
-    SELF%NDLNPR                = NDLNPR 
+    SELF%ND4SYS                = YRDYNA%ND4SYS
+    SELF%NDLNPR                = YRDYNA%NDLNPR 
     SELF%NFNUDG                = NFNUDG
     SELF%NINDAT                = NINDAT
-    SELF%NPDVAR                = NPDVAR
-    SELF%NVDVAR                = NVDVAR
-    SELF%RHYDR0                = RHYDR0
+    SELF%NPDVAR                = YRDYNA%NPDVAR
+    SELF%NVDVAR                = YRDYNA%NVDVAR
+    SELF%RHYDR0                = YRDYNA%RHYDR0
     SELF%RPLDARE               = RPLDARE 
     SELF%RPLRG                 = RPLRG
     SELF%TOPPRES               = TOPPRES
@@ -1979,8 +1977,8 @@ CONTAINS
 
     SELF%L_DFISTEP = LD_DFISTEP
 
-    LLCT =LPC_FULL.AND.(YDMODEL%YRML_DYN%YRDYN%NCURRENT_ITER > 0)
-    LLCTC=LPC_CHEAP.AND.(YDMODEL%YRML_DYN%YRDYN%NCURRENT_ITER > 0)
+    LLCT =YRDYNA%LPC_FULL.AND.(YDMODEL%YRML_DYN%YRDYN%NCURRENT_ITER > 0)
+    LLCTC=YRDYNA%LPC_CHEAP.AND.(YDMODEL%YRML_DYN%YRDYN%NCURRENT_ITER > 0)
     IF(NSTEP > 0) THEN
       SELF%LFSTEP=.FALSE.
     ELSE

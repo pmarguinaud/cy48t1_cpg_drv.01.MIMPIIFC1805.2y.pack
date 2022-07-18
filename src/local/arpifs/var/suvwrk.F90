@@ -45,7 +45,7 @@ USE YOMHOOK  , ONLY : LHOOK, DR_HOOK
 USE YOMLUN   , ONLY : NULNAM
 USE YOMCT0   , ONLY : LR2D
 USE YOMVWRK  , ONLY : NTRSLTYPE
-USE YOMDYNA  , ONLY : LELTRA
+USE YOMDYNA  , ONLY : YRDYNA
 
 !     ------------------------------------------------------------------
 
@@ -82,7 +82,7 @@ READ(NULNAM,NAMVWRK)
 !*       3.    Check the namelist value
 !              ------------------------
 
-IF ((NTRSLTYPE==0).AND.((.NOT.LR2D).OR.(.NOT.LELTRA))) &
+IF ((NTRSLTYPE==0).AND.((.NOT.LR2D).OR.(.NOT.YRDYNA%LELTRA))) &
  & CALL ABOR1('NTRSLTYPE=0 could only be used in 2D model with LELTRA.')
  
 IF ((NTRSLTYPE==1).AND.(.NOT.LR2D)) &

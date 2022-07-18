@@ -93,7 +93,7 @@ USE YOMHOOK   ,ONLY : LHOOK,   DR_HOOK
 
 USE YOMCST   , ONLY : TCST
 USE YOMMP0   , ONLY : MYSETV
-USE YOMDYNA  , ONLY : NDLNPR
+USE YOMDYNA  , ONLY : YRDYNA
 USE YOMDYN   , ONLY : TDYN
 USE YEMDYN   , ONLY : TEDYN
 USE YOMLDDH  , ONLY : TLDDH
@@ -217,7 +217,7 @@ ASSOCIATE( &
 !     ------------------------------------------------------------------
 
 ! * Case where the C1 constraint is not matched.
-LLNH_NOC1=.NOT.(NDLNPR == 1)
+LLNH_NOC1=.NOT.(YRDYNA%NDLNPR == 1)
 IF (LLNH_NOC1) THEN
   I_NITERHELM=NITERHELM
 ELSE

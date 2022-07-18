@@ -89,7 +89,7 @@ USE YOMVERT  , ONLY : TVAB
 USE PARKIND1 , ONLY : JPIM, JPRB
 USE YOMHOOK  , ONLY : LHOOK, DR_HOOK
 
-USE YOMDYNA  , ONLY : LSLHD_STATIC
+USE YOMDYNA  , ONLY : YRDYNA
 USE YOMDYN   , ONLY : TDYN
 
 !     ------------------------------------------------------------------
@@ -139,7 +139,7 @@ ZABSDTS2=ABS(PDTS2)
 
 !*       1.   Kappa function computation
 
-IF (LSLHD_STATIC) THEN
+IF (YRDYNA%LSLHD_STATIC) THEN
   PKAPPA(KSTART:KPROF,1:KFLEV)=1.0_JPRB
 ELSE
 

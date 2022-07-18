@@ -175,7 +175,7 @@ USE YOMHOOK   ,ONLY : LHOOK    ,DR_HOOK
 
 ! arp/ifs dependencies to be solved later.
 USE YOMCT0    , ONLY : LREGETA
-USE YOMDYNA  , ONLY : LSLHD    ,LSLHDQUAD, SLHDKMIN, LSLTVWENO
+USE YOMDYNA  , ONLY : YRDYNA
 USE YOMMP0   , ONLY : LOPT_SCALAR,NPROC
 
 USE EINT_MOD , ONLY : SL_STRUCT,JPDUP
@@ -319,8 +319,8 @@ LLT_SLHD(2)=LLSLHDQUAD
 LLT_SLHD(3)=LLSLHD_OLD
 LLT_SLHD(4)=.FALSE.
 
-ZSLHDKMINH=SLHDKMIN
-ZSLHDKMINV=SLHDKMIN
+ZSLHDKMINH=YRDYNA%SLHDKMIN
+ZSLHDKMINV=YRDYNA%SLHDKMIN
 
 ! cases relevant for COMAD scheme (switches LDCOMADH and LDCOMADV  are
 ! deactivated during computation of interpolation points in LAPINEA)
@@ -330,8 +330,8 @@ LLCOMADV=LLCOMAD.AND.LDCOMADV
 
 ! switches for interpolation of physics 
 ! It holds the same value for every iteration step (in ICI scheme). 
-LLT_PHYS(1)=LSLHD
-LLT_PHYS(2)=LSLHDQUAD
+LLT_PHYS(1)=YRDYNA%LSLHD
+LLT_PHYS(2)=YRDYNA%LSLHDQUAD
 LLT_PHYS(3)=LDSLHD_OLD
 LLT_PHYS(4)=.FALSE.
 
@@ -655,7 +655,7 @@ IF (KWIS == 103 .OR. KWIS == 104 .OR. KWIS == 105 .OR. KWIS == 106) THEN
   ENDDO
 
   ! note: case 102 not coded in LAM but same test as in lascaw
-  IF (KWIS == 102.AND.LSLTVWENO.OR.KWIS == 106) THEN
+  IF (KWIS == 102.AND.YRDYNA%LSLTVWENO.OR.KWIS == 106) THEN
     ! Set value for boundary offset
     IF (LREGETA) THEN
       IBCLIM=0

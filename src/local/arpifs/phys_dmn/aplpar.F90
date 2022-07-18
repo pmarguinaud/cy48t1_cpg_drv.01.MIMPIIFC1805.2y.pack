@@ -216,7 +216,7 @@ USE YOMCST             , ONLY : RG       ,RSIGMA   ,RV       ,RD       ,&
                               & RLSTT    ,RTT      ,RALPW    ,RBETW    ,RGAMW ,&
                               & RALPS    ,RBETS    ,RGAMS    ,RALPD    ,RBETD ,&
                               & RGAMD    ,RCPD     ,RATM     ,RKAPPA   
-USE YOMDYNA            , ONLY : YRDYNA
+
 USE YOMRIP0            , ONLY : NINDAT
 USE DDH_MIX            , ONLY : TYP_DDH
 USE YOMLUN             , ONLY : NULOUT
@@ -3362,7 +3362,7 @@ IF(LMPHYS) THEN
 
       ! First compute horizontal exchange coefficients for momentum:
       !  (there's mo TOMs contribution, thus has to be done at latest here)
-      IF (YRDYNA%L3DTURB) THEN
+      IF (YDMODEL%YRML_DYN%YRDYNA%L3DTURB) THEN
         CALL ACTKECOEFKH(YDRIP, YDMODEL%YRML_PHY_MF, YDGEOMETRY%YREGEO, YDCPG_BNDS%KIDIA, YDCPG_BNDS%KFDIA,                      &
         & YDCPG_OPTS%KLON, YDCPG_OPTS%KTDIA, YDCPG_OPTS%KFLEVG, YDMF_PHYS_BASE_STATE%TKE, ZTENDPTKE,                             &
         & YDMF_PHYS_BASE_STATE%YCPG_DYN%PHI, YDMF_PHYS_BASE_STATE%YCPG_DYN%PHIF, YDMF_PHYS_BASE_STATE%T,                         &
@@ -3406,7 +3406,7 @@ IF(LMPHYS) THEN
 
       ! Now the heat coefficient can be completed by TKE+ containing
       !  the TOMs contribution. 
-      IF (YRDYNA%L3DTURB) THEN
+      IF (YDMODEL%YRML_DYN%YRDYNA%L3DTURB) THEN
         CALL ACTKECOEFKH(YDRIP, YDMODEL%YRML_PHY_MF, YDGEOMETRY%YREGEO, YDCPG_BNDS%KIDIA, YDCPG_BNDS%KFDIA,                      &
         & YDCPG_OPTS%KLON, YDCPG_OPTS%KTDIA, YDCPG_OPTS%KFLEVG, YDMF_PHYS_BASE_STATE%TKE, ZTENDPTKE,                             &
         & YDMF_PHYS_BASE_STATE%YCPG_DYN%PHI, YDMF_PHYS_BASE_STATE%YCPG_DYN%PHIF, YDMF_PHYS_BASE_STATE%T,                         &
@@ -4996,7 +4996,7 @@ IF (LL_SAVE_PHSURF) THEN
 ENDIF
 
 ! Store horizontal exchange coefficients (3D turbulence) to SL2 buffers
-IF (YRDYNA%L3DTURB) THEN
+IF (YDMODEL%YRML_DYN%YRDYNA%L3DTURB) THEN
   DO JLEV=1,YDCPG_OPTS%KFLEVG
     YDCPG_SL2%KAPPAM (YDCPG_BNDS%KIDIA:YDCPG_BNDS%KFDIA, JLEV) = ZKUR_KUROV_H(YDCPG_BNDS%KIDIA:YDCPG_BNDS%KFDIA,JLEV)
     YDCPG_SL2%KAPPAH (YDCPG_BNDS%KIDIA:YDCPG_BNDS%KFDIA, JLEV) = ZKUR_KTROV_H(YDCPG_BNDS%KIDIA:YDCPG_BNDS%KFDIA,JLEV)

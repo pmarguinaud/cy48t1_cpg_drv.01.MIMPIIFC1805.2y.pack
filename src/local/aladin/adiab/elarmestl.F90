@@ -110,7 +110,7 @@ USE PARKIND1  , ONLY : JPIM, JPRB
 USE YOMHOOK   , ONLY : LHOOK, DR_HOOK
 USE SC2PRG_MOD, ONLY : SC2PRG
 
-USE YOMDYNA   , ONLY : YRDYNA
+
 USE YOMRIP    , ONLY : TRIP
 USE EINT_MOD  , ONLY : SL_STRUCT
 
@@ -224,9 +224,9 @@ CALL SC2PRG(MSLB1ZR0  ,PB1      ,ZSLB1ZR0)
 !*       1.2   Miscellaneous preliminary initialisations.
 
 ! in practical LLO.OR.LELTRA is now always T
-LLO=.NOT.YRDYNA%LELTRA
+LLO=.NOT.YDML_DYN%YRDYNA%LELTRA
 
-IF(.NOT.(LLO.OR.YRDYNA%LELTRA)) THEN
+IF(.NOT.(LLO.OR.YDML_DYN%YRDYNA%LELTRA)) THEN
   CALL ABOR1(' ELARMESTL: LLO.OR.LELTRA=F no longer supported')
 ENDIF
 
@@ -303,7 +303,7 @@ DO JITER=1,NITMP
         !     Set the origin point to the arrival point if it is left or right
         !     out of C+I zone
 
-        IF(LLO.OR.YRDYNA%LELTRA) THEN
+        IF(LLO.OR.YDML_DYN%YRDYNA%LELTRA) THEN
           PSCO(JROF,JLEV,YDML_DYN%YYTSCO%M_COSCO) = ZTXO*ZINEZ
           PSCO(JROF,JLEV,YDML_DYN%YYTSCO%M_SINCO) = ZTYO*ZINEZ
         ENDIF
@@ -313,7 +313,7 @@ DO JITER=1,NITMP
         ZWF(JROF,JLEV)=PB2(JROF,MSLB2WRL+JLEV-1)
         ZLEVO=-RTDT*ZWF(JROF,JLEV)*ZINEZ
         IF (POUT5(JROF,JLEV,1) >= 4._JPRB ) ZLEVO=0.0_JPRB
-        IF(LLO.OR.YRDYNA%LELTRA) THEN
+        IF(LLO.OR.YDML_DYN%YRDYNA%LELTRA) THEN
           PLEV(JROF,JLEV)=ZLEVO
         ENDIF
 
@@ -334,7 +334,7 @@ DO JITER=1,NITMP
 
         !   - Compute the relative coordinates of departure point of trajectory
 
-        IF(YRDYNA%LELTRA) THEN
+        IF(YDML_DYN%YRDYNA%LELTRA) THEN
           ZPU=ZUF(JROF,JLEV)
           ZPV=ZVF(JROF,JLEV)
         ELSEIF(LLO) THEN
@@ -364,7 +364,7 @@ DO JITER=1,NITMP
         !     Set the origin point to the arrival point if it is left or right
         !     out of C+I zone
 
-        IF(LLO.OR.YRDYNA%LELTRA) THEN
+        IF(LLO.OR.YDML_DYN%YRDYNA%LELTRA) THEN
           PSCO(JROF,JLEV,YDML_DYN%YYTSCO%M_COSCO) = ZTXO*ZINEZ
           PSCO(JROF,JLEV,YDML_DYN%YYTSCO%M_SINCO) = ZTYO*ZINEZ
         ENDIF
@@ -377,7 +377,7 @@ DO JITER=1,NITMP
 
         ZLEVO=-RTDT*ZWF(JROF,JLEV)*ZINEZ
         IF (POUT5(JROF,JLEV,JITER) >= 4._JPRB ) ZLEVO=0.0_JPRB
-        IF(LLO.OR.YRDYNA%LELTRA) THEN
+        IF(LLO.OR.YDML_DYN%YRDYNA%LELTRA) THEN
           PLEV(JROF,JLEV)=ZLEVO
         ENDIF
 

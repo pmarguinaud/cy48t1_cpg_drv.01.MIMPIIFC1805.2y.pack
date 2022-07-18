@@ -113,7 +113,7 @@ USE YOMHOOK   , ONLY : LHOOK, DR_HOOK
 USE SC2PRG_MOD, ONLY : SC2PRG
 USE YOMRIP    , ONLY : TRIP
 
-USE YOMDYNA   , ONLY : YRDYNA
+
 USE EINT_MOD  , ONLY : SL_STRUCT
 
 !     ------------------------------------------------------------------
@@ -248,9 +248,9 @@ DO JROF=KST,KPROF
 ENDDO
 
 ! in practical LLO.OR.LELTRA is now always T
-LLO=.NOT.YRDYNA%LELTRA
+LLO=.NOT.YDML_DYN%YRDYNA%LELTRA
 
-IF(.NOT.(LLO.OR.YRDYNA%LELTRA)) THEN
+IF(.NOT.(LLO.OR.YDML_DYN%YRDYNA%LELTRA)) THEN
   CALL ABOR1(' ELARMESAD: LLO.OR.LELTRA=F no longer supported')
 ENDIF
 
@@ -329,7 +329,7 @@ DO JITER=NITMP,1,-1
 
         ! * computations on a vertical.
 
-        IF(LLO.OR.YRDYNA%LELTRA) THEN
+        IF(LLO.OR.YDML_DYN%YRDYNA%LELTRA) THEN
           ZLEVO=PLEV(JROF,JLEV)
         ENDIF
         PLEV(JROF,JLEV)=0.0_JPRB
@@ -343,7 +343,7 @@ DO JITER=NITMP,1,-1
         !     Set the origin point to the arrival point if it is left or right
         !     out of C+I zone
 
-        IF(LLO.OR.YRDYNA%LELTRA) THEN
+        IF(LLO.OR.YDML_DYN%YRDYNA%LELTRA) THEN
           ZTXO=PSCO(JROF,JLEV,YDML_DYN%YYTSCO%M_COSCO)*ZINEZ
           ZTYO=PSCO(JROF,JLEV,YDML_DYN%YYTSCO%M_SINCO)*ZINEZ
         ENDIF
@@ -391,7 +391,7 @@ DO JITER=NITMP,1,-1
 
         ! * computations on a vertical.
 
-        IF(LLO.OR.YRDYNA%LELTRA) THEN
+        IF(LLO.OR.YDML_DYN%YRDYNA%LELTRA) THEN
           ZLEVO=PLEV(JROF,JLEV)
         ENDIF
         PLEV(JROF,JLEV)=0.0_JPRB
@@ -410,7 +410,7 @@ DO JITER=NITMP,1,-1
         !     Set the origin point to the arrival point if it is left or right
         !     out of C+I zone
 
-        IF(LLO.OR.YRDYNA%LELTRA) THEN
+        IF(LLO.OR.YDML_DYN%YRDYNA%LELTRA) THEN
           ZTXO=PSCO(JROF,JLEV,YDML_DYN%YYTSCO%M_COSCO)*ZINEZ
           ZTYO=PSCO(JROF,JLEV,YDML_DYN%YYTSCO%M_SINCO)*ZINEZ
         ENDIF
@@ -439,7 +439,7 @@ DO JITER=NITMP,1,-1
         ZTXO = 0.0_JPRB
         ZTYO = 0.0_JPRB
 
-        IF(YRDYNA%LELTRA) THEN
+        IF(YDML_DYN%YRDYNA%LELTRA) THEN
           ZUF(JROF,JLEV)=ZPU
           ZVF(JROF,JLEV)=ZPV
         ELSEIF(LLO) THEN

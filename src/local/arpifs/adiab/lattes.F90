@@ -118,7 +118,7 @@ USE YOMCT0             , ONLY : LTWOTL
 USE YOMCT3             , ONLY : NSTEP
 USE YOMCVER            , ONLY : LVERTFE
 USE YOMSTA             , ONLY : RTSUR
-USE YOMDYNA            , ONLY : YRDYNA
+
 USE YOMRIP             , ONLY : TRIP
 
 !------------------------------------------------------------------------------
@@ -198,8 +198,8 @@ ASSOCIATE(NPROMA=>YDDIM%NPROMA, &
 ! 1. AUXILIARITIES
 !############################################
 
-LLCT = YRDYNA%LPC_FULL .AND. NCURRENT_ITER > 0 ! corrector for LPC_FULL
-LLCTC = YRDYNA%LPC_CHEAP .AND. NCURRENT_ITER > 0
+LLCT = YDML_DYN%YRDYNA%LPC_FULL .AND. NCURRENT_ITER > 0 ! corrector for LPC_FULL
+LLCTC = YDML_DYN%YRDYNA%LPC_CHEAP .AND. NCURRENT_ITER > 0
 
 ZXIDT0=1.0_JPRB+XIDT
 ZXIDT9=1.0_JPRB+XIDT
@@ -265,7 +265,7 @@ IF (LTWOTL) THEN
       ! Fill PB1(.,MSLB1C9),PGMVT1S(.,YT1%MSP),ZSPNLT_FE:
       IF (NVLAG == 2 .OR. NVLAG == 3) THEN
 
-        IF ( NSTEP <= NFOST .OR. YRDYNA%LNESC ) THEN
+        IF ( NSTEP <= NFOST .OR. YDML_DYN%YRDYNA%LNESC ) THEN
 
           DO JROF=KST,KPROF
             PB1(JROF,MSLB1C9+JLEV-NFLSA)=PB1(JROF,MSLB1C9+JLEV-NFLSA)&
@@ -283,9 +283,9 @@ IF (LTWOTL) THEN
             ENDDO
           ENDIF
  
-        ELSEIF (YRDYNA%LSETTLS) THEN
+        ELSEIF (YDML_DYN%YRDYNA%LSETTLS) THEN
 
-          IF (YRDYNA%LPC_CHEAP) THEN
+          IF (YDML_DYN%YRDYNA%LPC_CHEAP) THEN
             DO JROF=KST,KPROF
               ZNESC  =PESGM*ZMOY1SP(JROF,JLEV)
               ZSETTLS=ZSPNLT0(JROF)-PGMV(JROF,JLEV,YT9%MSPNL)
@@ -341,12 +341,12 @@ IF (LTWOTL) THEN
       ENDIF
 
       ! Save quantities for corrector step
-      IF( YRDYNA%LPC_FULL )THEN
+      IF( YDML_DYN%YRDYNA%LPC_FULL )THEN
         ! save nonlinear model at time t
         PGMV(KST:KPROF,JLEV,YT9%MCSPNL)=ZMOY1SP(KST:KPROF,JLEV)
       ENDIF
 
-      IF( .NOT.YRDYNA%LNESC )THEN
+      IF( .NOT.YDML_DYN%YRDYNA%LNESC )THEN
         ! save of nonlinear residual at time t
         ! to be used as nonlinear residual at time t-dt next time step
         DO JROF=KST,KPROF

@@ -115,7 +115,7 @@ USE YOMHOOK            , ONLY : LHOOK, DR_HOOK
 USE YOMCST             , ONLY : RD
 USE YOMSTA             , ONLY : RTSUR
 USE YOMCT0             , ONLY : LTWOTL
-USE YOMDYNA            , ONLY : YRDYNA
+
 USE YOMCT3             , ONLY : NSTEP
 USE YOMCVER            , ONLY : LVERTFE
 USE YOMRIP             , ONLY : TRIP
@@ -188,8 +188,8 @@ ASSOCIATE(NPROMA=>YDDIM%NPROMA,   NFLEVG=>YDDIMV%NFLEVG, NFLSA=>YDDIMV%NFLSA,   
 ! 1. AUXILIARITIES
 !############################################
 
-LLCT = YRDYNA%LPC_FULL .AND. NCURRENT_ITER > 0 ! corrector for LPC_FULL
-LLCTC = YRDYNA%LPC_CHEAP .AND. NCURRENT_ITER > 0
+LLCT = YDML_DYN%YRDYNA%LPC_FULL .AND. NCURRENT_ITER > 0 ! corrector for LPC_FULL
+LLCTC = YDML_DYN%YRDYNA%LPC_CHEAP .AND. NCURRENT_ITER > 0
 
 ZXIDT0=1.0_JPRB+XIDT
 ZXIDT9=1.0_JPRB+XIDT
@@ -244,7 +244,7 @@ IF (LTWOTL) THEN
     ! or case nsiter=0.
     !############################################
 
-    IF (YRDYNA%LPC_CHEAP.AND.(.NOT.YRDYNA%LNESC)) THEN
+    IF (YDML_DYN%YRDYNA%LPC_CHEAP.AND.(.NOT.YDML_DYN%YRDYNA%LNESC)) THEN
       ! LPC_CHEAP=T is currently coded for LNESC only
       !  (for LNESC=F interpolated quantities are not the same ones
       !  at the predictor and corrector steps, and the LPC_CHEAP code
@@ -265,7 +265,7 @@ IF (LTWOTL) THEN
       ! Fill PB1(.,MSLB1C9),PGMVT1S(.,YT1%MSP),ZSPNLT_FE:
       IF (NVLAG == 2 .OR. NVLAG == 3) THEN
 
-        IF ( NSTEP <= NFOST .OR. YRDYNA%LNESC ) THEN
+        IF ( NSTEP <= NFOST .OR. YDML_DYN%YRDYNA%LNESC ) THEN
 
           DO JROF=KST,KPROF
             PB1(JROF,MSLB1C9+JLEV-NFLSA)=PB1(JROF,MSLB1C9+JLEV-NFLSA)&
@@ -283,7 +283,7 @@ IF (LTWOTL) THEN
             ENDDO
           ENDIF
 
-        ELSEIF (YRDYNA%LSETTLS) THEN
+        ELSEIF (YDML_DYN%YRDYNA%LSETTLS) THEN
 
           DO JROF=KST,KPROF
             PB1(JROF,MSLB1C9+JLEV-NFLSA)=PB1(JROF,MSLB1C9+JLEV-NFLSA)&
@@ -334,7 +334,7 @@ IF (LTWOTL) THEN
       !nyc-pc    PGMV(KST:KPROF,JLEV,YT9%MCSPNL)=ZMOY1SP(KST:KPROF,JLEV)
       !nyc-pc  ENDIF
 
-      IF( .NOT.YRDYNA%LNESC )THEN
+      IF( .NOT.YDML_DYN%YRDYNA%LNESC )THEN
         ! save of nonlinear residual at time t
         ! to be used as nonlinear residual at time t-dt next time step
         DO JROF=KST,KPROF

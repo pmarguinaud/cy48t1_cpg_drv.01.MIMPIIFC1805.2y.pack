@@ -187,7 +187,7 @@ NEXT:
               }
             else
               {
-               # die;
+                die;
               }
           }
         else

@@ -1,6 +1,6 @@
 SUBROUTINE GP_KAPPA(&
  ! --- INPUT --------------------------------------------------
- & YDVAB, YDDYN,KPROMA,KSTART,KPROF,KFLEV,&
+ & YDDYNA, YDVAB, YDDYN,KPROMA,KSTART,KPROF,KFLEV,&
  & PDTS2,PUT0L,PVT0L,PVORT0,PDIVT0,&
  & PLHU0,PLHV0,PRES0,PSPT0L,PSPT0M,PRDELP,PSLHDA,PSLHDD0,&
  ! --- OUTPUT -------------------------------------------------
@@ -89,13 +89,14 @@ USE YOMVERT  , ONLY : TVAB
 USE PARKIND1 , ONLY : JPIM, JPRB
 USE YOMHOOK  , ONLY : LHOOK, DR_HOOK
 
-USE YOMDYNA  , ONLY : YRDYNA
+USE YOMDYNA  , ONLY : TDYNA
 USE YOMDYN   , ONLY : TDYN
 
 !     ------------------------------------------------------------------
 
 IMPLICIT NONE
 
+TYPE (TDYNA), INTENT (IN) :: YDDYNA
 TYPE(TVAB)        ,INTENT(IN)    :: YDVAB
 TYPE(TDYN)        ,INTENT(IN)    :: YDDYN
 INTEGER(KIND=JPIM),INTENT(IN)    :: KPROMA 
@@ -139,7 +140,7 @@ ZABSDTS2=ABS(PDTS2)
 
 !*       1.   Kappa function computation
 
-IF (YRDYNA%LSLHD_STATIC) THEN
+IF (YDDYNA%LSLHD_STATIC) THEN
   PKAPPA(KSTART:KPROF,1:KFLEV)=1.0_JPRB
 ELSE
 

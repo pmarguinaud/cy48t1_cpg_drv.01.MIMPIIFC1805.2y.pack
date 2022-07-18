@@ -389,14 +389,14 @@ DO JITER=0,I_NITERHELM
 
   ! * Provides "LLstar Dprim_star_star" (mult by a constant coefficient)
   !   in ZSRHS.
-  CALL SISEVE(YDGEOMETRY,YDDYN,1,NFLEVG,ZR1D,ZSRHS,ISPCOL)
+  CALL SISEVE(YRDYNA,YDGEOMETRY,YDDYN,1,NFLEVG,ZR1D,ZSRHS,ISPCOL)
 
   ! * Provides "Tau Dprim_star_star" (mult by a constant coefficient) in ZST.
   CALL SITNU(YDCST, YDGEOMETRY,YDDYN,1,NFLEVG,ZR1D,ZST,ZSP,ISPCOL)
 
   ! * Provides "LLstar Tau Dprim_star_star" (mult by a constant coefficient)
   !   in ZWORK.
-  CALL SISEVE(YDGEOMETRY,YDDYN,1,NFLEVG,ZST,ZWORK,ISPCOL)
+  CALL SISEVE(YRDYNA,YDGEOMETRY,YDDYN,1,NFLEVG,ZST,ZWORK,ISPCOL)
   DO JLEV=1,NFLEVG
 !cdir nodep
     DO JSP=KSTA,KEND

@@ -87,6 +87,7 @@ USE PARKIND1     , ONLY : JPIM, JPRB
 USE YOMHOOK      , ONLY : LHOOK, DR_HOOK
 USE YOMCST       , ONLY : TCST
 USE YOMDYN       , ONLY : TDYN
+USE YOMDYNA      , ONLY : YRDYNA
 
 !      ----------------------------------------------------------------
 
@@ -172,7 +173,7 @@ IF (PRESENT(POU2)) THEN
   ENDDO
 
   ! * Apply the tridiagonal operator Lv* to get POU2
-  CALL SISEVE(YDGEOMETRY,YDDYN,KLEV,KLON,ZAUX,POU2,KNLON)
+  CALL SISEVE(YRDYNA,YDGEOMETRY,YDDYN,KLEV,KLON,ZAUX,POU2,KNLON)
 
 ENDIF
 

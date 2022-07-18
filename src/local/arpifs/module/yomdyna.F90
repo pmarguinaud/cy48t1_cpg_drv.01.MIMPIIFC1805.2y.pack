@@ -260,7 +260,7 @@ LOGICAL :: L_RDRY_VD
 
 END TYPE TDYNA
 
-TYPE (TDYNA), TARGET :: YRDYNA
+TYPE (TDYNA), POINTER :: YRDYNA => NULL ()
 
 ! ----------------------------------------------------------------------
 END MODULE YOMDYNA

@@ -87,6 +87,7 @@ USE YOMDYN       , ONLY : TDYN
 USE YOMDYNA      , ONLY : YRDYNA
 USE YOMLDDH      , ONLY : TLDDH
 USE YOMRIP       , ONLY : TRIP
+USE YOMCVER      , ONLY : LVERTFE
 
 !     ------------------------------------------------------------------
 
@@ -502,7 +503,7 @@ DO JITER=0,I_NITERHELM
   ! * Provides "Tau Dprim_star_star" if LIMPF=F, or
   !   "Tau Dprim_star_star_star" if LIMPF=T (mult by a constant coefficient)
   !   in ZST.
-  CALL SITNU(YDCST, YDGEOMETRY,YDDYN,1,NFLEVG,ZR1D,ZST,ZSP,ISPCOL)
+  CALL SITNU(LVERTFE, YDCST, YDGEOMETRY,YDDYN,1,NFLEVG,ZR1D,ZST,ZSP,ISPCOL)
 
   ! * Provides "LLstar Tau Dprim_star_star" if LIMPF=F, or
   !   "LLstar Tau Dprim_star_star_star" if LIMPF=T (mult by a constant

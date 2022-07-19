@@ -71,6 +71,7 @@ USE YOMDYN       , ONLY : TDYN
 USE YOMLDDH      , ONLY : TLDDH
 USE YOMRIP       , ONLY : TRIP
 USE YOMCST       , ONLY : TCST
+USE YOMCVER      , ONLY : LVERTFE
 
 !     ------------------------------------------------------------------
 
@@ -369,7 +370,7 @@ ENDIF
 !                                    and [  nu * (GMBAR**2 * DIVprim(t+dt)) ]
 
 IF( .NOT.LDONEM ) CALL GSTATS(1657,0)  ! Main routines and loops in SITNU chain are parallel
-CALL SITNU(YDCST, YDGEOMETRY,YDDYN,1,NFLEVG,ZHELP,ZST,ZSP,ISPCOL)
+CALL SITNU(LVERTFE, YDCST, YDGEOMETRY,YDDYN,1,NFLEVG,ZHELP,ZST,ZSP,ISPCOL)
 IF( .NOT.LDONEM ) CALL GSTATS(1657,1)
 
 !*       2.5  Increment Temperature and surface pressure

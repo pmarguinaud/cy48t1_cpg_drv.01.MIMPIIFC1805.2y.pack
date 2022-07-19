@@ -77,6 +77,7 @@ USE YOMDYN       , ONLY : TDYN
 USE YOMLDDH      , ONLY : TLDDH
 USE YOMRIP       , ONLY : TRIP
 USE YOMDYNA      , ONLY : YRDYNA
+USE YOMCVER      , ONLY : LVERTFE
 
 !     ------------------------------------------------------------------
 
@@ -385,7 +386,7 @@ ELSE
 ENDIF
 
 ! * ZTAU_M2SPDIVG = tau * ZM2SPDIVG, and ZNU_M2SPDIVG = nu * ZM2SPDIVG
-CALL SITNU(YDCST, YDGEOMETRY,YDDYN,1,NFLEVG,ZM2SPDIVG,ZTAU_M2SPDIVG,ZNU_M2SPDIVG,ISPCOL)
+CALL SITNU(LVERTFE, YDCST, YDGEOMETRY,YDDYN,1,NFLEVG,ZM2SPDIVG,ZTAU_M2SPDIVG,ZNU_M2SPDIVG,ISPCOL)
 
 ! * Provides final value of vertical divergence variable:
 !   d(t+dt) = SIFACI * [ Dcha_star_star - (ZBDT**2/H**2) LL_star_star (Cpdry [tau ZM2SPDIVG] - C**2 ZM2SPDIVG) ]

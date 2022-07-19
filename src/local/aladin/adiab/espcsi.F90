@@ -84,6 +84,7 @@ USE YEMDYN   , ONLY : TEDYN
 USE YOMLDDH  , ONLY : TLDDH
 USE YOMRIP   , ONLY : TRIP
 USE YOMCST   , ONLY : TCST
+USE YOMCVER      , ONLY : LVERTFE
 
 !     ------------------------------------------------------------------
 
@@ -395,7 +396,7 @@ ENDIF
 !         where GMBAR=max(M)
  
 IF (.NOT.LDONEM) CALL GSTATS(1657,0)
-CALL SITNU(YDCST, YDGEOMETRY,YDDYN,1,NFLEVG,ZHELP,ZST,ZSP,ISPCOL)
+CALL SITNU(LVERTFE, YDCST, YDGEOMETRY,YDDYN,1,NFLEVG,ZHELP,ZST,ZSP,ISPCOL)
 IF (.NOT.LDONEM) CALL GSTATS(1657,1)
 
 !*       2.5  Increment Temperature and surface pressure

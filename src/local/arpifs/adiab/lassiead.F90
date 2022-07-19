@@ -79,6 +79,7 @@ USE YOMDYN       , ONLY : TDYN
 USE YOM_YGFL     , ONLY : TYPE_GFLD
 USE YOMDYNA      , ONLY : YRDYNA
 USE YOMCST       , ONLY : YRCST
+USE YOMCVER      , ONLY : LVERTFE
 
 !     ------------------------------------------------------------------
 
@@ -143,7 +144,7 @@ IPROFS=KPROF-KST+1
 !  - Computation of Nu*D (SI term for continuity equation)
 !     and Tau*D (SI term for temperature equation).
 IF (LSPRT) THEN
-  CALL SITNU(YRCST,YDGEOMETRY,YDDYN,NPROMA,1,PGMV5(KST,1,YT5%MDIV),ZTOD5(KST,1),ZSDIV5(KST),IPROFS)
+  CALL SITNU(LVERTFE, YRCST,YDGEOMETRY,YDDYN,NPROMA,1,PGMV5(KST,1,YT5%MDIV),ZTOD5(KST,1),ZSDIV5(KST),IPROFS)
   DO JLEV=1,NFLEVG
     DO JROF=KST,KPROF
       ZR5(JROF,JLEV)=RD+(RV-RD)*PGFL5(JROF,JLEV,YQ%MP5)

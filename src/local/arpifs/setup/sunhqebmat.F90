@@ -50,6 +50,7 @@ USE YOMCST       , ONLY : TCST
 
 USE PARKIND1 , ONLY : JPIM, JPRB
 USE YOMHOOK  , ONLY : LHOOK, DR_HOOK
+USE YOMCVER      , ONLY : LVERTFE
 
 !     ------------------------------------------------------------------
 
@@ -112,7 +113,7 @@ ZBT2=(RBTS2*SITIME)**2
 
 ! * 2.1  Computes hydrostatic part of SIB (cf. SUSI)
 
-CALL SITNU(YDCST, YDGEOMETRY,YDDYN,1,NFLEVG,ZID,ZT,ZSP,NFLEVG)
+CALL SITNU(LVERTFE, YDCST, YDGEOMETRY,YDDYN,1,NFLEVG,ZID,ZT,ZSP,NFLEVG)
 CALL SIGAM(YDCST, YDGEOMETRY,YDDYN,1,NFLEVG,ZSIB_HYD,ZT,ZSP,NFLEVG,NFLEVG)
 
 ! * 2.2  Computes "LLsstar_kap**-1" and "LLsstar_kap**-1 Sstar_kap"

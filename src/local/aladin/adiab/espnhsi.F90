@@ -98,6 +98,7 @@ USE YOMDYN   , ONLY : TDYN
 USE YEMDYN   , ONLY : TEDYN
 USE YOMLDDH  , ONLY : TLDDH
 USE YOMRIP   , ONLY : TRIP
+USE YOMCVER      , ONLY : LVERTFE
 
 !     ------------------------------------------------------------------
 
@@ -392,7 +393,7 @@ DO JITER=0,I_NITERHELM
   CALL SISEVE(YRDYNA,YDGEOMETRY,YDDYN,1,NFLEVG,ZR1D,ZSRHS,ISPCOL)
 
   ! * Provides "Tau Dprim_star_star" (mult by a constant coefficient) in ZST.
-  CALL SITNU(YDCST, YDGEOMETRY,YDDYN,1,NFLEVG,ZR1D,ZST,ZSP,ISPCOL)
+  CALL SITNU(LVERTFE, YDCST, YDGEOMETRY,YDDYN,1,NFLEVG,ZR1D,ZST,ZSP,ISPCOL)
 
   ! * Provides "LLstar Tau Dprim_star_star" (mult by a constant coefficient)
   !   in ZWORK.

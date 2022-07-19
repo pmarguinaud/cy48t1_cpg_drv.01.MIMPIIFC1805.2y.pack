@@ -59,6 +59,7 @@ USE PARKIND1     , ONLY : JPIM, JPRB
 USE YOMHOOK      , ONLY : LHOOK, DR_HOOK
 USE YOMCST       , ONLY : TCST
 USE YOMDYN       , ONLY : TDYN
+USE YOMCVER      , ONLY : LVERTFE
 
 !     ------------------------------------------------------------------
 
@@ -101,7 +102,7 @@ ILEV = KLEV
 ILON = KLON
 INLON= KNLON
 
-CALL SITNU(YDCST, YDGEOMETRY,YDDYN,ILEV,ILON,PDH,PRNH,PSP,INLON)
+CALL SITNU(LVERTFE, YDCST, YDGEOMETRY,YDDYN,ILEV,ILON,PDH,PRNH,PSP,INLON)
 
 !     ------------------------------------------------------------------
 

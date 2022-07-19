@@ -86,6 +86,7 @@ USE YOMMP0       , ONLY : MYSETV
 USE YOMDYN       , ONLY : TDYN
 USE YOMLDDH      , ONLY : TLDDH
 USE YOMRIP       , ONLY : TRIP
+USE YOMCVER      , ONLY : LVERTFE
 
 !     ------------------------------------------------------------------
 
@@ -545,7 +546,7 @@ IF (LDDO_PARTSI(IPART_2D)) THEN
 !$OMP END PARALLEL DO
   ENDIF
 
-  CALL SITNU(YDCST, YDGEOMETRY,YDDYN,1,NFLEVG,Z32,Z34,Z33,ISPCOL)
+  CALL SITNU(LVERTFE, YDCST, YDGEOMETRY,YDDYN,1,NFLEVG,Z32,Z34,Z33,ISPCOL)
 
   ! * provides final value of log(prehyds).
 !$OMP PARALLEL DO PRIVATE(JSP)

@@ -226,7 +226,7 @@ ENDIF
 ! * Provides:
 !   a/ ZSDIV = - [ SITR gamma Qcha_rhs - Rd SITR Qcha_rhs - gamma T_rhs - Rd SITR logprehyd_rhs ]
 !   b/ ZSVED = (g TRSI)/(H TARSI) LLstar Qcha_rhs = g/H LLstarstar Qcha_rhs
-CALL SIDD(YDCST, YDGEOMETRY,YDDYN,1,NFLEVG,ZSDIV,ZSVED,ZZSPSPDG,ZZSPTG,ZZSPSPG,ISPCOL)
+CALL SIDD(YRDYNA, YDCST, YDGEOMETRY,YDDYN,1,NFLEVG,ZSDIV,ZSVED,ZZSPSPDG,ZZSPTG,ZZSPSPG,ISPCOL)
 
 ! * Provides Dprim_star_star in ZRDPRIM_STARSTAR and Dcha_star_star in ZRDCHA_STARSTAR.
 DO JSP=KSTA,KEND

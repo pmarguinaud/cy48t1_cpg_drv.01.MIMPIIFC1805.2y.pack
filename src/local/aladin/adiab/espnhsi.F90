@@ -732,7 +732,7 @@ ENDIF
 
 ! * Provides some intermediate quantities allowing to compute
 !   T(t+dt) (in ZST), log(prehyds)(t+dt) (in ZSP), spd(t+dt) (in ZSNHP).
-CALL SIPTP(YDCST, YDGEOMETRY,YDDYN,1,NFLEVG,ZWORK,ZZSPSVDG,ZSNHP,ZST,ZSP,ISPCOL)
+CALL SIPTP(LVERTFE, YDCST, YDGEOMETRY,YDDYN,1,NFLEVG,ZWORK,ZZSPSVDG,ZSNHP,ZST,ZSP,ISPCOL)
 
 ! * Provides T(t+dt) (in ZZSPTG) and spd(t+dt) (in ZZSPSPDG).
 DO JLEV=1,NFLEVG

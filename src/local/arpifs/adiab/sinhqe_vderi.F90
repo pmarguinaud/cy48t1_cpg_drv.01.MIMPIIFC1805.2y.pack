@@ -1,4 +1,4 @@
-SUBROUTINE SINHQE_VDERI(YDCST, YDGEOMETRY,YDDYN,KLEV,KLON,PV1,PV2,KNLON,LD_LSTAR)
+SUBROUTINE SINHQE_VDERI(LDVFE_LAPL_BC, YDCST, YDGEOMETRY,YDDYN,KLEV,KLON,PV1,PV2,KNLON,LD_LSTAR)
 
 !**** *SINHQE_VDERI* - first order vertical derivative operator in semi-implicit scheme (NHQE).
 
@@ -56,12 +56,13 @@ USE PARKIND1     , ONLY : JPIM, JPRB
 USE YOMHOOK      , ONLY : LHOOK, DR_HOOK
 USE YOMCST       , ONLY : TCST
 USE YOMDYN       , ONLY : TDYN
-USE YOMCVER      , ONLY : LVFE_LAPL_BC
+
 
 !     ------------------------------------------------------------------
 
 IMPLICIT NONE
 
+LOGICAL, INTENT (IN) :: LDVFE_LAPL_BC
 TYPE (TCST), INTENT (IN) :: YDCST
 TYPE(GEOMETRY)    ,INTENT(IN)    :: YDGEOMETRY
 TYPE(TDYN)        ,INTENT(IN)    :: YDDYN
@@ -101,7 +102,7 @@ ASSOCIATE(YDVAB=>YDGEOMETRY%YRVAB,NFLEVG=>YDGEOMETRY%YRDIMV%NFLEVG, &
  & SITLAH=>YDDYN%SITLAH,SITR=>YDDYN%SITR,SITRAM=>YDDYN%SITRAM)
 !     ------------------------------------------------------------------
 
-IF(LVFE_LAPL_BC) CALL ABOR1(' SINHQE_VDERI: VFE Laplacian not yet implemented')
+IF(LDVFE_LAPL_BC) CALL ABOR1(' SINHQE_VDERI: VFE Laplacian not yet implemented')
 
 !*       1.    BOUNDARY CONDITIONS FOR FD
 !              --------------------------

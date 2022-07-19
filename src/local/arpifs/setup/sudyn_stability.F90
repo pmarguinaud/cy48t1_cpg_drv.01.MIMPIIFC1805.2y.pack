@@ -751,7 +751,7 @@ DO IMM = 1,KDIM
   ZSPSP_SI  = 0.0_JPRB
 
   ! - Computation of SI terms for continuity, T and Pcha equations.
-  CALL SIPTP(YDCST, YDGEOMETRY,YDDYN,IPROMA,1,ZMDIV,ZMSVD,ZSPSPD_SI,ZSPT_SI, &
+  CALL SIPTP(LVERTFE, YDCST, YDGEOMETRY,YDDYN,IPROMA,1,ZMDIV,ZMSVD,ZSPSPD_SI,ZSPT_SI, &
    & ZSPSP_SI,IPROFS)
 
   ! - Computation of SI terms for momentum equation.

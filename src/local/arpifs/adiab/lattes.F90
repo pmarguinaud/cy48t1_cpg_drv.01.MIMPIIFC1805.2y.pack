@@ -115,7 +115,6 @@ USE YOMHOOK            , ONLY : LHOOK, DR_HOOK
 USE YOMCST             , ONLY : TCST
 USE YOMCT0             , ONLY : LTWOTL
 USE YOMCT3             , ONLY : NSTEP
-USE YOMCVER            , ONLY : LVERTFE
 USE YOMSTA             , ONLY : RTSUR
 USE CPG_OPTS_TYPE_MOD  , ONLY : CPG_BNDS_TYPE, CPG_OPTS_TYPE
 USE CPG_TYPE_MOD       , ONLY : CPG_SL1_TYPE, CPG_SL2_TYPE
@@ -256,7 +255,7 @@ IF (LTWOTL) THEN
             YDCPG_SL1%C9(JROF,JLEV)=YDCPG_SL1%C9(JROF,JLEV)&
              & +PESGM*ZMOY1SP(JROF,JLEV)
           ENDDO
-          IF (LVERTFE) THEN
+          IF (YDCPG_OPTS%LVERTFE) THEN
             DO JROF=YDCPG_BNDS%KIDIA,YDCPG_BNDS%KFDIA
               ZSPNLT_FE(JROF,JLEV)=ZSPNLT0(JROF)&
                & *ZVWEI(JROF,JLEV)*YDVETA%VFE_RDETAH(JLEV)*PESGP
@@ -287,7 +286,7 @@ IF (LTWOTL) THEN
                & +ZNESC+ZMIXNL*ZSETTLS
             ENDDO
           ENDIF
-          IF( LVERTFE )THEN
+          IF( YDCPG_OPTS%LVERTFE )THEN
             DO JROF=YDCPG_BNDS%KIDIA,YDCPG_BNDS%KFDIA
               ZSPNLT_FE(JROF,JLEV)=&
                & ZSPNLT0(JROF)*PESGP*ZVWEI(JROF,JLEV)*YDVETA%VFE_RDETAH(JLEV)
@@ -307,7 +306,7 @@ IF (LTWOTL) THEN
              & +PESGM*ZMOY1SP(JROF,JLEV)&
              & +0.5_JPRB*PESGM*(ZSPNLT0(JROF)-YDVARS%SPNL%T9(JROF,JLEV))
           ENDDO 
-          IF (LVERTFE) THEN
+          IF (YDCPG_OPTS%LVERTFE) THEN
             DO JROF=YDCPG_BNDS%KIDIA,YDCPG_BNDS%KFDIA
               ZSPNLT_FE(JROF,JLEV)=&
                & (1.5_JPRB*ZSPNLT0(JROF)-0.5_JPRB*YDVARS%SPNL%T9(JROF,JLEV))&
@@ -344,7 +343,7 @@ IF (LTWOTL) THEN
     !------------------------------------------------------------------------
     ! 3D additional actions
     !------------------------------------------------------------------------
-    IF (LVERTFE) THEN
+    IF (YDCPG_OPTS%LVERTFE) THEN
       IF(NVLAG == 2 .OR. NVLAG == 3)THEN
         ZSPNLT_FE(YDCPG_BNDS%KIDIA:YDCPG_BNDS%KFDIA,0)=0.0_JPRB
         ZSPNLT_FE(YDCPG_BNDS%KIDIA:YDCPG_BNDS%KFDIA,NFLEVG+1)=0.0_JPRB
@@ -390,7 +389,7 @@ IF (LTWOTL) THEN
            & +PESGM*YDVARS%CSPNL%T9(JROF,JLEV)
         ENDDO
       ENDIF
-      IF (LVERTFE) THEN
+      IF (YDCPG_OPTS%LVERTFE) THEN
         DO JROF=YDCPG_BNDS%KIDIA,YDCPG_BNDS%KFDIA
           ZSPNLT_FE(JROF,JLEV)=ZSPNLT1(JROF)&
            & *ZVWEI(JROF,JLEV)*YDVETA%VFE_RDETAH(JLEV)*PESGP
@@ -407,7 +406,7 @@ IF (LTWOTL) THEN
     !------------------------------------------------------------------------
     ! 3D additional actions
     !------------------------------------------------------------------------
-    IF (LVERTFE) THEN
+    IF (YDCPG_OPTS%LVERTFE) THEN
       ZSPNLT_FE(YDCPG_BNDS%KIDIA:YDCPG_BNDS%KFDIA,0)=0.0_JPRB
       ZSPNLT_FE(YDCPG_BNDS%KIDIA:YDCPG_BNDS%KFDIA,NFLEVG+1)=0.0_JPRB
       CALL VERDISINT(YDVFE,'ITOP','11',NPROMA,YDCPG_BNDS%KIDIA,YDCPG_BNDS%KFDIA,NFLEVG,ZSPNLT_FE,ZSPT1)
@@ -453,7 +452,7 @@ ELSE
 
   IF(NVLAG == 2 .OR. NVLAG == 3)THEN
 
-    IF(LVERTFE) THEN
+    IF(YDCPG_OPTS%LVERTFE) THEN
       DO JLEV=1,NFLEVG
         DO JROF=YDCPG_BNDS%KIDIA,YDCPG_BNDS%KFDIA
           ZMOYSPNL(JROF)=ZMOY1SP(JROF,JLEV)+YDCPG_SL2%SPSI(JROF)

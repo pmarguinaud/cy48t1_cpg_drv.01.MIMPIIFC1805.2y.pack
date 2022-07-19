@@ -65,7 +65,7 @@ USE YOMHOOK  , ONLY : LHOOK,   DR_HOOK
 USE YOMDYNA  , ONLY : YRDYNA
 USE YOMDYN   , ONLY : TDYN
 USE YOMCST   , ONLY : TCST
-USE YOMCVER  , ONLY : LVERTFE
+USE YOMCVER  , ONLY : LVERTFE, LVFE_LAPL_BC
 USE INTDYN_MOD,ONLY : YYTXYB
 
 !     ------------------------------------------------------------------
@@ -286,7 +286,7 @@ IF(SITIME /= TDT)THEN
     ! check - [ (Cpd/(Rd*Rd*Tstar)) (gamma tau + Rd Tstar nu) + QQstar ] LLstar = Id
     IF (YRDYNA%LNHQE_C2) THEN
       WRITE(KULOUT,*) ''
-      CALL SINHQE_SEVE(YDCST, YDGEOMETRY,YDDYN,1,NFLEVG,ZIDI,ZLAP,NFLEVG,LD_LSTAR=.TRUE.)
+      CALL SINHQE_SEVE(LVFE_LAPL_BC, YDCST, YDGEOMETRY,YDDYN,1,NFLEVG,ZIDI,ZLAP,NFLEVG,LD_LSTAR=.TRUE.)
       CALL SILKAPI(YDCST, YDGEOMETRY,YDDYN,0,1,NFLEVG,NFLEVG,ZLAP,ZIDO)
       WRITE(KULOUT,*) ' SUNHQESI: coefficients of LLstar**-1 LLstar '
       WRITE(KULOUT,*) ' Check that they are close to Id (otherwise constraint C2 is not matched) '

@@ -82,7 +82,6 @@ USE GEOMETRY_MOD , ONLY : GEOMETRY
 USE PARKIND1     , ONLY : JPIM, JPRB
 USE YOMHOOK      , ONLY : LHOOK, DR_HOOK
 USE YOMCST       , ONLY : TCST
-USE YOMCT0       , ONLY : LSPRT, LTWOTL
 USE YOMDYN       , ONLY : TDYN
 USE FIELD_VARIABLES_MOD,ONLY : FIELD_VARIABLES
 USE CPG_OPTS_TYPE_MOD, ONLY : CPG_BNDS_TYPE, CPG_OPTS_TYPE
@@ -187,7 +186,7 @@ ENDIF
 
 ! * Variables at time 9 (SL3TL only).
 
-IF (.NOT.LTWOTL) THEN
+IF (.NOT.YDCPG_OPTS%LTWOTL) THEN
 
   IF (LDGWADV) THEN
 
@@ -234,8 +233,8 @@ ENDIF
 ! * For "spectral RT" option, adjust semi-implicit term in
 !   T-equation to compensate for later multiplication by R/Rd
 
-IF (LSPRT) THEN
-  IF (LTWOTL) THEN
+IF (YDCPG_OPTS%LSPRT) THEN
+  IF (YDCPG_OPTS%LTWOTL) THEN
     ! remark for lpc_full:
     !  predictor: treatment of "t" data.
     !  corrector: treatment of provisional "t+dt" data.
@@ -266,7 +265,7 @@ IF (LIMPF .AND. (.NOT.LDGWADV)) THEN
       PGAGT0M(JROF,JLEV)=PGAGT0M(JROF,JLEV)+PRCORI(JROF)*YDVARS%U%T0(JROF,JLEV)
     ENDDO
   ENDDO
-  IF (.NOT.LTWOTL) THEN
+  IF (.NOT.YDCPG_OPTS%LTWOTL) THEN
     DO JLEV=1,NFLEVG
       DO JROF=YDCPG_BNDS%KIDIA,YDCPG_BNDS%KFDIA
         PGAGT9L(JROF,JLEV)=PGAGT9L(JROF,JLEV)-PRCORI(JROF)*YDVARS%V%T9(JROF,JLEV)

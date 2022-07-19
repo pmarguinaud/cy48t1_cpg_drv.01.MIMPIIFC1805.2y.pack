@@ -75,7 +75,6 @@ USE GEOMETRY_MOD , ONLY : GEOMETRY
 USE PARKIND1     , ONLY : JPIM, JPRB
 USE YOMHOOK      , ONLY : LHOOK, DR_HOOK
 USE YOMCST       , ONLY : TCST
-USE YOMCT0       , ONLY : LTWOTL, LSPRT
 USE YOMDYN       , ONLY : TDYN
 USE FIELD_VARIABLES_MOD,ONLY : FIELD_VARIABLES
 USE CPG_OPTS_TYPE_MOD, ONLY : CPG_BNDS_TYPE, CPG_OPTS_TYPE
@@ -131,7 +130,7 @@ CALL SIGAM(YDCPG_OPTS%LVERTFE, YDCST,YDGEOMETRY,YDDYN,NPROMA,1,PGAGT0M(YDCPG_BND
 
 ! * Variables at time 9 (SL3TL only).
 
-IF (.NOT.LTWOTL) THEN
+IF (.NOT.YDCPG_OPTS%LTWOTL) THEN
   ! - Computation of Nu*D (SI term for continuity equation)
   !   and Tau*D (SI term for temperature equation).
   CALL SITNU(YDCPG_OPTS%LVERTFE, YDCST,YDGEOMETRY,YDDYN,NPROMA,1,YDVARS%DIV%T9,PTOD9(YDCPG_BNDS%KIDIA,1),PSDIV9(YDCPG_BNDS%KIDIA),IPROFS)
@@ -143,8 +142,8 @@ ENDIF
 ! * For "spectral RT" option, adjust semi-implicit term (Tau*D) in
 !   T-equation to compensate for later multiplication by R/Rd
 
-IF (LSPRT) THEN
-  IF (LTWOTL) THEN
+IF (YDCPG_OPTS%LSPRT) THEN
+  IF (YDCPG_OPTS%LTWOTL) THEN
     ! remark for lpc_full:
     !  predictor: treatment of "t" data.
     !  corrector: treatment of provisional "t+dt" data.
@@ -176,7 +175,7 @@ IF (LIMPF) THEN
       PGAGT0M(JROF,JLEV)=PGAGT0M(JROF,JLEV)+PRCORI(JROF)*YDVARS%U%T0(JROF,JLEV)
     ENDDO
   ENDDO
-  IF (.NOT.LTWOTL) THEN
+  IF (.NOT.YDCPG_OPTS%LTWOTL) THEN
     DO JLEV=1,NFLEVG
       DO JROF=YDCPG_BNDS%KIDIA,YDCPG_BNDS%KFDIA
         PGAGT9L(JROF,JLEV)=PGAGT9L(JROF,JLEV)&

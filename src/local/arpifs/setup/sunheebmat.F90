@@ -52,7 +52,7 @@ USE YOMDYNA      , ONLY : YRDYNA
 
 USE PARKIND1 , ONLY : JPIM, JPRB
 USE YOMHOOK  , ONLY : LHOOK, DR_HOOK
-USE YOMCVER      , ONLY : LVERTFE
+USE YOMCVER      , ONLY : LVERTFE, LVFE_LAPL_BC
 
 !     ------------------------------------------------------------------
 
@@ -124,7 +124,7 @@ CALL SIGAM(LVERTFE, YDCST, YDGEOMETRY,YDDYN,1,NFLEVG,ZSIB_HYD,ZT,ZSP,NFLEVG,NFLE
 ! * 2.2  Computes SIFAC and SIFACI
 
 ! * Apply the "Laplacian" operator LLstarstar to ZID.
-CALL SISEVE(YRDYNA,YDGEOMETRY,YDDYN,1,NFLEVG,ZID,SIFAC,NFLEVG)
+CALL SISEVE(LVERTFE, LVFE_LAPL_BC, YRDYNA,YDGEOMETRY,YDDYN,1,NFLEVG,ZID,SIFAC,NFLEVG)
 
 ! * Multiply by
 ! "-(1+epsilon_uncentering)**2 beta**2 (Delta t)**2 C**2 (1/H**2)"

@@ -87,7 +87,7 @@ USE YOMDYN       , ONLY : TDYN
 USE YOMDYNA      , ONLY : YRDYNA
 USE YOMLDDH      , ONLY : TLDDH
 USE YOMRIP       , ONLY : TRIP
-USE YOMCVER      , ONLY : LVERTFE
+USE YOMCVER      , ONLY : LVERTFE, LVFE_LAPL_BC
 
 !     ------------------------------------------------------------------
 
@@ -498,7 +498,7 @@ DO JITER=0,I_NITERHELM
   ! * Provides "LLstar Dprim_star_star" if LIMPF=F, or
   !   "LLstar Dprim_star_star_star" if LIMPF=T
   !   (mult by a constant coefficient) in ZSRHS.
-  CALL SISEVE(YRDYNA,YDGEOMETRY,YDDYN,1,NFLEVG,ZR1D,ZSRHS,ISPCOL)
+  CALL SISEVE(LVERTFE, LVFE_LAPL_BC, YRDYNA,YDGEOMETRY,YDDYN,1,NFLEVG,ZR1D,ZSRHS,ISPCOL)
 
   ! * Provides "Tau Dprim_star_star" if LIMPF=F, or
   !   "Tau Dprim_star_star_star" if LIMPF=T (mult by a constant coefficient)
@@ -508,7 +508,7 @@ DO JITER=0,I_NITERHELM
   ! * Provides "LLstar Tau Dprim_star_star" if LIMPF=F, or
   !   "LLstar Tau Dprim_star_star_star" if LIMPF=T (mult by a constant
   !   coefficient) in ZWORK.
-  CALL SISEVE(YRDYNA,YDGEOMETRY,YDDYN,1,NFLEVG,ZST,ZWORK,ISPCOL)
+  CALL SISEVE(LVERTFE, LVFE_LAPL_BC, YRDYNA,YDGEOMETRY,YDDYN,1,NFLEVG,ZST,ZWORK,ISPCOL)
 !$OMP PARALLEL DO SCHEDULE(STATIC) PRIVATE(JSP,JLEV,IN)
     DO JSP=KSTA,KEND
       DO JLEV=1,NFLEVG

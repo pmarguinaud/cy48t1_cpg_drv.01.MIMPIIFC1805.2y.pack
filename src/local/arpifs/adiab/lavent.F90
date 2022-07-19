@@ -96,7 +96,6 @@ USE YOMCST             , ONLY : TCST
 USE CPG_OPTS_TYPE_MOD  , ONLY : CPG_BNDS_TYPE, CPG_OPTS_TYPE
 USE YOMRIP             , ONLY : TRIP
 USE YOMPARAR           , ONLY : TPARAR
-USE INTDYN_MOD         , ONLY : YYTTND
 
 !     ------------------------------------------------------------------
 

@@ -236,6 +236,7 @@ REAL(KIND=JPRB) :: ZHOOK_HANDLE
 #include "lattex_pgfl_2tl.intfb.h"
 #include "lattex_expl_2tl.intfb.h"
 #include "lattex_pgfl_3tl.intfb.h"
+#include "lattex_expl_3tl.intfb.h"
 #include "lattex_pgfl_vspltrans.intfb.h"
 
 !     ------------------------------------------------------------------
@@ -763,7 +764,11 @@ IF (YDCPG_OPTS%LTWOTL) THEN
   CALL LATTEX_EXPL_2TL (YDGEOMETRY, YDCPG_BNDS, YDML_GCONF, YDML_DYN, YDCPG_SL1, YDVARS, LLCT, LLCTC)
   ENDIF
 ELSE
+  IF (.FALSE.) THEN
   CALL LATTEX_PGFL_3TL (YDGEOMETRY, YDCPG_BNDS, YDML_GCONF, YDML_DYN, PGFL, YDCPG_SL1, YDVARS)
+  ELSE
+  CALL LATTEX_EXPL_3TL (YDGEOMETRY, YDCPG_BNDS, YDML_GCONF, YDML_DYN, PGFL, YDCPG_SL1, YDVARS)
+  ENDIF
 ENDIF
 
 ! * Transform the fields to be interpolated with cubic spline in the

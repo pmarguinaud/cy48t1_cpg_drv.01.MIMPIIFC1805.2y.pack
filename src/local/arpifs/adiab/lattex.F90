@@ -234,6 +234,7 @@ REAL(KIND=JPRB) :: ZHOOK_HANDLE
 #include "lattex_dnt.intfb.h"
 #include "lattex_tnt.intfb.h"
 #include "lattex_gfl_2tl.intfb.h"
+#include "lattex_gfl_2tl_expl.intfb.h"
 #include "lattex_gfl_3tl.intfb.h"
 #include "lattex_gfl_vspltrans.intfb.h"
 
@@ -756,7 +757,11 @@ ENDIF
 !       --------------------------------
 
 IF (YDCPG_OPTS%LTWOTL) THEN
+  IF (.FALSE.) THEN
   CALL LATTEX_GFL_2TL (YDGEOMETRY, YDCPG_BNDS, YDML_GCONF, YDML_DYN, PGFL, YDCPG_SL1, YDVARS, LLCT, LLCTC)
+  ELSE
+  CALL LATTEX_GFL_2TL_EXPL (YDGEOMETRY, YDCPG_BNDS, YDML_GCONF, YDML_DYN, PGFL, YDCPG_SL1, YDVARS, LLCT, LLCTC)
+  ENDIF
 ELSE
   CALL LATTEX_GFL_3TL (YDGEOMETRY, YDCPG_BNDS, YDML_GCONF, YDML_DYN, PGFL, YDCPG_SL1, YDVARS)
 ENDIF

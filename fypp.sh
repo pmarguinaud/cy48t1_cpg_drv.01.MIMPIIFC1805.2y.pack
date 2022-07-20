@@ -52,6 +52,11 @@ do
     d=arpifs/adiab
   fi
 
+  if [ "$b" = "lattex_gfl_2tl_expl" ]
+  then
+    d=arpifs/adiab
+  fi
+
 
   /opt/softs/anaconda3/bin/fypp -m os -M . -m yaml -m field_config ./$b.fypp ./$b.F90
 

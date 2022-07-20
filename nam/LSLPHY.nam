@@ -1,0 +1,6 @@
+&NAEPHY
+  LSLPHY=.TRUE.,
+/
+&NAMGFL
+  YQ_NL%LPHY=.TRUE.,
+/

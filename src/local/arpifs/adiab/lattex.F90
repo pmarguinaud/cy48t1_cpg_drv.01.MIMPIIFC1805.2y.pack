@@ -238,6 +238,7 @@ REAL(KIND=JPRB) :: ZHOOK_HANDLE
 #include "lattex_pgfl_3tl.intfb.h"
 #include "lattex_expl_3tl.intfb.h"
 #include "lattex_pgfl_vspltrans.intfb.h"
+#include "lattex_expl_vspltrans.intfb.h"
 
 !     ------------------------------------------------------------------
 
@@ -775,7 +776,11 @@ ENDIF
 !   vertical to "B-spline space".
 
 IF (.NOT.LLCTC) THEN
+  IF (.FALSE.) THEN
   CALL LATTEX_PGFL_VSPLTRANS (YDGEOMETRY, YDCPG_BNDS, YDML_GCONF, YDML_DYN, YDCPG_SL1)
+  ELSE
+  CALL LATTEX_EXPL_VSPLTRANS (YDGEOMETRY, YDCPG_BNDS, YDML_GCONF, YDML_DYN, YDCPG_SL1)
+  ENDIF
 ENDIF
 
 !     ------------------------------------------------------------------

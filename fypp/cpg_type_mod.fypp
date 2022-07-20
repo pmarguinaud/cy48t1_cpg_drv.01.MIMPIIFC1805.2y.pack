@@ -278,9 +278,15 @@ TYPE CPG_SL${ind}$_TYPE
   REAL (KIND=JPRB), POINTER, CONTIGUOUS :: ${v.name}$   (${', '.join ([':'] * (v.dim-1))}$) => NULL ()
 !>REAL (KIND=JPRB)                      :: ${v.name}$ (NPROMA, 0:NLEV+1)
   TYPE (FIELD_3D), POINTER :: F_${v.name}$ => NULL ()
+
   REAL (KIND=JPRB), POINTER, CONTIGUOUS :: ${v.name}$_F (${', '.join ([':'] * (v.dim-1))}$) => NULL ()
 !>REAL (KIND=JPRB)                      :: ${v.name}$_F (NPROMA, 0:NLEV+1)
   TYPE (FIELD_3D), POINTER :: F_${v.name}$_F => NULL ()
+
+  REAL (KIND=JPRB), POINTER, CONTIGUOUS :: ${v.name}$_SPF (${', '.join ([':'] * (v.dim-1))}$) => NULL ()
+!>REAL (KIND=JPRB)                      :: ${v.name}$_SPF (NPROMA, 0:NLEV+1)
+  TYPE (FIELD_3D), POINTER :: F_${v.name}$_SPF => NULL ()
+
     #:endif
   #:endfor
 #:endif
@@ -465,6 +471,7 @@ IF (YGFL%Y${v.name}$%MP_SL1 > 0 .AND. YGFL%Y${v.name}$%MP1 > 0) THEN
 ELSE
   SELF%F_${v.name}$ => NULL ()
 ENDIF
+
 IF (YDMODEL%YRML_DYN%YRDYN%LSPLTHOIGFL .OR. (YDMODEL%YRML_DYN%YRDYN%NSPLTHOI /= 0)) THEN
   IF (YGFL%Y${v.name}$%MP_SL1 > 0 .AND. YGFL%Y${v.name}$%MP1 > 0) THEN
     JFLD = YDTPTRSLB${ind}$%MSLB1GFLF9 + (YGFL%Y${v.name}$%MP_SL1-1)*(NLEV+${extra_levels2}$)
@@ -473,6 +480,14 @@ IF (YDMODEL%YRML_DYN%YRDYN%LSPLTHOIGFL .OR. (YDMODEL%YRML_DYN%YRDYN%NSPLTHOI /= 
     SELF%F_${v.name}$_F => NULL ()
   ENDIF
 ENDIF
+
+IF (YGFL%Y${v.name}$%MP_SPL > 0 .AND. YGFL%Y${v.name}$%MP1 > 0) THEN
+  JFLD = YDTPTRSLB${ind}$%MSLB1GFLSPF9  + (YGFL%Y${v.name}$%MP_SPL-1)*(NLEV+${extra_levels2}$)
+  SELF%F_${v.name}$_SPF => CREATE_FIELD_WRAP (SELF%ZDATA (:, JFLD:JFLD+NLEV${ubound_lev}$, :), PERSISTENT=LLPERSISTENT, LBOUNDS=[1,${lbound_lev}$,1])
+ELSE
+  SELF%F_${v.name}$_SPF => NULL ()
+ENDIF
+
     #:endif
   #:endfor
 #:endif
@@ -558,6 +573,7 @@ IF (ASSOCIATED (SELF%F_DATA)) THEN
   ELSEIF (.NOT. ASSOCIATED (SELF%${v.name}$)) THEN
     SELF%${v.name}$ => ZDUM${v.dim-1}$
   ENDIF
+
   IF (ASSOCIATED (SELF%F_${v.name}$_F)) THEN
     IF ((.NOT. SELF%F_${v.name}$_F%THREAD_BUFFER) .OR. (.NOT. ASSOCIATED (SELF%${v.name}$_F))) THEN
       SELF%${v.name}$_F => SELF%F_${v.name}$_F%GET_VIEW (BLOCK_INDEX)
@@ -565,6 +581,15 @@ IF (ASSOCIATED (SELF%F_DATA)) THEN
   ELSEIF (.NOT. ASSOCIATED (SELF%${v.name}$)) THEN
     SELF%${v.name}$_F => ZDUM${v.dim-1}$
   ENDIF
+
+  IF (ASSOCIATED (SELF%F_${v.name}$_SPF)) THEN
+    IF ((.NOT. SELF%F_${v.name}$_SPF%THREAD_BUFFER) .OR. (.NOT. ASSOCIATED (SELF%${v.name}$_SPF))) THEN
+      SELF%${v.name}$_SPF => SELF%F_${v.name}$_SPF%GET_VIEW (BLOCK_INDEX)
+    ENDIF
+  ELSEIF (.NOT. ASSOCIATED (SELF%${v.name}$)) THEN
+    SELF%${v.name}$_SPF => ZDUM${v.dim-1}$
+  ENDIF
+
     #:endif
   #:endfor
 #:endif

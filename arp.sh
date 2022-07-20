@@ -43,7 +43,7 @@ mkdir -p $TMPDIR
 cd $TMPDIR
 
 
-for NAM in ARP LACE LTWOTL=F.ARP SPNG
+for NAM in ARP LACE LTWOTL=F.ARP SPNG SLHD
 do
 
 mkdir -p $NAM

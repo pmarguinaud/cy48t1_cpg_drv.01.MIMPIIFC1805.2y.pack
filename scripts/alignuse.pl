@@ -34,7 +34,7 @@ for my $use (@use)
         my ($rename) = &F ('ancestor::rename', $n);
         $rename->unbindNode ();
       }
-    $use->unbindNode unless ($coount);
+    $use->unbindNode unless ($count);
   }
 
 @use = &F ('.//use-stmt', $d);
@@ -53,6 +53,18 @@ for my $use (@use)
   }
 
 my ($len) = sort { $b <=> $a } map { length ($_) } keys (%use);
+
+for my $use (@use)
+  {
+    my ($N) = &F ('./module-N', $use, 1);
+    unless ($use{$N})
+      {
+        $use->unbindNode;
+        next;
+      }
+    $use->replaceNode (&s (sprintf ("USE %-${len}s, ONLY : ", $N) . join (', ', sort keys (%{ $use{$N} }))));
+  }
+
 
 
 

@@ -94,7 +94,7 @@ sub sortArgs
   return (@d, @l);
 }
 
-my @INTRINSIC = qw (SIGN MAX MIN MOD JPRB REAL EXP ASIN FOLH SQRT PRESENT ABS TINY);
+my @INTRINSIC = qw (SIGN MAX MIN MOD JPRB REAL EXP ASIN FOLH SQRT PRESENT ABS TINY SUM);
 my %INTRINSIC = map { ($_, 1) } @INTRINSIC;
 
 
@@ -256,7 +256,7 @@ EOF
     for my $N (@N)
       {
 
-        $N2M{$N} or die $N;
+        $N2M{$N} or next;
 
         if (! $loc{$N})
           {

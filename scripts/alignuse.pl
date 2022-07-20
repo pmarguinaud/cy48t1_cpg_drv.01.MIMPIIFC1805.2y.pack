@@ -16,72 +16,45 @@ my $d = &Fxtran::fxtran (location => $F90, fopts => [qw (-line-length 300)]);
 
 my $t0 = $d->textContent;
 
-my @decl = &F ('.//T-decl-stmt[.//attribute-N[string(.)="INTENT"]', $d);
+my @use = &F ('.//use-stmt', $d);
 
-my %len;
-my %att;
-
-for my $decl (@decl)
+for my $use (@use)
   {
-    my ($tspec) = &F ('./_T-spec_', $decl, 1); $tspec =~ s/\s+//go;
-    
-    $len{type} = &max ($len{type} || 0, length ($tspec));
-
-    my @attr = &F ('.//attribute', $decl);
-    for my $attr (@attr)
+    my $count = 0;
+    my @n = &F ('.//use-N/N/n', $use);
+    for my $n (@n)
       {
-        my ($N) = &F ('./attribute-N', $attr, 1);
-        $attr = $attr->textContent; $attr =~ s/\s+//go;
-        $att{$N} = 1;
-        $len{$N} = &max (($len{$N} || 0), length ($attr));
-      }
-
-  }
-
-
-my @att = sort keys (%att);
-
-for (values (%len))
-  {
-    $_++;
-  }
-
-
-for my $decl (@decl)
-  {
-    my ($tspec) = &F ('./_T-spec_', $decl, 1); $tspec =~ s/\s+//go;
-    my ($endlt) = &F ('./EN-decl-LT', $decl, 1);
-
-
-    my @attr = &F ('.//attribute', $decl);
-    my %attr = map { my ($N) = &F ('./attribute-N', $_, 1); ($N, $_->textContent) } @attr;
-
-    for (values (%attr))
-      {
-        s/\s+//go;
-      }
-  
-    my $code = sprintf ("%-$len{type}s", $tspec);
-
-    for my $att (@att)
-      {
-        if ($attr{$att})
+        my @expr = &F ('.//named-E[string(N)="?"]', $n->textContent, $d);
+        my @type = &F ('.//T-N[string(.)="?"]', $n->textContent, $d);
+        if (@expr || @type)
           {
-            $code .= sprintf (",%-$len{$att}s", $attr{$att});
+            $count++;
+            next;
           }
-        else
-          {
-            $code .= ' ' x ($len{$att} + 1);
-          }
+        my ($rename) = &F ('ancestor::rename', $n);
+        $rename->unbindNode ();
       }
-
-    $code .= ' :: ' . $endlt;
-
-    my $stmt = &Fxtran::fxtran (statement => $code, fopts => [qw (-line-length 300)]);
-
-    $decl->replaceNode ($stmt);
-
+    $use->unbindNode unless ($coount);
   }
+
+@use = &F ('.//use-stmt', $d);
+
+
+my %use;
+
+for my $use (@use)
+  {
+    my ($N) = &F ('./module-N', $use, 1);
+    my @U = &F ('.//use-N/N/n', $use, 1);
+    for my $U (@U)
+      {
+        $use{$N}{$U}++;
+      }
+  }
+
+my ($len) = sort { $b <=> $a } map { length ($_) } keys (%use);
+
+
 
 my $t1 = $d->textContent;
 

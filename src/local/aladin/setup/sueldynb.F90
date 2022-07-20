@@ -134,8 +134,8 @@ ENDIF
 ! ky: for SLHD.. arrays it is recommended to allocate them even if LSLHD=F,
 !     to avoid false alarms in "bound checking" runs,
 !     because they are passed to SLag routines via dummy arg.
-ALLOCATE(YDDYN%SLHDA(NGPTOT))
-ALLOCATE(YDDYN%SLHDD0(NGPTOT))
+ALLOCATE(YDDYN%SLHDA(YDGEOMETRY%YRDIM%NPROMA,YDGEOMETRY%YRDIM%NGPBLKS))
+ALLOCATE(YDDYN%SLHDD0(YDGEOMETRY%YRDIM%NPROMA,YDGEOMETRY%YRDIM%NGPBLKS))
 
 !     ------------------------------------------------------------------
 

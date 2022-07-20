@@ -52,7 +52,7 @@ do
     d=arpifs/adiab
   fi
 
-  if [ "$b" = "lattex_gfl_2tl_expl" ]
+  if [ "$b" = "lattex_expl_2tl" ]
   then
     d=arpifs/adiab
   fi

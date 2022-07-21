@@ -17,8 +17,11 @@
   - {name: CSPDNL}
   - {name: CSPNL}
   - {name: CTNL}
+  - {name: CTPT}
   - {name: CUNL}
+  - {name: CUPT}
   - {name: CVNL}
+  - {name: CVPT}
   - {name: CVWVNL}
   - {name: DPHI}
   - {name: EDOT}

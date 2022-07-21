@@ -504,9 +504,8 @@ ELSE
 ENDIF
 
 IF (YGFL%Y${v.name}$%LPHY) THEN
-! JFLD = YDTPTRSLB${ind}$%MSLB1GFLP9  + (JGFL-1)*(NLEV+${extra_levels2}$)
-! SELF%F_${v.name}$_P => CREATE_FIELD_WRAP (SELF%ZDATA (:, JFLD:JFLD+NLEV${ubound_lev}$, :), PERSISTENT=LLPERSISTENT, LBOUNDS=[1,${lbound_lev}$,1])
-  SELF%F_${v.name}$_P => NULL ()
+  JFLD = YDTPTRSLB${ind}$%MSLB1GFLP9  + (YGFL%Y${v.name}$%MGFL-1)*(NLEV+${extra_levels2}$)
+  SELF%F_${v.name}$_P => CREATE_FIELD_WRAP (SELF%ZDATA (:, JFLD:JFLD+NLEV${ubound_lev}$, :), PERSISTENT=LLPERSISTENT, LBOUNDS=[1,${lbound_lev}$,1])
 ELSE
   SELF%F_${v.name}$_P => NULL ()
 ENDIF

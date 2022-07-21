@@ -1,0 +1,4 @@
+&NAMDYNA
+  LPC_FULL=.TRUE.,
+  LPC_CHEAP=.FALSE.,
+/

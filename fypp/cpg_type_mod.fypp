@@ -291,6 +291,10 @@ TYPE CPG_SL${ind}$_TYPE
 !>REAL (KIND=JPRB)                      :: ${v.name}$_SP (NPROMA, 0:NLEV+1)
   TYPE (FIELD_3D), POINTER :: F_${v.name}$_SP => NULL ()
 
+  REAL (KIND=JPRB), POINTER, CONTIGUOUS :: ${v.name}$_P (${', '.join ([':'] * (v.dim-1))}$) => NULL ()
+!>REAL (KIND=JPRB)                      :: ${v.name}$_P (NPROMA, 0:NLEV+1)
+  TYPE (FIELD_3D), POINTER :: F_${v.name}$_P => NULL ()
+
     #:endif
   #:endfor
 #:endif
@@ -499,6 +503,14 @@ ELSE
   SELF%F_${v.name}$_SP => NULL ()
 ENDIF
 
+IF (YGFL%Y${v.name}$%LPHY) THEN
+! JFLD = YDTPTRSLB${ind}$%MSLB1GFLP9  + (JGFL-1)*(NLEV+${extra_levels2}$)
+! SELF%F_${v.name}$_P => CREATE_FIELD_WRAP (SELF%ZDATA (:, JFLD:JFLD+NLEV${ubound_lev}$, :), PERSISTENT=LLPERSISTENT, LBOUNDS=[1,${lbound_lev}$,1])
+  SELF%F_${v.name}$_P => NULL ()
+ELSE
+  SELF%F_${v.name}$_P => NULL ()
+ENDIF
+
     #:endif
   #:endfor
 #:endif
@@ -603,10 +615,18 @@ IF (ASSOCIATED (SELF%F_DATA)) THEN
 
   IF (ASSOCIATED (SELF%F_${v.name}$_SP)) THEN
     IF ((.NOT. SELF%F_${v.name}$_SP%THREAD_BUFFER) .OR. (.NOT. ASSOCIATED (SELF%${v.name}$_SP))) THEN
-      SELF%${v.name}$_SP => SELF%F_${v.name}$_SPF%GET_VIEW (BLOCK_INDEX)
+      SELF%${v.name}$_SP => SELF%F_${v.name}$_SP%GET_VIEW (BLOCK_INDEX)
     ENDIF
   ELSEIF (.NOT. ASSOCIATED (SELF%${v.name}$)) THEN
     SELF%${v.name}$_SP => ZDUM${v.dim-1}$
+  ENDIF
+
+  IF (ASSOCIATED (SELF%F_${v.name}$_P)) THEN
+    IF ((.NOT. SELF%F_${v.name}$_P%THREAD_BUFFER) .OR. (.NOT. ASSOCIATED (SELF%${v.name}$_P))) THEN
+      SELF%${v.name}$_P => SELF%F_${v.name}$_P%GET_VIEW (BLOCK_INDEX)
+    ENDIF
+  ELSEIF (.NOT. ASSOCIATED (SELF%${v.name}$)) THEN
+    SELF%${v.name}$_P => ZDUM${v.dim-1}$
   ENDIF
 
     #:endif
@@ -822,9 +842,23 @@ SELF%ZVIEW => NULL ()
   IF (ASSOCIATED (SELF%F_${v.name}$)) CALL DELETE_TEMPORARY (SELF%F_${v.name}$)
   SELF%F_${v.name}$ => NULL ()
   SELF%${v.name}$ => NULL ()
+
   IF (ASSOCIATED (SELF%F_${v.name}$_F)) CALL DELETE_TEMPORARY (SELF%F_${v.name}$_F)
   SELF%F_${v.name}$_F => NULL ()
   SELF%${v.name}$_F => NULL ()
+
+  IF (ASSOCIATED (SELF%F_${v.name}$_SPF)) CALL DELETE_TEMPORARY (SELF%F_${v.name}$_SPF)
+  SELF%F_${v.name}$_SPF => NULL ()
+  SELF%${v.name}$_SPF => NULL ()
+
+  IF (ASSOCIATED (SELF%F_${v.name}$_SP)) CALL DELETE_TEMPORARY (SELF%F_${v.name}$_SP)
+  SELF%F_${v.name}$_SP => NULL ()
+  SELF%${v.name}$_SP => NULL ()
+
+  IF (ASSOCIATED (SELF%F_${v.name}$_P)) CALL DELETE_TEMPORARY (SELF%F_${v.name}$_P)
+  SELF%F_${v.name}$_P => NULL ()
+  SELF%${v.name}$_P => NULL ()
+
     #:endif
   #:endfor
 #:endif

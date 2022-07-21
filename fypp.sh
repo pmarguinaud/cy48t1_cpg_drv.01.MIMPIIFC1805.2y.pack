@@ -5,6 +5,29 @@ set -e
 
 cd fypp
 
+declare -A dir
+
+dir[gprcp_expl]=arpifs/adiab
+dir[test_ydvars]=arpifs/adiab
+dir[gpmpfc_expl_part2]=arpifs/adiab
+dir[gpinislb_part2_expl]=arpifs/adiab
+dir[gptf2_expl_3tl_part2]=arpifs/adiab
+dir[gpnspng_exp_expl]=arpifs/adiab
+dir[lattex_expl_2tl]=arpifs/adiab
+dir[lattex_expl_3tl]=arpifs/adiab
+dir[lattex_expl_vspltrans]=arpifs/adiab
+dir[lavabo_expl_lphy]=arpifs/adiab
+dir[gprcp_expl]=arpifs/adiab
+dir[test_ydvars]=arpifs/adiab
+dir[gpmpfc_expl_part2]=arpifs/adiab
+dir[gpinislb_part2_expl]=arpifs/adiab
+dir[gptf2_expl_3tl_part2]=arpifs/adiab
+dir[gpnspng_exp_expl]=arpifs/adiab
+dir[lattex_expl_2tl]=arpifs/adiab
+dir[lattex_expl_3tl]=arpifs/adiab
+dir[lattex_expl_vspltrans]=arpifs/adiab
+dir[lavabo_expl_lphy]=arpifs/adiab
+
 for f in *.fypp
 do
 
@@ -20,53 +43,12 @@ do
 
   b=$(basename $f .fypp)
 
-  d=arpifs/module
-
-  if [ "$b" = "gprcp_expl" ]
+  if [ "x${dir[$b]}" != "x" ]
   then
-    d=arpifs/adiab
+    d=${dir[$b]}
+  else
+    d=arpifs/module
   fi
-
-  if [ "$b" = "test_ydvars" ]
-  then
-    d=arpifs/adiab
-  fi
-
-  if [ "$b" = "gpmpfc_expl_part2" ]
-  then
-    d=arpifs/adiab
-  fi
-
-  if [ "$b" = "gpinislb_part2_expl" ]
-  then
-    d=arpifs/adiab
-  fi
-
-  if [ "$b" = "gptf2_expl_3tl_part2" ]
-  then
-    d=arpifs/adiab
-  fi
-
-  if [ "$b" = "gpnspng_exp_expl" ]
-  then
-    d=arpifs/adiab
-  fi
-
-  if [ "$b" = "lattex_expl_2tl" ]
-  then
-    d=arpifs/adiab
-  fi
-
-  if [ "$b" = "lattex_expl_3tl" ]
-  then
-    d=arpifs/adiab
-  fi
-
-  if [ "$b" = "lattex_expl_vspltrans" ]
-  then
-    d=arpifs/adiab
-  fi
-
 
   /opt/softs/anaconda3/bin/fypp -m os -M . -m yaml -m field_config ./$b.fypp ./$b.F90
 

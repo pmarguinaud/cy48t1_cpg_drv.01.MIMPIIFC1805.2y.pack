@@ -1108,6 +1108,14 @@ CALL PRINT_GFL(YGFL)
 
 LSPLTHOIGFL=LLTDIABLIN
 
+
+!*       4.    Set MGFL members
+!              ----------------------------------
+
+DO JGFL=1,NUMFLDS
+  YCOMP(JGFL)%MGFL = JGFL
+ENDDO
+
 !     ------------------------------------------------------------------
 END ASSOCIATE
 END ASSOCIATE

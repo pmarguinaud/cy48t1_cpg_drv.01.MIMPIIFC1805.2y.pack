@@ -205,7 +205,7 @@ TYPE(TSPP_CONFIG)       ,INTENT(IN)     :: YDSPP_CONFIG
 CHARACTER(LEN=*)        ,INTENT(IN)     :: CDPART
 
 INTEGER(KIND=JPIM) :: JFLD
-INTEGER(KIND=JPIM) :: ISLB1GFL9,ISLB1T9,ISLB1V9,ISLB1U9,ISLB1VD9
+
 REAL(KIND=JPRB), POINTER :: ZP1FORC(:,:)
 
 REAL(KIND=JPRB) :: ZHOOK_HANDLE
@@ -221,7 +221,6 @@ REAL(KIND=JPRB) :: ZHOOK_HANDLE
 #include "cpg_gp_tenc.intfb.h"
 #include "cpg_gp.intfb.h"
 #include "cpg_pt_ulp.intfb.h"
-#include "cp_ptrslb1.intfb.h"
 #include "ec_phys_lslphy.intfb.h"
 #include "gpiniddh.intfb.h"
 #include "cpg_pb1.intfb.h"
@@ -354,8 +353,6 @@ IF (CDPART (3:3) == 'X') THEN
     
     IF (YDMODEL%YRML_DYN%YRDYNA%LPC_FULL.AND.(.NOT.YDMODEL%YRML_DYN%YRDYNA%LPC_CHEAP).AND.LSLAG) THEN
     
-      CALL CP_PTRSLB1(YDDYN, YDPTRSLB1, ISLB1U9, ISLB1V9, ISLB1T9, ISLB1VD9, ISLB1GFL9)
-    
   ! * currently valid only for SL2TL advection scheme.
   !   Remarks KY:
   !   - PC scheme with Eulerian scheme: physics is passed differently
@@ -366,8 +363,7 @@ IF (CDPART (3:3) == 'X') THEN
   !     assumed to be zero and it is ignored.
   
       CALL CPG_PT_ULP(YDMODEL, YDGEOMETRY, YDCPG_SL1, YDVARS, YGFL, YDCPG_BNDS%KIDIA, &
-      & YDCPG_BNDS%KFDIA, NCURRENT_ITER > 0, NFLSA, NFLEN, PTENDGFL=YDCPG_SL1%ZVIEW(:, ISLB1GFL9), &
-      & PGFLPT=PGFLPT, PGFLT1=PGFLT1, PGFL=PGFL)
+      & YDCPG_BNDS%KFDIA, NCURRENT_ITER > 0, PGFLPT=PGFLPT, PGFLT1=PGFLT1, PGFL=PGFL)
     
     ENDIF
   

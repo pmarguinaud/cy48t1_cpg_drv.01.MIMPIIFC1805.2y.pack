@@ -31,6 +31,7 @@ IF (YGFL%Y${v.name}$%LPHY) THEN
   YDCPG_SL1%${v.name}$_P(KST:KPROF,0)=0.0_JPRB
   YDCPG_SL1%${v.name}$_P(KST:KPROF,YDGEOMETRY%YRDIMV%NFLEVG+1)=0.0_JPRB
 ENDIF
+
 #:endif
 #:endfor
 

@@ -27,6 +27,8 @@ dir[lattex_expl_2tl]=arpifs/adiab
 dir[lattex_expl_3tl]=arpifs/adiab
 dir[lattex_expl_vspltrans]=arpifs/adiab
 dir[lavabo_expl_lphy]=arpifs/adiab
+dir[lavabo_expl_laitvspcqm_part1]=arpifs/adiab
+dir[lavabo_expl_laitvspcqm_part2]=arpifs/adiab
 
 for f in *.fypp
 do

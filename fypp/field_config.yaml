@@ -16,6 +16,7 @@
   - {name: SVD, comment: Vertical div or velocity variable}
   - {name: CSPDNL}
   - {name: CSPNL}
+  - {name: CSVDPT}
   - {name: CTNL}
   - {name: CTPT}
   - {name: CUNL}
